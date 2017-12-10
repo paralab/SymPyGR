@@ -1,0 +1,428 @@
+#!/usr/bin/perl
+
+
+#####################################################################
+#
+#
+#   @d   - list of geometric vars that need 1st derivs for RHS
+#   @dd  - list of geometric vars that need 2nd derivs for RHS
+#   @ad  - list of geometric vars that need advective derivs for RHS
+#   @con_d - 
+#   @con_dd - 
+#   @mad_d
+#   @funcs - combined list of all derivatives for functions in @d and @dd
+#
+#
+#####################################################################
+
+# first derivs required for RHS
+
+# Note: gbx, gby, gbz are not needed for the RHS, but the derivatives
+# are needed for the boundary conditions.  The allocation of derivatives
+# and calls to derivative routines for the boundaries uses the functions
+# required for the rhs, so I include them here.
+@d = (alpha, shiftx, shifty, shiftz, 
+      gbx, gby, gbz,
+      chi, Gamtx, Gamty, Gamtz, trK,
+      gtxx, gtxy, gtxz, gtyy, gtyz, gtzz, 
+      Atxx, Atxy, Atxz, Atyy, Atyz, Atzz );
+
+# second derivs required for RHS
+@dd = (gtxx, gtxy, gtxz, gtyy, gtyz, gtzz, chi,
+       alpha, shiftx, shifty, shiftz );
+
+# advective derivatives
+@ad = (gtxx, gtxy, gtxz, gtyy, gtyz, gtzz,
+       Atxx, Atxy, Atxz, Atyy, Atyz, Atzz ,
+       alpha, shiftx, shifty, shiftz, chi, Gamtx, Gamty, Gamtz, trK,
+       gbx, gby, gbz );
+
+@pd = ("dx_", "dy_", "dz_");
+@pad = ("adx_", "ady_", "adz_");
+@pdd = ("dxx_", "dxy_", "dxz_", "dyy_", "dyz_", "dzz_");
+
+# RHS derivatives...................................................
+@funcs = ();
+
+foreach $f (@d) {
+  foreach $p (@pd) {
+    $n = $p . $f;
+    # printf "name: $n\n";
+    push(@funcs, $n);
+  }  
+}
+
+foreach $f (@dd) {
+  foreach $p (@pdd) {
+    $n = $p . $f;
+    # printf "name: $n\n";
+    push(@funcs, $n);
+  }  
+}
+
+# advective derivatives...................................................
+@afuncs=();
+foreach $f (@ad) {
+  foreach $p (@pad) {
+    $n = $p . $f;
+    # printf "name: $n\n";
+    push(@afuncs, $n);
+  } 
+}
+
+# advective derivatives 2....here we handle advective derivs with centered
+# ...........................operators....................................
+@afuncs2=();
+foreach $f (@ad) {
+  foreach $p (@pd) {
+    $n = $p . $f;
+    # printf "name: $n\n";
+    push(@afuncs2, $n);
+  } 
+}
+
+
+###########################################################################
+#
+#  Write declarations for the main RHS file
+#
+###########################################################################
+
+###########################################################################
+#
+#  Allocate memory (1)
+#
+###########################################################################
+$ofile = "NewMR_alloc.h";
+open(OFILE, ">$ofile");
+
+foreach $f (@funcs) {
+  print OFILE "  double *" . $f . " = new double [nd];\n";
+}
+
+foreach $f (@mfuncs) {
+  print OFILE "  double *" . $f . " = new double [nd];\n";
+}
+
+close(OFILE);
+
+###########################################################################
+#
+#  Calls for derivatives (1)
+#
+###########################################################################
+$ofile = "NewMR_derivs.h";
+open(OFILE, ">$ofile");
+
+foreach $e (@d) {
+  $dxn = "dx_" . $e;
+  $dxxn = "dxx_" . $e;
+  print OFILE "  deriv_x(" . $dxn . "," . $e . ",dx, nx, ny, nz);\n";
+  if ($e ~~ @dd) {
+    print OFILE "  deriv_xx(" . $dxxn . "," . $e . ",dx, nx, ny, nz);\n";
+  }
+}
+
+# QQ
+ print OFILE "  double *ft  = new double [nd];\n";
+ print OFILE "  double *dft = new double [nd];\n";
+ foreach $e (@d) {
+  $dyn = "dy_" . $e;
+  print OFILE "  transpose_xy(ft, " . $e . ",nx, ny, nz);\n";
+  print OFILE "  deriv_x(dft,ft,dy, ny, nx, nz);\n";
+  print OFILE "  transpose_xy(" . $dyn . ",dft, ny, nx, nz);\n";
+  if ($e ~~ @dd) {
+    $dyyn = "dyy_" . $e;
+    print OFILE "  deriv_xx(dft,ft,dy, ny, nx, nz);\n";
+    print OFILE "  transpose_xy(" . $dyyn . ",dft, ny, nx, nz);\n";
+  }
+} 
+
+ foreach $e (@d) {
+  $dzn = "dz_" . $e;
+  print OFILE "  transpose_xz(ft, " . $e . ",nx, ny, nz);\n";
+  print OFILE "  deriv_x(dft,ft,dz, nz, ny, nx);\n";
+  print OFILE "  transpose_xz(" . $dzn . ",dft, nz, ny, nx);\n";
+  if ($e ~~ @dd) {
+    $dzzn = "dzz_" . $e;
+    print OFILE "  deriv_xx(dft,ft,dz, nz, ny, nx);\n";
+    print OFILE "  transpose_xz(" . $dzzn . ",dft, nz, ny, nx);\n";
+  }
+}
+
+### Calls for mixed 2nd derivatives
+foreach $e (@dd) {
+  $dxn  = "dx_" . $e;
+  $dyn  = "dy_" . $e;
+  $dzn  = "dz_" . $e;
+  $dxyn = "dxy_" . $e;
+  $dxzn = "dxz_" . $e;
+  $dyzn = "dyz_" . $e;
+
+  print OFILE "  deriv_x(" . $dxyn . "," . $dyn . ",dx, nx, ny, nz);\n";
+  print OFILE "  deriv_x(" . $dxzn . "," . $dzn . ",dx, nx, ny, nz);\n";
+  print OFILE "  deriv_y(" . $dyzn . "," . $dzn . ",dy, nx, ny, nz);\n";
+}
+
+close(OFILE);
+
+###########################################################################
+#
+#  Calls for derivatives (2) -- no transpose
+#
+###########################################################################
+$ofile = "MR_derivs.h";
+open(OFILE, ">$ofile");
+
+foreach $e (@d) {
+  $dxn = "dx_" . $e;
+  $dxxn = "dxx_" . $e;
+  print OFILE "  deriv_x(" . $dxn . "," . $e . ",dx, nx, ny, nz);\n";
+  if ($e ~~ @dd) {
+    print OFILE "  deriv_xx(" . $dxxn . "," . $e . ",dx, nx, ny, nz);\n";
+  }
+}
+
+# QQ
+ foreach $e (@d) {
+  $dyn = "dy_" . $e;
+  print OFILE "  deriv_y(" . $dyn . "," . $e . ",dy, nx, ny, nz);\n";
+  if ($e ~~ @dd) {
+    $dyyn = "dyy_" . $e;
+    print OFILE "  deriv_yy(" . $dyyn . "," . $e . ",dy, nx, ny, nz);\n";
+  }
+} 
+
+ foreach $e (@d) {
+  $dzn = "dz_" . $e;
+  print OFILE "  deriv_z(" . $dzn . "," . $e . ",dz, nx, ny, nz);\n";
+  if ($e ~~ @dd) {
+    $dzzn = "dzz_" . $e;
+    print OFILE "  deriv_zz(" . $dzzn . "," . $e . ",dz, nx, ny, nz);\n";
+  }
+}
+
+### Calls for mixed 2nd derivatives
+foreach $e (@dd) {
+  $dxn  = "dx_" . $e;
+  $dyn  = "dy_" . $e;
+  $dzn  = "dz_" . $e;
+  $dxyn = "dxy_" . $e;
+  $dxzn = "dxz_" . $e;
+  $dyzn = "dyz_" . $e;
+
+  print OFILE "  deriv_x(" . $dxyn . "," . $dyn . ",dx, nx, ny, nz);\n";
+  print OFILE "  deriv_x(" . $dxzn . "," . $dzn . ",dx, nx, ny, nz);\n";
+  print OFILE "  deriv_y(" . $dyzn . "," . $dzn . ",dy, nx, ny, nz);\n";
+}
+
+close(OFILE);
+
+
+###########################################################################
+#
+#  Call to bssnrhs
+#
+###########################################################################
+$ofile = "NewMR_call_bssn.h";
+open(OFILE, ">$ofile");
+
+
+# geometric vars
+$i=0;
+while($i<=$#funcs) {
+  $j = 0;
+  print OFILE "     &  ";
+  while($j < 4 && $i <= $#funcs) {
+    print OFILE $funcs[$i] . ", ";
+    $j++;
+    $i++;
+  }
+  print OFILE "\n";
+}
+
+# matter vars
+$i=0;
+while($i<=$#mfuncs) {
+  $j = 0;
+  print OFILE "     &  ";
+  while($j < 4 && $i <= $#mfuncs) {
+    print OFILE $mfuncs[$i] . ", ";
+    $j++;
+    $i++;
+  }
+  print OFILE "\n";
+}
+
+
+close(OFILE);
+
+
+###########################################################################
+#
+# Deallocate memory
+#
+###########################################################################
+$ofile = "NewMR_dealloc.h";
+open(OFILE, ">$ofile");
+
+# geometric vars
+foreach $f (@funcs) {
+  print OFILE "  delete [] " . $f . ";\n";
+}
+
+# matter vars
+foreach $f (@mfuncs) {
+  print OFILE "  delete [] " . $f . ";\n";
+}
+
+close(OFILE);
+
+###########################################################################
+#
+# Now do the same for advective derivatives
+#
+###########################################################################
+
+###########################################################################
+#
+#  Allocate memory for advective derivs
+#
+###########################################################################
+$ofile = "NewMR_alloc_adv.h";
+open(OFILE, ">$ofile");
+
+#geometric vars
+foreach $f (@afuncs) {
+  print OFILE "  double *" .$f . " = new double [nd];\n";
+}
+
+#matter vars
+foreach $f (@mafuncs) {
+  print OFILE "  double *" .$f . " = new double [nd];\n";
+}
+
+close(OFILE);
+
+###########################################################################
+#
+#  Calls for derivatives (1)
+#
+###########################################################################
+$ofile = "NewMR_derivs_adv.h";
+open(OFILE, ">$ofile");
+
+### Calls for geometric advective derivatives
+foreach $e (@ad) {
+  $dxn = "adx_" . $e;
+  print OFILE "  adv_deriv_x(" . $dxn . "," . $e . ",dx, nx, ny, nz, shiftx);\n";
+}
+
+
+print OFILE "  double *beta_t = new double [nd];\n";
+print OFILE "  transpose_xy(beta_t, shifty, nx, ny, nz);\n";
+foreach $e (@ad) {
+  $dyn = "ady_" . $e;
+
+  print OFILE "  transpose_xy(ft, " . $e . ",nx, ny, nz);\n";
+  print OFILE "  adv_deriv_x(dft, ft, dy, ny, nx, nz, beta_t);\n";
+  print OFILE "  transpose_xy(" . $dyn . ",dft, ny, nx, nz);\n";
+}
+
+print OFILE "  transpose_xz(beta_t, shiftz, nx, ny, nz);\n";
+foreach $e (@ad) {
+  $dzn = "adz_" . $e;
+
+  print OFILE "  transpose_xz(ft, " . $e . ",nx, ny, nz);\n";
+  print OFILE "  adv_deriv_x(dft, ft, dy, nz, ny, nx, beta_t);\n";
+  print OFILE "  transpose_xz(" . $dzn . ",dft,nz, ny, nx);\n";
+}
+
+print OFILE "  delete [] beta_t;\n";
+print OFILE "  delete [] ft;\n";
+print OFILE "  delete [] dft;\n";
+
+close(OFILE);
+
+###########################################################################
+#
+#  Calls for derivatives (1)
+#
+###########################################################################
+$ofile = "MR_derivs_adv.h";
+open(OFILE, ">$ofile");
+
+### Calls for geometric advective derivatives
+foreach $e (@ad) {
+  $dxn = "adx_" . $e;
+  print OFILE "  adv_deriv_x(" . $dxn . "," . $e . ",dx, nx, ny, nz, shiftx);\n";
+}
+
+foreach $e (@ad) {
+  $dyn = "ady_" . $e;
+  print OFILE "  adv_deriv_y(" . $dyn . "," . $e . ",dy, nx, ny, nz, shifty);\n";
+}
+
+foreach $e (@ad) {
+  $dzn = "adz_" . $e;
+  print OFILE "  adv_deriv_z(" . $dzn . "," . $e . ",dz, nx, ny, nz, shiftz);\n";
+}
+
+close(OFILE);
+
+
+###########################################################################
+#
+#  Call to advective deriv. routine
+#
+###########################################################################
+$ofile = "NewMR_call_bssn_adv.h";
+open(OFILE, ">$ofile");
+
+# geometric vars
+$i=0;
+while($i<=$#afuncs) {
+  $j = 0;
+  print OFILE "     &  ";
+  while($j < 4 && $i <= $#afuncs) {
+    print OFILE $afuncs[$i] . ", ";
+    $j++;
+    $i++;
+  }
+  print OFILE "\n";
+}
+
+# matter vars
+$i=0;
+while($i<=$#mafuncs) {
+  $j = 0;
+  print OFILE "     &  ";
+  while($j < 4 && $i <= $#mafuncs) {
+    print OFILE $mafuncs[$i] . ", ";
+    $j++;
+    $i++;
+  }
+  print OFILE "\n";
+}
+
+close(OFILE);
+
+###########################################################################
+#
+# Deallocate memory for advective derivs
+#
+###########################################################################
+$ofile = "NewMR_dealloc_adv.h";
+open(OFILE, ">$ofile");
+
+# geometric vars
+foreach $f (@afuncs) {
+  print OFILE "  delete [] " . $f . ";\n";
+}
+
+# matter vars
+foreach $f (@mafuncs) {
+  print OFILE "  delete [] " . $f . ";\n";
+}
+close(OFILE);
+
