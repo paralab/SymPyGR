@@ -1,0 +1,15 @@
+One of the key objectives of this project is to Symbolic Python (SymPy) based framework for optimized code generation for BSSN formulation of Einstein equation for heterogeneous platforms.
+
+Note: Even though our current focus is on Computational Relativity the methods that we use to generate optimized code should be extendable to other computational problems which can have computationally tedious parameters (i.e. complicated diffusion tensor) which makes it tedious, time-consuming task to write code manually.  
+
+We can break this problem into two key parts. 
+\begin{itemize}
+\item Optimization:  Perform symbolic simplifications to reduce overall operations while improving the memory access patterns (i.e. highly depend on the architecture) and cache performance. 
+\item Code Generation: Generate efficient code based on the optimized symbolic expressions for a given architecture (i.e. AVX, CPU, GPU, CPU \& GPU). 
+\end{itemize}
+
+Currently, in SymPyGr there are two main python files. 
+\begin{itemize}
+\item \texttt{bssn.py} Contains BSSN equations in SymPy.
+\item \texttt{dendro.py} Contains code generation and some helper functions to write BSSN in SymPy.  Maybe later we can move all these helper functions (i.e. trace, derivatives, lie-derivatives etc.) to a separate python file. (This is very low priority)
+\end{itemize}
