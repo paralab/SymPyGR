@@ -504,22 +504,22 @@ def compute_ricci(Gt, chi):
 # code generation function
 ##########################################################################
 
-def print_n_write(value, fileToWrite, isCExp=False, isNewLineEnd=True, **settings):
+def print_n_write(value, fileToWrite=None, isCExp=False, isNewLineEnd=True, **settings):
     # fileToWrite should be a file object that is opened to write or append
     if isCExp:
         # C/C++ output write and print
         c_output = ccode(value, **settings)
         print(c_output, end="")
-        fileToWrite.write(c_output)
+        if(fileToWrite!=None): fileToWrite.write(c_output)
     else:
         # normal print and write
         print(str(value), end="")
-        fileToWrite.write(str(value))
+        if(fileToWrite!=None): fileToWrite.write(str(value))
     
     # Adding new line
     if isNewLineEnd:
         print()
-        fileToWrite.write("\n")
+        if(fileToWrite!=None): fileToWrite.write("\n")
 
 
 def generate(ex, vnames, idx):
@@ -607,13 +607,13 @@ def generate(ex, vnames, idx):
         for (v1, v2) in _v[0]:
             vv = numbered_symbols('v')
             vlist = []
-            gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx)
+            gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
             print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
         for i, e in enumerate(_v[1]):
             print_n_write("//--", output_file)
             vv = numbered_symbols('v')
             vlist = []
-            gen_vector_code(e, vv, vlist, oper, prevdefvars, idx)
+            gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
             #st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
             st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
             print_n_write(st.replace("'",""), output_file)
@@ -688,7 +688,7 @@ def vec_print_str(tv, pdvars):
         pdvars.add(tv)
     return st
 
-def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
+def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
     """
     create vectorized code from an expression.
     options:
@@ -718,7 +718,8 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             idxn = idxn.replace("]","")
             st += repr(tv) + ' = ' + o1s + '(' + repr(ex.func) + '_' + '_'.join(str_args) + '+' + idxn + ' );'
             # st += repr(tv) + ' = ' + repr(ex) + ';'
-            print(st.replace(idx,""))
+            # print(st.replace(idx,""))
+            print_n_write(st.replace(idx,""), fileToWrite)
             return
 
     if isinstance(ex, Pow):
@@ -736,12 +737,13 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 st += repr(tv) + ' = ' + repr(a1) + ' * ' + repr(a1) + ';'
             else:
                 st += repr(tv) + ' = pow( ' + repr(a1) + ', ' + repr(a2) + ');'
-            print(st)
+            # print(st)
+            print_n_write(st, fileToWrite)
             return
 
     # recursively process the arguments of the function or operator
     for arg in ex.args:
-        gen_vector_code(arg, vsym, vlist, oper, prevdefvars, idx)
+        gen_vector_code(arg, vsym, vlist, oper, prevdefvars, idx, fileToWrite)
 
     if isinstance(ex, Number):
         if isinstance(ex, Integer) and ex == 1:
@@ -756,13 +758,15 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 st += repr(tv) + ' = ' + repr(float(ex)) + ';'
             else:
                 st += repr(tv) + ' = ' + repr(ex) + ';'
-            print(st)
+            # print(st)
+            print_n_write(st, fileToWrite)
     elif isinstance(ex, Symbol):
         tv = next(vsym)
         vlist.append(tv)
         st = vec_print_str(tv, prevdefvars)
         st += repr(tv) +  ' = ' + repr(ex) + ';'
-        print(st)
+        # print(st)
+        print_n_write(st, fileToWrite)
     elif isinstance(ex, Mul):
         nargs = len(ex.args)
         #print('mul..',len(vlist))
@@ -775,7 +779,8 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             #st += repr(v1) + ' * ' + repr(v2) + ';'
             o1 = oper['mul']
             st += repr(o1) + '(' + repr(v1) + ', ' + repr(v2) + ');'
-            print(st.replace("'", ""))
+            # print(st.replace("'", ""))
+            print_n_write(st.replace("'", ""), fileToWrite)
             vlist.append(tv)
     elif isinstance(ex, Add):
         nargs = len(ex.args)
@@ -788,7 +793,8 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             v2 = vlist.pop()
             o1 = oper['add']
             st += repr(o1) + '(' + repr(v1) + ', ' + repr(v2) + ');'
-            print(st.replace("'",""))
+            # print(st.replace("'",""))
+            print_n_write(st.replace("'", ""), fileToWrite)
             vlist.append(tv)
     elif isinstance(ex, Pow):
         tv = next(vsym)
@@ -807,19 +813,22 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                print(st.replace("'",""))
+                #print(st.replace("'",""))
+                print_n_write(st.replace("'", ""), fileToWrite)
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = 1.0 / ' + repr(v1) + ';'
             elif (a2 > 2 and a2 < 8):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                print(st.replace("'",""))
+                #print(st.replace("'",""))
+                print_n_write(st.replace("'", ""), fileToWrite)
                 for i in range(a2-3):
                     v2 = next(vsym)
                     st = vec_print_str(v2, prevdefvars)
                     st += repr(v2) + ' = ' + repr(o1) + '(' + repr(v1) + ', ' + repr(qman) + ');'
-                    print(st.replace("'",""))
+                    #print(st.replace("'",""))
+                    print_n_write(st.replace("'", ""), fileToWrite)
                     v1 = v2
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = ' + repr(o1) + '(' + repr(v1) + ', ' + repr(qman) + ');'
@@ -829,5 +838,6 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
         else:
             st = vec_print_str(tv, prevdefvars)
             st = repr(tv) + ' = pow(' + repr(qman) + ',' + repr(qexp) + ');'
-        print(st.replace("'",""))
+        #print(st.replace("'",""))
+        print_n_write(st.replace("'", ""), fileToWrite)
         vlist.append(tv)
