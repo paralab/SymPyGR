@@ -518,10 +518,7 @@ def print_n_write(value, fileToWrite, isCExp=False, isNewLineEnd=True, **setting
     
     # Adding new line
     if isNewLineEnd:
-        try:
-            print()
-        except:
-            print("Error occurss now what ===================")
+        print()
         fileToWrite.write("\n")
 
 
