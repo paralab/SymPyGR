@@ -12,7 +12,8 @@ from sympy import *
 from sympy.tensor.array import *
 from sympy.functions.special.tensor_functions import KroneckerDelta
 from sympy.utilities import numbered_symbols
-from sympy.printing import print_ccode
+from sympy.printing import print_ccode, ccode
+import os
 
 import string
 import random
@@ -503,6 +504,23 @@ def compute_ricci(Gt, chi):
 # code generation function
 ##########################################################################
 
+def print_n_write(value, fileToWrite=None, isCExp=False, isNewLineEnd=True, **settings):
+    # fileToWrite should be a file object that is opened to write or append
+    if isCExp:
+        # C/C++ output write and print
+        c_output = ccode(value, **settings)
+        print(c_output, end="")
+        if(fileToWrite!=None): fileToWrite.write(c_output)
+    else:
+        # normal print and write
+        print(str(value), end="")
+        if(fileToWrite!=None): fileToWrite.write(str(value))
+    
+    # Adding new line
+    if isNewLineEnd:
+        print()
+        if(fileToWrite!=None): fileToWrite.write("\n")
+
 
 def generate(ex, vnames, idx):
     """
@@ -536,71 +554,71 @@ def generate(ex, vnames, idx):
 
     # print(num_e)
     # print(len(lname))
+    with open("bssn.cpp", 'w') as output_file:
+        
+        print_n_write('// Dendro: {{{ ', output_file)
+        print_n_write('// Dendro: original ops: ' + str(count_ops(lexp)), output_file)
 
-    print('// Dendro: {{{ ')
-    print('// Dendro: original ops: ', count_ops(lexp))
+        # print("--------------------------------------------------------")
+        # print("Now trying Common Subexpression Detection and Collection")
+        # print("--------------------------------------------------------")
 
-    # print("--------------------------------------------------------")
-    # print("Now trying Common Subexpression Detection and Collection")
-    # print("--------------------------------------------------------")
+        # Common Subexpression Detection and Collection
+        # for i in range(len(ex)):
+        #     # print("--------------------------------------------------------")
+        #     # print(ex[i])
+        #     # print("--------------------------------------------------------")
+        #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+        #     ee_syms = numbered_symbols(prefix=ee_name)
+        #     _v = cse(ex[i],symbols=ee_syms)
+        #     # print(type(_v))
+        #     for (v1,v2) in _v[0]:
+        #         print("double %s = %s;" % (v1, v2))
+        #     print("%s = %s" % (vnames[i], _v[1][0]))
 
-    # Common Subexpression Detection and Collection
-    # for i in range(len(ex)):
-    #     # print("--------------------------------------------------------")
-    #     # print(ex[i])
-    #     # print("--------------------------------------------------------")
-    #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-    #     ee_syms = numbered_symbols(prefix=ee_name)
-    #     _v = cse(ex[i],symbols=ee_syms)
-    #     # print(type(_v))
-    #     for (v1,v2) in _v[0]:
-    #         print("double %s = %s;" % (v1, v2))
-    #     print("%s = %s" % (vnames[i], _v[1][0]))
+        #mex = Matrix(ex)
+        ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+        ee_syms = numbered_symbols(prefix=ee_name)
+        _v = cse(lexp, symbols=ee_syms, optimizations='basic')
 
-    #mex = Matrix(ex)
-    ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-    ee_syms = numbered_symbols(prefix=ee_name)
-    _v = cse(lexp, symbols=ee_syms, optimizations='basic')
+        custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
-    custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
+        rops=0
+        print_n_write('// Dendro: printing temp variables', output_file)
+        for (v1, v2) in _v[0]:
+            # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
+            print_n_write('double ', output_file, isNewLineEnd=False)
+            print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
+            rops = rops + count_ops(v2)
 
-    rops=0
-    print('// Dendro: printing temp variables')
-    for (v1, v2) in _v[0]:
-        # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
-        print('double ', end='')
-        print_ccode(v2, assign_to=v1, user_functions=custom_functions)
-        rops = rops + count_ops(v2)
+        print_n_write('\n// Dendro: printing variables', output_file)
+        for i, e in enumerate(_v[1]):
+            print_n_write("//--", output_file)
+            # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
+            print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
+            rops = rops + count_ops(e)
 
-    print()
-    print('// Dendro: printing variables')
-    for i, e in enumerate(_v[1]):
-        print("//--")
-        # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
-        print_ccode(e, assign_to=lname[i], user_functions=custom_functions)
-        rops = rops + count_ops(e)
+        print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
+        print_n_write('// Dendro: }}} ', output_file)
 
-    print('// Dendro: reduced ops: ', rops)
-    print('// Dendro: }}} ')
+        print_n_write('// Dendro vectorized code: {{{', output_file)
+        oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
+        prevdefvars = set()
+        for (v1, v2) in _v[0]:
+            vv = numbered_symbols('v')
+            vlist = []
+            gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
+            print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
+        for i, e in enumerate(_v[1]):
+            print_n_write("//--", output_file)
+            vv = numbered_symbols('v')
+            vlist = []
+            gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
+            #st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
+            st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
+            print_n_write(st.replace("'",""), output_file)
 
-    print('// Dendro vectorized code: {{{')
-    oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
-    prevdefvars = set()
-    for (v1, v2) in _v[0]:
-        vv = numbered_symbols('v')
-        vlist = []
-        gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx)
-        print('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';')
-    for i, e in enumerate(_v[1]):
-        print("//--")
-        vv = numbered_symbols('v')
-        vlist = []
-        gen_vector_code(e, vv, vlist, oper, prevdefvars, idx)
-        #st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
-        st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
-        print(st.replace("'",""))
-
-    print('// Dendro vectorized code: }}} ')
+        print_n_write('// Dendro vectorized code: }}} ', output_file)
 
 def replace_pow(exp_in):
     """
@@ -670,7 +688,7 @@ def vec_print_str(tv, pdvars):
         pdvars.add(tv)
     return st
 
-def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
+def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
     """
     create vectorized code from an expression.
     options:
@@ -700,7 +718,8 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             idxn = idxn.replace("]","")
             st += repr(tv) + ' = ' + o1s + '(' + repr(ex.func) + '_' + '_'.join(str_args) + '+' + idxn + ' );'
             # st += repr(tv) + ' = ' + repr(ex) + ';'
-            print(st.replace(idx,""))
+            # print(st.replace(idx,""))
+            print_n_write(st.replace(idx,""), fileToWrite)
             return
 
     if isinstance(ex, Pow):
@@ -718,12 +737,13 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 st += repr(tv) + ' = ' + repr(a1) + ' * ' + repr(a1) + ';'
             else:
                 st += repr(tv) + ' = pow( ' + repr(a1) + ', ' + repr(a2) + ');'
-            print(st)
+            # print(st)
+            print_n_write(st, fileToWrite)
             return
 
     # recursively process the arguments of the function or operator
     for arg in ex.args:
-        gen_vector_code(arg, vsym, vlist, oper, prevdefvars, idx)
+        gen_vector_code(arg, vsym, vlist, oper, prevdefvars, idx, fileToWrite)
 
     if isinstance(ex, Number):
         if isinstance(ex, Integer) and ex == 1:
@@ -738,13 +758,15 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 st += repr(tv) + ' = ' + repr(float(ex)) + ';'
             else:
                 st += repr(tv) + ' = ' + repr(ex) + ';'
-            print(st)
+            # print(st)
+            print_n_write(st, fileToWrite)
     elif isinstance(ex, Symbol):
         tv = next(vsym)
         vlist.append(tv)
         st = vec_print_str(tv, prevdefvars)
         st += repr(tv) +  ' = ' + repr(ex) + ';'
-        print(st)
+        # print(st)
+        print_n_write(st, fileToWrite)
     elif isinstance(ex, Mul):
         nargs = len(ex.args)
         #print('mul..',len(vlist))
@@ -757,7 +779,8 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             #st += repr(v1) + ' * ' + repr(v2) + ';'
             o1 = oper['mul']
             st += repr(o1) + '(' + repr(v1) + ', ' + repr(v2) + ');'
-            print(st.replace("'", ""))
+            # print(st.replace("'", ""))
+            print_n_write(st.replace("'", ""), fileToWrite)
             vlist.append(tv)
     elif isinstance(ex, Add):
         nargs = len(ex.args)
@@ -770,7 +793,8 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             v2 = vlist.pop()
             o1 = oper['add']
             st += repr(o1) + '(' + repr(v1) + ', ' + repr(v2) + ');'
-            print(st.replace("'",""))
+            # print(st.replace("'",""))
+            print_n_write(st.replace("'", ""), fileToWrite)
             vlist.append(tv)
     elif isinstance(ex, Pow):
         tv = next(vsym)
@@ -789,19 +813,22 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                print(st.replace("'",""))
+                #print(st.replace("'",""))
+                print_n_write(st.replace("'", ""), fileToWrite)
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = 1.0 / ' + repr(v1) + ';'
             elif (a2 > 2 and a2 < 8):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                print(st.replace("'",""))
+                #print(st.replace("'",""))
+                print_n_write(st.replace("'", ""), fileToWrite)
                 for i in range(a2-3):
                     v2 = next(vsym)
                     st = vec_print_str(v2, prevdefvars)
                     st += repr(v2) + ' = ' + repr(o1) + '(' + repr(v1) + ', ' + repr(qman) + ');'
-                    print(st.replace("'",""))
+                    #print(st.replace("'",""))
+                    print_n_write(st.replace("'", ""), fileToWrite)
                     v1 = v2
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = ' + repr(o1) + '(' + repr(v1) + ', ' + repr(qman) + ');'
@@ -811,5 +838,6 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
         else:
             st = vec_print_str(tv, prevdefvars)
             st = repr(tv) + ' = pow(' + repr(qman) + ',' + repr(qexp) + ');'
-        print(st.replace("'",""))
+        #print(st.replace("'",""))
+        print_n_write(st.replace("'", ""), fileToWrite)
         vlist.append(tv)
