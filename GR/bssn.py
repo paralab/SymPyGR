@@ -1,4 +1,4 @@
-import dendro
+import  GR.dendro as dendro
 from sympy import *
 
 ###################################################################
