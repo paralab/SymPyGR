@@ -13,7 +13,7 @@ from sympy.tensor.array import *
 from sympy.functions.special.tensor_functions import KroneckerDelta
 from sympy.utilities import numbered_symbols
 from sympy.printing import print_ccode, ccode
-#import GR.dependency as dp
+#import dependency as dp
 
 # internal variables
 undef = symbols('undefined')
@@ -579,6 +579,10 @@ def generate(ex, vnames, idx):
         _v = cse(lexp, symbols=ee_syms, optimizations='basic')
 
         #dp.drawgragh(_v)
+        #dependencies = dp.makeCompleteDependencies(_v)
+        #dp.printDependencies(dependencies)
+
+
 
         custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
