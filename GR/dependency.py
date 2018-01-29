@@ -63,4 +63,82 @@ def drawgragh(_v):
     dot.render('dependency.gv', view=True)
 
 
+def getAllArguments(expression, result):
+    args = expression.args
+    for arg in args:
+        if(len(arg.args)==0):
+            if(str(arg) not in result):
+                result.append(str(arg))
+        else:
+            getAllArguments(arg, result)
 
+    return result
+
+def getReducedArguments(expression, result):
+    args = expression.args
+    func = expression.func
+    if("grad" in str(func)):
+        result.append(str(expression))
+    else:
+        for arg in args:
+            if(len(arg.args)==0):
+                if(str(arg) not in result):
+                    result.append(str(arg))
+            else:
+                getAllArguments(arg, result)
+
+    return result
+
+def makeDependencies(_v):
+    dependencies = {}
+    counter = 1
+    for i in _v[0]:
+        result = []
+        result = getAllArguments(i[1], result)
+        dependencies[str(i[0])] = result
+    for i in _v[1]:
+        result = []
+        result = getAllArguments(i, result)
+        dependencies["Equation" + str(counter)+": "] = result
+        counter= counter+1
+    return dependencies
+
+def remove_values_from_list(the_list, val):
+   return [value for value in the_list if value != val]
+
+def makeCompleteDependencies(_v):
+    dependencies = {}
+    counter = 1
+    for i in _v[0]:
+        result = []
+        result = getReducedArguments(i[1], result)
+        for j in result:
+            if(str(j) in dependencies.keys()):
+                externDepen = dependencies[str(j)]
+                for k in externDepen:
+                    if(str(k) not in result):
+                        result.append(str(k))
+                result = remove_values_from_list(result, str(j))
+        dependencies[str(i[0])] = result
+    for i in _v[1]:
+        result = []
+        result = getReducedArguments(i, result)
+        for j in result:
+            if (str(j) in dependencies.keys()):
+                externDepen = dependencies[str(j)]
+                for k in externDepen:
+                    if (str(k) not in result):
+                        result.append(str(k))
+                result = remove_values_from_list(result, str(j))
+        dependencies["Equation" + str(counter)+": "] = result
+        counter= counter+1
+    return dependencies
+
+def printDependencies(dependencies):
+    for i in dependencies.keys():
+        print(str(i)+ str(dependencies[i]))
+        print()
+
+
+def getDependency(dependencies, var_name):
+    return dependencies[var_name]
