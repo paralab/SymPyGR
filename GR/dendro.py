@@ -13,7 +13,7 @@ from sympy.tensor.array import *
 from sympy.functions.special.tensor_functions import KroneckerDelta
 from sympy.utilities import numbered_symbols
 from sympy.printing import print_ccode, ccode
-#import dependency as dp
+import GR.laplaciangraph as lg
 
 # internal variables
 undef = symbols('undefined')
@@ -582,7 +582,16 @@ def generate(ex, vnames, idx):
         #dependencies = dp.makeCompleteDependencies(_v)
         #dp.printDependencies(dependencies)
 
+        #Generating the graph for dependencies
+        graph = lg.makeDependencies(_v)
+        lg.printGraph(graph)
 
+
+        #Graph Laplacian
+        graphLaplacian = lg.getGraphLaplacian(graph)
+
+        #spectral clustering
+        sc = lg.SpectralClustering(graphLaplacian)
 
         custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
