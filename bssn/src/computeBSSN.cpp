@@ -8,7 +8,8 @@
 //
 
 #include <iostream>
-#include "computeBSSN.h"
+#include "computeBSSN.h" 
+#include "kernal.h"
 
 
 int main (int argc, char** argv)
@@ -23,7 +24,11 @@ int main (int argc, char** argv)
      * numblks : number of blocks needed for each block sizes. (total_blks= (blk_up-blk_lb+1)*numblks)
      *
      * */
-
+	  int arraySize = 5;
+     int a[arraySize] = { 1, 2, 3, 4, 5 };
+     int b[arraySize] = { 10, 20, 30, 40, 50 };
+    int c[arraySize] = { 0 };
+	addWithCuda(a,b,c, arraySize);
 
     if(argc<2)
     {
