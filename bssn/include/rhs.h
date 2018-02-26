@@ -6,6 +6,7 @@
 #include <time.h>
 #include "derivs.h"
 #include "profile_param.h"
+#include "derivs_cuda.h"
 
 
 
@@ -13,7 +14,7 @@
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 
 #define deriv_x deriv42_x
-#define deriv_y deriv42_y
+#define deriv_y deriv42_yWithCuda
 #define deriv_z deriv42_z
 
 #define deriv_xx deriv42_xx

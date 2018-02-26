@@ -1,7 +1,13 @@
+/**
+ * kernal.cu
+ * 
+ * Created on: Feb 12, 2018
+ * 		Author: Eminda, Akila, Eranga, Ruwan
+ **/
+
 #include "kernal.h"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-
 #include <stdio.h>
 
 __global__ void addKernel(int *c, const int *a, const int *b)

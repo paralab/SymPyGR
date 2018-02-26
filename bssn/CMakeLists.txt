@@ -32,13 +32,12 @@ include_directories(${PROJECT_BINARY_DIR}
         utils
         )
 
-
 set(INC_FILES
         include/computeBSSN.h
         include/derivs.h
         include/rhs.h
         include/def.h
-	include/kernal.h
+	include/derivs_cuda.h
         include/bssn_profiler.h
         include/profile_param.h
         )
