@@ -13,6 +13,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from sklearn.cluster import SpectralClustering
 from sklearn import metrics
+import scipy.sparse as sparse
+import csv
 
 def printGraph(G):
     nx.draw(G, with_labels = True)
@@ -49,40 +51,74 @@ def getReducedArguments(expression, result):
                 getReducedArguments(arg, result)
     return result
 
+
 def makeDependencies(_v):
-    print("-----------Printing results--------------")
-    G=nx.Graph()
+    G=nx.DiGraph()
     dependencies = {}
     counter = 1
     for i in _v[0]:
         result = []
         result = getReducedArguments(i[1], result)
-        print(str(i[0])+"="+str(result))
-        print(str(i[0])+"="+str(i[1]))
-        print()
+        #print(str(i[0])+"="+str(result))
+        #print(str(i[0])+"="+str(i[1]))
+        #print()
+        dependencies[str(i[0])] = len(result)
         G.add_node(str(i[0]))
         for arg in result:
+            if(arg not in dependencies.keys()):
+                dependencies[arg] = 0
             G.add_node(str(arg))
             G.add_edge(str(i[0]),str(arg))
     for i in _v[1]:
         G.add_node("Equation" + str(counter))
         result = []
         result = getReducedArguments(i, result)
-        print("Equation" + str(counter)+"="+str(result))
-        print("Equation" + str(counter)+"="+str(i))
-        print()
+        dependencies["Equation" + str(counter)] = len(result)
+        #print("Equation" + str(counter)+"="+str(result))
+        #print("Equation" + str(counter)+"="+str(i))
+        #print()
         for arg in result:
+            if (arg not in dependencies.keys()):
+                dependencies[arg] = 0
             G.add_node(str(arg))
             G.add_edge("Equation" + str(counter),str(arg))
         counter = counter+1
-    print("-----------End Printing Results--------------")
-    return G
+    return (G, dependencies)
+
+def getNumNodes(G):
+    return len(G.nodes())
+
+def getDimensions(matrix):
+    return matrix.shape
+
+def getAdjecencyMatrix(G):
+    return nx.to_numpy_matrix(G)
 
 def getGraphLaplacian(G):
-    return nx.normalized_laplacian_matrix(G)
+    return nx.laplacian_matrix(G)
 
-def doSpectralClustering(graphLaplacian):
+def doSpectralClustering(adj_mtr):
     # Cluster
-    sc = SpectralClustering()
-    sc.fit(graphLaplacian)
+    sc = SpectralClustering(n_clusters = 4, assign_labels = "kmeans")
+    sc.fit(adj_mtr)
     return sc
+
+def printSpectralClustering(sc, graph, dependencies):
+    # print(len(dependencies.keys()))
+    # print(len(list(graph.nodes())))
+    # print(str(sc.labels_.size))
+
+    print('spectral clustering')
+    nodes = list(graph.nodes())
+    labels = sc.labels_
+    data = []
+    data.append(["Node name", "Label", "Number of dependencies"])
+    for i in range(len(nodes)):
+        data.append([str(nodes[i]), str(labels[i]), str(dependencies[str(nodes[i])])])
+    myFile = open('SpectralClustering.csv', 'w')
+    with myFile:
+        writer = csv.writer(myFile)
+        writer.writerows(data)
+
+def getEigenValuesandVectors(matrix):
+    return sparse.linalg.eigs(matrix)

@@ -583,15 +583,34 @@ def generate(ex, vnames, idx):
         #dp.printDependencies(dependencies)
 
         #Generating the graph for dependencies
-        graph = lg.makeDependencies(_v)
+        graph, dependencies = lg.makeDependencies(_v)
         lg.printGraph(graph)
 
 
         #Graph Laplacian
-        graphLaplacian = lg.getGraphLaplacian(graph)
+        #graphLaplacian = lg.getGraphLaplacian(graph)
+
+        adj_mat = lg.getAdjecencyMatrix(graph)
+
+
+        #print("Number of Nodes: "+str(lg.getNumNodes(graph)))
+        #print("Dimensions of the matrix" + str(lg.getDimensions(adj_mat)))
+
+        #print(str(type(graphLaplacian)))
+
+        #vals, vecs = lg.getEigenValuesandVectors(graphLaplacian)
+
+        #print("Printing Eigen Values")
+
+        #print(vals)
+
+        #print("Printing Eigen Vectors")
+        #print(vecs)
 
         #spectral clustering
-        sc = lg.SpectralClustering(graphLaplacian)
+        sc = lg.doSpectralClustering(adj_mat)
+
+        lg.printSpectralClustering(sc, graph, dependencies)
 
         custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
