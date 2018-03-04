@@ -9,11 +9,12 @@
 
 #include <iostream>
 #include "computeBSSN.h" 
-#include "kernal.h"
-
+#include "cuda_runtime.h"
+#include <stdio.h>
 
 int main (int argc, char** argv)
 {
+    std::cout << "Let's start debuging" <<std::endl;
 
 
     /**
@@ -24,11 +25,6 @@ int main (int argc, char** argv)
      * numblks : number of blocks needed for each block sizes. (total_blks= (blk_up-blk_lb+1)*numblks)
      *
      * */
-	  int arraySize = 5;
-     int a[arraySize] = { 1, 2, 3, 4, 5 };
-     int b[arraySize] = { 10, 20, 30, 40, 50 };
-    int c[arraySize] = { 0 };
-	addWithCuda(a,b,c, arraySize);
 
     if(argc<2)
     {
@@ -60,20 +56,28 @@ int main (int argc, char** argv)
     //1. setup the blk offsets.
     Block * blkList=new Block[total_blks];
     unsigned long unzipSz=0;
+    unsigned int index=0;
     for(unsigned int lev=blk_lb; lev<=blk_up; lev++)
        for(unsigned int i=0;i<num_blks;i++)
        {
-           blkList[(lev-blk_lb)*num_blks+i]=Block((1u<<lev));
-           blkList[(lev-blk_lb)*num_blks+i].offset=unzipSz;
-           unzipSz+=((blkList[(lev-blk_lb)*num_blks+i].node1D_x)*(blkList[(lev-blk_lb)*num_blks+i].node1D_y)*(blkList[(lev-blk_lb)*num_blks+i].node1D_z));
+           index = (lev-blk_lb)*num_blks+i;
 
+           blkList[index]=Block((1u<<lev)); // lu<<lev = 2**lev
+
+           Block & blk=blkList[index];
+           blk.offset=unzipSz;
+           unzipSz+=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
        }
-
     const unsigned long unzip_dof=unzipSz;
 
     //2. allocate memory for bssn computation.
     double ** var_in=new double*[BSSN_NUM_VARS];
     double ** var_out=new double*[BSSN_NUM_VARS];
+    // // Allocate memory on GPU for bssn computation
+    // double **dev_var_in;
+    // double **dev_var_out;
+    // cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
+    // cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
 
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
@@ -86,9 +90,32 @@ int main (int argc, char** argv)
             var_in[i][j]=sqrt(2)*0.001*j;
             var_out[i][j]=0.0;
         }
-
-
     }
+
+    // // GPU usage requirement
+    // double *host_var_in = new double[BSSN_NUM_VARS*unzip_dof];
+    // double *host_var_out = new double[BSSN_NUM_VARS*unzip_dof];
+    // for(unsigned int i=0;i<BSSN_NUM_VARS*unzip_dof;i++)
+    // {
+    //     int j = 0;
+    //     j++;
+    //     if (j>10000){
+    //         j=0;
+    //     }
+    //     // some random initialization.
+    //     host_var_in[i]=sqrt(2)*0.001*j;
+    //     host_var_out[i]=0.0;
+    // }
+
+    // double *dev_var_in;
+    // double *dev_var_out;
+    // cudaMalloc((void**)&dev_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double));
+    // cudaMalloc((void**)&dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double));
+    // cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double),cudaMemcpyHostToDevice);
+    // cudaMemcpy(dev_var_out, host_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double),cudaMemcpyHostToDevice);
+
+
+    // std::cout << dev_var_out <<std::endl;
 
     unsigned int offset;
     double ptmin[3], ptmax[3];
@@ -96,13 +123,12 @@ int main (int argc, char** argv)
     unsigned int bflag;
     double dx,dy,dz;
 
-
      //----- timer begin:
     //3. perform computation.
     for(unsigned int blk=0;blk<total_blks;blk++)
     {
         offset=blkList[blk].offset;
-        sz[0]=blkList[blk].node1D_x;
+        sz[0]=blkList[blk].node1D_x; 
         sz[1]=blkList[blk].node1D_y;
         sz[2]=blkList[blk].node1D_z;
 
@@ -141,8 +167,10 @@ int main (int argc, char** argv)
 
     bssn::timer::profileInfo();
 
+    // // Free up memory
+    // cudaFree(&dev_var_in);
+    // cudaFree(&dev_var_out);
+
     return 0;
-
-
 
 }

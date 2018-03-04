@@ -25,6 +25,10 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
 
 
   const double *alpha = &uZipVars[VAR::U_ALPHA][offset];
+
+  // std::cout << *alpha << std::endl;
+
+
   const double *chi = &uZipVars[VAR::U_CHI][offset];
   const double *K = &uZipVars[VAR::U_K][offset];
   const double *gt0 = &uZipVars[VAR::U_SYMGT0][offset];
@@ -121,7 +125,8 @@ bssn::timer::t_deriv.start();
 
 #include "bssnrhs_memalloc.h"
 #include "bssnrhs_memalloc_adv.h"
-#include "bssnrhs_derivs.h"
+// #include "bssnrhs_derivs.h"
+deriv_y(grad_1_alpha, alpha, hy, sz, bflag); 
 #include "bssnrhs_derivs_adv.h"
 
 bssn::timer::t_deriv.stop();
