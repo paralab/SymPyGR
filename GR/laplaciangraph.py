@@ -5,7 +5,7 @@
 #
 # python module to generate dependency graph
 #
-# (c) 2016 University of Utah, All rights reserved.
+# (c) 2018 University of Utah, All rights reserved.
 ##########################################################################
 
 from sympy import *
