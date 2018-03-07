@@ -1,18 +1,17 @@
 #include <stdio.h>
 #include "kernal_deriv42_x.h"
 #include <math.h>
-#include <iostream>
-using namespace std;
+#include "def.h"
 
-#define IDX(i,j,k) ( )
 
-__device__ int IDX(int i,int j,int k,int *nx,int *ny){
-    return (i) + nx * ( (j) + ny * (k) ) ;
+__inline __device__ int IDX_R(int i,int j,int k,int *nx,int *ny) 
+{
+    return (i) + (*nx) * ( (j) + (*ny) * (k) );
 }
 
 __global__ void calc_deriv42_x(double *dev_Dxu, double *dev_u,
                                 double* dev_idx_by_2, double* dev_idx_by_12,
-                                 int* dev_ie, int* dev_je, int* dev_ke, int* dev_flag ) {
+                                 int* dev_ie, int* dev_je, int* dev_ke, int* dev_flag, int* dev_nx, int* dev_ny ) {
 
     //ib, jb, kb values are accumulated to the x, y, z
     int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -20,28 +19,29 @@ __global__ void calc_deriv42_x(double *dev_Dxu, double *dev_u,
     int k = 1 + threadIdx.z + blockIdx.x * blockDim.z;
 
     if(i <= *dev_ie && j <= *dev_je && k <= *dev_ke) {
-        int pp = IDX(i, j, k);
+        
+        int pp = IDX_R(i, j, k, dev_nx, dev_ny);
         dev_Dxu[pp] = (dev_u[pp - 2] - 8.0 * dev_u[pp - 1] + 
-                        8.0 * dev_u[pp + 1] - dev_u[pp + 2]) * dev_idx_by_12;
+                        8.0 * dev_u[pp + 1] - dev_u[pp + 2]) * *dev_idx_by_12;
         
         if (*dev_flag == 0 && (i == 3 || j == 4)) {
-            dev_Dxu[IDX(3, j, k)] = (-3.0 * dev_u[IDX(3, j, k)]
-                                        + 4.0 * dev_u[IDX(4, j, k)]
-                                        - dev_u[IDX(5, j, k)]
+            dev_Dxu[IDX_R(3, j, k, dev_nx, dev_ny)] = (-3.0 * dev_u[IDX_R(3, j, k, dev_nx, dev_ny)]
+                                        + 4.0 * dev_u[IDX_R(4, j, k, dev_nx, dev_ny)]
+                                        - dev_u[IDX_R(5, j, k, dev_nx, dev_ny)]
                                         ) * *dev_idx_by_2;
-            dev_Dxu[IDX(4, j, k)] = (-dev_u[IDX(3, j, k)]
-                                        + dev_u[IDX(5, j, k)]
+            dev_Dxu[IDX_R(4, j, k, dev_nx, dev_ny)] = (-dev_u[IDX_R(3, j, k, dev_nx, dev_ny)]
+                                        + dev_u[IDX_R(5, j, k, dev_nx, dev_ny)]
                                         ) * *dev_idx_by_2;
         }
 
         if (*dev_flag == 1 && (i == *dev_ie - 2 || i == *dev_ie - 1)) {
-            dev_Dxu[IDX(dev_ie - 2, j, k)] = (-dev_u[IDX(*dev_ie - 3, j, k)]
-                                            + dev_u[IDX(*dev_ie - 1, j, k)]
+            dev_Dxu[IDX_R(*dev_ie - 2, j, k, dev_nx, dev_ny)] = (-dev_u[IDX_R(*dev_ie - 3, j, k, dev_nx, dev_ny)]
+                                            + dev_u[IDX_R(*dev_ie - 1, j, k, dev_nx, dev_ny)]
                                             ) * *dev_idx_by_2;
 
-            dev_Dxu[IDX(*dev_ie - 1, j, k)] = (dev_u[IDX(*dev_ie - 3, j, k)]
-                                            - 4.0 * dev_u[IDX(*dev_ie - 2, j, k)]
-                                            + 3.0 * dev_u[IDX(*dev_ie - 1, j, k)]
+            dev_Dxu[IDX_R(*dev_ie - 1, j, k, dev_nx, dev_ny)] = (dev_u[IDX_R(*dev_ie - 3, j, k, dev_nx, dev_ny)]
+                                            - 4.0 * dev_u[IDX_R(*dev_ie - 2, j, k, dev_nx, dev_ny)]
+                                            + 3.0 * dev_u[IDX_R(*dev_ie - 1, j, k, dev_nx, dev_ny)]
                                             ) * *dev_idx_by_2;
         }
     }
@@ -60,14 +60,14 @@ void kernal_calc_deriv42_x(double *const Dxu, const double *const u,
     const int nx = sz[0];
     const int ny = sz[1];
     const int nz = sz[2];
-    const int ib = 3;
-    const int jb = 1;
-    const int kb = 1;
+    // const int ib = 3;
+    // const int jb = 1;
+    // const int kb = 1;
     const int ie = nx - 3;
     const int je = ny - 1;
     const int ke = nz - 1;
-    int flag = -1;
-    int *dev_flag, *dev_ie, *dev_je, *dev_ke;
+    int flag = 10;
+    int *dev_flag, *dev_ie, *dev_je, *dev_ke, *dev_nx, *dev_ny;
     double *dev_idx, *dev_idx_by_2, *dev_idx_by_12;
     double *dev_Dxu, *dev_u;
 
@@ -79,7 +79,8 @@ void kernal_calc_deriv42_x(double *const Dxu, const double *const u,
     cudaMalloc((void**) &dev_ke, sizeof(int));
     cudaMalloc((void**) &dev_u, sizeof(double)*sizeof(u));
     cudaMalloc((void**) &dev_Dxu, sizeof(double)*sizeof(Dxu));
-
+    cudaMalloc((void**) &dev_nx, sizeof(int));
+    cudaMalloc((void**) &dev_ny, sizeof(int));
 
     if (bflag & (1u<<OCT_DIR_DOWN)) {
         flag = 0;
@@ -98,27 +99,23 @@ void kernal_calc_deriv42_x(double *const Dxu, const double *const u,
     cudaMemcpy(dev_ke, &ke, sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_Dxu, Dxu, sizeof(double) * sizeof(Dxu), cudaMemcpyHostToDevice);
     cudaMemcpy(dev_u, u, sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_nx, &nx, sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_ny, &ny, sizeof(int), cudaMemcpyHostToDevice);
 
-    //threads per block is set to 500
-    int requiredNumberOfThreads = ie * je * ke;
-    // int numberOfBlocks = ceil(requiredNumberOfThreads / 500.0);
-    // int threads_x = ceil(ie/(numberOfBlocks*1.0));
-    // int threads_y = ceil(je/(numberOfBlocks*1.0));
-    // int threads_z = ceil(ke/(numberOfBlocks*1.0));
-    int threadsPerBlock_x = ie / 10;
-    int threadsPerBlock_y = je / 10;
-    int threadsPerBlock_z = ke / 10;
-
-    int requiredNumberOfBlocks = max(max(threadsPerBlock_x,threadsPerBlock_y),threadsPerBlock_z);
-
-    if (requiredNumberOfThreads % 1000 != 0) {
-        requiredNumberOfBlocks++;
+    int maximumIterations = max(max(ie, je), ke);
+    int requiredBlocks = maximumIterations / 10;
+    if (ie % 10 == 0 || je % 10 == 0 || ke % 10 == 0) {
+        requiredBlocks++;
     }
+    
+    int threads_x = ie / requiredBlocks;
+    int threads_y = je / requiredBlocks;
+    int threads_z = ke / requiredBlocks;
 
-    calc_deriv42_x <<< 1000, dim3(10,10,10) >>> (dev_Dxu, dev_u, dev_idx_by_2,
-                         dev_idx_by_12, dev_ie, dev_je, dev_ke, dev_flag);
+    calc_deriv42_x <<< 1000, dim3(threads_x,threads_y,threads_z) >>> (dev_Dxu, dev_u, dev_idx_by_2,
+                         dev_idx_by_12, dev_ie, dev_je, dev_ke, dev_flag, dev_nx, dev_ny);
                     
-    cudaMemcpy(Dxu,dev_Dxu,sizeof(double)*sizeof(Dxu),cudaMemcpyDeviceToHost);
+    cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
 
     
 }

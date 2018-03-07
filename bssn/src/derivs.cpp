@@ -1,6 +1,7 @@
 #include <cmath>
 #include <iostream>
 #include "derivs.h"
+#include "kernal_deriv42_x.h"
 
 
 /*----------------------------------------------------------------------;
@@ -11,72 +12,21 @@
 void deriv42_x(double * const  Dxu, const double * const  u,
                const double dx, const unsigned int *sz, unsigned bflag)
 {
+  
+  kernal_calc_deriv42_x(Dxu, u, dx, sz, bflag);
+  
 
-  const double idx = 1.0/dx;
-  const double idx_by_2 = 0.5 * idx;
-  const double idx_by_12 = idx / 12.0;
-
-  const int nx = sz[0];
-  const int ny = sz[1];
-  const int nz = sz[2];
-  const int ib = 3;
-  const int jb = 1;
-  const int kb = 1;
-  const int ie = sz[0]-3;
-  const int je = sz[1]-1;
-  const int ke = sz[2]-1;
-    const int n=1;
-
-  for (int k = kb; k < ke; k++) {
-    for (int j = jb; j < je; j++) {
-      for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
-        Dxu[pp] = (u[pp-2] -8.0*u[pp-1] + 8.0*u[pp+1] - u[pp+2] ) * idx_by_12;
+  #ifdef DEBUG_DERIVS_COMP
+  #pragma message("DEBUG_DERIVS_COMP: ON")
+    for (int k = 3; k < sz[2]-3; k++) {
+      for (int j = 3; j < sz[1]-3; j++) {
+        for (int i = 3; i < sz[0]-3; i++) {
+          int pp = IDX(i,j,k);
+          if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+        }
       }
     }
-  }
-
-  if (bflag & (1u<<OCT_DIR_LEFT)) {
-    for (int k = kb; k < ke; k++) {
-      for (int j = jb; j < je; j++) {
-        Dxu[IDX(3,j,k)] = ( -  3.0 * u[IDX(3,j,k)]
-                            +  4.0 * u[IDX(4,j,k)]
-                            -        u[IDX(5,j,k)]
-                          ) * idx_by_2;
-        Dxu[IDX(4,j,k)] = ( - u[IDX(3,j,k)]
-                            + u[IDX(5,j,k)]
-                          ) * idx_by_2;
-      }
-    }
-  }
-
-  if (bflag & (1u<<OCT_DIR_RIGHT)) {
-    for (int k = kb; k < ke; k++) {
-      for (int j = jb; j < je; j++) {
-        Dxu[IDX(ie-2,j,k)] = ( - u[IDX(ie-3,j,k)]
-                               + u[IDX(ie-1,j,k)]
-                             ) * idx_by_2;
-
-        Dxu[IDX(ie-1,j,k)] = (        u[IDX(ie-3,j,k)]
-                              - 4.0 * u[IDX(ie-2,j,k)]
-                              + 3.0 * u[IDX(ie-1,j,k)]
-                             ) * idx_by_2;
-
-      }
-    }
-  }
-
-#ifdef DEBUG_DERIVS_COMP
-#pragma message("DEBUG_DERIVS_COMP: ON")
-  for (int k = 3; k < sz[2]-3; k++) {
-    for (int j = 3; j < sz[1]-3; j++) {
-      for (int i = 3; i < sz[0]-3; i++) {
-        int pp = IDX(i,j,k);
-         if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-      }
-    }
-  }
-#endif
+  #endif
 
 
 }
