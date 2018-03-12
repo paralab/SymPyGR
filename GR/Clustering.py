@@ -127,10 +127,10 @@ def spectralClusteringClusterPoints(dependencies, featureVectors):
     spectralClustering = SpectralClustering().fit(X)
     return spectralClustering
 
-def agglomerativeClusteringClusterPoints(dependencies, featureVectors):
+def agglomerativeClusteringClusterPoints(n_clusters, featureVectors):
     #Using K means clustering, cluster the points
     X = np.array(featureVectors)
-    agglomerative = AgglomerativeClustering().fit(X)
+    agglomerative = AgglomerativeClustering(n_clusters=n_clusters, affinity = "cosine", linkage  = "complete").fit(X)
     return agglomerative
 
 def dBSCANClusteringClusterPoints(dependencies, featureVectors):
