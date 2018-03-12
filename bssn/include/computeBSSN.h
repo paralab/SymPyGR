@@ -20,7 +20,7 @@ const unsigned int PAD_WIDTH=3;
 
 
 
-struct Block
+struct Block 
 {
 
     unsigned int ele1D;

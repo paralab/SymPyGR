@@ -70,53 +70,58 @@ int main (int argc, char** argv)
        }
     const unsigned long unzip_dof=unzipSz;
 
-    //2. allocate memory for bssn computation.
-    double ** var_in=new double*[BSSN_NUM_VARS];
-    double ** var_out=new double*[BSSN_NUM_VARS];
-    // // Allocate memory on GPU for bssn computation
-    // double **dev_var_in;
-    // double **dev_var_out;
-    // cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
-    // cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
+    // //2. allocate memory for bssn computation.
+    // double ** var_in=new double*[BSSN_NUM_VARS];
+    // double ** var_out=new double*[BSSN_NUM_VARS];
+    // Allocate memory on GPU for bssn computation
+    double *dev_var_in;
+    double *dev_var_out;
+    cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
+    cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
 
-    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
-    {
-        var_in[i]=new double[unzip_dof];
-        var_out[i]=new double[unzip_dof];
-
-        for(unsigned int j=0;j<unzip_dof;j++)
-        {
-            // some random initialization.
-            var_in[i][j]=sqrt(2)*0.001*j;
-            var_out[i][j]=0.0;
-        }
-    }
-
-    // // GPU usage requirement
-    // double *host_var_in = new double[BSSN_NUM_VARS*unzip_dof];
-    // double *host_var_out = new double[BSSN_NUM_VARS*unzip_dof];
-    // for(unsigned int i=0;i<BSSN_NUM_VARS*unzip_dof;i++)
+    // for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     // {
-    //     int j = 0;
-    //     j++;
-    //     if (j>10000){
-    //         j=0;
+    //     var_in[i]=new double[unzip_dof];
+    //     var_out[i]=new double[unzip_dof];
+
+    //     for(unsigned int j=0;j<unzip_dof;j++)
+    //     {
+    //         // some random initialization.
+    //         var_in[i][j]=sqrt(2)*0.001*j;
+    //         var_out[i][j]=0.0;
     //     }
-    //     // some random initialization.
-    //     host_var_in[i]=sqrt(2)*0.001*j;
-    //     host_var_out[i]=0.0;
     // }
+
+    // GPU usage requirement
+    double * host_var_in = new double[BSSN_NUM_VARS*unzip_dof];
+    double * host_var_out = new double[BSSN_NUM_VARS*unzip_dof];
+
+    unsigned int j = 0;
+    for(unsigned int i=0;i<BSSN_NUM_VARS*unzip_dof;i++)
+    {
+        if (j==unzip_dof){
+            j=0;
+        }
+        // some random initialization.
+        host_var_in[i]=sqrt(2)*0.001*j;
+        host_var_out[i]=0.0;     
+        j++;  
+    }
+    
+    
 
     // double *dev_var_in;
     // double *dev_var_out;
     // cudaMalloc((void**)&dev_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double));
     // cudaMalloc((void**)&dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double));
-    // cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double),cudaMemcpyHostToDevice);
-    // cudaMemcpy(dev_var_out, host_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double),cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(dev_var_out, host_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
+    // std::cout << cudaStatus <<std::endl;
 
 
     // std::cout << dev_var_out <<std::endl;
 
+    unzip_dof;
     unsigned int offset;
     double ptmin[3], ptmax[3];
     unsigned int sz[3];
@@ -146,30 +151,30 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+        bssnrhs(dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag); // required to send the output array also
 
     }
     //-- timer end
     // (time this part of the code. )
 
 
-    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
-    {
-        delete [] var_in[i];
-        delete [] var_out[i];
-    }
+    // for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+    // {
+    //     delete [] var_in[i];
+    //     delete [] var_out[i];
+    // }
 
     delete [] blkList;
-    delete [] var_in;
-    delete [] var_out;
+    // delete [] var_in;
+    // delete [] var_out;
 
     bssn::timer::total_runtime.stop();
 
     bssn::timer::profileInfo();
 
-    // // Free up memory
-    // cudaFree(&dev_var_in);
-    // cudaFree(&dev_var_out);
+    // Free up memory
+    cudaFree(&dev_var_in);
+    cudaFree(&dev_var_out);
 
     return 0;
 

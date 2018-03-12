@@ -9,7 +9,7 @@
 
 
 void deriv42_z(double * const  Dzu, const double * const  u, const double dz, const unsigned int *sz, unsigned bflag);
-void deriv42_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int *sz, unsigned bflag);
+void deriv42_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int *sz, unsigned bflag); 
 void deriv42_x(double * const  Dxu, const double * const  u, const double dx, const unsigned int *sz, unsigned bflag);
 
 
