@@ -12,14 +12,26 @@ from sympy import *
 import networkx as nx
 import matplotlib.pyplot as plt
 from sklearn.cluster import SpectralClustering
-from sklearn import metrics
 import scipy.sparse as sparse
 import csv
+import numpy as np
+from sklearn.cluster import *
 
-def printGraph(G):
-    nx.draw(G, with_labels = True)
+def printGraph(G, original_dependencies, clusters, n_clusters=7):
+    colors = {0: "black", 1: "white",2: "yellow", 3: "red", 4: "green", 5: "blue", 6: "gray", 7: "purple" }
+    original_dependencies = list(original_dependencies.keys())
+    cluster_labels = clusters.labels_.tolist()
+    labels = {}
+    for i in range(len(original_dependencies)):
+        labels[original_dependencies[i]] = cluster_labels[i]
+    color_map = []
+    for node in G:
+        if node not in original_dependencies:
+            color_map.append(colors[7])
+        else:
+            color_map.append(colors[labels[node]])
+    nx.draw(G, node_color=color_map, with_labels=True)
     plt.show()
-    plt.savefig("dependency-graph.png")
 
 def RepresentsInt(s):
     try:
@@ -52,7 +64,7 @@ def getReducedArguments(expression, result):
     return result
 
 
-def makeDependencies(_v):
+def makeGraph(_v):
     G=nx.DiGraph()
     dependencies = {}
     counter = 1
@@ -83,7 +95,7 @@ def makeDependencies(_v):
             G.add_node(str(arg))
             G.add_edge("Equation" + str(counter),str(arg))
         counter = counter+1
-    return (G, dependencies)
+    return (G)
 
 def getNumNodes(G):
     return len(G.nodes())

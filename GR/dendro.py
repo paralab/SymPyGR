@@ -628,31 +628,31 @@ def generate(ex, vnames, idx):
         # dBSCANClusteringClusterPoints
         # BirchClusteringClusterPoints,
 
-        kmeans = cl.kMeansClusterPoints(dependencies, featureVectors)
-        cl.writeClusteredResultstoCSV("Kmeans",kmeans, dependencies)
+        # kmeans = cl.kMeansClusterPoints(dependencies, featureVectors)
+        # cl.writeClusteredResultstoCSV("Kmeans",kmeans, dependencies)
+        #
+        # miniBatchKMeans = cl.miniBatchKMeansClusterPoints(dependencies, featureVectors)
+        # cl.writeClusteredResultstoCSV("MiniBatchKMeans", miniBatchKMeans, dependencies)
+        #
+        # meanShift = cl.meanShiftClusterPoints(dependencies, featureVectors)
+        # cl.writeClusteredResultstoCSV("MeanShift", meanShift, dependencies)
+        #
+        # spectralClustering = cl.spectralClusteringClusterPoints(dependencies, featureVectors)
+        # cl.writeClusteredResultstoCSV("SpectralClustering", spectralClustering, dependencies)
 
-        miniBatchKMeans = cl.miniBatchKMeansClusterPoints(dependencies, featureVectors)
-        cl.writeClusteredResultstoCSV("MiniBatchKMeans", miniBatchKMeans, dependencies)
+        agglomerative = cl.agglomerativeClusteringClusterPoints(7, featureVectors)
+        cl.writeClusteredResultstoCSV("Agglomerative7", agglomerative, dependencies)
 
-        meanShift = cl.meanShiftClusterPoints(dependencies, featureVectors)
-        cl.writeClusteredResultstoCSV("MeanShift", meanShift, dependencies)
-
-        spectralClustering = cl.spectralClusteringClusterPoints(dependencies, featureVectors)
-        cl.writeClusteredResultstoCSV("SpectralClustering", spectralClustering, dependencies)
-
-        agglomerative = cl.agglomerativeClusteringClusterPoints(dependencies, featureVectors)
-        cl.writeClusteredResultstoCSV("Agglomerative", agglomerative, dependencies)
-
-        dBSCAN = cl.dBSCANClusteringClusterPoints(dependencies, featureVectors)
-        cl.writeClusteredResultstoCSV("DBSCAN", dBSCAN, dependencies)
-
-        birch = cl.birchClusteringClusterPoints(dependencies, featureVectors)
-        cl.writeClusteredResultstoCSV("Birch", birch, dependencies)
+        #gnerating the graph for dependencies
+        graph= lg.makeGraph(_v)
+        lg.printGraph(graph, dependencies, agglomerative)
 
 
-
-
-
+        # dBSCAN = cl.dBSCANClusteringClusterPoints(dependencies, featureVectors)
+        # cl.writeClusteredResultstoCSV("DBSCAN", dBSCAN, dependencies)
+        #
+        # birch = cl.birchClusteringClusterPoints(dependencies, featureVectors)
+        # cl.writeClusteredResultstoCSV("Birch", birch, dependencies)
 
         custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
