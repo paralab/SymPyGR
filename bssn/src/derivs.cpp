@@ -25,7 +25,7 @@ void deriv42_x(double * const  Dxu, const double * const  u,
   const int ie = sz[0]-3;
   const int je = sz[1]-1;
   const int ke = sz[2]-1;
-    const int n=1;
+  const int n=1;
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
@@ -91,7 +91,7 @@ void deriv42_y(double * const  Dyu, const double * const  u,
 {
   const double idy = 1.0/dy;
   const double idy_by_2 = 0.50 * idy;
-  const double idy_by_12 = idy / 12.0;
+  const double idy_by_12 = idy / 12.0; 
 
   const int nx = sz[0];
   const int ny = sz[1];
@@ -101,14 +101,14 @@ void deriv42_y(double * const  Dyu, const double * const  u,
   const int kb = 1;
   const int ie = sz[0]-3;
   const int je = sz[1]-3;
-  const int ke = sz[2]-1;
+  const int ke = sz[2]-1; 
 
-    const int n=nx;
+  const int n=nx;
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
       for (int j = jb; j < je; j++) {
-        int pp = IDX(i,j,k);
+        int pp = IDX(i,j,k); //(i) + nx * ( (j) + ny * (k) )
         Dyu[pp] = (u[pp-2*nx] - 8.0*u[pp-nx] + 8.0*u[pp+nx] - u[pp+2*nx])*idy_by_12;
       }
     }

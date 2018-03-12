@@ -12,6 +12,7 @@
 
 #include "rhs.h"
 #include "profile_param.h"
+#include "kernal.h"
 const unsigned int ELE_ORDER=4;
 const unsigned int BSSN_NUM_VARS=24;
 const unsigned int PAD_WIDTH=3;
@@ -19,7 +20,7 @@ const unsigned int PAD_WIDTH=3;
 
 
 
-struct Block
+struct Block 
 {
 
     unsigned int ele1D;

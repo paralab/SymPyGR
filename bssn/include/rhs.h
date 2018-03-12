@@ -6,6 +6,7 @@
 #include <time.h>
 #include "derivs.h"
 #include "profile_param.h"
+#include "derivs_cuda.h"
 
 
 
@@ -13,7 +14,7 @@
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 
 #define deriv_x deriv42_x
-#define deriv_y deriv42_y
+#define deriv_y deriv42_yWithCuda
 #define deriv_z deriv42_z
 
 #define deriv_xx deriv42_xx
@@ -28,7 +29,7 @@
 #define ko_deriv_y ko_deriv42_y
 #define ko_deriv_z ko_deriv42_z
 
-void bssnrhs(double **uzipVarsRHS, const double **uZipVars,
+void bssnrhs(double * dev_var_in, const unsigned int unzip_dof,
              const unsigned int &offset,
              const double *ptmin, const double *ptmax, const unsigned int *sz,
              const unsigned int &bflag);

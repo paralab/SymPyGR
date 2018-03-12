@@ -16,63 +16,59 @@ double BSSN_LAMBDA_F[2]={0.8,0.9};
  * vector form of RHS
  *
  *----------------------------------------------------------------------*/
-void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
-             const unsigned int& offset,
-             const double *pmin, const double *pmax, const unsigned int *sz,
-             const unsigned int& bflag)
+void bssnrhs(double * dev_var_in, const unsigned int unzip_dof, const unsigned int& offset,
+             const double *pmin, const double *pmax, const unsigned int *sz, const unsigned int& bflag)
 {
+  int alphaInt = (VAR::U_ALPHA) * unzip_dof + offset;
+  int chiInt = (VAR::U_CHI) * unzip_dof + offset;
+  int KInt = (VAR::U_K) * unzip_dof + offset;
+  int gt0Int = (VAR::U_SYMGT0) * unzip_dof + offset;
+  int gt1Int = (VAR::U_SYMGT1) * unzip_dof + offset;
+  int gt2Int =  (VAR::U_SYMGT2) * unzip_dof + offset; 
+  int gt3Int =(VAR::U_SYMGT3) * unzip_dof + offset;  
+  int gt4Int = (VAR::U_SYMGT4) * unzip_dof + offset;
+  int gt5Int = (VAR::U_SYMGT5) * unzip_dof + offset;
+  int beta0Int = (VAR::U_BETA0) * unzip_dof + offset; 
+  int beta1Int = (VAR::U_BETA1) * unzip_dof + offset; 
+  int beta2Int =(VAR::U_BETA2) * unzip_dof + offset; 
+  int At0Int = (VAR::U_SYMAT0) * unzip_dof + offset; 
+  int At1Int = (VAR::U_SYMAT1) * unzip_dof + offset; 
+  int At2Int = (VAR::U_SYMAT2) * unzip_dof + offset; 
+  int At3Int = (VAR::U_SYMAT3) * unzip_dof + offset; 
+  int At4Int = (VAR::U_SYMAT4) * unzip_dof + offset; 
+  int At5Int = (VAR::U_SYMAT5) * unzip_dof + offset; 
+  int Gt0Int = (VAR::U_GT0) * unzip_dof + offset; 
+  int Gt1Int = (VAR::U_GT1) * unzip_dof + offset; 
+  int Gt2Int = (VAR::U_GT2) * unzip_dof + offset; 
+  int B0Int = (VAR::U_B0) * unzip_dof + offset;  
+  int B1Int = (VAR::U_B1) * unzip_dof + offset; 
+  int B2Int = (VAR::U_B2) * unzip_dof + offset; 
 
-
-
-  const double *alpha = &uZipVars[VAR::U_ALPHA][offset];
-  const double *chi = &uZipVars[VAR::U_CHI][offset];
-  const double *K = &uZipVars[VAR::U_K][offset];
-  const double *gt0 = &uZipVars[VAR::U_SYMGT0][offset];
-  const double *gt1 = &uZipVars[VAR::U_SYMGT1][offset];
-  const double *gt2 = &uZipVars[VAR::U_SYMGT2][offset];
-  const double *gt3 = &uZipVars[VAR::U_SYMGT3][offset];
-  const double *gt4 = &uZipVars[VAR::U_SYMGT4][offset];
-  const double *gt5 = &uZipVars[VAR::U_SYMGT5][offset];
-  const double *beta0 = &uZipVars[VAR::U_BETA0][offset];
-  const double *beta1 = &uZipVars[VAR::U_BETA1][offset];
-  const double *beta2 = &uZipVars[VAR::U_BETA2][offset];
-  const double *At0 = &uZipVars[VAR::U_SYMAT0][offset];
-  const double *At1 = &uZipVars[VAR::U_SYMAT1][offset];
-  const double *At2 = &uZipVars[VAR::U_SYMAT2][offset];
-  const double *At3 = &uZipVars[VAR::U_SYMAT3][offset];
-  const double *At4 = &uZipVars[VAR::U_SYMAT4][offset];
-  const double *At5 = &uZipVars[VAR::U_SYMAT5][offset];
-  const double *Gt0 = &uZipVars[VAR::U_GT0][offset];
-  const double *Gt1 = &uZipVars[VAR::U_GT1][offset];
-  const double *Gt2 = &uZipVars[VAR::U_GT2][offset];
-  const double *B0 = &uZipVars[VAR::U_B0][offset];
-  const double *B1 = &uZipVars[VAR::U_B1][offset];
-  const double *B2 = &uZipVars[VAR::U_B2][offset];
-
-  double *a_rhs = &unzipVarsRHS[VAR::U_ALPHA][offset];
-  double *chi_rhs = &unzipVarsRHS[VAR::U_CHI][offset];
-  double *K_rhs = &unzipVarsRHS[VAR::U_K][offset];
-  double *gt_rhs00 = &unzipVarsRHS[VAR::U_SYMGT0][offset];
-  double *gt_rhs01 = &unzipVarsRHS[VAR::U_SYMGT1][offset];
-  double *gt_rhs02 = &unzipVarsRHS[VAR::U_SYMGT2][offset];
-  double *gt_rhs11 = &unzipVarsRHS[VAR::U_SYMGT3][offset];
-  double *gt_rhs12 = &unzipVarsRHS[VAR::U_SYMGT4][offset];
-  double *gt_rhs22 = &unzipVarsRHS[VAR::U_SYMGT5][offset];
-  double *b_rhs0 = &unzipVarsRHS[VAR::U_BETA0][offset];
-  double *b_rhs1 = &unzipVarsRHS[VAR::U_BETA1][offset];
-  double *b_rhs2 = &unzipVarsRHS[VAR::U_BETA2][offset];
-  double *At_rhs00 = &unzipVarsRHS[VAR::U_SYMAT0][offset];
-  double *At_rhs01 = &unzipVarsRHS[VAR::U_SYMAT1][offset];
-  double *At_rhs02 = &unzipVarsRHS[VAR::U_SYMAT2][offset];
-  double *At_rhs11 = &unzipVarsRHS[VAR::U_SYMAT3][offset];
-  double *At_rhs12 = &unzipVarsRHS[VAR::U_SYMAT4][offset];
-  double *At_rhs22 = &unzipVarsRHS[VAR::U_SYMAT5][offset];
-  double *Gt_rhs0 = &unzipVarsRHS[VAR::U_GT0][offset];
-  double *Gt_rhs1 = &unzipVarsRHS[VAR::U_GT1][offset];
-  double *Gt_rhs2 = &unzipVarsRHS[VAR::U_GT2][offset];
-  double *B_rhs0 = &unzipVarsRHS[VAR::U_B0][offset];
-  double *B_rhs1 = &unzipVarsRHS[VAR::U_B1][offset];
-  double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
+  // Output indexes need to handle later
+  // double *a_rhs = &unzipVarsRHS[VAR::U_ALPHA][offset];
+  // double *chi_rhs = &unzipVarsRHS[VAR::U_CHI][offset];
+  // double *K_rhs = &unzipVarsRHS[VAR::U_K][offset];
+  // double *gt_rhs00 = &unzipVarsRHS[VAR::U_SYMGT0][offset];
+  // double *gt_rhs01 = &unzipVarsRHS[VAR::U_SYMGT1][offset];
+  // double *gt_rhs02 = &unzipVarsRHS[VAR::U_SYMGT2][offset];
+  // double *gt_rhs11 = &unzipVarsRHS[VAR::U_SYMGT3][offset];
+  // double *gt_rhs12 = &unzipVarsRHS[VAR::U_SYMGT4][offset];
+  // double *gt_rhs22 = &unzipVarsRHS[VAR::U_SYMGT5][offset];
+  // double *b_rhs0 = &unzipVarsRHS[VAR::U_BETA0][offset];
+  // double *b_rhs1 = &unzipVarsRHS[VAR::U_BETA1][offset];
+  // double *b_rhs2 = &unzipVarsRHS[VAR::U_BETA2][offset];
+  // double *At_rhs00 = &unzipVarsRHS[VAR::U_SYMAT0][offset];
+  // double *At_rhs01 = &unzipVarsRHS[VAR::U_SYMAT1][offset];
+  // double *At_rhs02 = &unzipVarsRHS[VAR::U_SYMAT2][offset];
+  // double *At_rhs11 = &unzipVarsRHS[VAR::U_SYMAT3][offset];
+  // double *At_rhs12 = &unzipVarsRHS[VAR::U_SYMAT4][offset];
+  // double *At_rhs22 = &unzipVarsRHS[VAR::U_SYMAT5][offset];
+  // double *Gt_rhs0 = &unzipVarsRHS[VAR::U_GT0][offset];
+  // double *Gt_rhs1 = &unzipVarsRHS[VAR::U_GT1][offset];
+  // double *Gt_rhs2 = &unzipVarsRHS[VAR::U_GT2][offset];
+  // double *B_rhs0 = &unzipVarsRHS[VAR::U_B0][offset];
+  // double *B_rhs1 = &unzipVarsRHS[VAR::U_B1][offset];
+  // double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
 
   const unsigned int nx = sz[0];
   const unsigned int ny = sz[1];
@@ -86,215 +82,216 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
                                   BSSN_LAMBDA[2], BSSN_LAMBDA[3]};
   const double lambda_f[2] = {BSSN_LAMBDA_F[0], BSSN_LAMBDA_F[1]};
 
-
-
   int idx[3];
 
   unsigned int n = sz[0]*sz[1]*sz[2];
+  
+// #if 0
+//   double vars[24];
+//   pmin[0] = 0.0; pmin[1] = 0.0; pmin[2] = 0.0;
+//   pmax[0] = 2.0; pmax[1] = 2.0; pmax[2] = 2.0;
 
-#if 0
-  double vars[24];
-  pmin[0] = 0.0; pmin[1] = 0.0; pmin[2] = 0.0;
-  pmax[0] = 2.0; pmax[1] = 2.0; pmax[2] = 2.0;
+//   hx = (pmax[0] - pmin[0]) / (nx - 1);
+//   hy = (pmax[1] - pmin[1]) / (ny - 1);
+//   hz = (pmax[2] - pmin[2]) / (nz - 1);
 
-  hx = (pmax[0] - pmin[0]) / (nx - 1);
-  hy = (pmax[1] - pmin[1]) / (ny - 1);
-  hz = (pmax[2] - pmin[2]) / (nz - 1);
-
-  for (unsigned int k = 0; k < nz; k++) {
-    double z = pmin[2] + k*hz;
-    for (unsigned int j = 0; j < ny; j++) {
-      double y = pmin[1] + j*hy;
-      for (unsigned int i = 0; i < nx; i++) {
-        double x = pmin[0] + i*hx;
-        int pp = i + nx*(j + k*ny);
-        fake_initial_data(x, y, z, vars);
-        for (unsigned int m = 0; m < 24; m++) {
-          uZipVars[m][offset+pp] = vars[m];
-        }
-      }
-    }
-  }
-#endif
+//   for (unsigned int k = 0; k < nz; k++) {
+//     double z = pmin[2] + k*hz;
+//     for (unsigned int j = 0; j < ny; j++) {
+//       double y = pmin[1] + j*hy;
+//       for (unsigned int i = 0; i < nx; i++) {
+//         double x = pmin[0] + i*hx;
+//         int pp = i + nx*(j + k*ny);
+//         fake_initial_data(x, y, z, vars);
+//         for (unsigned int m = 0; m < 24; m++) {
+//           uZipVars[m][offset+pp] = vars[m];
+//         }
+//       }
+//     }
+//   }
+// #endif
 
 bssn::timer::t_deriv.start();
 
-#include "bssnrhs_memalloc.h"
-#include "bssnrhs_memalloc_adv.h"
-#include "bssnrhs_derivs.h"
-#include "bssnrhs_derivs_adv.h"
+#include "bssnrhs_cuda_malloc.h"
+#include "bssnrhs_cuda_derivs.h"
+// deriv_y(dev_var_in, alphaInt, hy, sz, bflag); 
+// deriv_y(grad_0_beta2, 0, hy, sz, bflag);
+
+// #include "bssnrhs_memalloc_adv.h"
+// #include "bssnrhs_derivs_adv.h"
 
 bssn::timer::t_deriv.stop();
 
-  register double x;
-  register double y;
-  register double z;
-  register unsigned int pp;
+//   register double x;
+//   register double y;
+//   register double z;
+//   register unsigned int pp;
 
-  double r_coord;
-  double eta;
+//   double r_coord;
+//   double eta;
 
-  //cout << "begin loop" << endl;
-  for (unsigned int k = 3; k < nz-3; k++) {
-      z = pmin[2] + k*hz;
+//   //cout << "begin loop" << endl;
+//   for (unsigned int k = 3; k < nz-3; k++) {
+//       z = pmin[2] + k*hz;
 
-    for (unsigned int j = 3; j < ny-3; j++) {
-       y = pmin[1] + j*hy;
+//     for (unsigned int j = 3; j < ny-3; j++) {
+//        y = pmin[1] + j*hy;
 
-      for (unsigned int i = 3; i < nx-3; i++) {
-         x = pmin[0] + i*hx;
-         pp = i + nx*(j + ny*k);
-         r_coord = sqrt(x*x + y*y + z*z);
-         eta=ETA_CONST;
-         if (r_coord >= ETA_R0) {
-          eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
-         }
-
-
-bssn::timer::t_rhs.start();
-
-        #include "bssneqs.cpp"
-
-bssn::timer::t_rhs.stop();
-
-       /* debugging */
-        unsigned int qi = 46 - 1;
-        unsigned int qj = 10 - 1;
-        unsigned int qk = 60 - 1;
-        unsigned int qidx = qi + nx*(qj + ny*qk);
-        if (0 && qidx == pp) {
-          std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;
-        }
-
-      }
-    }
-  }
+//       for (unsigned int i = 3; i < nx-3; i++) {
+//          x = pmin[0] + i*hx;
+//          pp = i + nx*(j + ny*k);
+//          r_coord = sqrt(x*x + y*y + z*z);
+//          eta=ETA_CONST;
+//          if (r_coord >= ETA_R0) {
+//           eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
+//          }
 
 
-  if (bflag != 0) {
+// bssn::timer::t_rhs.start();
 
-    bssn::timer::t_bdyc.start();
+//         #include "bssneqs.cpp"
 
-    bssn_bcs(a_rhs, alpha, grad_0_alpha, grad_1_alpha, grad_2_alpha, pmin, pmax,
-             1.0, 1.0, sz, bflag);
-    bssn_bcs(chi_rhs, chi, grad_0_chi, grad_1_chi, grad_2_chi, pmin, pmax,
-             1.0, 1.0, sz, bflag);
-    bssn_bcs(K_rhs, K, grad_0_K, grad_1_K, grad_2_K, pmin, pmax,
-             1.0, 0.0, sz, bflag);
+// bssn::timer::t_rhs.stop();
 
-    bssn_bcs(b_rhs0, beta0, grad_0_beta0, grad_1_beta0, grad_2_beta0, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-    bssn_bcs(b_rhs1, beta1, grad_0_beta1, grad_1_beta1, grad_2_beta1, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-    bssn_bcs(b_rhs2, beta2, grad_0_beta2, grad_1_beta2, grad_2_beta2, pmin, pmax,
-             1.0, 0.0, sz, bflag);
+//        /* debugging */
+//         unsigned int qi = 46 - 1;
+//         unsigned int qj = 10 - 1;
+//         unsigned int qk = 60 - 1;
+//         unsigned int qidx = qi + nx*(qj + ny*qk);
+//         if (0 && qidx == pp) {
+//           std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;
+//         }
 
-    bssn_bcs(Gt_rhs0, Gt0, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-    bssn_bcs(Gt_rhs1, Gt1, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-    bssn_bcs(Gt_rhs2, Gt2, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-
-    bssn_bcs(B_rhs0, B0, grad_0_B0, grad_1_B0, grad_2_B0, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-    bssn_bcs(B_rhs1, B1, grad_0_B1, grad_1_B1, grad_2_B1, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-    bssn_bcs(B_rhs2, B2, grad_0_B2, grad_1_B2, grad_2_B2, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-
-    bssn_bcs(At_rhs00, At0, grad_0_At0, grad_1_At0, grad_2_At0, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-    bssn_bcs(At_rhs01, At1, grad_0_At1, grad_1_At1, grad_2_At1, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-    bssn_bcs(At_rhs02, At2, grad_0_At2, grad_1_At2, grad_2_At2, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-    bssn_bcs(At_rhs11, At3, grad_0_At3, grad_1_At3, grad_2_At3, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-    bssn_bcs(At_rhs12, At4, grad_0_At4, grad_1_At4, grad_2_At4, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-    bssn_bcs(At_rhs22, At5, grad_0_At5, grad_1_At5, grad_2_At5, pmin, pmax,
-             2.0, 0.0, sz, bflag);
-
-    bssn_bcs(gt_rhs00, gt0, grad_0_gt0, grad_1_gt0, grad_2_gt0, pmin, pmax,
-             1.0, 1.0, sz, bflag);
-    bssn_bcs(gt_rhs01, gt1, grad_0_gt1, grad_1_gt1, grad_2_gt1, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-    bssn_bcs(gt_rhs02, gt2, grad_0_gt2, grad_1_gt2, grad_2_gt2, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-    bssn_bcs(gt_rhs11, gt3, grad_0_gt3, grad_1_gt3, grad_2_gt3, pmin, pmax,
-             1.0, 1.0, sz, bflag);
-    bssn_bcs(gt_rhs12, gt4, grad_0_gt4, grad_1_gt4, grad_2_gt4, pmin, pmax,
-             1.0, 0.0, sz, bflag);
-    bssn_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
-             1.0, 1.0, sz, bflag);
-
-    bssn::timer::t_bdyc.stop();
-  }
+//       }
+//     }
+//   }
 
 
-bssn::timer::t_deriv.start();
-#include "bssnrhs_ko_derivs.h"
-bssn::timer::t_deriv.stop();
+//   if (bflag != 0) {
 
-bssn::timer::t_rhs.start();
+//     bssn::timer::t_bdyc.start();
 
-  const  double sigma = KO_DISS_SIGMA;
+//     bssn_bcs(a_rhs, alpha, grad_0_alpha, grad_1_alpha, grad_2_alpha, pmin, pmax,
+//              1.0, 1.0, sz, bflag);
+//     bssn_bcs(chi_rhs, chi, grad_0_chi, grad_1_chi, grad_2_chi, pmin, pmax,
+//              1.0, 1.0, sz, bflag);
+//     bssn_bcs(K_rhs, K, grad_0_K, grad_1_K, grad_2_K, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+
+//     bssn_bcs(b_rhs0, beta0, grad_0_beta0, grad_1_beta0, grad_2_beta0, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+//     bssn_bcs(b_rhs1, beta1, grad_0_beta1, grad_1_beta1, grad_2_beta1, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+//     bssn_bcs(b_rhs2, beta2, grad_0_beta2, grad_1_beta2, grad_2_beta2, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+
+//     bssn_bcs(Gt_rhs0, Gt0, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+//     bssn_bcs(Gt_rhs1, Gt1, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+//     bssn_bcs(Gt_rhs2, Gt2, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+
+//     bssn_bcs(B_rhs0, B0, grad_0_B0, grad_1_B0, grad_2_B0, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+//     bssn_bcs(B_rhs1, B1, grad_0_B1, grad_1_B1, grad_2_B1, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+//     bssn_bcs(B_rhs2, B2, grad_0_B2, grad_1_B2, grad_2_B2, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+
+//     bssn_bcs(At_rhs00, At0, grad_0_At0, grad_1_At0, grad_2_At0, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+//     bssn_bcs(At_rhs01, At1, grad_0_At1, grad_1_At1, grad_2_At1, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+//     bssn_bcs(At_rhs02, At2, grad_0_At2, grad_1_At2, grad_2_At2, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+//     bssn_bcs(At_rhs11, At3, grad_0_At3, grad_1_At3, grad_2_At3, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+//     bssn_bcs(At_rhs12, At4, grad_0_At4, grad_1_At4, grad_2_At4, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+//     bssn_bcs(At_rhs22, At5, grad_0_At5, grad_1_At5, grad_2_At5, pmin, pmax,
+//              2.0, 0.0, sz, bflag);
+
+//     bssn_bcs(gt_rhs00, gt0, grad_0_gt0, grad_1_gt0, grad_2_gt0, pmin, pmax,
+//              1.0, 1.0, sz, bflag);
+//     bssn_bcs(gt_rhs01, gt1, grad_0_gt1, grad_1_gt1, grad_2_gt1, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+//     bssn_bcs(gt_rhs02, gt2, grad_0_gt2, grad_1_gt2, grad_2_gt2, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+//     bssn_bcs(gt_rhs11, gt3, grad_0_gt3, grad_1_gt3, grad_2_gt3, pmin, pmax,
+//              1.0, 1.0, sz, bflag);
+//     bssn_bcs(gt_rhs12, gt4, grad_0_gt4, grad_1_gt4, grad_2_gt4, pmin, pmax,
+//              1.0, 0.0, sz, bflag);
+//     bssn_bcs(gt_rhs22, gt5, grad_0_gt5, grad_1_gt5, grad_2_gt5, pmin, pmax,
+//              1.0, 1.0, sz, bflag);
+
+//     bssn::timer::t_bdyc.stop();
+//   }
 
 
-  for (unsigned int k = 3; k < nz-3; k++) {
-    for (unsigned int j = 3; j < ny-3; j++) {
-      for (unsigned int i = 3; i < nx-3; i++) {
-        pp = i + nx*(j + ny*k);
+// bssn::timer::t_deriv.start();
+// #include "bssnrhs_ko_derivs.h"
+// bssn::timer::t_deriv.stop();
 
-        a_rhs[pp]  += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
-        b_rhs0[pp] += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
-        b_rhs1[pp] += sigma * (grad_0_beta1[pp] + grad_1_beta1[pp] + grad_2_beta1[pp]);
-        b_rhs2[pp] += sigma * (grad_0_beta2[pp] + grad_1_beta2[pp] + grad_2_beta2[pp]);
+// bssn::timer::t_rhs.start();
 
-        gt_rhs00[pp] += sigma * (grad_0_gt0[pp] + grad_1_gt0[pp] + grad_2_gt0[pp]);
-        gt_rhs01[pp] += sigma * (grad_0_gt1[pp] + grad_1_gt1[pp] + grad_2_gt1[pp]);
-        gt_rhs02[pp] += sigma * (grad_0_gt2[pp] + grad_1_gt2[pp] + grad_2_gt2[pp]);
-        gt_rhs11[pp] += sigma * (grad_0_gt3[pp] + grad_1_gt3[pp] + grad_2_gt3[pp]);
-        gt_rhs12[pp] += sigma * (grad_0_gt4[pp] + grad_1_gt4[pp] + grad_2_gt4[pp]);
-        gt_rhs22[pp] += sigma * (grad_0_gt5[pp] + grad_1_gt5[pp] + grad_2_gt5[pp]);
-
-        chi_rhs[pp]  += sigma * (grad_0_chi[pp] + grad_1_chi[pp] + grad_2_chi[pp]);
-
-        At_rhs00[pp] += sigma * (grad_0_At0[pp] + grad_1_At0[pp] + grad_2_At0[pp]);
-        At_rhs01[pp] += sigma * (grad_0_At1[pp] + grad_1_At1[pp] + grad_2_At1[pp]);
-        At_rhs02[pp] += sigma * (grad_0_At2[pp] + grad_1_At2[pp] + grad_2_At2[pp]);
-        At_rhs11[pp] += sigma * (grad_0_At3[pp] + grad_1_At3[pp] + grad_2_At3[pp]);
-        At_rhs12[pp] += sigma * (grad_0_At4[pp] + grad_1_At4[pp] + grad_2_At4[pp]);
-        At_rhs22[pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
-
-        K_rhs[pp] += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
-
-        Gt_rhs0[pp] += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
-        Gt_rhs1[pp] += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
-        Gt_rhs2[pp] += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
-
-        B_rhs0[pp] += sigma * (grad_0_B0[pp] + grad_1_B0[pp] + grad_2_B0[pp]);
-        B_rhs1[pp] += sigma * (grad_0_B1[pp] + grad_1_B1[pp] + grad_2_B1[pp]);
-        B_rhs2[pp] += sigma * (grad_0_B2[pp] + grad_1_B2[pp] + grad_2_B2[pp]);
-      }
-    }
-  }
-
-bssn::timer::t_rhs.stop();
+//   const  double sigma = KO_DISS_SIGMA;
 
 
+//   for (unsigned int k = 3; k < nz-3; k++) {
+//     for (unsigned int j = 3; j < ny-3; j++) {
+//       for (unsigned int i = 3; i < nx-3; i++) {
+//         pp = i + nx*(j + ny*k);
 
-bssn::timer::t_deriv.start();
-#include "bssnrhs_dealloc.h"
-#include "bssnrhs_dealloc_adv.h"
-bssn::timer::t_deriv.stop();
+//         a_rhs[pp]  += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
+//         b_rhs0[pp] += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
+//         b_rhs1[pp] += sigma * (grad_0_beta1[pp] + grad_1_beta1[pp] + grad_2_beta1[pp]);
+//         b_rhs2[pp] += sigma * (grad_0_beta2[pp] + grad_1_beta2[pp] + grad_2_beta2[pp]);
 
-#if 0
-  for (unsigned int m = 0; m < 24; m++) {
-    std::cout<<"  || dtu("<<m<<")|| = "<<normLInfty(unzipVarsRHS[m] + offset, n)<<std::endl;
-  }
-#endif
+//         gt_rhs00[pp] += sigma * (grad_0_gt0[pp] + grad_1_gt0[pp] + grad_2_gt0[pp]);
+//         gt_rhs01[pp] += sigma * (grad_0_gt1[pp] + grad_1_gt1[pp] + grad_2_gt1[pp]);
+//         gt_rhs02[pp] += sigma * (grad_0_gt2[pp] + grad_1_gt2[pp] + grad_2_gt2[pp]);
+//         gt_rhs11[pp] += sigma * (grad_0_gt3[pp] + grad_1_gt3[pp] + grad_2_gt3[pp]);
+//         gt_rhs12[pp] += sigma * (grad_0_gt4[pp] + grad_1_gt4[pp] + grad_2_gt4[pp]);
+//         gt_rhs22[pp] += sigma * (grad_0_gt5[pp] + grad_1_gt5[pp] + grad_2_gt5[pp]);
+
+//         chi_rhs[pp]  += sigma * (grad_0_chi[pp] + grad_1_chi[pp] + grad_2_chi[pp]);
+
+//         At_rhs00[pp] += sigma * (grad_0_At0[pp] + grad_1_At0[pp] + grad_2_At0[pp]);
+//         At_rhs01[pp] += sigma * (grad_0_At1[pp] + grad_1_At1[pp] + grad_2_At1[pp]);
+//         At_rhs02[pp] += sigma * (grad_0_At2[pp] + grad_1_At2[pp] + grad_2_At2[pp]);
+//         At_rhs11[pp] += sigma * (grad_0_At3[pp] + grad_1_At3[pp] + grad_2_At3[pp]);
+//         At_rhs12[pp] += sigma * (grad_0_At4[pp] + grad_1_At4[pp] + grad_2_At4[pp]);
+//         At_rhs22[pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
+
+//         K_rhs[pp] += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
+
+//         Gt_rhs0[pp] += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
+//         Gt_rhs1[pp] += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
+//         Gt_rhs2[pp] += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
+
+//         B_rhs0[pp] += sigma * (grad_0_B0[pp] + grad_1_B0[pp] + grad_2_B0[pp]);
+//         B_rhs1[pp] += sigma * (grad_0_B1[pp] + grad_1_B1[pp] + grad_2_B1[pp]);
+//         B_rhs2[pp] += sigma * (grad_0_B2[pp] + grad_1_B2[pp] + grad_2_B2[pp]);
+//       }
+//     }
+//   }
+
+// bssn::timer::t_rhs.stop();
+
+
+
+// bssn::timer::t_deriv.start();
+#include "bssnrhs_cuda_mdealloc.h"
+// #include "bssnrhs_dealloc_adv.h"
+// bssn::timer::t_deriv.stop();
+
+// #if 0
+//   for (unsigned int m = 0; m < 24; m++) {
+//     std::cout<<"  || dtu("<<m<<")|| = "<<normLInfty(unzipVarsRHS[m] + offset, n)<<std::endl;
+//   }
+// #endif
 
 
 
