@@ -10,9 +10,13 @@
 #ifndef BSSN_COMPUTEBSSN_H
 #define BSSN_COMPUTEBSSN_H
 
-#include "rhs.h"
+#include "rhs_cuda.h"
 #include "profile_param.h"
-#include "kernal.h"
+
+#include <cmath>
+#include <iostream>
+#include <stdio.h>
+
 const unsigned int ELE_ORDER=4;
 const unsigned int BSSN_NUM_VARS=24;
 const unsigned int PAD_WIDTH=3;
