@@ -6,11 +6,8 @@
 *@brief
 */
 //
-
-#include <iostream>
 #include "computeBSSN.h" 
-#include "cuda_runtime.h"
-#include <stdio.h>
+
 
 int main (int argc, char** argv)
 {
@@ -74,8 +71,8 @@ int main (int argc, char** argv)
     // double ** var_in=new double*[BSSN_NUM_VARS];
     // double ** var_out=new double*[BSSN_NUM_VARS];
     // Allocate memory on GPU for bssn computation
-    double *dev_var_in;
-    double *dev_var_out;
+    double * dev_var_in;
+    double * dev_var_out;
     cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
     cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
 
@@ -121,7 +118,6 @@ int main (int argc, char** argv)
 
     // std::cout << dev_var_out <<std::endl;
 
-    unzip_dof;
     unsigned int offset;
     double ptmin[3], ptmax[3];
     unsigned int sz[3];
@@ -130,7 +126,7 @@ int main (int argc, char** argv)
 
      //----- timer begin:
     //3. perform computation.
-    for(unsigned int blk=0;blk<total_blks;blk++)
+    for(unsigned int blk=0;blk<1;blk++)
     {
         offset=blkList[blk].offset;
         sz[0]=blkList[blk].node1D_x; 
@@ -151,7 +147,9 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        bssnrhs(dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag); // required to send the output array also
+        // bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag); // required to send the output array also
+
+        cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
 
     }
     //-- timer end

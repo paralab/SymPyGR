@@ -37,7 +37,8 @@ set(INC_FILES
         include/derivs.h
         include/rhs.h
         include/def.h
-	include/derivs_cuda.h
+        include/derivs_cuda.h
+        include/rhs_cuda.h
         include/bssn_profiler.h
         include/profile_param.h
         )
