@@ -47,7 +47,7 @@ def bssnrhs_derivs_gen():
             if (line2[1].strip()+"Int") in readyToUse:
                 output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_sz, bflag, sz);\n"%(line1[0], firstPara, line2[1].strip(), line2[2].strip())
             else:
-                output_method_call = "%s(%s, %s, 0, dev_dy_%s, dev_sz, bflag, sz);\n"%(line1[0], firstPara, line2[1].strip(), line2[2].strip())
+                output_method_call = "%s(%s, %s, dev_zero, dev_dy_%s, dev_sz, bflag, sz);\n"%(line1[0], firstPara, line2[1].strip(), line2[2].strip())
             output_file1.write(output_method_call)
     output_file1.close()
 
