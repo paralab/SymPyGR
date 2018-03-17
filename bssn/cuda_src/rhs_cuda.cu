@@ -79,6 +79,10 @@ const unsigned int& bflag)
     cudaStatus = cudaMemcpy(dev_sz, sz, 3*sizeof(int), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "sz cudaMemcpy failed!\n"); return;}
 
+    int * dev_zero;
+    cudaStatus = cudaMalloc((void **) &dev_zero, sizeof(int));
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "0 cudaMalloc failed!\n"); return;}
+
     // Allocate memory to store the output of derivs
     unsigned int n = sz[0]*sz[1]*sz[2];
     #include "bssnrhs_cuda_malloc.h"
@@ -87,8 +91,6 @@ const unsigned int& bflag)
 
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
-    // deriv_y(grad_1_alpha, dev_var_in, alphaInt, dev_dy_hy, dev_sz, bflag, sz);
-    // deriv_y(grad2_0_1_gt0, grad_0_gt0, 0, dev_dy_hy, dev_sz, bflag, sz);
 
     bssn::timer::t_deriv.stop();
 

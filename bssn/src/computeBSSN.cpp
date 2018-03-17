@@ -126,7 +126,7 @@ int main (int argc, char** argv)
 
      //----- timer begin:
     //3. perform computation.
-    for(unsigned int blk=0;blk<1;blk++)
+    for(unsigned int blk=0;blk<total_blks;blk++)
     {
         offset=blkList[blk].offset;
         sz[0]=blkList[blk].node1D_x; 
