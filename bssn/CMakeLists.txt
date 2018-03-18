@@ -41,6 +41,8 @@ set(INC_FILES
         include/rhs_cuda.h
         include/bssn_profiler.h
         include/profile_param.h
+	include/bssneqn_solve.h
+        include/cuda_bssneqs.h
         )
 
 set(SRC_FILES
