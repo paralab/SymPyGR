@@ -54,7 +54,7 @@
   double *agrad_2_Gt0 = (double *) malloc(bytes);
   double *agrad_0_Gt1 = (double *) malloc(bytes);
   double *agrad_1_Gt1 = (double *) malloc(bytes);
-  double *agrad_2_Gt1 = (double *) malloc(bytes);
+  double *agrad_2_Gt1 = (double *) malloc(bytes); 
   double *agrad_0_Gt2 = (double *) malloc(bytes);
   double *agrad_1_Gt2 = (double *) malloc(bytes);
   double *agrad_2_Gt2 = (double *) malloc(bytes);
