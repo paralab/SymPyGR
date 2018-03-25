@@ -4,7 +4,7 @@
  **/
 
  #include "derivs_cuda.h"
- 
+
  __global__ void cuda_deriv42_y_firstThreeForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
  {
     int x = threadIdx.x + blockIdx.x*10;
@@ -27,8 +27,8 @@
     // printf("%f\n", output[pp]);
 }
 
- __global__ void cuda_deriv42_y_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
- {
+__global__ void cuda_deriv42_y_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
+{
     int x = threadIdx.x + blockIdx.x*30;
     int z = threadIdx.y + blockIdx.x*30;
 
@@ -385,7 +385,8 @@ void cuda_deriv42_x(double * output, double * dev_var_in, int * dev_u_offset, do
     // #endif
 }
 
-void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
+void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset, 
+    double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
 {
     int zblocks = ((host_sz[2]-1)/10)+1; // k
     int yblocks = ((host_sz[1]-1)/10)+1; // j
@@ -469,4 +470,133 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset, do
     //     }
     //   #endif
 }
- 
+
+__global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * dev_betax,
+     int *dev_dx, int* dev_lflag, int* dev_rflag, int* dev_sz, int* dev_u_offset) {
+    
+    //ib, jb, kb values are accumulated to the x, y, z
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+    int idx_by_2 = 0.50 * (1.0 / dev_dx[0]);
+    int idx_by_12 = (1.0 / dev_dx[0])/12;
+    int nx = dev_sz[0];
+    int ny = dev_sz[1];
+
+    if(i >= nx-3 && j >= ny-3 && k >= dev_sz[2]-3) return;
+    int pp = IDX(i, j, k);
+    if (dev_betax[pp] > 0.0 ) {
+        output[pp] = ( -  3.0 * dev_var_in[*dev_u_offset + pp - dev_sz[0]]
+                    - 10.0 * dev_var_in[*dev_u_offset + pp]
+                    + 18.0 * dev_var_in[*dev_u_offset + pp + dev_sz[0]]
+                    -  6.0 * dev_var_in[*dev_u_offset + pp + 2 * dev_sz[0]]
+                    +        dev_var_in[*dev_u_offset + pp + 3 * dev_sz[0]]
+                  ) * idx_by_12;
+    }
+    else {
+        output[pp] = ( -        dev_var_in[*dev_u_offset + pp - 3 * dev_sz[0]]
+                    +  6.0 * dev_var_in[*dev_u_offset + pp - 2 * dev_sz[0]]
+                    - 18.0 * dev_var_in[*dev_u_offset + pp - dev_sz[0]]
+                    + 10.0 * dev_var_in[*dev_u_offset + pp]
+                    +  3.0 * dev_var_in[*dev_u_offset + pp + dev_sz[0]]
+                  ) * idx_by_12;
+    }
+    
+    if (*dev_lflag && (i == 0)) {
+        output[IDX(3,j,k)] = ( -  3.0 * dev_var_in[*dev_u_offset + IDX(3,j,k)]
+                +  4.0 * dev_var_in[*dev_u_offset + IDX(4,j,k)]
+                -        dev_var_in[*dev_u_offset + IDX(5,j,k)]
+                ) * idx_by_2;
+
+        if (dev_betax[IDX(4,j,k)] > 0.0) {
+            output[IDX(4,j,k)] = ( -  3.0 * dev_var_in[*dev_u_offset + IDX(4,j,k)]
+                            +  4.0 * dev_var_in[*dev_u_offset + IDX(5,j,k)]
+                            -        dev_var_in[*dev_u_offset + IDX(6,j,k)]
+                        ) * idx_by_2;
+        }
+        else {
+            output[IDX(4,j,k)] = ( -         dev_var_in[*dev_u_offset + IDX(3,j,k)]
+                            +        dev_var_in[*dev_u_offset + IDX(5,j,k)]
+                        ) * idx_by_2;
+        }
+
+        if (dev_betax[IDX(5,j,k)] > 0.0 ) {
+            output[IDX(5,j,k)] = (-  3.0 * dev_var_in[*dev_u_offset + IDX(4,j,k)]
+                        - 10.0 * dev_var_in[*dev_u_offset + IDX(5,j,k)]
+                        + 18.0 * dev_var_in[*dev_u_offset + IDX(6,j,k)]
+                        -  6.0 * dev_var_in[*dev_u_offset + IDX(7,j,k)]
+                        +        dev_var_in[*dev_u_offset + IDX(8,j,k)]
+                        ) * idx_by_12;
+        }
+        else {
+            output[IDX(5,j,k)] = (           dev_var_in[*dev_u_offset + IDX(3,j,k)]
+                            -  4.0 * dev_var_in[*dev_u_offset + IDX(4,j,k)]
+                            +  3.0 * dev_var_in[*dev_u_offset + IDX(5,j,k)]
+                        ) * idx_by_2;
+        }
+    }
+
+    if (*dev_rflag && (i == 0)) {
+        const int ie = dev_sz[0] - 3;
+        
+        if ( dev_betax[IDX(ie-3,j,k)] < 0.0 ) {
+            output[IDX(ie-3,j,k)] = (  - 3.0 * dev_var_in[*dev_u_offset + IDX(ie-3,j,k)]
+                                    + 4.0 * dev_var_in[*dev_u_offset + IDX(ie-2,j,k)]
+                                    -       dev_var_in[*dev_u_offset + IDX(ie-1,j,k)]
+                                 ) * idx_by_2;
+        }
+        else {
+            output[IDX(ie-3,j,k)] = ( -   dev_var_in[*dev_u_offset + IDX(ie-6,j,k)]
+                              +  6.0 * dev_var_in[*dev_u_offset + IDX(ie-5,j,k)]
+                              - 18.0 * dev_var_in[*dev_u_offset + IDX(ie-4,j,k)]
+                              + 10.0 * dev_var_in[*dev_u_offset + IDX(ie-3  ,j,k)]
+                              +  3.0 * dev_var_in[*dev_u_offset + IDX(ie-2,j,k)]
+                            ) * idx_by_12;
+        }
+  
+          if (dev_betax[IDX(ie-2,j,k)] > 0.0 ) {
+            output[IDX(ie-2,j,k)] = (  -  dev_var_in[*dev_u_offset + IDX(ie-3,j,k)]
+                                    +  dev_var_in[*dev_u_offset + IDX(ie-1,j,k)]
+                                 ) * idx_by_2;
+          }
+          else {
+            output[IDX(ie-2,j,k)] = (     dev_var_in[*dev_u_offset + IDX(ie-4,j,k)]
+                               - 4.0 * dev_var_in[*dev_u_offset + IDX(ie-3,j,k)]
+                               + 3.0 * dev_var_in[*dev_u_offset + IDX(ie-2,j,k)]
+                                 ) * idx_by_2;
+          }
+  
+          output[IDX(ie-1,j,k)] = (          dev_var_in[*dev_u_offset + IDX(ie-3,j,k)]
+                                  - 4.0 * dev_var_in[*dev_u_offset + IDX(ie-2,j,k)]
+                                  + 3.0 * dev_var_in[*dev_u_offset + IDX(ie-1,j,k)]
+                               ) * idx_by_2;
+    }
+}
+
+void cuda_deriv42_adv_x(double * output, double * dev_var_in, 
+                            int * dev_u_offset, double * dev_dx, int * dev_sz, int * dev_betax,
+                            unsigned bflag, const unsigned int * host_sz)
+{
+
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 1;//y direction
+    const int ke = host_sz[2] - 1;//z direction
+
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    
+    int requiredBlocks = maximumIterations / 10;
+    if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
+        requiredBlocks++;
+    }
+    
+    int threads_x = ie / requiredBlocks;
+    int threads_y = je / requiredBlocks;
+    int threads_z = ke / requiredBlocks;
+
+    //calc_deriv42_x <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (dev_Dxu, dev_u, dev_idx_by_2,
+           //              dev_idx_by_12, dev_ie, dev_je, dev_ke, dev_flag, dev_nx, dev_ny);
+                    
+    // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
+
+}
