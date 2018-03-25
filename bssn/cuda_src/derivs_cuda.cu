@@ -5,8 +5,8 @@
 
  #include "derivs_cuda.h"
 
- __global__ void cuda_deriv42_y_firstThreeForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
- {
+__global__ void cuda_deriv42_y_firstThreeForLoops(double* output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
+{
     int x = threadIdx.x + blockIdx.x*10;
     int y = threadIdx.y + blockIdx.x*10;
     int z = threadIdx.z + blockIdx.x*10;
@@ -574,8 +574,8 @@ __global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * d
 }
 
 void cuda_deriv42_adv_x(double * output, double * dev_var_in, 
-                            int * dev_u_offset, double * dev_dx, int * dev_sz, int * dev_betax,
-                            unsigned bflag, const unsigned int * host_sz)
+    int * dev_u_offset, double * dev_dy, int * dev_sz,
+    int * dev_betax, int* lbflag, int* rbflag, const unsigned int * host_sz)
 {
 
     const int ie = host_sz[0] - 3;//x direction

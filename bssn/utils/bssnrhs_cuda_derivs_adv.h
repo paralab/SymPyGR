@@ -1,4 +1,4 @@
-  adv_deriv_x(agrad_0_gt0, dev_gt0Int, dev_dy_hx, dev_sz, dev_beta0Int, dev_lbflag, dev_rbflag, sz);
+adv_deriv_x(agrad_0_gt0, dev_var_in, dev_gt0Int, dev_dy_hx, dev_sz, dev_beta0Int, dev_lbflag, dev_rbflag, sz);
 //   adv_deriv_x(agrad_0_gt1, gt1, hx, sz, beta0, bflag);
 //   adv_deriv_x(agrad_0_gt2, gt2, hx, sz, beta0, bflag);
 //   adv_deriv_x(agrad_0_gt3, gt3, hx, sz, beta0, bflag);
