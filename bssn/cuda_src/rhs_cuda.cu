@@ -55,6 +55,8 @@ const unsigned int& bflag)
     int B0Int = (VAR_CU::U_B0) * unzip_dof + offset;
     int B1Int = (VAR_CU::U_B1) * unzip_dof + offset;
     int B2Int = (VAR_CU::U_B2) * unzip_dof + offset;
+    int lbflag = (bflag & (1u<<OCT_DIR_LEFT)) ? 1 : 0;
+    int rbflag = (bflag & (1u<<OCT_DIR_RIGHT)) ? 1 : 0;
 
     double hx = (pmax[0] - pmin[0]) / (sz[0] - 1);
     double hy = (pmax[1] - pmin[1]) / (sz[1] - 1);
@@ -63,7 +65,7 @@ const unsigned int& bflag)
     // Send above values to GPU memory
     #include "bssnrhs_cuda_offset_malloc.h"
 
-    double * dev_dy_hx;
+    double * dev_dy_hx; //similar to hx in cpu code
     cudaStatus = cudaMalloc((void **) &dev_dy_hx, sizeof(double));
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "hx cudaMalloc failed!\n"); return;}
     cudaStatus = cudaMemcpy(dev_dy_hx, &hx, sizeof(double), cudaMemcpyHostToDevice);
@@ -121,7 +123,8 @@ const unsigned int& bflag)
     bssn::timer::t_deriv.start();
 
     // Deriv calls are follows
-    #include "bssnrhs_cuda_derivs.h"
+    //#include "bssnrhs_cuda_derivs.h"
+    #include "bssnrhs_cuda_derivs_adv.h"
 
     bssn::timer::t_deriv.stop();
 
