@@ -914,7 +914,7 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     }
                     
     // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
-
+}
  
 void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
 {
