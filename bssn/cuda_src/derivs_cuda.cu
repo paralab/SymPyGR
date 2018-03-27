@@ -751,7 +751,153 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
     
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_x kernal!\n", cudaStatus);
+            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_y kernal!\n", cudaStatus);
+            return;
+    }
+                    
+    // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
+
+}
+
+__global__ void calc_deriv42_adv_z(double * output, double * dev_var_in, int * dev_betaz,
+    double *dev_dz, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+   
+   //ib, jb, kb values are accumulated to the x, y, z
+   int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+   int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
+   int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+
+   int idz_by_2 = 0.50 * (1.0 / dev_dz[0]);
+   int idz_by_12 = (1.0 / dev_dz[0])/12.0;
+   int nx = dev_sz[0];
+   int ny = dev_sz[1];
+   
+   if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+
+   int n = nx * ny;
+   int pp = IDX(i, j, k);
+   
+   if (dev_var_in[*dev_betaz + pp] > 0.0 ) {
+        output[pp] = ( -  3.0 * dev_var_in[*dev_u_offset + pp - n]
+                    - 10.0 * dev_var_in[*dev_u_offset + pp]
+                    + 18.0 * dev_var_in[*dev_u_offset + pp + n]
+                    -  6.0 * dev_var_in[*dev_u_offset + pp + 2*n]
+                    +        dev_var_in[*dev_u_offset + pp + 3*n]
+                  ) * idz_by_12;
+   }
+   else {
+       output[pp] = ( -        dev_var_in[*dev_u_offset + pp - 3*n]
+                   +  6.0 * dev_var_in[*dev_u_offset + pp - 2*n]
+                   - 18.0 * dev_var_in[*dev_u_offset + pp - n]
+                   + 10.0 * dev_var_in[*dev_u_offset + pp]
+                   +  3.0 * dev_var_in[*dev_u_offset + pp +n]
+                 ) * idz_by_12;
+               
+   }
+   
+   if ((*dev_bflag & (1u<<OCT_DIR_BACK)) && (k == 0)) {
+       
+       output[IDX(i,j,3)] = ( -  3.0 * dev_var_in[*dev_u_offset + IDX(i,j,3)]
+               +  4.0 * dev_var_in[*dev_u_offset + IDX(i,j,4)]
+               -        dev_var_in[*dev_u_offset + IDX(i,j,5)]
+               ) * idz_by_2;
+               
+       if (dev_var_in[*dev_betaz + IDX(i,j,4)] > 0.0) {
+           output[IDX(i,j,4)] = ( -  3.0 * dev_var_in[*dev_u_offset + IDX(i,j,4)]
+                           +  4.0 * dev_var_in[*dev_u_offset + IDX(i,j,5)]
+                           -        dev_var_in[*dev_u_offset + IDX(i,j,6)]
+                       ) * idz_by_2;
+
+       }
+       else {
+           output[IDX(i,j,4)] = ( -         dev_var_in[*dev_u_offset + IDX(i,j,3)]
+                           +        dev_var_in[*dev_u_offset + IDX(i,j,5)]
+                       ) * idz_by_2;
+                       
+       }
+
+       if (dev_var_in[*dev_betaz + IDX(i,j,5)] > 0.0 ) {
+           output[IDX(i,j,5)] = (-  3.0 * dev_var_in[*dev_u_offset + IDX(i,j,4)]
+                       - 10.0 * dev_var_in[*dev_u_offset + IDX(i,j,5)]
+                       + 18.0 * dev_var_in[*dev_u_offset + IDX(i,j,6)]
+                       -  6.0 * dev_var_in[*dev_u_offset + IDX(i,j,7)]
+                       +        dev_var_in[*dev_u_offset + IDX(i,j,8)]
+                       ) * idz_by_12;
+       }
+       else {
+           output[IDX(i,j,5)] = (           dev_var_in[*dev_u_offset + IDX(i,j,3)]
+                           -  4.0 * dev_var_in[*dev_u_offset + IDX(i,j,4)]
+                           +  3.0 * dev_var_in[*dev_u_offset + IDX(i,j,5)]
+                       ) * idz_by_2;
+       }
+   }
+
+   if ((*dev_bflag & (1u<<OCT_DIR_FRONT)) && (k == 1)) {
+       
+       const int ke = dev_sz[12] - 3;
+       
+       if ( dev_var_in[*dev_betaz + IDX(i,j,ke-3)] < 0.0 ) {
+           output[IDX(i,j,ke-3)] = (  - 3.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-3)]
+                                   + 4.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-2)]
+                                   -       dev_var_in[*dev_u_offset + IDX(i,j,ke-1)]
+                                ) * idz_by_2;
+       }
+       else {
+           output[IDX(i,j,ke-3)] = ( -   dev_var_in[*dev_u_offset + IDX(i,j,ke-6)]
+                             +  6.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-5)]
+                             - 18.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-4)]
+                             + 10.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-3)]
+                             +  3.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-2)]
+                           ) * idz_by_12;
+       }
+ 
+         if (dev_var_in[*dev_betaz + IDX(i,j,ke-2)] > 0.0 ) {
+           output[IDX(i,j,ke-2)] = (  -  dev_var_in[*dev_u_offset + IDX(i,j,ke-3)]
+                                   +  dev_var_in[*dev_u_offset + IDX(i,j,ke-1)]
+                                ) * idz_by_2;
+         }
+         else {
+           output[IDX(i,j,ke-2)] = (     dev_var_in[*dev_u_offset + IDX(i,j,ke-4)]
+                              - 4.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-3)]
+                              + 3.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-2)]
+                                ) * idz_by_2;
+         }
+ 
+         output[IDX(i,j,ke-1)]  = (          dev_var_in[*dev_u_offset + IDX(i,j,ke-3)]
+                                 - 4.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-2)]
+                                 + 3.0 * dev_var_in[*dev_u_offset + IDX(i,j,ke-1)]
+                              ) * idz_by_2;
+   }
+}
+
+void cuda_deriv42_adv_z(double * output, double * dev_var_in, 
+    int * dev_u_offset, double * dev_dz, int * dev_sz,
+    int * dev_betaz, int* dev_bflag, const unsigned int * host_sz)
+{
+    cudaError_t cudaStatus;
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 3;//z direction
+    //printf("i = %d, j = %d, k = %d\n", ie, je, ke);
+
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    
+    int requiredBlocks = maximumIterations / 10;
+    if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
+        requiredBlocks++;
+    }
+    
+    int threads_x = ie / requiredBlocks;
+    int threads_y = je / requiredBlocks;
+    int threads_z = ke / requiredBlocks;
+    
+    calc_deriv42_adv_y <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (output, dev_var_in, dev_betaz,
+        dev_dz, dev_bflag, dev_sz, dev_u_offset);
+    
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_z kernal!\n", cudaStatus);
             return;
     }
                     
