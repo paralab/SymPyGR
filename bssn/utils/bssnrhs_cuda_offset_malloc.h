@@ -142,19 +142,11 @@ if (cudaStatus != cudaSuccess) {fprintf(stderr, "B2Int cudaMalloc failed!\n"); r
 cudaStatus = cudaMemcpy(dev_B2Int, &B2Int, sizeof(int), cudaMemcpyHostToDevice);
 if (cudaStatus != cudaSuccess) {fprintf(stderr, "B2Int cudaMemcpy failed!\n"); return;}
 
-int * dev_lbflag;
-cudaStatus = cudaMalloc((void **) &dev_lbflag, sizeof(int));
+int * dev_bflag;
+cudaStatus = cudaMalloc((void **) &dev_bflag, sizeof(int));
 if (cudaStatus != cudaSuccess)
-    fprintf(stderr, "B2Int cudaMalloc failed!\n");
-cudaStatus = cudaMemcpy(dev_lbflag, &lbflag, sizeof(int), cudaMemcpyHostToDevice);
+    fprintf(stderr, "bflag cudaMalloc failed!\n");
+cudaStatus = cudaMemcpy(dev_bflag, &bflag, sizeof(int), cudaMemcpyHostToDevice);
 if (cudaStatus != cudaSuccess) 
-    fprintf(stderr, "B2Int cudaMemcpy failed!\n");
-
-int * dev_rbflag;
-cudaStatus = cudaMalloc((void **) &dev_rbflag, sizeof(int));
-if (cudaStatus != cudaSuccess)
-    fprintf(stderr, "B2Int cudaMalloc failed!\n");
-cudaStatus = cudaMemcpy(dev_rbflag, &rbflag, sizeof(int), cudaMemcpyHostToDevice);
-if (cudaStatus != cudaSuccess) 
-    fprintf(stderr, "B2Int cudaMemcpy failed!\n"); 
+    fprintf(stderr, "bflag cudaMemcpy failed!\n"); 
 

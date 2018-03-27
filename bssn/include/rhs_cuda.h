@@ -20,6 +20,8 @@
 #define deriv_yy cuda_deriv42_yy
 #define deriv_zz cuda_deriv42_zz
 #define adv_deriv_x cuda_deriv42_adv_x
+#define adv_deriv_y cuda_deriv42_adv_y
+#define adv_deriv_z cuda_deriv42_adv_z
 
 
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, 
