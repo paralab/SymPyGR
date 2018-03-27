@@ -123,7 +123,7 @@ const unsigned int& bflag)
     bssn::timer::t_deriv.start();
 
     // Deriv calls are follows
-    //#include "bssnrhs_cuda_derivs.h"
+    #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
 
     bssn::timer::t_deriv.stop();
