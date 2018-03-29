@@ -10,18 +10,18 @@
 #ifndef BSSN_COMPUTEBSSN_H
 #define BSSN_COMPUTEBSSN_H
 
-#include "rhs_cuda.h"
-#include "profile_param.h"
-
 #include <cmath>
 #include <iostream>
 #include <stdio.h>
+#include <time.h>
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
+
+#include "profile_param.h"
 
 const unsigned int ELE_ORDER=4;
 const unsigned int BSSN_NUM_VARS=24;
 const unsigned int PAD_WIDTH=3;
-
-
 
 
 struct Block 

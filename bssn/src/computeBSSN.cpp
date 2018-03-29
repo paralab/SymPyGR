@@ -33,8 +33,7 @@ int main (int argc, char** argv)
     bssn::timer::t_rhs.start();
     bssn::timer::t_bdyc.start();
 
-
-
+    
     bssn::timer::total_runtime.start();
 
     unsigned int num_blks=100;
@@ -64,21 +63,35 @@ int main (int argc, char** argv)
        }
     const unsigned long unzip_dof=unzipSz;
 
-    std::cout << "Est. total RAM req: " << 2*24*unzip_dof*8/1024/1024 << " mb" << std::endl;
+    // 2. a. allocate memory for bssn computation on CPU. -----------------------------------------------
+    #if 0
+    double ** var_in=new double*[BSSN_NUM_VARS];
+    double ** var_out=new double*[BSSN_NUM_VARS];
 
-    // //2. allocate memory for bssn computation.
-    // double ** var_in=new double*[BSSN_NUM_VARS];
-    // double ** var_out=new double*[BSSN_NUM_VARS];
-    // Allocate memory on GPU for bssn computation
-    cudaError_t cudaStatus;
+    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+    {
+        var_in[i]=new double[unzip_dof];
+        var_out[i]=new double[unzip_dof];
+
+        for(unsigned int j=0;j<unzip_dof;j++)
+        {
+            // some random initialization.
+            var_in[i][j]=sqrt(2)*0.001*j;
+            var_out[i][j]=0.0;
+        }
+    }
+    #endif
+    //------------------------------------------------------------------------------------------------
     
+    // 2. b. Allocate memory on GPU for bssn computation----------------------------------------------------
+    #if 1
+    cudaError_t cudaStatus;
     // Choose which GPU to run on, change this on a multi-GPU system.
      cudaStatus = cudaSetDevice(0);
      if (cudaStatus != cudaSuccess) {
          fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
          return 0;
      }
-
 
     double * dev_var_in;
     double * dev_var_out;
@@ -87,19 +100,6 @@ int main (int argc, char** argv)
 
     cudaStatus = cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_out cudaMalloc failed!\n"); return 0;}
-
-    // for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
-    // {
-    //     var_in[i]=new double[unzip_dof];
-    //     var_out[i]=new double[unzip_dof];
-
-    //     for(unsigned int j=0;j<unzip_dof;j++)
-    //     {
-    //         // some random initialization.
-    //         var_in[i][j]=sqrt(2)*0.001*j;
-    //         var_out[i][j]=0.0;
-    //     }
-    // }
 
     // GPU usage requirement
     double * host_var_in = new double[BSSN_NUM_VARS*unzip_dof];
@@ -117,19 +117,10 @@ int main (int argc, char** argv)
         j++;  
     }
     
-    
-
-    // double *dev_var_in;
-    // double *dev_var_out;
-    // cudaMalloc((void**)&dev_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double));
-    // cudaMalloc((void**)&dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double));
     cudaStatus = cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
-
-    // std::cout << cudaStatus <<std::endl;
-
-
-    // std::cout << dev_var_out <<std::endl;
+    #endif
+    //-----------------------------------------------------------------------------------------------------------------
 
     unsigned int offset;
     double ptmin[3], ptmax[3];
@@ -137,7 +128,9 @@ int main (int argc, char** argv)
     unsigned int bflag;
     double dx,dy,dz;
 
-     //----- timer begin:
+    std::cout << "Est. total RAM req (var_in, var_out): " << 2*24*unzip_dof*8/1024/1024 << " mb" << std::endl;
+
+    //----- timer begin:
     //3. perform computation.
     for(unsigned int blk=0;blk<total_blks;blk++)
     {
@@ -160,34 +153,44 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        // bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag); // required to send the output array also
-        printf("blockNo: %d | TotalBlockPoints: %d | Est. GPU memory req: %d mb\n", blk, sz[0]*sz[0]*sz[0],  (sz[0]*sz[0]*sz[0]*210*8 + 24*4)/1024/1024);
+        // //CPU bssnrhs call
+        // #include "rhs.h"
+        // bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+        
+        // CUDA_bssnrhs call
+        #include "rhs_cuda.h"
+        printf("blockNo: %d \t| TotalBlockPoints: %d \t| Est. GPU memory req: %d mb\n", blk, sz[0]*sz[0]*sz[0],  (sz[0]*sz[0]*sz[0]*210*8 + 24*4)/1024/1024);
         cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
-
     }
     printf("-------------------------\n");
     //-- timer end
     // (time this part of the code. )
 
+    // CPU code
+    #if 0
+    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+    {
+        delete [] var_in[i];
+        delete [] var_out[i];
+    }
+    delete [] var_in;
+    delete [] var_out;
+    #endif
 
-    // for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
-    // {
-    //     delete [] var_in[i];
-    //     delete [] var_out[i];
-    // }
-
-    delete [] blkList;
+    // GPU code
+    #if 1
     delete [] host_var_in;
     delete [] host_var_out;
+    // Free up GPU memory
+    cudaFree(dev_var_in);
+    cudaFree(dev_var_out);
+    #endif
+
+    delete [] blkList;
 
     bssn::timer::total_runtime.stop();
 
     bssn::timer::profileInfo();
 
-    // Free up GPU memory
-    cudaFree(dev_var_in);
-    cudaFree(dev_var_out);
-
     return 0;
-
 }
