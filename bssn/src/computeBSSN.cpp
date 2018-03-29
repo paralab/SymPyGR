@@ -185,8 +185,8 @@ int main (int argc, char** argv)
     bssn::timer::profileInfo();
 
     // Free up GPU memory
-    cudaStatus = cudaFree(dev_var_in);
-    cudaStatus = cudaFree(dev_var_out);
+    cudaFree(dev_var_in);
+    cudaFree(dev_var_out);
 
     return 0;
 
