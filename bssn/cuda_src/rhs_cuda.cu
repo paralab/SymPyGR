@@ -379,7 +379,8 @@ const unsigned int& bflag)
     cudaFree(dev_dy_hy);
     cudaFree(dev_dy_hz);
     cudaFree(dev_sz);
-
-     
-    
+    cudaFree(dev_zero);
+    cudaFree(dev_pmin);
+    cudaFree(dev_lambda);
+    cudaFree(dev_lambda_f);
 }
