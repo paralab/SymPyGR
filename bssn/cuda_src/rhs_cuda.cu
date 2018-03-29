@@ -13,11 +13,6 @@ double KO_DISS_SIGMA_CUDA=1e-4;
 unsigned int BSSN_LAMBDA_CUDA[4]={1,2,3,4};
 double BSSN_LAMBDA_F_CUDA[2]={0.8,0.9};
 
-__global__ void example_kernal(double * val){
-    // Eminda you can use this if it is required
-    //test GPU mem values
-}
-
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, 
 const unsigned int& offset, const double *pmin, const double *pmax, const unsigned int *sz, 
 const unsigned int& bflag)
