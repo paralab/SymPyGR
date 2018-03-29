@@ -1,5 +1,4 @@
-  const unsigned int bytes = n * sizeof(double);
-  double *grad_0_alpha = (double *) malloc(bytes);
+   double *grad_0_alpha = (double *) malloc(bytes);
   double *grad_1_alpha = (double *) malloc(bytes);
   double *grad_2_alpha = (double *) malloc(bytes); 
   double *grad_0_beta0 = (double *) malloc(bytes);
@@ -8,7 +7,7 @@
   double *grad_0_beta1 = (double *) malloc(bytes);
   double *grad_1_beta1 = (double *) malloc(bytes);
   double *grad_2_beta1 = (double *) malloc(bytes);
-  double *grad_0_beta2 = (double *) malloc(bytes);
+  double *grad_0_beta2 = (double *) malloc(bytes); 
   double *grad_1_beta2 = (double *) malloc(bytes);
   double *grad_2_beta2 = (double *) malloc(bytes);
   double *grad_0_B0 = (double *) malloc(bytes);
