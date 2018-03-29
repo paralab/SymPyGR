@@ -91,7 +91,7 @@ def bssnrhs_adv_derivs_gen():
     """
     adv_deriv_x(agrad_0_gt0, gt0, hx, sz, beta0, bflag); // old
 
-    adv_deriv_x(agrad_0_gt0, dev_var_in, dev_gt0Int, dev_dy_hx, dev_sz, dev_beta0Int, dev_lbflag, dev_rbflag, sz); // new
+    adv_deriv_x(agrad_0_gt0, dev_var_in, dev_gt0Int, dev_dy_hx, dev_sz, dev_beta0Int, dev_bflag, sz); // new
     """
 
     output_file1 = open("t_bssnrhs_derivs_adv.h", 'w')
@@ -111,7 +111,7 @@ def bssnrhs_adv_derivs_gen():
 
             # print(method_name, para1, para2, para3, para4, para5, para6)
 
-            output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_sz, dev_%sInt, dev_lbflag, dev_rbflag, sz);\n"%(method_name, para1, para2, para3, para5)
+            output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_sz, dev_%sInt, dev_bflag, sz);\n"%(method_name, para1, para2, para3, para5)
 
             # print(output_method_call)
 

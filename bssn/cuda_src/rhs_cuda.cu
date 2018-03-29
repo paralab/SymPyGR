@@ -48,6 +48,7 @@ const unsigned int& bflag)
     int B0Int = (VAR_CU::U_B0) * unzip_dof + offset;
     int B1Int = (VAR_CU::U_B1) * unzip_dof + offset;
     int B2Int = (VAR_CU::U_B2) * unzip_dof + offset;
+    
     int lbflag = (bflag & (1u<<OCT_DIR_LEFT)) ? 1 : 0;
     int rbflag = (bflag & (1u<<OCT_DIR_RIGHT)) ? 1 : 0;
 
