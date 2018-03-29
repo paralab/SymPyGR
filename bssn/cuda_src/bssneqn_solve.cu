@@ -263,7 +263,7 @@ int *dev_sizeArray
         int j=firstLeft/secondBlock+3;
         int i=firstLeft%secondBlock+3;
 
-        double z= pmin[2] + k*(*hz);
+        double z = pmin[2] + k*(*hz);
         double y = pmin[1] + j*(*hy);
         double x = pmin[0] + i*(*hx);
 
@@ -781,6 +781,9 @@ int *dev_sizeArray
             dev_var_in,
             dev_var_out,
             dev_sizeArray);
+
+        
+        cudaFree(dev_sizeArray);
     }
 
  

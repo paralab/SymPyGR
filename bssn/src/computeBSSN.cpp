@@ -11,9 +11,6 @@
 
 int main (int argc, char** argv)
 {
-    std::cout << "Let's start debuging" <<std::endl;
-
-
     /**
      *
      * parameters:
@@ -67,14 +64,29 @@ int main (int argc, char** argv)
        }
     const unsigned long unzip_dof=unzipSz;
 
+    std::cout << "Est. total RAM req: " << 2*24*unzip_dof*8/1024/1024 << " mb" << std::endl;
+
     // //2. allocate memory for bssn computation.
     // double ** var_in=new double*[BSSN_NUM_VARS];
     // double ** var_out=new double*[BSSN_NUM_VARS];
     // Allocate memory on GPU for bssn computation
+    cudaError_t cudaStatus;
+    
+    // Choose which GPU to run on, change this on a multi-GPU system.
+     cudaStatus = cudaSetDevice(0);
+     if (cudaStatus != cudaSuccess) {
+         fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
+         return 0;
+     }
+
+
     double * dev_var_in;
     double * dev_var_out;
-    cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
-    cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
+    cudaStatus = cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMalloc failed!\n"); return 0;}
+
+    cudaStatus = cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_out cudaMalloc failed!\n"); return 0;}
 
     // for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     // {
@@ -111,8 +123,9 @@ int main (int argc, char** argv)
     // double *dev_var_out;
     // cudaMalloc((void**)&dev_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double));
     // cudaMalloc((void**)&dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double));
-    cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpy(dev_var_out, host_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
+
     // std::cout << cudaStatus <<std::endl;
 
 
@@ -148,10 +161,11 @@ int main (int argc, char** argv)
         ptmax[2]=1.0;
 
         // bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag); // required to send the output array also
-
+        printf("blockNo: %d | TotalBlockPoints: %d | Est. GPU memory req: %d mb\n", blk, sz[0]*sz[0]*sz[0],  (sz[0]*sz[0]*sz[0]*210*8 + 24*4)/1024/1024);
         cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
 
     }
+    printf("-------------------------\n");
     //-- timer end
     // (time this part of the code. )
 
@@ -163,16 +177,16 @@ int main (int argc, char** argv)
     // }
 
     delete [] blkList;
-    // delete [] var_in;
-    // delete [] var_out;
+    delete [] host_var_in;
+    delete [] host_var_out;
 
     bssn::timer::total_runtime.stop();
 
     bssn::timer::profileInfo();
 
-    // Free up memory
-    cudaFree(&dev_var_in);
-    cudaFree(&dev_var_out);
+    // Free up GPU memory
+    cudaFree(dev_var_in);
+    cudaFree(dev_var_out);
 
     return 0;
 
