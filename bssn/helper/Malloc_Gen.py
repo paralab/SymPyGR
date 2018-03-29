@@ -14,13 +14,13 @@ def bssnrhs_cudo_malloc_gen():
     output_file2 = open("t_bssnrhs_cuda_mdealloc.h", 'w')
     
     with open("test_bssnrhs_memalloc.h", "r") as f:
-        output_file1.write("int size = n * sizeof(double);\n")
+        # output_file1.write("int size = n * sizeof(double);\n")
         for line in f:
             line = line.strip().split()
             if len(line)>1:
                 output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(line[1][1:], line[1][1:])
                 output_memalloc_error_check = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(line[1][1:])
-                output_memdealloc = "cudaFree(&%s);\n"%(line[1][1:])
+                output_memdealloc = "cudaFree(%s);\n"%(line[1][1:])
 
                 output_file1.write(output_memalloc)
                 output_file1.write(output_memalloc_error_check)
@@ -60,7 +60,7 @@ def allocate_memory_for_offset_ints():
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dy cudaMemcpy failed!\n"); return;}
     """
 
-    "cudaFree(&grad_2_B1);"
+    "cudaFree(grad_2_B1);"
 
     readyToUse = ["alphaInt", "chiInt", "KInt", "gt0Int", "gt1Int", "gt2Int", "gt3Int", "gt4Int", "gt5Int", "beta0Int", "beta1Int", "beta2Int",
     "At0Int", "At1Int", "At2Int", "At3Int", "At4Int", "At5Int", "Gt0Int", "Gt1Int", "Gt2Int", "B0Int", "B1Int", "B2Int"]
@@ -81,16 +81,82 @@ def allocate_memory_for_offset_ints():
         f.write(line4)
         f.write(line5)
 
-        line6 = "cudaFree(&%s);\n"%(variableName)
+        line6 = "cudaFree(%s);\n"%(variableName)
         f2.write(line6)
 
     f.close()
     f2.close()
+
+def bssnrhs_adv_derivs_gen():
+    """
+    adv_deriv_x(agrad_0_gt0, gt0, hx, sz, beta0, bflag); // old
+
+    adv_deriv_x(agrad_0_gt0, dev_var_in, dev_gt0Int, dev_dy_hx, dev_sz, dev_beta0Int, dev_lbflag, dev_rbflag, sz); // new
+    """
+
+    output_file1 = open("t_bssnrhs_derivs_adv.h", 'w')
+
+    with open("test_bssnrhs_derivs_adv.h", "r") as f:
+        for line in f:
+            line1 = line.strip().split("(")
+            method_name = line1[0]
+
+            line1 = line1[1].split(",")
+            para1 = line1[0].strip() # agrad_0_gt0
+            para2 = line1[1].strip() # gt0
+            para3 = line1[2].strip() # hx
+            para4 = line1[3].strip() # sz
+            para5 = line1[4].strip() # beta0
+            para6 = line1[5].split(")")[0] # bflag
+
+            # print(method_name, para1, para2, para3, para4, para5, para6)
+
+            output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_sz, dev_%sInt, dev_lbflag, dev_rbflag, sz);\n"%(method_name, para1, para2, para3, para5)
+
+            # print(output_method_call)
+
+            output_file1.write(output_method_call)
+
+    output_file1.close()
+
+
+
+def bssnrhs_cudo_malloc_adv_gen():
+    """
+        // old
+         double *agrad_0_B0 = (double *) malloc(bytes);
+         double *agrad_1_B0 = (double *) malloc(bytes);
+
+
+        // new
+        double *agrad_2_gt2; cudaStatus = cudaMalloc((void**)&agrad_2_gt2, size);
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_gt2 cudaMalloc failed!\n"); return;}
+    """
+    output_file1 = open("t_bssnrhs_cuda_malloc_adv.h", 'w')
+    output_file2 = open("t_bssnrhs_cuda_mdealloc_adv.h", 'w')
+    
+    with open("test_bssnrhs_memalloc_adv.h", "r") as f:
+        # output_file1.write("int size = n * sizeof(double);\n")
+        for line in f:
+            line = line.strip().split()
+            if len(line)>1:
+                variable_name = line[1][1:].strip()
+                output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(variable_name, variable_name)
+                output_memalloc_error_check = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(variable_name)
+                output_memdealloc = "cudaFree(%s);\n"%(variable_name)
+
+                output_file1.write(output_memalloc)
+                output_file1.write(output_memalloc_error_check)
+                output_file2.write(output_memdealloc)
+    output_file1.close()
+    output_file2.close()
 
 
 def main():
     allocate_memory_for_offset_ints()
     bssnrhs_cudo_malloc_gen()
     bssnrhs_derivs_gen()
+    bssnrhs_cudo_malloc_adv_gen()
+    bssnrhs_adv_derivs_gen()
 
 main()
