@@ -8,10 +8,13 @@
 # (c) 2016 University of Utah, All rights reserved.
 ##########################################################################
 
+
 from sympy import *
-from sympy.tensor.array import *
 from sympy.functions.special.tensor_functions import KroneckerDelta
+from sympy.printing import ccode
+from sympy.tensor.array import *
 from sympy.utilities import numbered_symbols
+import GR.clustering.agglomerative_clustering as ac
 from sympy.printing import print_ccode, ccode
 
 # internal variables
@@ -45,10 +48,10 @@ Ricci = undef
 
 def d2(i, j, a):
     global d2s
-    if (i>j):
-        return d2s(j,i,a)
+    if (i > j):
+        return d2s(j, i, a)
     else:
-        return d2s(i,j,a)
+        return d2s(i, j, a)
 
 
 ##########################################################################
@@ -122,6 +125,7 @@ def set_second_derivative(g):
     d2s = Function(g)
     return d2s
 
+
 def set_advective_derivative(g):
     """
     Set how the stencil for the second derivative will be called. Here g is a string
@@ -134,6 +138,7 @@ def set_advective_derivative(g):
     ad = Function(g)
     return ad
 
+
 def set_kreiss_oliger_dissipation(g):
     """
     Set how the stencil for Kreiss-Oliger dissipation will be called. Here g is a string.
@@ -145,6 +150,7 @@ def set_kreiss_oliger_dissipation(g):
     global kod
     kod = Function(g)
     return kod
+
 
 # Covariant Derivatives
 def DiDj(a):
@@ -171,9 +177,9 @@ def _Di_Dj(a):
     term in the At evolution equation.  As with DiDj, this object is symmetric
     in both indices when acting on a scalar.
     """
-#[ewh] shouldn't this be C2 instead of C3, i.e.:
+    # [ewh] shouldn't this be C2 instead of C3, i.e.:
     global d, C2
-#    global d, d2, C3
+    #    global d, d2, C3
 
     m = Matrix([d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i]) for i, j in e_ij])
     return m.reshape(3, 3)
@@ -186,7 +192,7 @@ def up_up(A):
     """
     global inv_metric
 
-    m = Matrix([sum([inv_metric[i, k]*inv_metric[j, l]*A[k, l] for k, l in e_ij]) for i, j in e_ij])
+    m = Matrix([sum([inv_metric[i, k] * inv_metric[j, l] * A[k, l] for k, l in e_ij]) for i, j in e_ij])
     return m.reshape(3, 3)
 
 
@@ -209,14 +215,17 @@ def lie(b, a, weight=0):
         raise ValueError('Dendro: The field wrt which the Lie derivative is calculated needs to be vec3.')
 
     if type(a) == Symbol:
-        return sum([b[i] * ad(i, a) for i in e_i]) + weight*a*sum([d(i, b[i]) for i in e_i])
+        return sum([b[i] * ad(i, a) for i in e_i]) + weight * a * sum([d(i, b[i]) for i in e_i])
     elif type(a) == tuple:
-        return [sum([b[j] * ad(j, a[i]) - a[j] * d(j, b[i]) + weight*a[i]*d(j, b[j]) for j in e_i]) for i in e_i]
+        return [sum([b[j] * ad(j, a[i]) - a[j] * d(j, b[i]) + weight * a[i] * d(j, b[j]) for j in e_i]) for i in e_i]
     elif type(a) == Matrix:
-        m = Matrix([sum([b[k]*ad(k, a[i, j]) + a[i, k]*d(j, b[k]) + a[k, j]*d(i, b[k]) + weight*a[i, j]*d(k, b[k]) for k in e_i]) for i, j in e_ij])
+        m = Matrix([sum(
+            [b[k] * ad(k, a[i, j]) + a[i, k] * d(j, b[k]) + a[k, j] * d(i, b[k]) + weight * a[i, j] * d(k, b[k]) for k
+             in e_i]) for i, j in e_ij])
         return m.reshape(3, 3)
     else:
         raise ValueError('Dendro: Unknown type for input field to compute Lie derivative for.')
+
 
 def kodiss(a):
     """
@@ -225,11 +234,11 @@ def kodiss(a):
     global kod
 
     if type(a) == Symbol:
-        return sum( [ kod(i, a) for i in e_i ] )
+        return sum([kod(i, a) for i in e_i])
     elif type(a) == tuple:
-        return [ sum ( [ kod(i, a[j]) for i in e_i ] ) for j in e_i ]
+        return [sum([kod(i, a[j]) for i in e_i]) for j in e_i]
     elif type(a) == Matrix:
-        return Matrix( [ sum( [ kod(k, a[i, j]) for k in e_i ] ) for i, j in e_ij ]).reshape(3, 3)
+        return Matrix([sum([kod(k, a[i, j]) for k in e_i]) for i, j in e_ij]).reshape(3, 3)
     else:
         raise ValueError('Dendro: Unknown type for input to computer kodiss.')
 
@@ -245,11 +254,11 @@ def laplacian(a, chi):
     """
     global d, metric, C3
 
-    full_metric = metric/chi
+    full_metric = metric / chi
     inv_full_metric = simplify(full_metric.inv('ADJ'))
 
-#    return sum([(inv_full_metric[i, j] * d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
-    return sum([ inv_full_metric[i, j] * ( d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i]) ) for i, j in e_ij])
+    #    return sum([(inv_full_metric[i, j] * d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    return sum([inv_full_metric[i, j] * (d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
 
 
 def laplacian_conformal(a):
@@ -272,8 +281,8 @@ def laplacian_conformal(a):
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-#ewh3    return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
-    return sum([ inv_metric[i, j] * (d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    # ewh3    return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    return sum([inv_metric[i, j] * (d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
 
 
 def sqr(a):
@@ -285,7 +294,8 @@ def sqr(a):
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-    return sum([a[i, j]*sum([inv_metric[i, k] * inv_metric[j, l] * a[k, l] for k in e_i for l in e_i]) for i, j in e_ij])
+    return sum(
+        [a[i, j] * sum([inv_metric[i, k] * inv_metric[j, l] * a[k, l] for k in e_i for l in e_i]) for i, j in e_ij])
 
 
 def trace_free(x):
@@ -297,30 +307,32 @@ def trace_free(x):
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-    trace = sum([ inv_metric[i, j] * x[i, j] for i, j in e_ij])
+    trace = sum([inv_metric[i, j] * x[i, j] for i, j in e_ij])
 
     # X_{ab} - 1/3 gt_{ab} X.
-#    tf = Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
-    tf = Matrix([x[i, j] - metric[i,j]*trace/3 for i, j in e_ij])
+    #    tf = Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
+    tf = Matrix([x[i, j] - metric[i, j] * trace / 3 for i, j in e_ij])
 
     return tf.reshape(3, 3)
+
 
 def vec_j_del_j(b, a):
     """
     expands to  $\beta^i\partial_i \alpha$
     """
-    return sum([b[i]*d(i, a) for i in e_i])
+    return sum([b[i] * d(i, a) for i in e_i])
 
 
-#[ewh] Adding this as this term needs to be in the beta equation as an
+# [ewh] Adding this as this term needs to be in the beta equation as an
 #      advective derivative ... and not as a regular (partial) derivative.
 def vec_j_ad_j(b, f):
     """
     expands to  $\beta^i\partial_i f$
     """
-    return sum([b[i]*ad(i, f) for i in e_i])
+    return sum([b[i] * ad(i, f) for i in e_i])
 
-#vec_k_del_k = vec_j_del_j
+
+# vec_k_del_k = vec_j_del_j
 
 ##########################################################################
 # metric related functions
@@ -379,7 +391,7 @@ def get_first_christoffel():
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-#                    C1[k, i, j] = 1 / 2 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
+                    #                    C1[k, i, j] = 1 / 2 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
                     C1[k, i, j] = 0.5 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
 
     return C1
@@ -426,11 +438,12 @@ def get_complete_christoffel(chi):
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-#                    C3[i, j, k] = C2[i, j, k] - 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
-                    C3[i, j, k] = C2[i, j, k] - 0.5/(chi)*(KroneckerDelta(i, j) * d(k, chi) +
-                                                           KroneckerDelta(i, k) * d(j, chi) -
-                                                           metric[j, k]*sum([inv_metric[i, m]*d(m, chi) for m in e_i])
-                                                           )
+                    #                    C3[i, j, k] = C2[i, j, k] - 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
+                    C3[i, j, k] = C2[i, j, k] - 0.5 / (chi) * (KroneckerDelta(i, j) * d(k, chi) +
+                                                               KroneckerDelta(i, k) * d(j, chi) -
+                                                               metric[j, k] * sum(
+                                                                   [inv_metric[i, m] * d(m, chi) for m in e_i])
+                                                               )
 
     return C3
 
@@ -457,44 +470,48 @@ def compute_ricci(Gt, chi):
 
     Lchi = laplacian_conformal(chi)
 
-    #print(type(Lchi))
+    # print(type(Lchi))
 
-    #print('Done with Lphi') #simplify(Lchi))
+    # print('Done with Lphi') #simplify(Lchi))
 
 
-#ewh4    DKchiDkchi = Matrix([4*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
-    DKchiDkchi = Matrix([0.25/chi/chi*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
+    # ewh4    DKchiDkchi = Matrix([4*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
+    DKchiDkchi = Matrix([0.25 / chi / chi * metric[i, j] * sum(
+        [sum([inv_metric[k, l] * d(l, chi) for l in e_i]) * d(k, chi) for k in e_i]) for i, j in e_ij])
 
-    #print('done with DKchi') # simplify(DKchiDkchi))
+    # print('done with DKchi') # simplify(DKchiDkchi))
 
-    CalGt = [sum(inv_metric[k,l]*C2[i,k,l] for k, l in e_ij) for i in e_i]
+    CalGt = [sum(inv_metric[k, l] * C2[i, k, l] for k, l in e_ij) for i in e_i]
 
-    Rt = Matrix([-0.5*sum([inv_metric[l, m]*d2(l, m, metric[i, j]) for l, m in e_ij]) +
-              0.5*sum([metric[k,i]*d(j, Gt[k]) + metric[k,j]*d(i, Gt[k]) for k in e_i]) +
-              0.5*sum([CalGt[k]*(C1[i,j,k] + C1[j,i,k]) for k in e_i]) +
-              sum([inv_metric[l,m]*(C2[k,l,i]*C1[j,k,m] + C2[k,l,j]*C1[i,k,m] + C2[k,i,m]*C1[k,l,j])
-                   for k in e_i for l,m in e_ij]) for i,j in e_ij])
+    Rt = Matrix([-0.5 * sum([inv_metric[l, m] * d2(l, m, metric[i, j]) for l, m in e_ij]) +
+                 0.5 * sum([metric[k, i] * d(j, Gt[k]) + metric[k, j] * d(i, Gt[k]) for k in e_i]) +
+                 0.5 * sum([CalGt[k] * (C1[i, j, k] + C1[j, i, k]) for k in e_i]) +
+                 sum([inv_metric[l, m] * (
+                 C2[k, l, i] * C1[j, k, m] + C2[k, l, j] * C1[i, k, m] + C2[k, i, m] * C1[k, l, j])
+                      for k in e_i for l, m in e_ij]) for i, j in e_ij])
 
-    #print('done with Rt') #simplify(Rt))
+    # print('done with Rt') #simplify(Rt))
 
-#ewh5    Rphi_tmp = Matrix([2*metric[i, j]*Lchi - 4*d(i, chi)*d(j, chi) for i, j in e_ij])
-#dwn    Rphi_tmp = Matrix([ 0.5*metric[i, j]*Lchi/chi - 0.25*d(i, chi)*d(j, chi)/chi/chi for i, j in e_ij])
+    # ewh5    Rphi_tmp = Matrix([2*metric[i, j]*Lchi - 4*d(i, chi)*d(j, chi) for i, j in e_ij])
+    # dwn    Rphi_tmp = Matrix([ 0.5*metric[i, j]*Lchi/chi - 0.25*d(i, chi)*d(j, chi)/chi/chi for i, j in e_ij])
 
-    #print(simplify(Rphi_tmp))
+    # print(simplify(Rphi_tmp))
 
-#ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
-#dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
-    xRphi = Matrix( [ 1/(2*chi)*(d2(i,j,chi) -
-          sum(C2[k,j,i]*d(k,chi) for k in e_i)) -
-          1/(4*chi*chi)*d(i,chi)*d(j,chi) for i, j in e_ij]).reshape(3,3)
+    # ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
+    # dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
+    xRphi = Matrix([1 / (2 * chi) * (d2(i, j, chi) -
+                                     sum(C2[k, j, i] * d(k, chi) for k in e_i)) -
+                    1 / (4 * chi * chi) * d(i, chi) * d(j, chi) for i, j in e_ij]).reshape(3, 3)
 
-    Rphi = xRphi + Matrix( [
-           1/(2*chi)*metric[i,j] * ( sum(inv_metric[k,l]*(d2(k,l,chi) -
-           3/(2*chi)*d(k,chi)*d(l,chi))  for k, l in e_ij) -
-           sum(CalGt[m]*d(m,chi) for m in e_i))
-           for i, j in e_ij ] ).reshape(3,3)
+    Rphi = xRphi + Matrix([
+        1 / (2 * chi) * metric[i, j] * (sum(inv_metric[k, l] * (d2(k, l, chi) -
+                                                                3 / (2 * chi) * d(k, chi) * d(l, chi)) for k, l in
+                                            e_ij) -
+                                        sum(CalGt[m] * d(m, chi) for m in e_i))
+        for i, j in e_ij]).reshape(3, 3)
 
-    return [Rt.reshape(3, 3) + Rphi, Rt.reshape(3,3), Rphi, CalGt]
+    return [Rt.reshape(3, 3) + Rphi, Rt.reshape(3, 3), Rphi, CalGt]
+
 
 ##########################################################################
 # code generation function
@@ -506,16 +523,16 @@ def print_n_write(value, fileToWrite=None, isCExp=False, isNewLineEnd=True, **se
         # C/C++ output write and print
         c_output = ccode(value, **settings)
         print(c_output, end="")
-        if(fileToWrite!=None): fileToWrite.write(c_output)
+        if (fileToWrite != None): fileToWrite.write(c_output)
     else:
         # normal print and write
         print(str(value), end="")
-        if(fileToWrite!=None): fileToWrite.write(str(value))
-    
+        if (fileToWrite != None): fileToWrite.write(str(value))
+
     # Adding new line
     if isNewLineEnd:
         print()
-        if(fileToWrite!=None): fileToWrite.write("\n")
+        if (fileToWrite != None): fileToWrite.write("\n")
 
 
 def generate(ex, vnames, idx):
@@ -537,21 +554,21 @@ def generate(ex, vnames, idx):
             num_e = num_e + len(e)
             for j, ev in enumerate(e):
                 lexp.append(ev)
-                lname.append(vnames[i]+repr(j)+idx)
+                lname.append(vnames[i] + repr(j) + idx)
         elif type(e) == Matrix:
             num_e = num_e + len(e)
             for j, k in enumerate(mi):
                 lexp.append(e[k])
-                lname.append(vnames[i]+midx[j]+idx)
+                lname.append(vnames[i] + midx[j] + idx)
         else:
             num_e = num_e + 1
             lexp.append(e)
-            lname.append(vnames[i]+idx)
+            lname.append(vnames[i] + idx)
 
     # print(num_e)
     # print(len(lname))
     with open("bssn.cpp", 'w') as output_file:
-        
+
         print_n_write('// Dendro: {{{ ', output_file)
         print_n_write('// Dendro: original ops: ' + str(count_ops(lexp)), output_file)
 
@@ -572,48 +589,70 @@ def generate(ex, vnames, idx):
         #         print("double %s = %s;" % (v1, v2))
         #     print("%s = %s" % (vnames[i], _v[1][0]))
 
-        #mex = Matrix(ex)
-        ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+        # mex = Matrix(ex)
+        ee_name = 'DENDRO_'  # ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
         ee_syms = numbered_symbols(prefix=ee_name)
+
         _v = cse(lexp, symbols=ee_syms, optimizations='basic')
+
+        dependencies = ac.makeCompleteDependencies(_v)
+        originalVariables = ac.getAllOriginalVariables(dependencies)
+
+        featureVectors = ac.getFeatureVectors(dependencies, originalVariables)
+
+        ac.writeFeatureVectorstoCSV(originalVariables, dependencies.keys(), featureVectors)
+
+        z = ac.cluster(featureVectors)
+
+        (newz, substitutions) = ac.createVariableClusterGraphList(z, originalVariables, 3)
+
+        ac.writeClusterListToFile(newz)
+
+        ac.createClusteringGraph(newz)
+
         custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
-        rops=0
-        print_n_write('// Dendro: printing temp variables', output_file)
-        for (v1, v2) in _v[0]:
-            # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
-            print_n_write('double ', output_file, isNewLineEnd=False)
-            print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
-            rops = rops + count_ops(v2)
+        #printBSSNCPP(_v, output_file, lname, custom_functions, idx)
 
-        print_n_write('\n// Dendro: printing variables', output_file)
-        for i, e in enumerate(_v[1]):
-            print_n_write("//--", output_file)
-            # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
-            print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
-            rops = rops + count_ops(e)
 
-        print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
-        print_n_write('// Dendro: }}} ', output_file)
+def printBSSNCPP(_v, output_file, lname, custom_functions, idx):
+    rops = 0
+    print_n_write('// Dendro: printing temp variables', output_file)
+    for (v1, v2) in _v[0]:
+        # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
+        print_n_write('double ', output_file, isNewLineEnd=False)
+        print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
+        rops = rops + count_ops(v2)
 
-        print_n_write('// Dendro vectorized code: {{{', output_file)
-        oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
-        prevdefvars = set()
-        for (v1, v2) in _v[0]:
-            vv = numbered_symbols('v')
-            vlist = []
-            gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
-            print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
-        for i, e in enumerate(_v[1]):
-            print_n_write("//--", output_file)
-            vv = numbered_symbols('v')
-            vlist = []
-            gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
-            #st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
-            st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
-            print_n_write(st.replace("'",""), output_file)
+    print_n_write('\n// Dendro: printing variables', output_file)
+    for i, e in enumerate(_v[1]):
+        print_n_write("//--", output_file)
+        # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
+        print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
+        rops = rops + count_ops(e)
 
-        print_n_write('// Dendro vectorized code: }}} ', output_file)
+    print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
+    print_n_write('// Dendro: }}} ', output_file)
+
+    print_n_write('// Dendro vectorized code: {{{', output_file)
+    oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
+    prevdefvars = set()
+    for (v1, v2) in _v[0]:
+        vv = numbered_symbols('v')
+        vlist = []
+        gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
+        print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
+    for i, e in enumerate(_v[1]):
+        print_n_write("//--", output_file)
+        vv = numbered_symbols('v')
+        vlist = []
+        gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
+        # st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
+        st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
+        print_n_write(st.replace("'", ""), output_file)
+
+    print_n_write('// Dendro vectorized code: }}} ', output_file)
+
 
 def replace_pow(exp_in):
     """
@@ -623,12 +662,12 @@ def replace_pow(exp_in):
     """
     pows = list(exp_in.atoms(Pow))
     if any(not e.is_Integer for b, e in (i.as_base_exp() for i in pows)):
-         raise ValueError("Dendro: Non integer power encountered.")
-    repl = zip(pows, (Mul(*[b]*e, evaluate=False) for b, e in (i.as_base_exp() for i in pows)))
+        raise ValueError("Dendro: Non integer power encountered.")
+    repl = zip(pows, (Mul(*[b] * e, evaluate=False) for b, e in (i.as_base_exp() for i in pows)))
     return exp_in.xreplace(dict(repl))
 
 
-def generate_debug (ex, vnames):
+def generate_debug(ex, vnames):
     """
     Generate the C++ code by simplifying the expressions.
     """
@@ -660,12 +699,13 @@ def generate_debug (ex, vnames):
                 print(replace_pow(e[k]), ';')
         else:
             num_e = num_e + 1
-            #lexp.append(e)
+            # lexp.append(e)
             print(vnames[i], end='')
             print(' = ', end='')
             print(replace_pow(e), ';')
 
     print('// Dendro: }}} ')
+
 
 def vec_print_str(tv, pdvars):
     """
@@ -683,6 +723,7 @@ def vec_print_str(tv, pdvars):
         pdvars.add(tv)
     return st
 
+
 def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
     """
     create vectorized code from an expression.
@@ -698,29 +739,29 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
     """
     one = symbols('one')
     negone = symbols('negone')
-    #print (vlist)
+    # print (vlist)
     if isinstance(ex, Function):
         # check to see if we are processing a derivative
-        if isinstance(ex, ad) or isinstance(ex, d) or isinstance(ex, kod) or isinstance(ex,d2s):
-            #print('...ex and args: ',ex,ex.func,ex.args)
+        if isinstance(ex, ad) or isinstance(ex, d) or isinstance(ex, kod) or isinstance(ex, d2s):
+            # print('...ex and args: ',ex,ex.func,ex.args)
             tv = next(vsym)
             vlist.append(tv)
             st = vec_print_str(tv, prevdefvars)
             str_args = [repr(a) for a in ex.args]
             o1 = oper['load']
-            o1s = repr(o1).replace("'","")
-            idxn = idx.replace("[","")
-            idxn = idxn.replace("]","")
+            o1s = repr(o1).replace("'", "")
+            idxn = idx.replace("[", "")
+            idxn = idxn.replace("]", "")
             st += repr(tv) + ' = ' + o1s + '(' + repr(ex.func) + '_' + '_'.join(str_args) + '+' + idxn + ' );'
             # st += repr(tv) + ' = ' + repr(ex) + ';'
             # print(st.replace(idx,""))
-            print_n_write(st.replace(idx,""), fileToWrite)
+            print_n_write(st.replace(idx, ""), fileToWrite)
             return
 
     if isinstance(ex, Pow):
         # check to see if we are processing a simple pow
         a1, a2 = ex.args
-        #print('processing pow...',ex,a1,a2)
+        # print('processing pow...',ex,a1,a2)
         if isinstance(a1, Symbol) and isinstance(a2, Number):
             # This is a simple Pow function. Process it here and return
             tv = next(vsym)
@@ -759,19 +800,19 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
         tv = next(vsym)
         vlist.append(tv)
         st = vec_print_str(tv, prevdefvars)
-        st += repr(tv) +  ' = ' + repr(ex) + ';'
+        st += repr(tv) + ' = ' + repr(ex) + ';'
         # print(st)
         print_n_write(st, fileToWrite)
     elif isinstance(ex, Mul):
         nargs = len(ex.args)
-        #print('mul..',len(vlist))
-        for i in range(nargs-1):
+        # print('mul..',len(vlist))
+        for i in range(nargs - 1):
             tv = next(vsym)
             st = vec_print_str(tv, prevdefvars)
             st += repr(tv) + ' = '
             v1 = vlist.pop()
             v2 = vlist.pop()
-            #st += repr(v1) + ' * ' + repr(v2) + ';'
+            # st += repr(v1) + ' * ' + repr(v2) + ';'
             o1 = oper['mul']
             st += repr(o1) + '(' + repr(v1) + ', ' + repr(v2) + ');'
             # print(st.replace("'", ""))
@@ -779,8 +820,8 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
             vlist.append(tv)
     elif isinstance(ex, Add):
         nargs = len(ex.args)
-        #print('add..',len(vlist))
-        for i in range(nargs-1):
+        # print('add..',len(vlist))
+        for i in range(nargs - 1):
             tv = next(vsym)
             st = vec_print_str(tv, prevdefvars)
             st += repr(tv) + ' = '
@@ -797,7 +838,7 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
         qman = vlist.pop()
         a1, a2 = ex.args
         o1 = oper['mul']
-        if isinstance(a2,Integer):
+        if isinstance(a2, Integer):
             if (a2 == -1):
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' =  1.0 / ' + repr(qman) + ';'
@@ -808,7 +849,7 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                #print(st.replace("'",""))
+                # print(st.replace("'",""))
                 print_n_write(st.replace("'", ""), fileToWrite)
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = 1.0 / ' + repr(v1) + ';'
@@ -816,13 +857,13 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                #print(st.replace("'",""))
+                # print(st.replace("'",""))
                 print_n_write(st.replace("'", ""), fileToWrite)
-                for i in range(a2-3):
+                for i in range(a2 - 3):
                     v2 = next(vsym)
                     st = vec_print_str(v2, prevdefvars)
                     st += repr(v2) + ' = ' + repr(o1) + '(' + repr(v1) + ', ' + repr(qman) + ');'
-                    #print(st.replace("'",""))
+                    # print(st.replace("'",""))
                     print_n_write(st.replace("'", ""), fileToWrite)
                     v1 = v2
                 st = vec_print_str(tv, prevdefvars)
@@ -833,6 +874,6 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx, fileToWrite=None):
         else:
             st = vec_print_str(tv, prevdefvars)
             st = repr(tv) + ' = pow(' + repr(qman) + ',' + repr(qexp) + ');'
-        #print(st.replace("'",""))
+        # print(st.replace("'",""))
         print_n_write(st.replace("'", ""), fileToWrite)
         vlist.append(tv)
