@@ -24,6 +24,9 @@
 #define adv_deriv_y cuda_deriv42_adv_y
 #define adv_deriv_z cuda_deriv42_adv_z
 
+#define ko_deriv_x cuda_ko_deriv42_x
+#define ko_deriv_y cuda_ko_deriv42_y
+#define ko_deriv_z cuda_ko_deriv42_z
 
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, 
 const unsigned int unzip_dof, const unsigned int& offset, 
