@@ -791,8 +791,7 @@ __global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * d
     if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
     
     int pp = IDX(i, j, k);
-    //printf("pp = %f\n", dev_var_in[*dev_betax + pp]);
-    printf("ie = %d, je = %d, ke = %d\n", i, j, k);
+    //printf("ie = %d, je = %d, ke = %d\n", i, j, k);
     if (dev_var_in[*dev_betax + pp] > 0.0 ) {
         output[pp] = ( -  3.0 * dev_var_in[*dev_u_offset + pp - 1]
                     - 10.0 * dev_var_in[*dev_u_offset + pp]
@@ -891,7 +890,7 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
-    printf("ie = %d, je = %d, ke = %d\n", ie, je, ke);
+    //printf("ie = %d, je = %d, ke = %d\n", ie, je, ke);
 
     int temp_max = (ie>je)? ie : je;
     int maximumIterations = (temp_max>ke) ? temp_max: ke;
@@ -900,7 +899,7 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
         requiredBlocks++;
     }
-    printf("requiredBlocks = %d\n", requiredBlocks);
+    //printf("requiredBlocks = %d\n", requiredBlocks);
     int threads_x = ie / requiredBlocks;
     int threads_y = je / requiredBlocks;
     int threads_z = ke / requiredBlocks;
