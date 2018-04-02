@@ -1,5 +1,8 @@
 #include "rhs.h"
 
+#include "test_param.h"     // including global "test" variable
+
+
 using namespace std;
 enum VAR {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};
 enum VAR_CONSTRAINT {C_HAM=0, C_MOM0, C_MOM1,C_MOM2};
@@ -123,6 +126,15 @@ bssn::timer::t_deriv.start();
 #include "bssnrhs_memalloc_adv.h"
 #include "bssnrhs_derivs.h"
 #include "bssnrhs_derivs_adv.h"
+
+
+
+// writing cuda derivative results to a file ---------------------------------------------------------
+
+#include "test_cpu_fw.h"      
+
+//--------------------------------------------------------------------------------------------------
+
 
 bssn::timer::t_deriv.stop();
 

@@ -1,6 +1,8 @@
 #include "rhs_cuda.h"
 #include "bssneqn_solve.h"
 
+#include "test_param.h"
+
 #include <iostream>
 #include <stdio.h>
 
@@ -116,6 +118,10 @@ const unsigned int& bflag)
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
+
+    // copying test gpu values to cpu -------------------------------------------------------------------------
+    #include "test_cuda.h"   
+    //---------------------------------------------------------------------------------------------------------
 
     bssn::timer::t_deriv.stop();
 

@@ -8,6 +8,10 @@
 //
 #include "computeBSSN.h" 
 
+#if(1)
+    #include "test_param.h"
+    #include "test_param_init.h"
+#endif
 
 int main (int argc, char** argv)
 {
@@ -64,7 +68,8 @@ int main (int argc, char** argv)
     const unsigned long unzip_dof=unzipSz;
 
     // 2. a. allocate memory for bssn computation on CPU. -----------------------------------------------
-    #if 0
+    // for testing only
+    #if (1)
     double ** var_in=new double*[BSSN_NUM_VARS];
     double ** var_out=new double*[BSSN_NUM_VARS];
 
@@ -81,10 +86,11 @@ int main (int argc, char** argv)
         }
     }
     #endif
+    
+   
     //------------------------------------------------------------------------------------------------
     
     // 2. b. Allocate memory on GPU for bssn computation----------------------------------------------------
-    #if 1
     cudaError_t cudaStatus;
     // Choose which GPU to run on, change this on a multi-GPU system.
      cudaStatus = cudaSetDevice(0);
@@ -119,7 +125,6 @@ int main (int argc, char** argv)
     
     cudaStatus = cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
-    #endif
     //-----------------------------------------------------------------------------------------------------------------
 
     unsigned int offset;
@@ -153,38 +158,47 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        // //CPU bssnrhs call
-        // #include "rhs.h"
-        // bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
-        
         // CUDA_bssnrhs call
         #include "rhs_cuda.h"
         printf("blockNo: %d \t| TotalBlockPoints: %d \t| Est. GPU memory req: %d mb\n", blk, sz[0]*sz[0]*sz[0],  (sz[0]*sz[0]*sz[0]*210*8 + 24*4)/1024/1024);
         cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
+    
+
+        // writing cuda derivative results to a file -----------------------------------------------------------------------------------------------------------
+        
+        #include "test_cuda_fw.h"
+
+        //------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+    // testing cpu derivative results ------------------------------------------------------------------------------------------------------------------------
+    if(test==1){
+      //CPU bssnrhs call
+        #include "rhs.h"
+        bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+        for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+        {
+            delete [] var_in[i];
+            delete [] var_out[i];
+        }
+        delete [] var_in;
+        delete [] var_out;
+    }
+    //---------------------------------------------------------------------------------------------------------------------------------------------------------
+    
+
     }
     printf("-------------------------\n");
     //-- timer end
     // (time this part of the code. )
 
-    // CPU code
-    #if 0
-    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
-    {
-        delete [] var_in[i];
-        delete [] var_out[i];
-    }
-    delete [] var_in;
-    delete [] var_out;
-    #endif
-
     // GPU code
-    #if 1
     delete [] host_var_in;
     delete [] host_var_out;
     // Free up GPU memory
     cudaFree(dev_var_in);
     cudaFree(dev_var_out);
-    #endif
 
     delete [] blkList;
 
