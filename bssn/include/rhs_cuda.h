@@ -5,7 +5,7 @@
 
 #ifndef RHS_CUDA_H_
 #define RHS_CUDA_H_
-
+#include <cmath>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
