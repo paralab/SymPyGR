@@ -191,26 +191,113 @@ __global__ void cacl_bssn_bcs_y(double * output, double * dev_var_in, int* dev_u
     const double *pmin,const double *pmax, const double f_falloff, const double f_asymptotic,
     int *dev_sz, int* dev_bflag) {
 
+        int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+        int k = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+        int nx = dev_sz[0];
+        int ny = dev_sz[1];
+        int nz = dev_sz[2];
 
+        if(i >= nx-3 || k >= nz-3) return;
 
+        double inv_r;
+        double hx = (pmax[0] - pmin[0]) / (nx - 1);
+        double hy = (pmax[1] - pmin[1]) / (ny - 1);
+        double hz = (pmax[2] - pmin[2]) / (nz - 1);
+        int x, y, z, pp;
+
+        if (*dev_bflag & (1u<<OCT_DIR_DOWN)) {
+            
+            y = pmin[1] + 3*hy;
+            z = pmin[2] + k*hz;
+            x = pmin[0] + i*hx;
+            pp = IDX(i,3,k);
+            inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+   
+            output[*dev_u_offset + pp] = -  inv_r * (
+                            x * dxf[pp]
+                          + y * dyf[pp]
+                          + z * dzf[pp]
+                          + f_falloff * (   dev_var_in[*dev_u_offset + pp] - f_asymptotic ) );
+            
+          }
+        
+          if (*dev_bflag & (1u<<OCT_DIR_UP)) {
+             x = pmin[0] + i*hx;
+             z = pmin[2] + k*hz;
+             y = pmin[1] + (ny-3)*hy;
+             pp = IDX(i,(ny - 3),k);
+             inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+    
+             output[*dev_u_offset + pp] = -  inv_r * (
+                             x * dxf[pp]
+                           + y * dyf[pp]
+                           + z * dzf[pp]
+                           + f_falloff * (   dev_var_in[*dev_u_offset + pp] - f_asymptotic ) );
+               
+          }
 }
 
 __global__ void cacl_bssn_bcs_z(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
     const double *pmin,const double *pmax, const double f_falloff, const double f_asymptotic,
     int *dev_sz, int* dev_bflag) {
+        
+            int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+            int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+            int nx = dev_sz[0];
+            int ny = dev_sz[1];
+            int nz = dev_sz[2];
 
+            if(i >= nx-3 || j >= ny-3) return;
 
+            double inv_r;
+            double hx = (pmax[0] - pmin[0]) / (nx - 1);
+            double hy = (pmax[1] - pmin[1]) / (ny - 1);
+            double hz = (pmax[2] - pmin[2]) / (nz - 1);
+            int x, y, z, pp;
 
+            if (*dev_bflag & (1u<<OCT_DIR_BACK)) {
+            
+            y = pmin[1] + j*hy;
+            z = pmin[2] + 3*hz;
+            x = pmin[0] + i*hx;
+            pp = IDX(i,j,3);
+            inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+   
+            output[*dev_u_offset + pp] = -  inv_r * (
+                            x * dxf[pp]
+                          + y * dyf[pp]
+                          + z * dzf[pp]
+                          + f_falloff * (   dev_var_in[*dev_u_offset + pp] - f_asymptotic ) );
+            
+          }
+        
+          if (*dev_bflag & (1u<<OCT_DIR_FRONT)) {
+            x = pmin[0] + i*hx;
+            z = pmin[2] + (nz-3)*hz;
+            y = pmin[1] + j*hy;
+            pp = IDX(i,j,3);
+            inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+    
+            output[*dev_u_offset + pp] = -  inv_r * (
+                             x * dxf[pp]
+                           + y * dyf[pp]
+                           + z * dzf[pp]
+                           + f_falloff * (   dev_var_in[*dev_u_offset + pp] - f_asymptotic ) );
+               
+          }
 }
 void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
     const double *pmin, const double *pmax, const double f_falloff, const double f_asymptotic,
     const unsigned int *host_sz, int* dev_bflag, int* dev_sz) {
-
+        
+        cudaError_t cudaStatus;
+        const unsigned int nx = host_sz[0];
         const unsigned int ny = host_sz[1];
         const unsigned int nz = host_sz[2];
 
+        const int ie = nx - 3;//x direction
         const int je = ny - 3;//y direction
         const int ke = nz - 3;//z direction
 
@@ -224,5 +311,38 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         cacl_bssn_bcs_x <<< dim3(threads_y,threads_z), dim3(threads_y,threads_z) >>> (output, dev_var_in,
            dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
 
+        cudaStatus = cudaDeviceSynchronize();
+           if (cudaStatus != cudaSuccess) {
+                   fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_x kernal!\n", cudaStatus);
+                   return;
+           }
+        
+        maximumIterations = (ke>ie) ? ke : ie ;
+        requiredBlocks = (9 + maximumIterations)/10;
+        int threads_x = (requiredBlocks-1+ie) / requiredBlocks;
+        threads_z = (requiredBlocks-1+ke) / requiredBlocks;
+        cacl_bssn_bcs_y <<< dim3(threads_x,threads_z), dim3(threads_x,threads_z) >>> (output, dev_var_in,
+            dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
+ 
+        cudaStatus = cudaDeviceSynchronize();
+        if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_y kernal!\n", cudaStatus);
+            return;
+        }
+
+        maximumIterations = (je>ie) ? je : ie ;
+        requiredBlocks = (9 + maximumIterations)/10;
+        threads_x = (requiredBlocks-1+ie) / requiredBlocks;
+        threads_y = (requiredBlocks-1+je) / requiredBlocks;
+        cacl_bssn_bcs_z <<< dim3(threads_x,threads_y), dim3(threads_x,threads_y) >>> (output, dev_var_in,
+            dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
+ 
+        cudaStatus = cudaDeviceSynchronize();
+        if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+            return;
+        }
+
+        
 
     }
