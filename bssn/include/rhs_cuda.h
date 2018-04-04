@@ -5,7 +5,7 @@
 
 #ifndef RHS_CUDA_H_
 #define RHS_CUDA_H_
-
+#include <cmath>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -32,5 +32,11 @@ void cuda_bssnrhs(double * dev_var_out, double * dev_var_in,
 const unsigned int unzip_dof, const unsigned int& offset, 
 const double *pmin,const double *pmax, const unsigned int *sz, 
 const unsigned int& bflag);
+
+void bssn_bcs(double *f_rhs, const double *f,
+              const double *dxf, const double *dyf, const double *dzf,
+              const double *pmin, const double *pmax,
+              const double f_falloff, const double f_asymptotic,
+              const unsigned int *sz, const unsigned int &bflag);
 
 #endif
