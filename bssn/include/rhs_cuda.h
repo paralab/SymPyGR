@@ -11,7 +11,6 @@
 
 #include "derivs_cuda.h"
 #include "profile_param.h"
-#include "test_param.h"
 
 #define deriv_x cuda_deriv42_x
 #define deriv_y cuda_deriv42_y

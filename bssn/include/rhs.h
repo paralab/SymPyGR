@@ -6,7 +6,6 @@
 #include <time.h>
 #include "derivs.h"
 #include "profile_param.h"
-#include "test_param.h"
 
 #define deriv_x deriv42_x
 #define deriv_y deriv42_y

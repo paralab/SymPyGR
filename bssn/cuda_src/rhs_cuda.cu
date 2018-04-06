@@ -128,7 +128,7 @@ const unsigned int& bflag)
     
     test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
 
-    cudaFree(host_array_cpu);
+    free(host_array_cpu);
     #endif
 
 //     int sizeArray=(sz[2]-3)*(sz[1]-3)*(sz[0]-3);
