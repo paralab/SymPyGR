@@ -11,6 +11,7 @@
 #define BSSN_PROFILE_PARAM_H
 
 #include "bssn_profiler.h"
+#include "test_param.h"
 
 namespace bssn
 {
