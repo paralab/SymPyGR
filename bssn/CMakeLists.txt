@@ -43,6 +43,7 @@ set(INC_FILES
         include/profile_param.h
 	include/bssneqn_solve.h
         include/cuda_bssneqs.h
+        include/test_support.h
         )
 
 set(SRC_FILES
@@ -51,6 +52,7 @@ set(SRC_FILES
         src/bssn_profiler.cpp
 	src/rhs.cpp
         src/profile_param.cpp
+        src/test_support.cpp
         )
 
 if(CUDA_FOUND)

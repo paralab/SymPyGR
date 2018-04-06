@@ -7,9 +7,8 @@
 */
 //
 #include "computeBSSN.h" 
-
 #include "test_param.h"
-double * grad_0_alpha_cpu = NULL;
+
 
 int main (int argc, char** argv)
 {
@@ -34,9 +33,6 @@ int main (int argc, char** argv)
     bssn::timer::t_deriv.start();
     bssn::timer::t_rhs.start();
     bssn::timer::t_bdyc.start();
-
-    
-    bssn::timer::total_runtime.start();
 
     unsigned int num_blks=100;
     unsigned int blk_lb=0;
@@ -154,24 +150,10 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        // //CPU bssnrhs call
-        // #include "rhs.h"
-        // bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
-        
-        // // CUDA_bssnrhs call
-        // #include "rhs_cuda.h"
-        // printf("blockNo: %d \t| TotalBlockPoints: %d \t| Est. GPU memory req: %d mb\n", blk, sz[0]*sz[0]*sz[0],  (sz[0]*sz[0]*sz[0]*210*8 + 24*4)/1024/1024);
-        // cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
-
         // CPU bssnrhs call
         #if isCPU
         #include "rhs.h"
         bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
-
-            // writing specified array in test_param.h to file
-            #if test
-            #include "test_cpu_fw.h"      
-            #endif
         #endif
 
           // CUDA_bssnrhs call
@@ -179,11 +161,6 @@ int main (int argc, char** argv)
         #include "rhs_cuda.h"
         printf("blockNo: %d \t| TotalBlockPoints: %d \t| Est. GPU memory req: %d mb\n", blk, sz[0]*sz[1]*sz[2],  (sz[0]*sz[1]*sz[2]*210*8 + 24*4)/1024/1024);
         cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
-        
-            // writing cuda derivative results to a file
-            #if test
-            #include "test_cuda_fw.h"
-            #endif
         #endif
 
 

@@ -47,6 +47,9 @@ void bssn::timer::profileInfo()
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--bdy cond.(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
-
+    #if test
+    double times[4] = {(double) total_runtime.seconds, (double) t_deriv.seconds, (double) t_rhs.seconds, (double) t_bdyc.seconds};
+    test_file_write::appendToFile("performance.txt", times, 4);
+    #endif
 
 }

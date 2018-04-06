@@ -4,7 +4,6 @@
 #include <iostream>
 #include <stdio.h>
 
-#include "test_param.h"
 
 enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};
 
@@ -126,12 +125,13 @@ const unsigned int& bflag)
 
     #if test
     // Copying specified array to CPU for testing purpose
-    grad_0_alpha_cpu = (double *) malloc(size);
+    double * host_array_cpu = (double *) malloc(size);
+    cudaStatus = cudaMemcpy(host_array_cpu, grad_1_alpha, size, cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
+    
+    test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
 
-    cudaStatus = cudaMemcpy(grad_0_alpha_cpu, grad_0_alpha, size, cudaMemcpyDeviceToHost);
-
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: grad_0_alpha cudaMemcpy from GPU to CPU failed!\n"); return;}
-    return;
+    free(host_array_cpu);
     #endif
 
 //     int sizeArray=(sz[2]-3)*(sz[1]-3)*(sz[0]-3);
