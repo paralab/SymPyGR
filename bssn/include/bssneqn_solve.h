@@ -255,9 +255,10 @@ double *dev_hy,
 double *dev_hz,
 double *dev_var_in,
 double *dev_var_out,
-int *dev_sizeArray
+int *dev_sizeArray,
+int *offset
 );
-	
+
 void callculateBSSN_EQ(
     double *grad_0_alpha,
     double *grad_1_alpha,

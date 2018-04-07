@@ -1,6 +1,3 @@
-// Dendro: {{{ 
-// Dendro: original ops:  667747
-// Dendro: printing temp variables
 double DENDRO_0 = 2*dev_var_in[*dev_alphaInt+pp];
 double DENDRO_1 = 0.75*dev_var_in[*dev_alphaInt+pp]*lambda_f[1] + 0.75*lambda_f[0];
 double DENDRO_2 = grad_0_beta0[pp];
