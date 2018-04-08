@@ -22,3 +22,4 @@ cudaFree(dev_Gt2Int);
 cudaFree(dev_B0Int);
 cudaFree(dev_B1Int);
 cudaFree(dev_B2Int);
+cudaFree(dev_bflag);

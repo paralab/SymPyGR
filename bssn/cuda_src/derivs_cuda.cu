@@ -5,589 +5,172 @@
 
  #include "derivs_cuda.h"
 
-__global__ void cuda_deriv42_y_firstThreeForLoops(double* output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-    int x = threadIdx.x + blockIdx.x*10;
-    int y = threadIdx.y + blockIdx.x*10;
-    int z = threadIdx.z + blockIdx.x*10;
 
-    int i;
-    int j;
-    int k;
+ __global__ void calc_deriv42_x(double * output, double * dev_var_in, 
+        const int * dev_u_offset, double * dev_dy, int * dev_sz, int* dev_bflag)
+ {
 
-    if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } //i handler
-    if( (dev_sz[1]-3-3)<=y ){ return; } else { j = y+3; } //j handler
-    if( (dev_sz[2]-1-1)<=z ){ return; } else { k = z+1; } //k handler
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
+    if(i >= nx-3 || j >= ny-1 || k >= dev_sz[2]-1) return;
+    
     int pp = IDX(i, j, k);
-
-    output[pp] = (dev_var_in[(*dev_u_offset) + pp - 2*dev_sz[0]] - 8.0*dev_var_in[(*dev_u_offset) + pp - dev_sz[0]] + 8.0*dev_var_in[(*dev_u_offset) + pp + dev_sz[0]] - dev_var_in[(*dev_u_offset) + pp + 2*dev_sz[0]] )*((1.0/dev_dy[0])/12.0);
-    // printf("%f\n", output[pp]);
-}
-
-__global__ void cuda_deriv42_y_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-    int x = threadIdx.x + blockIdx.x*30;
-    int z = threadIdx.y + blockIdx.x*30;
-
-    int i;
-    int k;
-
-    if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } //i handler
-    if( (dev_sz[2]-1-1)<=z ){ return; } else { k = z+1; } //k handler
-
-    int nx = dev_sz[0];
-    int ny = dev_sz[1];
-
-    int pp3 = IDX(i, 3, k);
-    int pp4 = IDX(i, 4, k);
-    int pp5 = IDX(i, 5, k);
-
-    output[pp3] = ((-3)*dev_var_in[(*dev_u_offset) + pp3] +  4*dev_var_in[(*dev_u_offset) + pp4] - dev_var_in[(*dev_u_offset) + pp5]) * 0.5 / dev_dy[0];
-    output[pp4] = (dev_var_in[(*dev_u_offset) + pp5] - dev_var_in[(*dev_u_offset) + pp3]) * (0.50/dev_dy[0]);
-    // printf("%f\n", output[pp3]);
- }
-
- __global__ void cuda_deriv42_y_thirdTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
- {
-    int x = threadIdx.x + blockIdx.x*30;
-    int z = threadIdx.y + blockIdx.x*30;
-
-    int i;
-    int k;
-
-    if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } //i handler
-    if( (dev_sz[2]-1-1)<=z ){ return; } else { k = z+1; } //k handler
-
-    int nx = dev_sz[0];
-    int ny = dev_sz[1];
-
-    int pp2 = IDX(i, dev_sz[1]-5, k); // IDX(i,je-2,k)
-    int pp3 = IDX(i, dev_sz[1]-6, k); // IDX(i,je-3,k)
-    int pp1 = IDX(i, dev_sz[1]-4, k); // IDX(i,je-1,k)
-
-    output[pp2] = (dev_var_in[(*dev_u_offset) + pp1] - dev_var_in[(*dev_u_offset) + pp3]) * 0.50 / dev_dy[0];
-    output[pp1] = (dev_var_in[(*dev_u_offset) + pp3]- 4.0 * dev_var_in[(*dev_u_offset) + pp2]+ 3.0 * dev_var_in[(*dev_u_offset) + pp1]) * 0.50 / dev_dy[0];
-    // printf("%f\n", output[pp1]);
- }
  
- // Please some one verify the below kernals carefully -------------------------------------------------------------------------------
- __global__ void cuda_deriv42_x_firstThreeForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-    int x = threadIdx.x + blockIdx.x*10;
-    int y = threadIdx.y + blockIdx.x*10;
-    int z = threadIdx.z + blockIdx.x*10;
+    output[pp] = (dev_var_in[(*dev_u_offset) + pp - 2] - 8.0*dev_var_in[(*dev_u_offset)
+                     + pp - 1] + 8.0*dev_var_in[(*dev_u_offset) + pp + 1] 
+                     - dev_var_in[(*dev_u_offset) + pp + 2] )*((1.0/dev_dy[0])/12.0);
 
-    int i;
-    int j;
-    int k;
+    if ((*dev_bflag & (1u<<OCT_DIR_LEFT)) && i==3)  {
+        int pp3 = IDX(3, j, k);
+        int pp4 = IDX(4, j, k);
+        int pp5 = IDX(5, j, k);
+        output[pp3] = ((-3)*dev_var_in[(*dev_u_offset) + pp3] + 4*dev_var_in[(*dev_u_offset) 
+                    + pp4] - dev_var_in[(*dev_u_offset) + pp5]) * 0.5 / dev_dy[0];
+        output[pp4] = (dev_var_in[(*dev_u_offset) + pp5] - dev_var_in[(*dev_u_offset) 
+                    + pp3]) * (0.50/dev_dy[0]);
+    }
 
-    if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } //i handler
-    if( (dev_sz[1]-1-1)<=y ){ return; } else { j = y+1; } //j handler
-    if( (dev_sz[2]-1-1)<=z ){ return; } else { k = z+1; } //k handler
+    if ((*dev_bflag & (1u<<OCT_DIR_RIGHT)) && i==4)  {
+        int pp2 = IDX(nx-5, j, k); // IDX(ie-2,j,k)
+        int pp3 = IDX(nx-6, j, k); // IDX(ie-3,j,k)
+        int pp1 = IDX(nx-4,j,k); // IDX(ie-1,j,k)
+        output[pp2] = (dev_var_in[(*dev_u_offset) + pp1] - dev_var_in[(*dev_u_offset) + pp3]) 
+                    * 0.50 / dev_dy[0];
+        output[pp1] = (dev_var_in[(*dev_u_offset) + pp3]- 4.0 * dev_var_in[(*dev_u_offset) + pp2]
+                    + 3.0 * dev_var_in[(*dev_u_offset) + pp1]) * 0.50 / dev_dy[0];
 
-    int nx = dev_sz[0]; 
-    int ny = dev_sz[1]; 
-    int pp = IDX(i, j, k);
+    }
+    
+ }
 
-    output[pp] = (dev_var_in[(*dev_u_offset) + pp - 2] - 8.0*dev_var_in[(*dev_u_offset) + pp - 1] + 8.0*dev_var_in[(*dev_u_offset) + pp + 1] - dev_var_in[(*dev_u_offset) + pp + 2] )*((1.0/dev_dy[0])/12.0);
-    // printf("%f\n", output[pp]);
-}
-
-__global__ void cuda_deriv42_x_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int j;
-   int k;
-
-   if( (dev_sz[1]-1-1)<=x ){ return; } else { j = x+1; } 
-   if( (dev_sz[2]-1-1)<=z ){ return; } else { k = z+1; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp3 = IDX(3, j, k);
-   int pp4 = IDX(4, j, k);
-   int pp5 = IDX(5, j, k);
-
-   output[pp3] = ((-3)*dev_var_in[(*dev_u_offset) + pp3] + 4*dev_var_in[(*dev_u_offset) + pp4] - dev_var_in[(*dev_u_offset) + pp5]) * 0.5 / dev_dy[0];
-   output[pp4] = (dev_var_in[(*dev_u_offset) + pp5] - dev_var_in[(*dev_u_offset) + pp3]) * (0.50/dev_dy[0]);
-   // printf("%f\n", output[pp3]);
-}
-
-__global__ void cuda_deriv42_x_thirdTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int j;
-   int k;
-
-   if( (dev_sz[1]-1-1)<=x ){ return; } else { j = x+1; } 
-   if( (dev_sz[2]-1-1)<=z ){ return; } else { k = z+1; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp2 = IDX(dev_sz[0]-5, j, k); // IDX(ie-2,j,k)
-   int pp3 = IDX(dev_sz[0]-6, j, k); // IDX(ie-3,j,k)
-   int pp1 = IDX(dev_sz[0]-4,j,k); // IDX(ie-1,j,k)
-
-   output[pp2] = (dev_var_in[(*dev_u_offset) + pp1] - dev_var_in[(*dev_u_offset) + pp3]) * 0.50 / dev_dy[0];
-   output[pp1] = (dev_var_in[(*dev_u_offset) + pp3]- 4.0 * dev_var_in[(*dev_u_offset) + pp2]+ 3.0 * dev_var_in[(*dev_u_offset) + pp1]) * 0.50 / dev_dy[0];
-   // printf("%f\n", output[pp1]);
-}
-
-__global__ void cuda_deriv42_z_firstThreeForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*10;
-   int y = threadIdx.y + blockIdx.x*10;
-   int z = threadIdx.z + blockIdx.x*10;
-
-   int i;
-   int j;
-   int k;
-
-   if( (dev_sz[2]-3-3)<=x ){ return; } else { k = x+3; }
-   if( (dev_sz[0]-3-3)<=y ){ return; } else { i = y+3; }
-   if( (dev_sz[1]-3-3)<=z ){ return; } else { j = z+3; }
-
-   int nx = dev_sz[0]; 
-   int ny = dev_sz[1]; 
-   int n = nx * ny;
-   int pp = IDX(i, j, k);
-   
-   output[pp] = (dev_var_in[(*dev_u_offset) + pp - 2*n] - 8.0*dev_var_in[(*dev_u_offset) + pp - n] + 8.0*dev_var_in[(*dev_u_offset) + pp + n] - dev_var_in[(*dev_u_offset) + pp + 2*n]) * ((1.0/dev_dy[0])/12);
-   // printf("%f\n", output[pp]);
-}
-
-__global__ void cuda_deriv42_z_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int j;
-   int i;
-
-   if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } 
-   if( (dev_sz[1]-3-3)<=z ){ return; } else { j = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp3 = IDX(i, j, 3); // IDX(i, j, 3)
-   int pp4 = IDX(i, j, 4); // IDX(i,j,4)
-   int pp5 = IDX(i, j, 5); // IDX(i,j,5)
-
-   output[pp3] = ((-3)*dev_var_in[(*dev_u_offset) + pp3] + 4*dev_var_in[(*dev_u_offset) + pp4] - dev_var_in[(*dev_u_offset) + pp5]) * 0.5 / dev_dy[0];
-   output[pp4] = (dev_var_in[(*dev_u_offset) + pp5] - dev_var_in[(*dev_u_offset) + pp3]) * (0.50/dev_dy[0]);
-   // printf("%f\n", output[pp3]);
-}
-
-__global__ void cuda_deriv42_z_thirdTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int i;
-   int j;
-
-   if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } 
-   if( (dev_sz[1]-3-3)<=z ){ return; } else { j = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp2 = IDX(i, j, dev_sz[2]-5); // IDX(i,j,ke-2)
-   int pp3 = IDX(i, j, dev_sz[2]-6); // IDX(i,j,ke-3)
-   int pp1 = IDX(i, j, dev_sz[2]-4); // IDX(i,j,ke-1)
-
-   output[pp2] = (dev_var_in[(*dev_u_offset) + pp1] - dev_var_in[(*dev_u_offset) + pp3]) * 0.50 / dev_dy[0];
-   output[pp1] = (dev_var_in[(*dev_u_offset) + pp3]- 4.0 * dev_var_in[(*dev_u_offset) + pp2]+ 3.0 * dev_var_in[(*dev_u_offset) + pp1]) * 0.50 / dev_dy[0];
-   // printf("%f\n", output[pp1]);
-}
-
-__global__ void cuda_deriv42_xx_firstThreeForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
+ void cuda_deriv42_x(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
+        int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
  {
-    int x = threadIdx.x + blockIdx.x*10;
-    int y = threadIdx.y + blockIdx.x*10;
-    int z = threadIdx.z + blockIdx.x*10;
+ 
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 1;//y direction
+    const int ke = host_sz[2] - 1;//z direction
+  
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+     
+    int requiredBlocks = (9+maximumIterations) / 10;
+    
+    calc_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                      dim3((ie + requiredBlocks -1)/requiredBlocks,
+                      (je + requiredBlocks -1)/requiredBlocks, 
+                      (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                        dev_u_offset, dev_dy, dev_sz, dev_bflag);
+ 
+     // Check for any errors launching the kernel
+     cudaError_t cudaStatus;
+     cudaStatus = cudaGetLastError();
+     if (cudaStatus != cudaSuccess) {
+         fprintf(stderr, "cuda_deriv42_x_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+         return;
+     }
+     // cudaDeviceSynchronize waits for the kernel to finish, and returns
+     // any errors encountered during the launch.
+     cudaStatus = cudaDeviceSynchronize();
+     if (cudaStatus != cudaSuccess) {
+         fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_x_firstThreeForLoops kernal!\n", cudaStatus);
+         return;
+     }
+ 
+     // No GPU code for the following part
+     // #ifdef DEBUG_DERIVS_COMP
+     //     #pragma message("DEBUG_DERIVS_COMP: ON")
+     //     for (int k = 3; k < sz[2]-3; k++) {
+     //         for (int j = 3; j < sz[1]-3; j++) {
+     //             for (int i = 3; i < sz[0]-3; i++) {
+     //                 int pp = IDX(i,j,k);
+     //                 if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+     //                 }
+     //             }
+     //         }
+     // #endif
+ }
 
-    int i;
-    int j;
-    int k;
-
-    if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } //i handler
-    if( (dev_sz[1]-3-3)<=y ){ return; } else { j = y+3; } //j handler
-    if( (dev_sz[2]-3-3)<=z ){ return; } else { k = z+1; } //k handler
+__global__ void calc_deriv42_y(double* output, double * dev_var_in, const int * dev_u_offset,
+                         double * dev_dy, int * dev_sz, int* dev_bflag)
+{
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
+    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-1) return;
+    
     int pp = IDX(i, j, k);
 
-    output[pp] = (
-        (-1)*dev_var_in[(*dev_u_offset) + pp - 2] 
-        + 16.0*dev_var_in[(*dev_u_offset) + pp - 1] 
-        - 30.0*dev_var_in[(*dev_u_offset) + pp] 
-        + 16.0*dev_var_in[(*dev_u_offset) + pp + 1] 
-        - dev_var_in[(*dev_u_offset) + pp + 2] 
-    )*(1.0/(dev_dy[0]*dev_dy[0]))/12.0;
-
-    // printf("%1.20f\n", output[pp]);
-}
-
-__global__ void cuda_deriv42_xx_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int j;
-   int k;
-
-   if( (dev_sz[1]-3-3)<=x ){ return; } else { j = x+3; } 
-   if( (dev_sz[2]-3-3)<=z ){ return; } else { k = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp3 = IDX(3, j, k); 
-   int pp4 = IDX(4, j, k); 
-   int pp5 = IDX(5, j, k); 
-   int pp6 = IDX(6, j, k); 
-
-   output[pp3] = (
-            2.0 *   dev_var_in[(*dev_u_offset) + pp3] 
-        -   5.0 *   dev_var_in[(*dev_u_offset) + pp4] 
-        +   4.0 *   dev_var_in[(*dev_u_offset) + pp5] 
-        -           dev_var_in[(*dev_u_offset) + pp6]
-       ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-   output[pp4] = (
-                    dev_var_in[(*dev_u_offset) + pp3]
-        -   2.0 *   dev_var_in[(*dev_u_offset) + pp4]
-        +           dev_var_in[(*dev_u_offset) + pp5]
-    ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-//    printf("%f\n", output[pp3]);
-}
-
-__global__ void cuda_deriv42_xx_thirdTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int k;
-   int j;
-
-   if( (dev_sz[2]-3-3)<=x ){ return; } else { k = x+3; } 
-   if( (dev_sz[1]-3-3)<=z ){ return; } else { j = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp1 = IDX(dev_sz[0] - 4, j, k); // IDX(ie-1,j,k)
-   int pp2 = IDX(dev_sz[0] - 5, j, k); // IDX(ie-2,j,k)
-   int pp3 = IDX(dev_sz[0] - 6, j, k); // IDX(ie-3,j,k)
-   int pp4 = IDX(dev_sz[0] - 7, j, k); // IDX(ie-4,j,k)
-
-   output[pp2] = (
-                    dev_var_in[(*dev_u_offset) + pp3] 
-        -   2.0 *   dev_var_in[(*dev_u_offset) + pp2] 
-        +           dev_var_in[(*dev_u_offset) + pp1] 
-        ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-
-    output[pp1] = (
-        -   1.0 *   dev_var_in[(*dev_u_offset) + pp4] 
-        +   4.0 *   dev_var_in[(*dev_u_offset) + pp3] 
-        -   5.0 *   dev_var_in[(*dev_u_offset) + pp2] 
-        +   2.0 *   dev_var_in[(*dev_u_offset) + pp1]
-        ) * 1.0/(dev_dy[0]*dev_dy[0]);
-   // printf("%f\n", output[pp1]);
-}
-
-
-__global__ void cuda_deriv42_yy_firstThreeForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
- {
-    int x = threadIdx.x + blockIdx.x*10;
-    int y = threadIdx.y + blockIdx.x*10;
-    int z = threadIdx.z + blockIdx.x*10;
-
-    int i;
-    int j;
-    int k;
-
-    if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } 
-    if( (dev_sz[1]-3-3)<=y ){ return; } else { j = y+3; } 
-    if( (dev_sz[2]-3-3)<=z ){ return; } else { k = z+1; } 
-
-    int nx = dev_sz[0]; 
-    int ny = dev_sz[1]; 
-    int pp = IDX(i, j, k);
-
-    output[pp] = (
-        (-1)*dev_var_in[(*dev_u_offset) + pp - 2*nx] 
-        + 16.0*dev_var_in[(*dev_u_offset) + pp - nx] 
-        - 30.0*dev_var_in[(*dev_u_offset) + pp] 
-        + 16.0*dev_var_in[(*dev_u_offset) + pp + nx] 
-        - dev_var_in[(*dev_u_offset) + pp + 2*nx] 
-    )*(1.0/(dev_dy[0]*dev_dy[0]))/12.0;
-
-    // printf("%1.20f\n", output[pp]);
-}
-
-__global__ void cuda_deriv42_yy_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int i;
-   int k;
-
-   if( (dev_sz[1]-3-3)<=x ){ return; } else { i = x+3; } 
-   if( (dev_sz[2]-3-3)<=z ){ return; } else { k = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp3 = IDX(i, 3, k); 
-   int pp4 = IDX(i, 4, k); 
-   int pp5 = IDX(i, 5, k); 
-   int pp6 = IDX(i, 6, k); 
-
-   output[pp3] = (
-            2.0 *   dev_var_in[(*dev_u_offset) + pp3] 
-        -   5.0 *   dev_var_in[(*dev_u_offset) + pp4] 
-        +   4.0 *   dev_var_in[(*dev_u_offset) + pp5] 
-        -           dev_var_in[(*dev_u_offset) + pp6]
-       ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-   output[pp4] = (
-                    dev_var_in[(*dev_u_offset) + pp3]
-        -   2.0 *   dev_var_in[(*dev_u_offset) + pp4]
-        +           dev_var_in[(*dev_u_offset) + pp5]
-    ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-   // printf("%f\n", output[pp3]);
-}
-
-__global__ void cuda_deriv42_yy_thirdTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int i;
-   int k;
-
-   if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } 
-   if( (dev_sz[2]-3-3)<=z ){ return; } else { k = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp1 = IDX(i, dev_sz[1] - 4, k); 
-   int pp2 = IDX(i, dev_sz[1] - 5, k); 
-   int pp3 = IDX(i, dev_sz[1] - 6, k); 
-   int pp4 = IDX(i, dev_sz[1] - 7, k); 
-
-   output[pp2] = (
-                    dev_var_in[(*dev_u_offset) + pp3] 
-        -   2.0 *   dev_var_in[(*dev_u_offset) + pp2] 
-        +           dev_var_in[(*dev_u_offset) + pp1] 
-        ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-
-    output[pp1] = (
-        -   1.0 *   dev_var_in[(*dev_u_offset) + pp4] 
-        +   4.0 *   dev_var_in[(*dev_u_offset) + pp3] 
-        -   5.0 *   dev_var_in[(*dev_u_offset) + pp2] 
-        +   2.0 *   dev_var_in[(*dev_u_offset) + pp1]
-        ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-   // printf("%f\n", output[pp1]);
-}
-
-
-__global__ void cuda_deriv42_zz_firstThreeForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
- {
-    int x = threadIdx.x + blockIdx.x*10;
-    int y = threadIdx.y + blockIdx.x*10;
-    int z = threadIdx.z + blockIdx.x*10;
-
-    int i;
-    int j;
-    int k;
-
-    if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } 
-    if( (dev_sz[1]-3-3)<=y ){ return; } else { j = y+3; } 
-    if( (dev_sz[2]-3-3)<=z ){ return; } else { k = z+1; } 
-
-    int nx = dev_sz[0]; 
-    int ny = dev_sz[1]; 
-    int pp = IDX(i, j, k);
-
-    int n = nx * ny;
-
-    output[pp] = (
-        (-1)*dev_var_in[(*dev_u_offset) + pp - 2*n] 
-        + 16.0*dev_var_in[(*dev_u_offset) + pp - n] 
-        - 30.0*dev_var_in[(*dev_u_offset) + pp] 
-        + 16.0*dev_var_in[(*dev_u_offset) + pp + n] 
-        - dev_var_in[(*dev_u_offset) + pp + 2*n] 
-    )*(1.0/(dev_dy[0]*dev_dy[0]))/12.0;
-
-    // printf("%1.20f\n", output[pp]);
-}
-
-__global__ void cuda_deriv42_zz_secondTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int j;
-   int i;
-
-   if( (dev_sz[1]-3-3)<=x ){ return; } else { j = x+3; } 
-   if( (dev_sz[0]-3-3)<=z ){ return; } else { i = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp3 = IDX(i, j, 3); 
-   int pp4 = IDX(i, j, 4); 
-   int pp5 = IDX(i, j, 5); 
-   int pp6 = IDX(i, j, 6); 
-
-   output[pp3] = (
-            2.0 *   dev_var_in[(*dev_u_offset) + pp3] 
-        -   5.0 *   dev_var_in[(*dev_u_offset) + pp4] 
-        +   4.0 *   dev_var_in[(*dev_u_offset) + pp5] 
-        -           dev_var_in[(*dev_u_offset) + pp6]
-       ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-   output[pp4] = (
-                    dev_var_in[(*dev_u_offset) + pp3]
-        -   2.0 *   dev_var_in[(*dev_u_offset) + pp4]
-        +           dev_var_in[(*dev_u_offset) + pp5]
-    ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-   // printf("%f\n", output[pp3]);
-}
-
-__global__ void cuda_deriv42_zz_thirdTwoForLoops(double * output, double * dev_var_in, const int * dev_u_offset, double * dev_dy, int * dev_sz)
-{
-   int x = threadIdx.x + blockIdx.x*30;
-   int z = threadIdx.y + blockIdx.x*30;
-
-   int i;
-   int j;
-
-   if( (dev_sz[0]-3-3)<=x ){ return; } else { i = x+3; } 
-   if( (dev_sz[1]-3-3)<=z ){ return; } else { j = z+3; }
-
-   int nx = dev_sz[0];
-   int ny = dev_sz[1];
-
-   int pp1 = IDX(i, j, dev_sz[2] - 4); 
-   int pp2 = IDX(i, j, dev_sz[2] - 5); 
-   int pp3 = IDX(i, j, dev_sz[2] - 6); 
-   int pp4 = IDX(i, j, dev_sz[2] - 7); 
-
-   output[pp2] = (
-                    dev_var_in[(*dev_u_offset) + pp3] 
-        -   2.0 *   dev_var_in[(*dev_u_offset) + pp2] 
-        +           dev_var_in[(*dev_u_offset) + pp1] 
-        ) * 1.0/(dev_dy[0]*dev_dy[0]);
-
-
-    output[pp1] = (
-        -   1.0 *   dev_var_in[(*dev_u_offset) + pp4] 
-        +   4.0 *   dev_var_in[(*dev_u_offset) + pp3] 
-        -   5.0 *   dev_var_in[(*dev_u_offset) + pp2] 
-        +   2.0 *   dev_var_in[(*dev_u_offset) + pp1]
-        ) * 1.0/(dev_dy[0]*dev_dy[0]);
+    output[pp] = (dev_var_in[*dev_u_offset + pp - 2*nx] 
+                - 8.0*dev_var_in[*dev_u_offset + pp - nx] 
+                + 8.0*dev_var_in[*dev_u_offset + pp + nx] 
+                - dev_var_in[*dev_u_offset + pp + 2*nx] )*((1.0/dev_dy[0])/12.0);
+    
+            
+    if ((*dev_bflag & (1u<<OCT_DIR_DOWN)) && j==3)  {
+        int pp3 = IDX(i, 3, k);
+        int pp4 = IDX(i, 4, k);
+        int pp5 = IDX(i, 5, k);
+
+        output[pp3] = ((-3)*dev_var_in[(*dev_u_offset) + pp3] +  4*dev_var_in[(*dev_u_offset) + pp4] 
+                    - dev_var_in[(*dev_u_offset) + pp5]) * 0.5 / dev_dy[0];
+        output[pp4] = (dev_var_in[(*dev_u_offset) + pp5] - dev_var_in[(*dev_u_offset) + pp3]) 
+                    * (0.50/dev_dy[0]);
         
-   // printf("%f\n", output[pp1]);
+    }
+
+    if ((*dev_bflag & (1u<<OCT_DIR_UP)) && j==4)  {
+        int pp2 = IDX(i, ny-5, k); // IDX(i,je-2,k)
+        int pp3 = IDX(i, ny-6, k); // IDX(i,je-3,k)
+        int pp1 = IDX(i, ny-4, k); // IDX(i,je-1,k)
+    
+        output[pp2] = (dev_var_in[(*dev_u_offset) + pp1] - dev_var_in[(*dev_u_offset) + pp3]) 
+                    * 0.50 / dev_dy[0];
+        output[pp1] = (dev_var_in[(*dev_u_offset) + pp3]- 4.0 * dev_var_in[(*dev_u_offset) + pp2]
+                    + 3.0 * dev_var_in[(*dev_u_offset) + pp1]) * 0.50 / dev_dy[0];
+        
+    }
 }
 
-
-void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
+void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
+                int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
  {
-    int zblocks = ((host_sz[2]-1)/10)+1;
-    int yblocks = ((host_sz[0]-3)/10)+1;
-    int xblocks = ((host_sz[1]-3)/10)+1;
-    int max1 = ( zblocks < yblocks ) ? yblocks : zblocks;
-    int max = ( ( max1 < xblocks ) ? xblocks : max1 );
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 1;//z direction
+  
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+     
+    int requiredBlocks = (9+maximumIterations) / 10;
 
-    cuda_deriv42_y_firstThreeForLoops<<< max, dim3(10, 10, 10) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
+    calc_deriv42_y<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                    dim3((ie + requiredBlocks -1)/requiredBlocks,
+                    (je + requiredBlocks -1)/requiredBlocks, 
+                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
     cudaError_t cudaStatus;
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_y_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        fprintf(stderr, "calc_deriv42_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
     // cudaDeviceSynchronize waits for the kernel to finish, and returns
     // any errors encountered during the launch.
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_y_firstThreeForLoops kernal!\n", cudaStatus);
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching calc_deriv42_y kernal!\n", cudaStatus);
         return;
     }
-
-
-    if (bflag & (1u<<OCT_DIR_DOWN)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[2]-1)/30)+1;
-        int xblocks = ((host_sz[0]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_y_secondTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_y_secondTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_y_secondTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    }
-    
-    if (bflag & (1u<<OCT_DIR_UP)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[2]-1)/30)+1;
-        int xblocks = ((host_sz[0]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_y_thirdTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_y_thirdTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_y_thirdTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    } 
 
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
@@ -601,104 +184,66 @@ void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, do
     //   }
     // #endif
  }
- 
-void cuda_deriv42_x(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
+
+__global__ void calc_deriv42_z(double * output, double * dev_var_in, const int * dev_u_offset,
+                             double * dev_dy, int * dev_sz, int* dev_bflag)
 {
-    int zblocks = ((host_sz[2]-1)/10)+1; // k
-    int yblocks = ((host_sz[1]-1)/10)+1; // j
-    int xblocks = ((host_sz[0]-3)/10)+1; // i
-    int max1 = ( zblocks < yblocks ) ? yblocks : zblocks;
-    int max = ( ( max1 < xblocks ) ? xblocks : max1 );
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
-    cuda_deriv42_x_firstThreeForLoops<<< max, dim3(10, 10, 10) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
+    int nx = dev_sz[0]; 
+    int ny = dev_sz[1]; 
+    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_x_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
+    int n = nx * ny;
+    int pp = IDX(i, j, k);
+   
+   output[pp] = (dev_var_in[(*dev_u_offset) + pp - 2*n] - 8.0*dev_var_in[(*dev_u_offset) + pp - n] 
+                + 8.0*dev_var_in[(*dev_u_offset) + pp + n] - dev_var_in[(*dev_u_offset) + pp + 2*n]) 
+                * ((1.0/dev_dy[0])/12);
+    
+    if ((*dev_bflag & (1u<<OCT_DIR_BACK)) && k==3)  {
+        int pp3 = IDX(i, j, 3); // IDX(i, j, 3)
+        int pp4 = IDX(i, j, 4); // IDX(i,j,4)
+        int pp5 = IDX(i, j, 5); // IDX(i,j,5)
+
+        output[pp3] = ((-3)*dev_var_in[(*dev_u_offset) + pp3] + 4*dev_var_in[(*dev_u_offset) + pp4] 
+                    - dev_var_in[(*dev_u_offset) + pp5]) * 0.5 / dev_dy[0];
+        output[pp4] = (dev_var_in[(*dev_u_offset) + pp5] - dev_var_in[(*dev_u_offset) + pp3])
+                     * (0.50/dev_dy[0]);
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_x_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
+            
+    if ((*dev_bflag & (1u<<OCT_DIR_FRONT)) && k==4)  {
+        int pp2 = IDX(i, j, dev_sz[2]-5); // IDX(i,j,ke-2)
+        int pp3 = IDX(i, j, dev_sz[2]-6); // IDX(i,j,ke-3)
+        int pp1 = IDX(i, j, dev_sz[2]-4); // IDX(i,j,ke-1)
+
+        output[pp2] = (dev_var_in[(*dev_u_offset) + pp1] - dev_var_in[(*dev_u_offset) + pp3]) 
+                    * 0.50 / dev_dy[0];
+        output[pp1] = (dev_var_in[(*dev_u_offset) + pp3]- 4.0 * dev_var_in[(*dev_u_offset) + pp2]
+                    + 3.0 * dev_var_in[(*dev_u_offset) + pp1]) * 0.50 / dev_dy[0];
     }
-
-    if (bflag & (1u<<OCT_DIR_LEFT)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[2]-1)/30)+1;
-        int xblocks = ((host_sz[1]-1)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_x_secondTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_x_secondTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_x_secondTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    }
-
-    if (bflag & (1u<<OCT_DIR_RIGHT)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[2]-1)/30)+1;
-        int xblocks = ((host_sz[1]-1)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_x_thirdTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_x_thirdTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_x_thirdTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    } 
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    //     #pragma message("DEBUG_DERIVS_COMP: ON")
-    //     for (int k = 3; k < sz[2]-3; k++) {
-    //         for (int j = 3; j < sz[1]-3; j++) {
-    //             for (int i = 3; i < sz[0]-3; i++) {
-    //                 int pp = IDX(i,j,k);
-    //                 if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //                 }
-    //             }
-    //         }
-    // #endif
+  
 }
 
 void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset, 
-    double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
+    double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
 {
-    int zblocks = ((host_sz[2]-1)/10)+1; // k
-    int yblocks = ((host_sz[1]-1)/10)+1; // j
-    int xblocks = ((host_sz[0]-3)/10)+1; // i
-    int max1 = ( zblocks < yblocks ) ? yblocks : zblocks;
-    int max = ( ( max1 < xblocks ) ? xblocks : max1 );
+     const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 3;//z direction
+  
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+     
+    int requiredBlocks = (9+maximumIterations) / 10;
 
-    cuda_deriv42_z_firstThreeForLoops<<< max, dim3(10, 10, 10) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
+    calc_deriv42_z<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                    dim3((ie + requiredBlocks -1)/requiredBlocks,
+                    (je + requiredBlocks -1)/requiredBlocks, 
+                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
     cudaError_t cudaStatus;
@@ -715,54 +260,6 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset,
         return;
     }
 
-    if (bflag & (1u<<OCT_DIR_BACK)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[0]-3)/30)+1;
-        int xblocks = ((host_sz[0]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_z_secondTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_z_secondTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_z_secondTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    }
-
-    if (bflag & (1u<<OCT_DIR_FRONT)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[0]-3)/30)+1;
-        int xblocks = ((host_sz[0]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_z_thirdTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_z_thirdTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_z_thirdTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    } 
-
     //   #ifdef DEBUG_DERIVS_COMP
     //     for (int k = kb; k < ke; k++) {
     //       for (int j = jb; j < je; j++) {
@@ -775,13 +272,346 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset,
     //   #endif
 }
 
+__global__ void calc_deriv42_xx(double * output, double * dev_var_in, const int * dev_u_offset,
+             double * dev_dy, int * dev_sz, int* dev_bflag)
+ {
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+
+    int nx = dev_sz[0]; 
+    int ny = dev_sz[1]; 
+    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+
+    int pp = IDX(i, j, k);
+
+    output[pp] = ((-1)*dev_var_in[(*dev_u_offset) + pp - 2] 
+                + 16.0*dev_var_in[(*dev_u_offset) + pp - 1] 
+                - 30.0*dev_var_in[(*dev_u_offset) + pp] 
+                + 16.0*dev_var_in[(*dev_u_offset) + pp + 1] 
+                - dev_var_in[(*dev_u_offset) + pp + 2] 
+            )*(1.0/(dev_dy[0]*dev_dy[0]))/12.0;
+            
+    if ((*dev_bflag & (1u<<OCT_DIR_LEFT)) && i==3)  {
+        int pp3 = IDX(3, j, k); 
+        int pp4 = IDX(4, j, k); 
+        int pp5 = IDX(5, j, k); 
+        int pp6 = IDX(6, j, k); 
+     
+        output[pp3] = (
+                 2.0 *   dev_var_in[(*dev_u_offset) + pp3] 
+             -   5.0 *   dev_var_in[(*dev_u_offset) + pp4] 
+             +   4.0 *   dev_var_in[(*dev_u_offset) + pp5] 
+             -           dev_var_in[(*dev_u_offset) + pp6]
+            ) * 1.0/(dev_dy[0]*dev_dy[0]);
+     
+        output[pp4] = (
+                         dev_var_in[(*dev_u_offset) + pp3]
+             -   2.0 *   dev_var_in[(*dev_u_offset) + pp4]
+             +           dev_var_in[(*dev_u_offset) + pp5]
+         ) * 1.0/(dev_dy[0]*dev_dy[0]);
+     
+    }
+                    
+    if ((*dev_bflag & (1u<<OCT_DIR_RIGHT)) && i==4)  {
+        int pp1 = IDX(dev_sz[0] - 4, j, k); // IDX(ie-1,j,k)
+        int pp2 = IDX(dev_sz[0] - 5, j, k); // IDX(ie-2,j,k)
+        int pp3 = IDX(dev_sz[0] - 6, j, k); // IDX(ie-3,j,k)
+        int pp4 = IDX(dev_sz[0] - 7, j, k); // IDX(ie-4,j,k)
+
+        output[pp2] = (
+                            dev_var_in[(*dev_u_offset) + pp3] 
+                -   2.0 *   dev_var_in[(*dev_u_offset) + pp2] 
+                +           dev_var_in[(*dev_u_offset) + pp1] 
+                ) * 1.0/(dev_dy[0]*dev_dy[0]);
+
+
+            output[pp1] = (
+                -   1.0 *   dev_var_in[(*dev_u_offset) + pp4] 
+                +   4.0 *   dev_var_in[(*dev_u_offset) + pp3] 
+                -   5.0 *   dev_var_in[(*dev_u_offset) + pp2] 
+                +   2.0 *   dev_var_in[(*dev_u_offset) + pp1]
+                ) * 1.0/(dev_dy[0]*dev_dy[0]);
+    }
+}
+
+void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset, 
+                double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+{
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 3;//z direction
+  
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+     
+    int requiredBlocks = (9+maximumIterations) / 10;
+
+    calc_deriv42_xx<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                    dim3((ie + requiredBlocks -1)/requiredBlocks,
+                    (je + requiredBlocks -1)/requiredBlocks, 
+                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
+
+    // Check for any errors launching the kernel
+    cudaError_t cudaStatus;
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cuda_deriv42_xx_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        return;
+    }
+    // cudaDeviceSynchronize waits for the kernel to finish, and returns
+    // any errors encountered during the launch.
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_xx_firstThreeForLoops kernal!\n", cudaStatus);
+        return;
+    }
+
+    // No GPU code for the following part
+    // #ifdef DEBUG_DERIVS_COMP
+    // for (int k = kb; k < ke; k++) {
+    //   for (int j = jb; j < je; j++) {
+    //     for (int i = ib; i < ie; i++) {
+    //       int pp = IDX(i,j,k);
+    //       if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+    //     }
+    //   }
+    // }
+    // #endif    
+}
+
+
+
+__global__ void calc_deriv42_yy(double * output, double * dev_var_in, const int * dev_u_offset, 
+                double * dev_dy, int * dev_sz, int* dev_bflag)
+ {
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+
+    int nx = dev_sz[0]; 
+    int ny = dev_sz[1]; 
+    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+
+    int pp = IDX(i, j, k);
+
+    output[pp] = ((-1)*dev_var_in[(*dev_u_offset) + pp - 2*nx] 
+                + 16.0*dev_var_in[(*dev_u_offset) + pp - nx] 
+                - 30.0*dev_var_in[(*dev_u_offset) + pp] 
+                + 16.0*dev_var_in[(*dev_u_offset) + pp + nx] 
+                - dev_var_in[(*dev_u_offset) + pp + 2*nx] 
+            )*(1.0/(dev_dy[0]*dev_dy[0]))/12.0;
+            
+    if ((*dev_bflag & (1u<<OCT_DIR_DOWN)) && j==3)  {
+        int pp3 = IDX(i, 3, k); 
+        int pp4 = IDX(i, 4, k); 
+        int pp5 = IDX(i, 5, k); 
+        int pp6 = IDX(i, 6, k); 
+     
+        output[pp3] = (
+                 2.0 *   dev_var_in[(*dev_u_offset) + pp3] 
+             -   5.0 *   dev_var_in[(*dev_u_offset) + pp4] 
+             +   4.0 *   dev_var_in[(*dev_u_offset) + pp5] 
+             -           dev_var_in[(*dev_u_offset) + pp6]
+            ) * 1.0/(dev_dy[0]*dev_dy[0]);
+     
+        output[pp4] = (
+                         dev_var_in[(*dev_u_offset) + pp3]
+             -   2.0 *   dev_var_in[(*dev_u_offset) + pp4]
+             +           dev_var_in[(*dev_u_offset) + pp5]
+         ) * 1.0/(dev_dy[0]*dev_dy[0]);
+    }
+                            
+    if ((*dev_bflag & (1u<<OCT_DIR_UP)) && j==4)  {
+        int pp1 = IDX(i, dev_sz[1] - 4, k); 
+        int pp2 = IDX(i, dev_sz[1] - 5, k); 
+        int pp3 = IDX(i, dev_sz[1] - 6, k); 
+        int pp4 = IDX(i, dev_sz[1] - 7, k); 
+     
+        output[pp2] = (
+                         dev_var_in[(*dev_u_offset) + pp3] 
+             -   2.0 *   dev_var_in[(*dev_u_offset) + pp2] 
+             +           dev_var_in[(*dev_u_offset) + pp1] 
+             ) * 1.0/(dev_dy[0]*dev_dy[0]);
+     
+     
+         output[pp1] = (
+             -   1.0 *   dev_var_in[(*dev_u_offset) + pp4] 
+             +   4.0 *   dev_var_in[(*dev_u_offset) + pp3] 
+             -   5.0 *   dev_var_in[(*dev_u_offset) + pp2] 
+             +   2.0 *   dev_var_in[(*dev_u_offset) + pp1]
+             ) * 1.0/(dev_dy[0]*dev_dy[0]);
+    
+    }
+    
+}
+
+void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
+                int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+{
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 3;//z direction
+  
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+     
+    int requiredBlocks = (9+maximumIterations) / 10;
+
+    calc_deriv42_yy<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                    dim3((ie + requiredBlocks -1)/requiredBlocks,
+                    (je + requiredBlocks -1)/requiredBlocks, 
+                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
+
+    // Check for any errors launching the kernel
+    cudaError_t cudaStatus;
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cuda_deriv42_yy_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        return;
+    }
+    // cudaDeviceSynchronize waits for the kernel to finish, and returns
+    // any errors encountered during the launch.
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_yy_firstThreeForLoops kernal!\n", cudaStatus);
+        return;
+    }
+
+    // No GPU code for the following part
+    // #ifdef DEBUG_DERIVS_COMP
+    // for (int k = kb; k < ke; k++) {
+    // for (int j = jb; j < je; j++) {
+    //     for (int i = ib; i < ie; i++) {
+    //     int pp = IDX(i,j,k);
+    //     if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+    //     }
+    // }
+    // }
+    // #endif 
+}
+
+
+__global__ void calc_deriv42_zz(double * output, double * dev_var_in, const int * dev_u_offset,
+                 double * dev_dy, int * dev_sz, int* dev_bflag)
+ {
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+
+    int nx = dev_sz[0]; 
+    int ny = dev_sz[1]; 
+    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+
+    int pp = IDX(i, j, k);
+    int n = nx * ny;
+
+    output[pp] = ((-1)*dev_var_in[(*dev_u_offset) + pp - 2*n] 
+                + 16.0*dev_var_in[(*dev_u_offset) + pp - n] 
+                - 30.0*dev_var_in[(*dev_u_offset) + pp] 
+                + 16.0*dev_var_in[(*dev_u_offset) + pp + n] 
+                - dev_var_in[(*dev_u_offset) + pp + 2*n] 
+            )*(1.0/(dev_dy[0]*dev_dy[0]))/12.0;
+
+    if ((*dev_bflag & (1u<<OCT_DIR_BACK)) && k==3)  {
+        int pp3 = IDX(i, j, 3); 
+        int pp4 = IDX(i, j, 4); 
+        int pp5 = IDX(i, j, 5); 
+        int pp6 = IDX(i, j, 6); 
+     
+        output[pp3] = (
+                 2.0 *   dev_var_in[(*dev_u_offset) + pp3] 
+             -   5.0 *   dev_var_in[(*dev_u_offset) + pp4] 
+             +   4.0 *   dev_var_in[(*dev_u_offset) + pp5] 
+             -           dev_var_in[(*dev_u_offset) + pp6]
+            ) * 1.0/(dev_dy[0]*dev_dy[0]);
+     
+        output[pp4] = (
+                         dev_var_in[(*dev_u_offset) + pp3]
+             -   2.0 *   dev_var_in[(*dev_u_offset) + pp4]
+             +           dev_var_in[(*dev_u_offset) + pp5]
+         ) * 1.0/(dev_dy[0]*dev_dy[0]);
+    }
+                                    
+    if ((*dev_bflag & (1u<<OCT_DIR_FRONT)) && k==4)  {
+        int pp1 = IDX(i, j, dev_sz[2] - 4); 
+        int pp2 = IDX(i, j, dev_sz[2] - 5); 
+        int pp3 = IDX(i, j, dev_sz[2] - 6); 
+        int pp4 = IDX(i, j, dev_sz[2] - 7); 
+
+        output[pp2] = (
+                            dev_var_in[(*dev_u_offset) + pp3] 
+                -   2.0 *   dev_var_in[(*dev_u_offset) + pp2] 
+                +           dev_var_in[(*dev_u_offset) + pp1] 
+                ) * 1.0/(dev_dy[0]*dev_dy[0]);
+
+
+            output[pp1] = (
+                -   1.0 *   dev_var_in[(*dev_u_offset) + pp4] 
+                +   4.0 *   dev_var_in[(*dev_u_offset) + pp3] 
+                -   5.0 *   dev_var_in[(*dev_u_offset) + pp2] 
+                +   2.0 *   dev_var_in[(*dev_u_offset) + pp1]
+                ) * 1.0/(dev_dy[0]*dev_dy[0]);
+    }
+}
+
+
+void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset, 
+        double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+{
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 3;//z direction
+  
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+     
+    int requiredBlocks = (9+maximumIterations) / 10;
+
+    calc_deriv42_zz<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                    dim3((ie + requiredBlocks -1)/requiredBlocks,
+                    (je + requiredBlocks -1)/requiredBlocks, 
+                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
+
+    // Check for any errors launching the kernel
+    cudaError_t cudaStatus;
+    cudaStatus = cudaGetLastError();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cuda_deriv42_zz_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        return;
+    }
+    // cudaDeviceSynchronize waits for the kernel to finish, and returns
+    // any errors encountered during the launch.
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_zz_firstThreeForLoops kernal!\n", cudaStatus);
+        return;
+    }
+
+    // No GPU code for the following part
+    // #ifdef DEBUG_DERIVS_COMP
+    // for (int k = kb; k < ke; k++) {
+    //   for (int j = jb; j < je; j++) {
+    //     for (int i = ib; i < ie; i++) {
+    //       int pp = IDX(i,j,k);
+    //       if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
+    //     }
+    //   }
+    // }
+    // #endif
+}
+
+
 __global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * dev_betax,
      double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
     
     //ib, jb, kb values are accumulated to the x, y, z
     int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
     int idx_by_2 = 0.50 * (1.0 / dev_dx[0]);
     int idx_by_12 = (1.0 / dev_dx[0])/12;
@@ -895,17 +725,13 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     int temp_max = (ie>je)? ie : je;
     int maximumIterations = (temp_max>ke) ? temp_max: ke;
     
-    int requiredBlocks = maximumIterations / 10;
-    if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
-        requiredBlocks++;
-    }
-    //printf("requiredBlocks = %d\n", requiredBlocks);
-    int threads_x = ie / requiredBlocks;
-    int threads_y = je / requiredBlocks;
-    int threads_z = ke / requiredBlocks;
-   
-    calc_deriv42_adv_x <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (output, dev_var_in, dev_betax,
-        dev_dx, dev_bflag, dev_sz, dev_u_offset);
+    int requiredBlocks = (9+maximumIterations) / 10;
+  
+    calc_deriv42_adv_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                        dim3((ie + requiredBlocks -1)/requiredBlocks,
+                        (je + requiredBlocks -1)/requiredBlocks, 
+                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betax,
+                            dev_dx, dev_bflag, dev_sz, dev_u_offset);
     
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
@@ -922,8 +748,8 @@ __global__ void calc_deriv42_adv_y(double * output, double * dev_var_in, int * d
    
    //ib, jb, kb values are accumulated to the x, y, z
    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int idy_by_2 = 0.50 * (1.0 / dev_dy[0]);
    int idy_by_12 = (1.0 / dev_dy[0])/12.0;
@@ -1035,22 +861,18 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
-    //printf("i = %d, j = %d, k = %d\n", ie, je, ke);
 
     int temp_max = (ie>je)? ie : je;
     int maximumIterations = (temp_max>ke) ? temp_max: ke;
     
-    int requiredBlocks = maximumIterations / 10;
-    if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
-        requiredBlocks++;
-    }
-    
-    int threads_x = ie / requiredBlocks;
-    int threads_y = je / requiredBlocks;
-    int threads_z = ke / requiredBlocks;
-    
-    calc_deriv42_adv_y <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (output, dev_var_in, dev_betay,
-        dev_dy, dev_bflag, dev_sz, dev_u_offset);
+    int requiredBlocks = (9+maximumIterations) / 10;
+  
+    calc_deriv42_adv_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                        dim3((ie + requiredBlocks -1)/requiredBlocks,
+                        (je + requiredBlocks -1)/requiredBlocks, 
+                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betay,
+                            dev_dy, dev_bflag, dev_sz, dev_u_offset);
+        
     
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
@@ -1067,8 +889,8 @@ __global__ void calc_deriv42_adv_z(double * output, double * dev_var_in, int * d
    
    //ib, jb, kb values are accumulated to the x, y, z
    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int idz_by_2 = 0.50 * (1.0 / dev_dz[0]);
    int idz_by_12 = (1.0 / dev_dz[0])/12.0;
@@ -1181,297 +1003,32 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
-    //printf("i = %d, j = %d, k = %d\n", ie, je, ke);
 
     int temp_max = (ie>je)? ie : je;
     int maximumIterations = (temp_max>ke) ? temp_max: ke;
     
-    int requiredBlocks = maximumIterations / 10;
-    if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
-        requiredBlocks++;
-    }
-    
-    int threads_x = ie / requiredBlocks;
-    int threads_y = je / requiredBlocks;
-    int threads_z = ke / requiredBlocks;
-    
-    calc_deriv42_adv_y <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (output, dev_var_in, dev_betaz,
-        dev_dz, dev_bflag, dev_sz, dev_u_offset);
+    int requiredBlocks = (9+maximumIterations) / 10;
+  
+    calc_deriv42_adv_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                        dim3((ie + requiredBlocks -1)/requiredBlocks,
+                        (je + requiredBlocks -1)/requiredBlocks, 
+                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betaz,
+                            dev_dz, dev_bflag, dev_sz, dev_u_offset);
     
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
             fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_z kernal!\n", cudaStatus);
             return;
     }
-                    
-    // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
-}
- 
-void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
-{
-    int zblocks = ((host_sz[2]-3)/10)+1; // k
-    int yblocks = ((host_sz[1]-3)/10)+1; // j
-    int xblocks = ((host_sz[0]-3)/10)+1; // i
-    int max1 = ( zblocks < yblocks ) ? yblocks : zblocks;
-    int max = ( ( max1 < xblocks ) ? xblocks : max1 );
-
-    cuda_deriv42_xx_firstThreeForLoops<<< max, dim3(10, 10, 10) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_xx_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_xx_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
-
-    if (bflag & (1u<<OCT_DIR_LEFT)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[2]-3)/30)+1;
-        int xblocks = ((host_sz[1]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_xx_secondTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_xx_secondTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_xx_secondTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    }
-
-    if (bflag & (1u<<OCT_DIR_RIGHT)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[2]-3)/30)+1;
-        int xblocks = ((host_sz[1]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_xx_thirdTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_xx_thirdTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_xx_thirdTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    } 
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    // for (int k = kb; k < ke; k++) {
-    //   for (int j = jb; j < je; j++) {
-    //     for (int i = ib; i < ie; i++) {
-    //       int pp = IDX(i,j,k);
-    //       if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //     }
-    //   }
-    // }
-    // #endif    
 }
 
-void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
-{
-    int zblocks = ((host_sz[2]-3)/10)+1; // k
-    int yblocks = ((host_sz[1]-3)/10)+1; // j
-    int xblocks = ((host_sz[0]-3)/10)+1; // i
-    int max1 = ( zblocks < yblocks ) ? yblocks : zblocks;
-    int max = ( ( max1 < xblocks ) ? xblocks : max1 );
-
-    cuda_deriv42_yy_firstThreeForLoops<<< max, dim3(10, 10, 10) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_yy_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_yy_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
-
-    if (bflag & (1u<<OCT_DIR_DOWN)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[0]-3)/30)+1;
-        int xblocks = ((host_sz[2]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_yy_secondTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_yy_secondTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_yy_secondTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    }
-
-    if (bflag & (1u<<OCT_DIR_UP)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[0]-3)/30)+1;
-        int xblocks = ((host_sz[2]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_yy_thirdTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_yy_thirdTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_yy_thirdTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    } 
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    // for (int k = kb; k < ke; k++) {
-    // for (int j = jb; j < je; j++) {
-    //     for (int i = ib; i < ie; i++) {
-    //     int pp = IDX(i,j,k);
-    //     if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //     }
-    // }
-    // }
-    // #endif 
-}
-
-void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, unsigned bflag, const unsigned int * host_sz)
-{
-    int zblocks = ((host_sz[2]-3)/10)+1; // k
-    int yblocks = ((host_sz[1]-3)/10)+1; // j
-    int xblocks = ((host_sz[0]-3)/10)+1; // i
-    int max1 = ( zblocks < yblocks ) ? yblocks : zblocks;
-    int max = ( ( max1 < xblocks ) ? xblocks : max1 );
-
-    cuda_deriv42_zz_firstThreeForLoops<<< max, dim3(10, 10, 10) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_zz_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_zz_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
-
-    if (bflag & (1u<<OCT_DIR_BACK)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[0]-3)/30)+1;
-        int xblocks = ((host_sz[2]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_zz_secondTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_zz_secondTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_zz_secondTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    }
-
-    if (bflag & (1u<<OCT_DIR_FRONT)) {
-        // Not tested yet-----------------------------------------------------------------------------
-        int yblocks = ((host_sz[0]-3)/30)+1;
-        int xblocks = ((host_sz[2]-3)/30)+1;
-        int max = ( xblocks < yblocks ) ? yblocks : xblocks;
-
-        cuda_deriv42_zz_thirdTwoForLoops<<< max, dim3(30, 30) >>>(output, dev_var_in, dev_u_offset, dev_dy, dev_sz);
-
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_deriv42_zz_thirdTwoForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        // cudaDeviceSynchronize waits for the kernel to finish, and returns
-        // any errors encountered during the launch.
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_zz_thirdTwoForLoops kernal!\n", cudaStatus);
-            return;
-        }
-    } 
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    // for (int k = kb; k < ke; k++) {
-    //   for (int j = jb; j < je; j++) {
-    //     for (int i = ib; i < ie; i++) {
-    //       int pp = IDX(i,j,k);
-    //       if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //     }
-    //   }
-    // }
-    // #endif
-}
-
-__global__ void calc_co_deriv42_x(double * output, double * dev_var_in,
+__global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
     double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
    
    //ib, jb, kb values are accumulated to the x, y, z
    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
@@ -1551,18 +1108,14 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
 
    int temp_max = (ie>je)? ie : je;
    int maximumIterations = (temp_max>ke) ? temp_max: ke;
-   
-   int requiredBlocks = maximumIterations / 10;
-   if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
-       requiredBlocks++;
-   }
-   
-   int threads_x = ie / requiredBlocks;
-   int threads_y = je / requiredBlocks;
-   int threads_z = ke / requiredBlocks;
+
+   int requiredBlocks = (9+maximumIterations) / 10;
   
-   calc_co_deriv42_x <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (output, dev_var_in,
-       dev_dx, dev_bflag, dev_sz, dev_u_offset);
+   calc_ko_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                        dim3((ie + requiredBlocks -1)/requiredBlocks,
+                        (je + requiredBlocks -1)/requiredBlocks, 
+                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                            dev_dx, dev_bflag, dev_sz, dev_u_offset);
    
    cudaStatus = cudaDeviceSynchronize();
    if (cudaStatus != cudaSuccess) {
@@ -1572,7 +1125,7 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
 
 }
 
-__global__ void calc_co_deriv42_y(double * output, double * dev_var_in,
+__global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
     double *dev_dy, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
    
    //ib, jb, kb values are accumulated to the x, y, z
@@ -1659,34 +1212,30 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
 
    int temp_max = (ie>je)? ie : je;
    int maximumIterations = (temp_max>ke) ? temp_max: ke;
-   
-   int requiredBlocks = maximumIterations / 10;
-   if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
-       requiredBlocks++;
-   }
-   
-   int threads_x = ie / requiredBlocks;
-   int threads_y = je / requiredBlocks;
-   int threads_z = ke / requiredBlocks;
+
+   int requiredBlocks = (9+maximumIterations) / 10;
   
-   calc_co_deriv42_y <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (output, dev_var_in,
-       dev_dy, dev_bflag, dev_sz, dev_u_offset);
-   
-   cudaStatus = cudaDeviceSynchronize();
-   if (cudaStatus != cudaSuccess) {
-           fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_y kernal!\n", cudaStatus);
-           return;
-   }
+   calc_ko_deriv42_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                    dim3((ie + requiredBlocks -1)/requiredBlocks,
+                    (je + requiredBlocks -1)/requiredBlocks, 
+                    (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                        dev_dy, dev_bflag, dev_sz, dev_u_offset);
+
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_y kernal!\n", cudaStatus);
+            return;
+    }
 
 }
 
-__global__ void calc_co_deriv42_z(double * output, double * dev_var_in,
+__global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
     double *dev_dz, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
    
    //ib, jb, kb values are accumulated to the x, y, z
    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
@@ -1769,22 +1318,17 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
    int temp_max = (ie>je)? ie : je;
    int maximumIterations = (temp_max>ke) ? temp_max: ke;
    
-   int requiredBlocks = maximumIterations / 10;
-   if (ie % 10 != 0 || je % 10 != 0 || ke % 10 != 0) {
-       requiredBlocks++;
-   }
-   
-   int threads_x = ie / requiredBlocks;
-   int threads_y = je / requiredBlocks;
-   int threads_z = ke / requiredBlocks;
+   int requiredBlocks = (9+maximumIterations) / 10;
   
-   calc_co_deriv42_y <<< requiredBlocks, dim3(threads_x,threads_y,threads_z) >>> (output, dev_var_in,
-       dev_dz, dev_bflag, dev_sz, dev_u_offset);
+   calc_ko_deriv42_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                    dim3((ie + requiredBlocks -1)/requiredBlocks,
+                    (je + requiredBlocks -1)/requiredBlocks, 
+                    (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                        dev_dz, dev_bflag, dev_sz, dev_u_offset);
    
    cudaStatus = cudaDeviceSynchronize();
    if (cudaStatus != cudaSuccess) {
-           fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_y kernal!\n", cudaStatus);
-           return;
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_z kernal!\n", cudaStatus);
+        return;
    }
-
 }
