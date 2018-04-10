@@ -149,6 +149,11 @@ test_file_write::writeToFile("output_cpu.txt", grad_1_alpha, n);
 
       for (unsigned int i = 3; i < nx-3; i++) {
          x = pmin[0] + i*hx;
+
+    //          if (i==5 && j==5 && k==6){
+    //     printf("%f | %f | %f\n", z, y ,x);
+    // }
+
          pp = i + nx*(j + ny*k);
          r_coord = sqrt(x*x + y*y + z*z);
          eta=ETA_CONST;
