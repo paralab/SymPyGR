@@ -381,6 +381,179 @@ const unsigned int& bflag)
     //         &sizeArray
     // );
     // Free up GPU memory
+        
+    if (bflag != 0) {
+        bssn::timer::t_bdyc.start();
+
+        bssn_bcs(dev_var_out, dev_var_in, dev_alphaInt, grad_0_alpha, grad_1_alpha, grad_2_alpha,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_chiInt, grad_0_chi, grad_1_chi, grad_2_chi,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_KInt, grad_0_K, grad_1_K, grad_2_K,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_beta0Int, grad_0_beta0, grad_1_beta0, grad_2_beta0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_beta1Int, grad_0_beta1, grad_1_beta1, grad_2_beta1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_beta2Int, grad_0_beta2, grad_1_beta2, grad_2_beta2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_Gt0Int, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_Gt1Int, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_Gt2Int, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_B0Int, grad_0_B0, grad_1_B0, grad_2_B0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_B1Int, grad_0_B1, grad_1_B1, grad_2_B1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_B2Int, grad_0_B2, grad_1_B2, grad_2_B2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At0Int, grad_0_At0, grad_1_At0, grad_2_At0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At1Int, grad_0_At1, grad_1_At1, grad_2_At1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At2Int, grad_0_At2, grad_1_At2, grad_2_At2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At3Int, grad_0_At3, grad_1_At3, grad_2_At3,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At4Int, grad_0_At4, grad_1_At4, grad_2_At4,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At5Int, grad_0_At5, grad_1_At5, grad_2_At5,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);    
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt0Int, grad_0_gt0, grad_1_gt0, grad_2_gt0,
+                dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt1Int, grad_0_gt1, grad_1_gt1, grad_2_gt1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt2Int, grad_0_gt2, grad_1_gt2, grad_2_gt2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt3Int, grad_0_gt3, grad_1_gt3, grad_2_gt3,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt4Int, grad_0_gt4, grad_1_gt4, grad_2_gt4,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt5Int, grad_0_gt5, grad_1_gt5, grad_2_gt5,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+          
+
+        bssn::timer::t_bdyc.stop();
+    }
+
+    bssn::timer::t_deriv.start();
+    #include "bssnrhs_cuda_ko_derivs.h"
+    bssn::timer::t_deriv.stop();
+
+    bssn::timer::t_rhs.start();
+
+    get_output(dev_var_out,
+        dev_alphaInt,
+        dev_chiInt,
+        dev_KInt,
+        dev_gt0Int,
+        dev_gt1Int,
+        dev_gt2Int,
+        dev_gt3Int,
+        dev_gt4Int,
+        dev_gt5Int,
+        dev_beta0Int,
+        dev_beta1Int,
+        dev_beta2Int,
+        dev_At0Int,
+        dev_At1Int,
+        dev_At2Int,
+        dev_At3Int,
+        dev_At4Int,
+        dev_At5Int,
+        dev_Gt0Int,
+        dev_Gt1Int,
+        dev_Gt2Int,
+        dev_B0Int,
+        dev_B1Int,
+        dev_B2Int,
+
+        grad_0_alpha,
+         grad_1_alpha,
+         grad_2_alpha,
+         grad_0_beta0,
+         grad_1_beta0,
+         grad_2_beta0,
+         grad_0_beta1,
+         grad_1_beta1,
+         grad_2_beta1,
+         grad_0_beta2,
+         grad_1_beta2,
+         grad_2_beta2,
+        
+         grad_0_gt0,
+         grad_1_gt0,
+         grad_2_gt0,
+         grad_0_gt1,
+         grad_1_gt1,
+         grad_2_gt1,
+         grad_0_gt2,
+         grad_1_gt2,
+         grad_2_gt2,
+         grad_0_gt3,
+         grad_1_gt3,
+         grad_2_gt3,
+         grad_0_gt4,
+         grad_1_gt4,
+         grad_2_gt4,
+         grad_0_gt5,
+         grad_1_gt5,
+         grad_2_gt5,
+
+         grad_0_chi,
+         grad_1_chi,
+         grad_2_chi,
+
+         grad_0_At0,
+         grad_1_At0,
+         grad_2_At0,
+         grad_0_At1,
+         grad_1_At1,
+         grad_2_At1,
+         grad_0_At2,
+         grad_1_At2,
+         grad_2_At2,
+         grad_0_At3,
+         grad_1_At3,
+         grad_2_At3,
+         grad_0_At4,
+         grad_1_At4,
+         grad_2_At4,
+         grad_0_At5,
+         grad_1_At5,
+         grad_2_At5,
+
+         grad_0_K,
+         grad_1_K,
+         grad_2_K,
+
+         grad_0_Gt0,
+         grad_1_Gt0,
+         grad_2_Gt0,
+         grad_0_Gt1,
+         grad_1_Gt1,
+         grad_2_Gt1,
+         grad_0_Gt2,
+         grad_1_Gt2,
+         grad_2_Gt2,
+
+         grad_0_B0,
+         grad_1_B0,
+         grad_2_B0,
+         grad_0_B1,
+         grad_1_B1,
+         grad_2_B1,
+         grad_0_B2,
+         grad_1_B2,
+         grad_2_B2,
+
+        dev_sz,
+        sz);
+
+    bssn::timer::t_rhs.stop();
+
     #include "bssnrhs_cuda_offset_demalloc.h"
     #include "bssnrhs_cuda_mdealloc.h"
     #include "bssnrhs_cuda_mdealloc_adv.h"
@@ -396,7 +569,7 @@ const unsigned int& bflag)
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
-    const double *pmin,const double *pmax, const double f_falloff, const double f_asymptotic,
+    double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
     int *dev_sz, int* dev_bflag) {
 
         int j = 3 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -448,7 +621,7 @@ __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u
 
 __global__ void cacl_bssn_bcs_y(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
-    const double *pmin,const double *pmax, const double f_falloff, const double f_asymptotic,
+    double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
     int *dev_sz, int* dev_bflag) {
 
         int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -499,7 +672,7 @@ __global__ void cacl_bssn_bcs_y(double * output, double * dev_var_in, int* dev_u
 
 __global__ void cacl_bssn_bcs_z(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
-    const double *pmin,const double *pmax, const double f_falloff, const double f_asymptotic,
+    double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
     int *dev_sz, int* dev_bflag) {
         
             int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -549,7 +722,7 @@ __global__ void cacl_bssn_bcs_z(double * output, double * dev_var_in, int* dev_u
 }
 void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
-    const double *pmin, const double *pmax, const double f_falloff, const double f_asymptotic,
+    double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
     const unsigned int *host_sz, int* dev_bflag, int* dev_sz) {
         
         cudaError_t cudaStatus;
@@ -604,5 +777,388 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         }
 
         
+
+    }
+
+    __global__ void kernal_get_output ( double* output,
+
+    int *dev_alphaInt,
+    int *dev_chiInt,
+    int *dev_KInt,
+    int *dev_gt0Int,
+    int *dev_gt1Int,
+    int *dev_gt2Int,
+    int *dev_gt3Int,
+    int *dev_gt4Int,
+    int *dev_gt5Int,
+    int *dev_beta0Int,
+    int *dev_beta1Int,
+    int *dev_beta2Int,
+    int *dev_At0Int,
+    int *dev_At1Int,
+    int *dev_At2Int,
+    int *dev_At3Int,
+    int *dev_At4Int,
+    int *dev_At5Int,
+    int *dev_Gt0Int,
+    int *dev_Gt1Int,
+    int *dev_Gt2Int,
+    int *dev_B0Int,
+    int *dev_B1Int,
+    int *dev_B2Int,
+
+    double *grad_0_alpha,
+    double *grad_1_alpha,
+    double *grad_2_alpha,
+    double *grad_0_beta0,
+    double *grad_1_beta0,
+    double *grad_2_beta0,
+    double *grad_0_beta1,
+    double *grad_1_beta1,
+    double *grad_2_beta1,
+    double *grad_0_beta2,
+    double *grad_1_beta2,
+    double *grad_2_beta2,
+
+    double *grad_0_gt0,
+    double *grad_1_gt0,
+    double *grad_2_gt0,
+    double *grad_0_gt1,
+    double *grad_1_gt1,
+    double *grad_2_gt1,
+    double *grad_0_gt2,
+    double *grad_1_gt2,
+    double *grad_2_gt2,
+    double *grad_0_gt3,
+    double *grad_1_gt3,
+    double *grad_2_gt3,
+    double *grad_0_gt4,
+    double *grad_1_gt4,
+    double *grad_2_gt4,
+    double *grad_0_gt5,
+    double *grad_1_gt5,
+    double *grad_2_gt5,  
+
+    double *grad_0_chi,
+    double *grad_1_chi,
+    double *grad_2_chi,
+
+    double *grad_0_At0,
+    double *grad_1_At0,
+    double *grad_2_At0,
+    double *grad_0_At1,
+    double *grad_1_At1,
+    double *grad_2_At1,
+    double *grad_0_At2,
+    double *grad_1_At2,
+    double *grad_2_At2,
+    double *grad_0_At3,
+    double *grad_1_At3,
+    double *grad_2_At3,
+    double *grad_0_At4,
+    double *grad_1_At4,
+    double *grad_2_At4,
+    double *grad_0_At5,
+    double *grad_1_At5,
+    double *grad_2_At5,
+
+    double *grad_0_K,
+    double *grad_1_K,
+    double *grad_2_K,
+
+    double *grad_0_Gt0,
+    double *grad_1_Gt0,
+    double *grad_2_Gt0,
+    double *grad_0_Gt1,
+    double *grad_1_Gt1,
+    double *grad_2_Gt1,
+    double *grad_0_Gt2,
+    double *grad_1_Gt2,
+    double *grad_2_Gt2,
+
+    double *grad_0_B0,
+    double *grad_1_B0,
+    double *grad_2_B0,
+    double *grad_0_B1,
+    double *grad_1_B1,
+    double *grad_2_B1,
+    double *grad_0_B2,
+    double *grad_1_B2,
+    double *grad_2_B2,
+    int * dev_sz) {
+    
+        int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+        int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
+        int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+
+        int nx = dev_sz[0];
+        int ny = dev_sz[1];
+
+        if(i >= nx-3 || j >= ny-1 || k >= dev_sz[2]-1) return;
+
+        const  double sigma = 1e-4;
+        int pp = i + nx*(j + ny*k);
+
+        output[*dev_alphaInt + pp] += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
+        output[*dev_beta0Int + pp] += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
+        output[*dev_beta1Int + pp] += sigma * (grad_0_beta1[pp] + grad_1_beta1[pp] + grad_2_beta1[pp]);
+        output[*dev_beta2Int + pp] += sigma * (grad_0_beta2[pp] + grad_1_beta2[pp] + grad_2_beta2[pp]);
+
+        output[*dev_gt0Int + pp] += sigma * (grad_0_gt0[pp] + grad_1_gt0[pp] + grad_2_gt0[pp]);
+        output[*dev_gt1Int + pp] += sigma * (grad_0_gt1[pp] + grad_1_gt1[pp] + grad_2_gt1[pp]);
+        output[*dev_gt2Int + pp] += sigma * (grad_0_gt2[pp] + grad_1_gt2[pp] + grad_2_gt2[pp]);
+        output[*dev_gt3Int + pp] += sigma * (grad_0_gt3[pp] + grad_1_gt3[pp] + grad_2_gt3[pp]);
+        output[*dev_gt4Int + pp] += sigma * (grad_0_gt4[pp] + grad_1_gt4[pp] + grad_2_gt4[pp]);
+        output[*dev_gt5Int + pp] += sigma * (grad_0_gt5[pp] + grad_1_gt5[pp] + grad_2_gt5[pp]);
+
+        output[*dev_chiInt + pp]  += sigma * (grad_0_chi[pp] + grad_1_chi[pp] + grad_2_chi[pp]);
+
+        output[*dev_At0Int + pp] += sigma * (grad_0_At0[pp] + grad_1_At0[pp] + grad_2_At0[pp]);
+        output[*dev_At1Int + pp] += sigma * (grad_0_At1[pp] + grad_1_At1[pp] + grad_2_At1[pp]);
+        output[*dev_At2Int + pp] += sigma * (grad_0_At2[pp] + grad_1_At2[pp] + grad_2_At2[pp]);
+        output[*dev_At3Int + pp] += sigma * (grad_0_At3[pp] + grad_1_At3[pp] + grad_2_At3[pp]);
+        output[*dev_At4Int + pp] += sigma * (grad_0_At4[pp] + grad_1_At4[pp] + grad_2_At4[pp]);
+        output[*dev_At5Int + pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
+
+        output[*dev_KInt + pp] += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
+
+        output[*dev_Gt0Int + pp] += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
+        output[*dev_Gt1Int + pp] += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
+        output[*dev_Gt2Int + pp] += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
+
+        output[*dev_B0Int + pp] += sigma * (grad_0_B0[pp] + grad_1_B0[pp] + grad_2_B0[pp]);
+        output[*dev_B1Int + pp] += sigma * (grad_0_B1[pp] + grad_1_B1[pp] + grad_2_B1[pp]);
+        output[*dev_B2Int + pp] += sigma * (grad_0_B2[pp] + grad_1_B2[pp] + grad_2_B2[pp]);
+
+    }
+
+    void get_output (double* output,
+
+        int *dev_alphaInt,
+        int *dev_chiInt,
+        int *dev_KInt,
+        int *dev_gt0Int,
+        int *dev_gt1Int,
+        int *dev_gt2Int,
+        int *dev_gt3Int,
+        int *dev_gt4Int,
+        int *dev_gt5Int,
+        int *dev_beta0Int,
+        int *dev_beta1Int,
+        int *dev_beta2Int,
+        int *dev_At0Int,
+        int *dev_At1Int,
+        int *dev_At2Int,
+        int *dev_At3Int,
+        int *dev_At4Int,
+        int *dev_At5Int,
+        int *dev_Gt0Int,
+        int *dev_Gt1Int,
+        int *dev_Gt2Int,
+        int *dev_B0Int,
+        int *dev_B1Int,
+        int *dev_B2Int,
+
+        double *grad_0_alpha,
+        double *grad_1_alpha,
+        double *grad_2_alpha,
+        double *grad_0_beta0,
+        double *grad_1_beta0,
+        double *grad_2_beta0,
+        double *grad_0_beta1,
+        double *grad_1_beta1,
+        double *grad_2_beta1,
+        double *grad_0_beta2,
+        double *grad_1_beta2,
+        double *grad_2_beta2,
+
+        double *grad_0_gt0,
+        double *grad_1_gt0,
+        double *grad_2_gt0,
+        double *grad_0_gt1,
+        double *grad_1_gt1,
+        double *grad_2_gt1,
+        double *grad_0_gt2,
+        double *grad_1_gt2,
+        double *grad_2_gt2,
+        double *grad_0_gt3,
+        double *grad_1_gt3,
+        double *grad_2_gt3,
+        double *grad_0_gt4,
+        double *grad_1_gt4,
+        double *grad_2_gt4,
+        double *grad_0_gt5,
+        double *grad_1_gt5,
+        double *grad_2_gt5,  
+
+        double *grad_0_chi,
+        double *grad_1_chi,
+        double *grad_2_chi,
+
+        double *grad_0_At0,
+        double *grad_1_At0,
+        double *grad_2_At0,
+        double *grad_0_At1,
+        double *grad_1_At1,
+        double *grad_2_At1,
+        double *grad_0_At2,
+        double *grad_1_At2,
+        double *grad_2_At2,
+        double *grad_0_At3,
+        double *grad_1_At3,
+        double *grad_2_At3,
+        double *grad_0_At4,
+        double *grad_1_At4,
+        double *grad_2_At4,
+        double *grad_0_At5,
+        double *grad_1_At5,
+        double *grad_2_At5,
+
+        double *grad_0_K,
+        double *grad_1_K,
+        double *grad_2_K,
+
+        double *grad_0_Gt0,
+        double *grad_1_Gt0,
+        double *grad_2_Gt0,
+        double *grad_0_Gt1,
+        double *grad_1_Gt1,
+        double *grad_2_Gt1,
+        double *grad_0_Gt2,
+        double *grad_1_Gt2,
+        double *grad_2_Gt2,
+
+        double *grad_0_B0,
+        double *grad_1_B0,
+        double *grad_2_B0,
+        double *grad_0_B1,
+        double *grad_1_B1,
+        double *grad_2_B1,
+        double *grad_0_B2,
+        double *grad_1_B2,
+        double *grad_2_B2,
+        
+        int* dev_sz,
+        const unsigned int* host_sz) {
+        
+            const int ie = host_sz[0] - 3;//x direction
+            const int je = host_sz[1] - 1;//y direction
+            const int ke = host_sz[2] - 1;//z direction
+  
+            int temp_max = (ie>je)? ie : je;
+            int maximumIterations = (temp_max>ke) ? temp_max: ke;
+            
+            int requiredBlocks = (9+maximumIterations) / 10;
+
+            kernal_get_output <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                      dim3((ie + requiredBlocks -1)/requiredBlocks,
+                      (je + requiredBlocks -1)/requiredBlocks, 
+                      (ke + requiredBlocks -1)/requiredBlocks) >>> (output,
+                        dev_alphaInt,
+                        dev_chiInt,
+                        dev_KInt,
+                        dev_gt0Int,
+                        dev_gt1Int,
+                        dev_gt2Int,
+                        dev_gt3Int,
+                        dev_gt4Int,
+                        dev_gt5Int,
+                        dev_beta0Int,
+                        dev_beta1Int,
+                        dev_beta2Int,
+                        dev_At0Int,
+                        dev_At1Int,
+                        dev_At2Int,
+                        dev_At3Int,
+                        dev_At4Int,
+                        dev_At5Int,
+                        dev_Gt0Int,
+                        dev_Gt1Int,
+                        dev_Gt2Int,
+                        dev_B0Int,
+                        dev_B1Int,
+                        dev_B2Int,
+
+                        grad_0_alpha,
+                         grad_1_alpha,
+                         grad_2_alpha,
+                         grad_0_beta0,
+                         grad_1_beta0,
+                         grad_2_beta0,
+                         grad_0_beta1,
+                         grad_1_beta1,
+                         grad_2_beta1,
+                         grad_0_beta2,
+                         grad_1_beta2,
+                         grad_2_beta2,
+                        
+                         grad_0_gt0,
+                         grad_1_gt0,
+                         grad_2_gt0,
+                         grad_0_gt1,
+                         grad_1_gt1,
+                         grad_2_gt1,
+                         grad_0_gt2,
+                         grad_1_gt2,
+                         grad_2_gt2,
+                         grad_0_gt3,
+                         grad_1_gt3,
+                         grad_2_gt3,
+                         grad_0_gt4,
+                         grad_1_gt4,
+                         grad_2_gt4,
+                         grad_0_gt5,
+                         grad_1_gt5,
+                         grad_2_gt5,
+
+                         grad_0_chi,
+                         grad_1_chi,
+                         grad_2_chi,
+
+                         grad_0_At0,
+                         grad_1_At0,
+                         grad_2_At0,
+                         grad_0_At1,
+                         grad_1_At1,
+                         grad_2_At1,
+                         grad_0_At2,
+                         grad_1_At2,
+                         grad_2_At2,
+                         grad_0_At3,
+                         grad_1_At3,
+                         grad_2_At3,
+                         grad_0_At4,
+                         grad_1_At4,
+                         grad_2_At4,
+                         grad_0_At5,
+                         grad_1_At5,
+                         grad_2_At5,
+
+                         grad_0_K,
+                         grad_1_K,
+                         grad_2_K,
+
+                         grad_0_Gt0,
+                         grad_1_Gt0,
+                         grad_2_Gt0,
+                         grad_0_Gt1,
+                         grad_1_Gt1,
+                         grad_2_Gt1,
+                         grad_0_Gt2,
+                         grad_1_Gt2,
+                         grad_2_Gt2,
+
+                         grad_0_B0,
+                         grad_1_B0,
+                         grad_2_B0,
+                         grad_0_B1,
+                         grad_1_B1,
+                         grad_2_B1,
+                         grad_0_B2,
+                         grad_1_B2,
+                         grad_2_B2,
+
+                        dev_sz
+                      );
 
     }
