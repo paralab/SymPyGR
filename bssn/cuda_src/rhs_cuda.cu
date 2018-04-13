@@ -7,13 +7,6 @@
 
 enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};
 
-double ETA_CONST_CUDA=0.1;
-double ETA_R0_CUDA=0.1;
-double ETA_DAMPING_EXP_CUDA=0.1;
-double KO_DISS_SIGMA_CUDA=1e-4;
-unsigned int BSSN_LAMBDA_CUDA[4]={1,2,3,4};
-double BSSN_LAMBDA_F_CUDA[2]={0.8,0.9};
-
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, 
 const unsigned int& offset, const double *pmin, const double *pmax, const unsigned int *sz, 
 const unsigned int& bflag)
@@ -101,266 +94,27 @@ const unsigned int& bflag)
 
     bssn::timer::t_deriv.stop();
 
+
+    bssn::timer::t_rhs.start();
+    calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
+        #include "list_of_args.h"
+    );
+    bssn::timer::t_rhs.stop();
+
     #if test
     // Copying specified array to CPU for testing purpose
     double * host_array_cpu = (double *) malloc(size);
     cudaStatus = cudaMemcpy(host_array_cpu, grad_1_alpha, size, cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
-    
     test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
-
     free(host_array_cpu);
+
+    // double * host_array_cpu = (double *) malloc(unzip_dof*24);
+    // cudaStatus = cudaMemcpy(host_array_cpu, dev_var_out, unzip_dof*24, cudaMemcpyDeviceToHost);
+    // if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
+    // test_file_write::writeToFile("output_cuda.txt", host_array_cpu, unzip_dof*24);
+    // free(host_array_cpu);
     #endif
-
-    calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
-        grad_0_alpha,
-        grad_1_alpha,
-        grad_2_alpha,
-        grad_0_beta0,
-        grad_1_beta0,
-        grad_2_beta0,
-        grad_0_beta1,
-        grad_1_beta1,
-        grad_2_beta1,
-        grad_0_beta2,
-        grad_1_beta2,
-        grad_2_beta2,
-        grad_0_B0,
-        grad_1_B0,
-        grad_2_B0,
-        grad_0_B1,
-        grad_1_B1,
-        grad_2_B1,
-        grad_0_B2,
-        grad_1_B2,
-        grad_2_B2,
-        grad_0_chi,
-        grad_1_chi,
-        grad_2_chi,
-        grad_0_Gt0,
-        grad_1_Gt0,
-        grad_2_Gt0,
-        grad_0_Gt1,
-        grad_1_Gt1,
-        grad_2_Gt1,
-        grad_0_Gt2,
-        grad_1_Gt2,
-        grad_2_Gt2,
-        grad_0_K,
-        grad_1_K,
-        grad_2_K,
-        grad_0_gt0,
-        grad_1_gt0,
-        grad_2_gt0,
-        grad_0_gt1,
-        grad_1_gt1,
-        grad_2_gt1,
-        grad_0_gt2,
-        grad_1_gt2,
-        grad_2_gt2,
-        grad_0_gt3,
-        grad_1_gt3,
-        grad_2_gt3,
-        grad_0_gt4,
-        grad_1_gt4,
-        grad_2_gt4,
-        grad_0_gt5,
-        grad_1_gt5,
-        grad_2_gt5,
-        grad_0_At0,
-        grad_1_At0,
-        grad_2_At0,
-        grad_0_At1,
-        grad_1_At1,
-        grad_2_At1,
-        grad_0_At2,
-        grad_1_At2,
-        grad_2_At2,
-        grad_0_At3,
-        grad_1_At3,
-        grad_2_At3,
-        grad_0_At4,
-        grad_1_At4,
-        grad_2_At4,
-        grad_0_At5,
-        grad_1_At5,
-        grad_2_At5,
-        grad2_0_0_gt0,
-        grad2_0_1_gt0,
-        grad2_0_2_gt0,
-        grad2_1_1_gt0,
-        grad2_1_2_gt0,
-        grad2_2_2_gt0,
-        grad2_0_0_gt1,
-        grad2_0_1_gt1,
-        grad2_0_2_gt1,
-        grad2_1_1_gt1,
-        grad2_1_2_gt1,
-        grad2_2_2_gt1,
-        grad2_0_0_gt2,
-        grad2_0_1_gt2,
-        grad2_0_2_gt2,
-        grad2_1_1_gt2,
-        grad2_1_2_gt2,
-        grad2_2_2_gt2,
-        grad2_0_0_gt3,
-        grad2_0_1_gt3,
-        grad2_0_2_gt3,
-        grad2_1_1_gt3,
-        grad2_1_2_gt3,
-        grad2_2_2_gt3,
-        grad2_0_0_gt4,
-        grad2_0_1_gt4,
-        grad2_0_2_gt4,
-        grad2_1_1_gt4,
-        grad2_1_2_gt4,
-        grad2_2_2_gt4,
-        grad2_0_0_gt5,
-        grad2_0_1_gt5,
-        grad2_0_2_gt5,
-        grad2_1_1_gt5,
-        grad2_1_2_gt5,
-        grad2_2_2_gt5,
-        grad2_0_0_chi,
-        grad2_0_1_chi,
-        grad2_0_2_chi,
-        grad2_1_1_chi,
-        grad2_1_2_chi,
-        grad2_2_2_chi,
-        grad2_0_0_alpha,
-        grad2_0_1_alpha,
-        grad2_0_2_alpha,
-        grad2_1_1_alpha,
-        grad2_1_2_alpha,
-        grad2_2_2_alpha,
-        grad2_0_0_beta0,
-        grad2_0_1_beta0,
-        grad2_0_2_beta0,
-        grad2_1_1_beta0,
-        grad2_1_2_beta0,
-        grad2_2_2_beta0,
-        grad2_0_0_beta1,
-        grad2_0_1_beta1,
-        grad2_0_2_beta1,
-        grad2_1_1_beta1,
-        grad2_1_2_beta1,
-        grad2_2_2_beta1,
-        grad2_0_0_beta2,
-        grad2_0_1_beta2,
-        grad2_0_2_beta2,
-        grad2_1_1_beta2,
-        grad2_1_2_beta2,
-        grad2_2_2_beta2,
-        agrad_0_gt0,
-        agrad_1_gt0,
-        agrad_2_gt0,
-        agrad_0_gt1,
-        agrad_1_gt1,
-        agrad_2_gt1,
-        agrad_0_gt2,
-        agrad_1_gt2,
-        agrad_2_gt2,
-        agrad_0_gt3,
-        agrad_1_gt3,
-        agrad_2_gt3,
-        agrad_0_gt4,
-        agrad_1_gt4,
-        agrad_2_gt4,
-        agrad_0_gt5,
-        agrad_1_gt5,
-        agrad_2_gt5,
-        agrad_0_At0,
-        agrad_1_At0,
-        agrad_2_At0,
-        agrad_0_At1,
-        agrad_1_At1,
-        agrad_2_At1,
-        agrad_0_At2,
-        agrad_1_At2,
-        agrad_2_At2,
-        agrad_0_At3,
-        agrad_1_At3,
-        agrad_2_At3,
-        agrad_0_At4,
-        agrad_1_At4,
-        agrad_2_At4,
-        agrad_0_At5,
-        agrad_1_At5,
-        agrad_2_At5,
-        agrad_0_alpha,
-        agrad_1_alpha,
-        agrad_2_alpha,
-        agrad_0_beta0,
-        agrad_1_beta0,
-        agrad_2_beta0,
-        agrad_0_beta1,
-        agrad_1_beta1,
-        agrad_2_beta1,
-        agrad_0_beta2,
-        agrad_1_beta2,
-        agrad_2_beta2,
-        agrad_0_chi,
-        agrad_1_chi,
-        agrad_2_chi,
-        agrad_0_Gt0,
-        agrad_1_Gt0,
-        agrad_2_Gt0,
-        agrad_0_Gt1,
-        agrad_1_Gt1,
-        agrad_2_Gt1,
-        agrad_0_Gt2,
-        agrad_1_Gt2,
-        agrad_2_Gt2,
-        agrad_0_K,
-        agrad_1_K,
-        agrad_2_K,
-        agrad_0_B0,
-        agrad_1_B0,
-        agrad_2_B0,
-        agrad_0_B1,
-        agrad_1_B1,
-        agrad_2_B1,
-        agrad_0_B2,
-        agrad_1_B2,
-        agrad_2_B2,
-        dev_alphaInt,
-        dev_chiInt,
-        dev_KInt,
-        dev_gt0Int,
-        dev_gt1Int,
-        dev_gt2Int,
-        dev_gt3Int,
-        dev_gt4Int,
-        dev_gt5Int,
-        dev_beta0Int,
-        dev_beta1Int,
-        dev_beta2Int,
-        dev_At0Int,
-        dev_At1Int,
-        dev_At2Int,
-        dev_At3Int,
-        dev_At4Int,
-        dev_At5Int,
-        dev_Gt0Int,
-        dev_Gt1Int,
-        dev_Gt2Int,
-        dev_B0Int,
-        dev_B1Int,
-        dev_B2Int);
-    // const unsigned int nx = sz[0];
-    // const unsigned int ny = sz[1];
-    // const unsigned int nz = sz[2];
-
-    // for (unsigned int k = 3; k < nz-3; k++) {
-    //     z = pmin[2] + k*hz;
-  
-    //   for (unsigned int j = 3; j < ny-3; j++) {
-    //      y = pmin[1] + j*hy;
-  
-    //     for (unsigned int i = 3; i < nx-3; i++) {
-    //         x = pmin[0] + i*hx;
-
-
 
     // Free up GPU memory
     #include "bssnrhs_cuda_offset_demalloc.h"
@@ -371,7 +125,5 @@ const unsigned int& bflag)
     cudaFree(dev_dy_hz);
     cudaFree(dev_sz);
     cudaFree(dev_zero);
-    // cudaFree(dev_pmin);
-    // cudaFree(dev_lambda);
-    // cudaFree(dev_lambda_f);
+    cudaFree(dev_pmin);
 }

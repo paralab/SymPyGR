@@ -126,12 +126,6 @@ bssn::timer::t_deriv.start();
 
 bssn::timer::t_deriv.stop();
 
-
-#if test
-// Take the pointer of specified array
-test_file_write::writeToFile("output_cpu.txt", grad_1_alpha, n);
-#endif
-
   register double x;
   register double y;
   register double z;
@@ -140,6 +134,7 @@ test_file_write::writeToFile("output_cpu.txt", grad_1_alpha, n);
   double r_coord;
   double eta;
 
+  bssn::timer::t_rhs.start();
   //cout << "begin loop" << endl;
   for (unsigned int k = 3; k < nz-3; k++) {
       z = pmin[2] + k*hz;
@@ -162,11 +157,8 @@ test_file_write::writeToFile("output_cpu.txt", grad_1_alpha, n);
          }
 
 
-bssn::timer::t_rhs.start();
-
         #include "bssneqs.cpp"
 
-bssn::timer::t_rhs.stop();
 
        /* debugging */
         unsigned int qi = 46 - 1;
@@ -180,7 +172,21 @@ bssn::timer::t_rhs.stop();
       }
     }
   }
+  bssn::timer::t_rhs.stop();
 
+  #if test
+  // Take the pointer of specified array
+  test_file_write::writeToFile("output_cpu.txt", grad_1_alpha, n);
+
+  // for (int j=0; j<24; j++){
+  //   if (j==0) {
+  //     test_file_write::writeToFile("output_cpu.txt", unzipVarsRHS[j], 1331);
+  //   }else{
+  //     test_file_write::appendToFile("output_cpu.txt", unzipVarsRHS[j], 1331);
+  //   }
+  // }
+  
+  #endif
 
   if (bflag != 0) {
 
