@@ -121,7 +121,6 @@ const unsigned int& bflag)
     // test_file_write::writeToFile("output_cuda.txt", host_array_cpu, unzip_dof*24);
     // free(host_array_cpu);
     #endif
-    // Free up GPU memory
         
     if (bflag != 0) {
         bssn::timer::t_bdyc.start();
@@ -295,6 +294,7 @@ const unsigned int& bflag)
 
     bssn::timer::t_rhs.stop();
 
+    // Free up GPU memory
     #include "bssnrhs_cuda_offset_demalloc.h"
     #include "bssnrhs_cuda_mdealloc.h"
     #include "bssnrhs_cuda_mdealloc_adv.h"
