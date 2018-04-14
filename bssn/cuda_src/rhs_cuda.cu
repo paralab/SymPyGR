@@ -10,7 +10,7 @@ enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, 
 const unsigned int& offset, const double *pmin, const double *pmax, const unsigned int *sz, 
 const unsigned int& bflag)
-{
+{ 
     int alphaInt = (VAR_CU::U_ALPHA) * unzip_dof + offset;
     int chiInt = (VAR_CU::U_CHI) * unzip_dof + offset;
     int KInt = (VAR_CU::U_K) * unzip_dof + offset;
