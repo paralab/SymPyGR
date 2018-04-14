@@ -7,19 +7,10 @@
 
 enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};
 
-double ETA_CONST_CUDA=0.1;
-double ETA_R0_CUDA=0.1;
-double ETA_DAMPING_EXP_CUDA=0.1;
-double KO_DISS_SIGMA_CUDA=1e-4;
-unsigned int BSSN_LAMBDA_CUDA[4]={1,2,3,4};
-double BSSN_LAMBDA_F_CUDA[2]={0.8,0.9};
-
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, 
 const unsigned int& offset, const double *pmin, const double *pmax, const unsigned int *sz, 
 const unsigned int& bflag)
-{
-    cudaError_t cudaStatus;
-
+{ 
     int alphaInt = (VAR_CU::U_ALPHA) * unzip_dof + offset;
     int chiInt = (VAR_CU::U_CHI) * unzip_dof + offset;
     int KInt = (VAR_CU::U_K) * unzip_dof + offset;
@@ -50,6 +41,7 @@ const unsigned int& bflag)
     double hz = (pmax[2] - pmin[2]) / (sz[2] - 1);
 
     // Send above values to GPU memory
+    cudaError_t cudaStatus;
     #include "bssnrhs_cuda_offset_malloc.h"
 
     double * dev_dy_hx; //similar to hx in cpu code
@@ -80,10 +72,10 @@ const unsigned int& bflag)
     cudaStatus = cudaMalloc((void **) &dev_zero, sizeof(int));
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "0 cudaMalloc failed!\n"); return;}
 
-    double *dev_pmin;
-    cudaStatus = cudaMalloc((void **) &dev_pmin, sizeof(pmin)*sizeof(double));
+    double * dev_pmin;
+    cudaStatus = cudaMalloc((void **) &dev_pmin, 3*sizeof(double));
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMalloc failed!\n"); return;}
-    cudaStatus = cudaMemcpy(dev_pmin, pmin, sizeof(pmin)*sizeof(double), cudaMemcpyHostToDevice);
+    cudaStatus = cudaMemcpy(dev_pmin, pmin, 3*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMemcpy failed!\n"); return;}
 
     double *dev_pmax;
@@ -92,30 +84,15 @@ const unsigned int& bflag)
     cudaStatus = cudaMemcpy(dev_pmax, pmax, sizeof(pmax)*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMemcpy failed!\n"); return;}
 
-    const unsigned int lambda[4] = {BSSN_LAMBDA_CUDA[0], BSSN_LAMBDA_CUDA[1],
-        BSSN_LAMBDA_CUDA[2], BSSN_LAMBDA_CUDA[3]};
-    const double lambda_f[2] = {BSSN_LAMBDA_F_CUDA[0], BSSN_LAMBDA_F_CUDA[1]};
-
-    unsigned int *dev_lambda;
-    cudaStatus = cudaMalloc((void **) &dev_lambda, sizeof(lambda)*sizeof(int));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "lambda cudaMalloc failed!\n"); return;}
-    cudaStatus = cudaMemcpy(dev_lambda, lambda, sizeof(lambda)*sizeof(int), cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "lambda cudaMemcpy failed!\n"); return;}
-
-    double *dev_lambda_f;
-    cudaStatus = cudaMalloc((void **) &dev_lambda_f, sizeof(lambda_f)*sizeof(double));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "lambda_f cudaMalloc failed!\n"); return;}
-    cudaStatus = cudaMemcpy(dev_lambda_f, lambda_f, sizeof(lambda_f)*sizeof(double), cudaMemcpyHostToDevice);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "lambda_f cudaMemcpy failed!\n"); return;}
-
     // Allocate memory to store the output of derivs
     unsigned int n = sz[0]*sz[1]*sz[2];
     int size = n * sizeof(double);
 
+    bssn::timer::t_deriv.start();
+
     #include "bssnrhs_cuda_malloc.h"
     #include "bssnrhs_cuda_malloc_adv.h"
-
-    bssn::timer::t_deriv.start();
+   
 
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
@@ -123,264 +100,200 @@ const unsigned int& bflag)
 
     bssn::timer::t_deriv.stop();
 
+
+    bssn::timer::t_rhs.start();
+    calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
+        #include "list_of_args.h"
+    );
+    bssn::timer::t_rhs.stop();
+
     #if test
     // Copying specified array to CPU for testing purpose
     double * host_array_cpu = (double *) malloc(size);
     cudaStatus = cudaMemcpy(host_array_cpu, grad_1_alpha, size, cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
-    
     test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
-
     free(host_array_cpu);
+
+    // double * host_array_cpu = (double *) malloc(unzip_dof*24);
+    // cudaStatus = cudaMemcpy(host_array_cpu, dev_var_out, unzip_dof*24, cudaMemcpyDeviceToHost);
+    // if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
+    // test_file_write::writeToFile("output_cuda.txt", host_array_cpu, unzip_dof*24);
+    // free(host_array_cpu);
     #endif
-    // int sizeArray=(sz[2]-3)*(sz[1]-3)*(sz[0]-3);
-    // callculateBSSN_EQ(
-    //         grad_0_alpha,
-    //         grad_1_alpha,
-    //         grad_2_alpha,
-    //         grad_0_beta0,
-    //         grad_1_beta0,
-    //         grad_2_beta0,
-    //         grad_0_beta1,
-    //         grad_1_beta1,
-    //         grad_2_beta1,
-    //         grad_0_beta2,
-    //         grad_1_beta2,
-    //         grad_2_beta2,
-    //         grad_0_B0,
-    //         grad_1_B0,
-    //         grad_2_B0,
-    //         grad_0_B1,
-    //         grad_1_B1,
-    //         grad_2_B1,
-    //         grad_0_B2,
-    //         grad_1_B2,
-    //         grad_2_B2,
-    //         grad_0_chi,
-    //         grad_1_chi,
-    //         grad_2_chi,
-    //         grad_0_Gt0,
-    //         grad_1_Gt0,
-    //         grad_2_Gt0,
-    //         grad_0_Gt1,
-    //         grad_1_Gt1,
-    //         grad_2_Gt1,
-    //         grad_0_Gt2,
-    //         grad_1_Gt2,
-    //         grad_2_Gt2,
-    //         grad_0_K,
-    //         grad_1_K,
-    //         grad_2_K,
-    //         grad_0_gt0,
-    //         grad_1_gt0,
-    //         grad_2_gt0,
-    //         grad_0_gt1,
-    //         grad_1_gt1,
-    //         grad_2_gt1,
-    //         grad_0_gt2,
-    //         grad_1_gt2,
-    //         grad_2_gt2,
-    //         grad_0_gt3,
-    //         grad_1_gt3,
-    //         grad_2_gt3,
-    //         grad_0_gt4,
-    //         grad_1_gt4,
-    //         grad_2_gt4,
-    //         grad_0_gt5,
-    //         grad_1_gt5,
-    //         grad_2_gt5,
-    //         grad_0_At0,
-    //         grad_1_At0,
-    //         grad_2_At0,
-    //         grad_0_At1,
-    //         grad_1_At1,
-    //         grad_2_At1,
-    //         grad_0_At2,
-    //         grad_1_At2,
-    //         grad_2_At2,
-    //         grad_0_At3,
-    //         grad_1_At3,
-    //         grad_2_At3,
-    //         grad_0_At4,
-    //         grad_1_At4,
-    //         grad_2_At4,
-    //         grad_0_At5,
-    //         grad_1_At5,
-    //         grad_2_At5,
-    //         grad2_0_0_gt0,
-    //         grad2_0_1_gt0,
-    //         grad2_0_2_gt0,
-    //         grad2_1_1_gt0,
-    //         grad2_1_2_gt0,
-    //         grad2_2_2_gt0,
-    //         grad2_0_0_gt1,
-    //         grad2_0_1_gt1,
-    //         grad2_0_2_gt1,
-    //         grad2_1_1_gt1,
-    //         grad2_1_2_gt1,
-    //         grad2_2_2_gt1,
-    //         grad2_0_0_gt2,
-    //         grad2_0_1_gt2,
-    //         grad2_0_2_gt2,
-    //         grad2_1_1_gt2,
-    //         grad2_1_2_gt2,
-    //         grad2_2_2_gt2,
-    //         grad2_0_0_gt3,
-    //         grad2_0_1_gt3,
-    //         grad2_0_2_gt3,
-    //         grad2_1_1_gt3,
-    //         grad2_1_2_gt3,
-    //         grad2_2_2_gt3,
-    //         grad2_0_0_gt4,
-    //         grad2_0_1_gt4,
-    //         grad2_0_2_gt4,
-    //         grad2_1_1_gt4,
-    //         grad2_1_2_gt4,
-    //         grad2_2_2_gt4,
-    //         grad2_0_0_gt5,
-    //         grad2_0_1_gt5,
-    //         grad2_0_2_gt5,
-    //         grad2_1_1_gt5,
-    //         grad2_1_2_gt5,
-    //         grad2_2_2_gt5,
-    //         grad2_0_0_chi,
-    //         grad2_0_1_chi,
-    //         grad2_0_2_chi,
-    //         grad2_1_1_chi,
-    //         grad2_1_2_chi,
-    //         grad2_2_2_chi,
-    //         grad2_0_0_alpha,
-    //         grad2_0_1_alpha,
-    //         grad2_0_2_alpha,
-    //         grad2_1_1_alpha,
-    //         grad2_1_2_alpha,
-    //         grad2_2_2_alpha,
-    //         grad2_0_0_beta0,
-    //         grad2_0_1_beta0,
-    //         grad2_0_2_beta0,
-    //         grad2_1_1_beta0,
-    //         grad2_1_2_beta0,
-    //         grad2_2_2_beta0,
-    //         grad2_0_0_beta1,
-    //         grad2_0_1_beta1,
-    //         grad2_0_2_beta1,
-    //         grad2_1_1_beta1,
-    //         grad2_1_2_beta1,
-    //         grad2_2_2_beta1,
-    //         grad2_0_0_beta2,
-    //         grad2_0_1_beta2,
-    //         grad2_0_2_beta2,
-    //         grad2_1_1_beta2,
-    //         grad2_1_2_beta2,
-    //         grad2_2_2_beta2,
-    //         agrad_0_gt0,
-    //         agrad_1_gt0,
-    //         agrad_2_gt0,
-    //         agrad_0_gt1,
-    //         agrad_1_gt1,
-    //         agrad_2_gt1,
-    //         agrad_0_gt2,
-    //         agrad_1_gt2,
-    //         agrad_2_gt2,
-    //         agrad_0_gt3,
-    //         agrad_1_gt3,
-    //         agrad_2_gt3,
-    //         agrad_0_gt4,
-    //         agrad_1_gt4,
-    //         agrad_2_gt4,
-    //         agrad_0_gt5,
-    //         agrad_1_gt5,
-    //         agrad_2_gt5,
-    //         agrad_0_At0,
-    //         agrad_1_At0,
-    //         agrad_2_At0,
-    //         agrad_0_At1,
-    //         agrad_1_At1,
-    //         agrad_2_At1,
-    //         agrad_0_At2,
-    //         agrad_1_At2,
-    //         agrad_2_At2,
-    //         agrad_0_At3,
-    //         agrad_1_At3,
-    //         agrad_2_At3,
-    //         agrad_0_At4,
-    //         agrad_1_At4,
-    //         agrad_2_At4,
-    //         agrad_0_At5,
-    //         agrad_1_At5,
-    //         agrad_2_At5,
-    //         agrad_0_alpha,
-    //         agrad_1_alpha,
-    //         agrad_2_alpha,
-    //         agrad_0_beta0,
-    //         agrad_1_beta0,
-    //         agrad_2_beta0,
-    //         agrad_0_beta1,
-    //         agrad_1_beta1,
-    //         agrad_2_beta1,
-    //         agrad_0_beta2,
-    //         agrad_1_beta2,
-    //         agrad_2_beta2,
-    //         agrad_0_chi,
-    //         agrad_1_chi,
-    //         agrad_2_chi,
-    //         agrad_0_Gt0,
-    //         agrad_1_Gt0,
-    //         agrad_2_Gt0,
-    //         agrad_0_Gt1,
-    //         agrad_1_Gt1,
-    //         agrad_2_Gt1,
-    //         agrad_0_Gt2,
-    //         agrad_1_Gt2,
-    //         agrad_2_Gt2,
-    //         agrad_0_K,
-    //         agrad_1_K,
-    //         agrad_2_K,
-    //         agrad_0_B0,
-    //         agrad_1_B0,
-    //         agrad_2_B0,
-    //         agrad_0_B1,
-    //         agrad_1_B1,
-    //         agrad_2_B1,
-    //         agrad_0_B2,
-    //         agrad_1_B2,
-    //         agrad_2_B2,
-    //         dev_alphaInt,
-    //         dev_chiInt,
-    //         dev_KInt,
-    //         dev_gt0Int,
-    //         dev_gt1Int,
-    //         dev_gt2Int,
-    //         dev_gt3Int,
-    //         dev_gt4Int,
-    //         dev_gt5Int,
-    //         dev_beta0Int,
-    //         dev_beta1Int,
-    //         dev_beta2Int,
-    //         dev_At0Int,
-    //         dev_At1Int,
-    //         dev_At2Int,
-    //         dev_At3Int,
-    //         dev_At4Int,
-    //         dev_At5Int,
-    //         dev_Gt0Int,
-    //         dev_Gt1Int,
-    //         dev_Gt2Int,
-    //         dev_B0Int,
-    //         dev_B1Int,
-    //         dev_B2Int,
-    //         dev_lambda,
-    //         dev_lambda_f,
-    //         pmin,
-    //         dev_sz,
-    //         dev_dy_hx,
-    //         dev_dy_hy,
-    //         dev_dy_hz,
-    //         dev_var_in,
-    //         dev_var_out,
-    //         &sizeArray
-    // );
-    // Free up GPU memory
+        
+    if (bflag != 0) {
+        bssn::timer::t_bdyc.start();
+
+        bssn_bcs(dev_var_out, dev_var_in, dev_alphaInt, grad_0_alpha, grad_1_alpha, grad_2_alpha,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_chiInt, grad_0_chi, grad_1_chi, grad_2_chi,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_KInt, grad_0_K, grad_1_K, grad_2_K,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_beta0Int, grad_0_beta0, grad_1_beta0, grad_2_beta0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_beta1Int, grad_0_beta1, grad_1_beta1, grad_2_beta1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_beta2Int, grad_0_beta2, grad_1_beta2, grad_2_beta2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_Gt0Int, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_Gt1Int, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_Gt2Int, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_B0Int, grad_0_B0, grad_1_B0, grad_2_B0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_B1Int, grad_0_B1, grad_1_B1, grad_2_B1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_B2Int, grad_0_B2, grad_1_B2, grad_2_B2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At0Int, grad_0_At0, grad_1_At0, grad_2_At0,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At1Int, grad_0_At1, grad_1_At1, grad_2_At1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At2Int, grad_0_At2, grad_1_At2, grad_2_At2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At3Int, grad_0_At3, grad_1_At3, grad_2_At3,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At4Int, grad_0_At4, grad_1_At4, grad_2_At4,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_At5Int, grad_0_At5, grad_1_At5, grad_2_At5,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);    
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt0Int, grad_0_gt0, grad_1_gt0, grad_2_gt0,
+                dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt1Int, grad_0_gt1, grad_1_gt1, grad_2_gt1,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt2Int, grad_0_gt2, grad_1_gt2, grad_2_gt2,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt3Int, grad_0_gt3, grad_1_gt3, grad_2_gt3,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt4Int, grad_0_gt4, grad_1_gt4, grad_2_gt4,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+        bssn_bcs(dev_var_out, dev_var_in, dev_gt5Int, grad_0_gt5, grad_1_gt5, grad_2_gt5,
+            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+          
+
+        bssn::timer::t_bdyc.stop();
+    }
+
+    bssn::timer::t_deriv.start();
+    #include "bssnrhs_cuda_ko_derivs.h"
+    bssn::timer::t_deriv.stop();
+
+    bssn::timer::t_rhs.start();
+
+    get_output(dev_var_out,
+        dev_alphaInt,
+        dev_chiInt,
+        dev_KInt,
+        dev_gt0Int,
+        dev_gt1Int,
+        dev_gt2Int,
+        dev_gt3Int,
+        dev_gt4Int,
+        dev_gt5Int,
+        dev_beta0Int,
+        dev_beta1Int,
+        dev_beta2Int,
+        dev_At0Int,
+        dev_At1Int,
+        dev_At2Int,
+        dev_At3Int,
+        dev_At4Int,
+        dev_At5Int,
+        dev_Gt0Int,
+        dev_Gt1Int,
+        dev_Gt2Int,
+        dev_B0Int,
+        dev_B1Int,
+        dev_B2Int,
+
+        grad_0_alpha,
+         grad_1_alpha,
+         grad_2_alpha,
+         grad_0_beta0,
+         grad_1_beta0,
+         grad_2_beta0,
+         grad_0_beta1,
+         grad_1_beta1,
+         grad_2_beta1,
+         grad_0_beta2,
+         grad_1_beta2,
+         grad_2_beta2,
+        
+         grad_0_gt0,
+         grad_1_gt0,
+         grad_2_gt0,
+         grad_0_gt1,
+         grad_1_gt1,
+         grad_2_gt1,
+         grad_0_gt2,
+         grad_1_gt2,
+         grad_2_gt2,
+         grad_0_gt3,
+         grad_1_gt3,
+         grad_2_gt3,
+         grad_0_gt4,
+         grad_1_gt4,
+         grad_2_gt4,
+         grad_0_gt5,
+         grad_1_gt5,
+         grad_2_gt5,
+
+         grad_0_chi,
+         grad_1_chi,
+         grad_2_chi,
+
+         grad_0_At0,
+         grad_1_At0,
+         grad_2_At0,
+         grad_0_At1,
+         grad_1_At1,
+         grad_2_At1,
+         grad_0_At2,
+         grad_1_At2,
+         grad_2_At2,
+         grad_0_At3,
+         grad_1_At3,
+         grad_2_At3,
+         grad_0_At4,
+         grad_1_At4,
+         grad_2_At4,
+         grad_0_At5,
+         grad_1_At5,
+         grad_2_At5,
+
+         grad_0_K,
+         grad_1_K,
+         grad_2_K,
+
+         grad_0_Gt0,
+         grad_1_Gt0,
+         grad_2_Gt0,
+         grad_0_Gt1,
+         grad_1_Gt1,
+         grad_2_Gt1,
+         grad_0_Gt2,
+         grad_1_Gt2,
+         grad_2_Gt2,
+
+         grad_0_B0,
+         grad_1_B0,
+         grad_2_B0,
+         grad_0_B1,
+         grad_1_B1,
+         grad_2_B1,
+         grad_0_B2,
+         grad_1_B2,
+         grad_2_B2,
+
+        dev_sz,
+        sz);
+
+    bssn::timer::t_rhs.stop();
+
         
     if (bflag != 0) {
         bssn::timer::t_bdyc.start();
@@ -563,8 +476,6 @@ const unsigned int& bflag)
     cudaFree(dev_sz);
     cudaFree(dev_zero);
     cudaFree(dev_pmin);
-    cudaFree(dev_lambda);
-    cudaFree(dev_lambda_f);
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,

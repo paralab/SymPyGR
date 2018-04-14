@@ -151,6 +151,36 @@ def bssnrhs_cudo_malloc_adv_gen():
     output_file1.close()
     output_file2.close()
 
+def bssnrhs_ko_derivs_gen():
+    """
+      ko_deriv_x(grad_0_gt0, gt0, hx, sz, bflag); // old
+
+      ko_deriv_x(grad_0_gt0, dev_var_in, dev_gt0Int, dev_dy_hx, dev_sz, dev_bflag, sz); // new
+    """
+
+    output_file1 = open("t_bssnrhs_ko_derivs.h", 'w')
+
+    with open("test_bssnrhs_ko_derivs.h", "r") as f:
+        for line in f:
+            line1 = line.strip().split("(")
+            method_name = line1[0]
+
+            line1 = line1[1].split(",")
+            para1 = line1[0].strip() # grad_0_gt0
+            para2 = line1[1].strip() # gt0
+            para3 = line1[2].strip() # hx
+            para4 = line1[3].strip() # sz
+            para5 = line1[4].split(")")[0].strip() # bflag
+
+            # print(method_name, para1, para2, para3, para4, para5)
+
+            output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_%s, dev_%s, sz);\n"%(method_name, para1, para2, para3, para4, para5)
+
+            # print(output_method_call)
+
+            output_file1.write(output_method_call)
+
+    output_file1.close()
 
 def main():
     allocate_memory_for_offset_ints()
@@ -158,5 +188,6 @@ def main():
     bssnrhs_derivs_gen()
     bssnrhs_cudo_malloc_adv_gen()
     bssnrhs_adv_derivs_gen()
+    bssnrhs_ko_derivs_gen()
 
 main()
