@@ -997,6 +997,18 @@ double DENDRO_991 = -DENDRO_11*DENDRO_970 - DENDRO_13*DENDRO_968 + DENDRO_202*DE
 // Dendro: printing variables
 //--
 a_rhs[pp] = -DENDRO_0*K[pp] + lambda[0]*(beta0[pp]*agrad_0_alpha[pp] + beta1[pp]*agrad_1_alpha[pp] + beta2[pp]*agrad_2_alpha[pp]);
+// if (pp==400) {
+//     printf("CPU=%f\n", a_rhs[pp]);
+//     printf("DENDRO_0=%f\n", DENDRO_0);
+//     printf("K=%f\n", K[pp]);
+//     printf("lambda0=%f\n", lambda[0]*1.0);
+//     printf("beta0=%f\n", beta0[pp]);
+//     printf("agrad_0_alpha=%f\n", agrad_0_alpha[pp]);
+//     printf("beta1=%f\n", beta1[pp]);
+//     printf("agrad_1_alpha=%f\n", agrad_1_alpha[pp]);
+//     printf("beta2=%f\n", beta2[pp]);
+//     printf("agrad_2_alpha=%f\n", agrad_2_alpha[pp]);
+// }
 //--
 b_rhs0[pp] = B0[pp]*DENDRO_1 + lambda[1]*(beta0[pp]*agrad_0_beta0[pp] + beta1[pp]*agrad_1_beta0[pp] + beta2[pp]*agrad_2_beta0[pp]);
 //--

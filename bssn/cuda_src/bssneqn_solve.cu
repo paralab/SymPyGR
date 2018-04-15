@@ -6,8 +6,11 @@
 
 using namespace std;
 
-__constant__ int threads_per_block=200;
-__constant__ int blocks=32;
+int threads_per_block_cpu=250;
+int blocks_cpu=50;
+
+__constant__ int threads_per_block=250;
+__constant__ int blocks=50;
 
 __constant__ double ETA_CONST=0.1;
 __constant__ double ETA_R0=0.1;
@@ -32,7 +35,7 @@ __global__ void cuda_bssn_eqns_points(int * dev_offset, int * dev_sz, double * d
     double y = dev_pmin[1] + *dev_dy_hy*j;
     double x = dev_pmin[0] + *dev_dy_hx*i;
 
-    int pp = i + (dev_sz[0]-3)*(j + (dev_sz[1]-3)*k);
+    int pp = i + (dev_sz[0])*(j + (dev_sz[1])*k);
     double r_coord = sqrt(x*x + y*y + z*z);
     double eta = ETA_CONST;
     if (r_coord >= ETA_R0) {
@@ -48,7 +51,7 @@ double * dev_var_in, double * dev_var_out,
 {
     int total_points = (sz[2]-6)*(sz[1]-6)*(sz[0]-6);
 
-    int points_at_once = threads_per_block*blocks;
+    int points_at_once = threads_per_block_cpu*blocks_cpu;
     int loops = ceil(1.0*total_points/points_at_once);
 
     cudaError_t cudaStatus;
@@ -62,9 +65,10 @@ double * dev_var_in, double * dev_var_out,
         cudaStatus = cudaMemcpy(dev_offset, &offset, sizeof(int), cudaMemcpyHostToDevice);
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_offset cudaMemcpy failed!\n"); return;}
 
-        cuda_bssn_eqns_points<<< blocks, threads_per_block >>>(dev_offset, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
+        cuda_bssn_eqns_points<<< blocks_cpu, threads_per_block_cpu >>>(dev_offset, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
             #include "list_of_args.h"
         );
+        
         // Check for any errors launching the kernel
         cudaError_t cudaStatus;
         cudaStatus = cudaGetLastError();

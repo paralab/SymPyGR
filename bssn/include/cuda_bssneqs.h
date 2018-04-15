@@ -993,6 +993,19 @@ double DENDRO_991 = -DENDRO_11*DENDRO_970 - DENDRO_13*DENDRO_968 + DENDRO_202*DE
 // Dendro: printing variables
 //--
 dev_var_out[*dev_alphaInt+pp] = -DENDRO_0*dev_var_in[*dev_KInt+pp] + lambda[0]*(dev_var_in[*dev_beta0Int+pp]*agrad_0_alpha[pp] + dev_var_in[*dev_beta1Int+pp]*agrad_1_alpha[pp] + dev_var_in[*dev_beta2Int+pp]*agrad_2_alpha[pp]);
+
+// if (pp==400) {
+//     printf("GPU=%f\n", dev_var_out[*dev_alphaInt+pp]);
+//     printf("DENDRO_0=%f\n", DENDRO_0);
+//     printf("K=%f\n", dev_var_in[*dev_KInt+pp]);
+//     printf("lambda0=%f\n", lambda[0]*1.0);
+//     printf("beta0=%f\n", dev_var_in[*dev_beta0Int+pp]);
+//     printf("agrad_0_alpha=%f\n", agrad_0_alpha[pp]);
+//     printf("beta1=%f\n", dev_var_in[*dev_beta1Int+pp]);
+//     printf("agrad_1_alpha=%f\n", agrad_1_alpha[pp]);
+//     printf("beta2=%f\n", dev_var_in[*dev_beta2Int+pp]);
+//     printf("agrad_2_alpha=%f\n", agrad_2_alpha[pp]);
+// }
 //--
 dev_var_out[*dev_beta0Int+pp] = dev_var_in[*dev_B0Int+pp]*DENDRO_1 + lambda[1]*(dev_var_in[*dev_beta0Int+pp]*agrad_0_beta0[pp] + dev_var_in[*dev_beta1Int+pp]*agrad_1_beta0[pp] + dev_var_in[*dev_beta2Int+pp]*agrad_2_beta0[pp]);
 //--
