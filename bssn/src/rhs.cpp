@@ -176,7 +176,7 @@ bssn::timer::t_deriv.stop();
 
   #if test
   // Take the pointer of specified array
-  test_file_write::writeToFile("output_cpu.txt", grad_1_alpha, n);
+  test_file_write::writeToFile("output_cpu.txt", agrad_0_alpha, n);
 
   // for (int j=0; j<24; j++){
   //   if (j==0) {
@@ -185,7 +185,7 @@ bssn::timer::t_deriv.stop();
   //     test_file_write::appendToFile("output_cpu.txt", unzipVarsRHS[j], 1331);
   //   }
   // }
-  
+
   #endif
 
   if (bflag != 0) {

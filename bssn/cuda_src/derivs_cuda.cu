@@ -4,7 +4,7 @@
  **/
 
  #include "derivs_cuda.h"
-
+ 
 
  __global__ void calc_deriv42_x(double * output, double * dev_var_in, 
         const int * dev_u_offset, double * dev_dy, int * dev_sz, int* dev_bflag)
