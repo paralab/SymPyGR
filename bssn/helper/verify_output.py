@@ -27,7 +27,8 @@ testcases = [
 
 isCorrect = True
 for test in testcases:
-    subprocess.check_output("./computeBSSN " + test, shell=True)
+    out = subprocess.check_output("./computeBSSN " + test, shell=True)
+    # print(out.decode("utf-8"))
 
     try:
         cpu = open("../build/output_cpu.txt", "r")
@@ -36,13 +37,18 @@ for test in testcases:
         print("files not found")
     else:
         correct = True
-
+        count_line = 0
         while(True):
+            count_line += 1
             cpuline = cpu.readline()
             gpuline = gpu.readline()
             if cpuline!=gpuline:
+                if round(float(cpuline.strip()), 8)==round(float(gpuline.strip()), 8): continue # special requirement
+                print("line-%d \t| CPU-%s \t| GPU-%s"%(count_line, cpuline.strip(), gpuline.strip()))
                 correct = False
                 isCorrect = False
+                # break # if you want to print only the first error, uncomment this line
+                
             if cpuline=="":
                 if correct:
                     print("Outputs matched for %s"%(test))

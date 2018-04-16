@@ -613,8 +613,8 @@ __global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * d
     int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
     int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
-    int idx_by_2 = 0.50 * (1.0 / dev_dx[0]);
-    int idx_by_12 = (1.0 / dev_dx[0])/12;
+    double idx_by_2 = 0.50 * (1.0 / dev_dx[0]);
+    double idx_by_12 = (1.0 / dev_dx[0])/12;
     int nx = dev_sz[0];
     int ny = dev_sz[1];
 
@@ -751,8 +751,8 @@ __global__ void calc_deriv42_adv_y(double * output, double * dev_var_in, int * d
    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
-   int idy_by_2 = 0.50 * (1.0 / dev_dy[0]);
-   int idy_by_12 = (1.0 / dev_dy[0])/12.0;
+   double idy_by_2 = 0.50 * (1.0 / dev_dy[0]);
+   double idy_by_12 = (1.0 / dev_dy[0])/12.0;
    int nx = dev_sz[0];
    int ny = dev_sz[1];
    
@@ -892,8 +892,8 @@ __global__ void calc_deriv42_adv_z(double * output, double * dev_var_in, int * d
    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
-   int idz_by_2 = 0.50 * (1.0 / dev_dz[0]);
-   int idz_by_12 = (1.0 / dev_dz[0])/12.0;
+   double idz_by_2 = 0.50 * (1.0 / dev_dz[0]);
+   double idz_by_12 = (1.0 / dev_dz[0])/12.0;
    int nx = dev_sz[0];
    int ny = dev_sz[1];
    

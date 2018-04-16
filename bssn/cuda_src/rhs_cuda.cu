@@ -115,8 +115,8 @@ const unsigned int& bflag)
     test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
     free(host_array_cpu);
 
-    // double * host_array_cpu = (double *) malloc(unzip_dof*24);
-    // cudaStatus = cudaMemcpy(host_array_cpu, dev_var_out, unzip_dof*24, cudaMemcpyDeviceToHost);
+    // double * host_array_cpu = (double *) calloc(unzip_dof*24, sizeof(double));
+    // cudaStatus = cudaMemcpy(host_array_cpu, dev_var_out, unzip_dof*24*sizeof(double), cudaMemcpyDeviceToHost);
     // if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
     // test_file_write::writeToFile("output_cuda.txt", host_array_cpu, unzip_dof*24);
     // free(host_array_cpu);
