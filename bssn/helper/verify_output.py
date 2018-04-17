@@ -40,14 +40,14 @@ for test in testcases:
         count_line = 0
         while(True):
             count_line += 1
-            cpuline = cpu.readline()
-            gpuline = gpu.readline()
+            cpuline = cpu.readline().strip()
+            gpuline = gpu.readline().strip()
             if cpuline!=gpuline:
-                if round(float(cpuline.strip()), 8)==round(float(gpuline.strip()), 8): continue # special requirement
-                print("line-%d \t| CPU-%s \t| GPU-%s"%(count_line, cpuline.strip(), gpuline.strip()))
+                # if round(float(cpuline), 20)==round(float(gpuline), 20): continue # special requirement
+                print("line-%d \t| CPU-%s \t| GPU-%s"%(count_line, cpuline, gpuline))
                 correct = False
                 isCorrect = False
-                # break # if you want to print only the first error, uncomment this line
+                break # if you want to print only the first error, uncomment this line
                 
             if cpuline=="":
                 if correct:
