@@ -1,14 +1,14 @@
 git remote add upstream https://github.com/paralab/SymPyGR.git
 
 git remot
-
-gi upstream
+fgh 
+gi upstghream
 
 gish
 
 git branch -a
 
-git checkout upstream/develop_cuda
+git checksdfout dsf upstream/develop_cuda
 
 
 
