@@ -1,0 +1,15 @@
+git remote add upstream https://github.com/paralab/SymPyGR.git
+
+git remote -vv
+
+git fetch upstream
+
+git stash
+
+git branch -a
+
+git checkout upstream/develop_cuda
+
+
+
+
