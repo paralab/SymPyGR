@@ -1,10 +1,10 @@
 git remote add upstream https://github.com/paralab/SymPyGR.git
 
-git remote -vv
+git remot
 
-git fetch upstream
+gi upstream
 
-git stash
+gish
 
 git branch -a
 
