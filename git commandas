@@ -10,10 +10,8 @@ git branch -a
 
 git checkout upstream/develop_cuda
 
-commit karaganin
 
-git push origin
-
+git checkout -b "introduce_algo_for_bssneq"
 
 
 
