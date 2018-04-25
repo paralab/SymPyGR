@@ -13,8 +13,6 @@ from sympy.tensor.array import *
 from sympy.functions.special.tensor_functions import KroneckerDelta
 from sympy.utilities import numbered_symbols
 from sympy.printing import print_ccode, ccode
-import GR.laplaciangraph as lg
-import GR.Clustering as cl
 
 # internal variables
 undef = symbols('undefined')
@@ -578,82 +576,6 @@ def generate(ex, vnames, idx):
         ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
         ee_syms = numbered_symbols(prefix=ee_name)
         _v = cse(lexp, symbols=ee_syms, optimizations='basic')
-
-        #dp.drawgragh(_v)
-        #dependencies = dp.makeCompleteDependencies(_v)
-        #dp.printDependencies(dependencies)
-
-        #Generating the graph for dependencies
-        #graph, dependencies = lg.makeDependencies(_v)
-        #lg.printGraph(graph)
-
-
-        #Graph Laplacian
-        #graphLaplacian = lg.getGraphLaplacian(graph)
-
-        #adj_mat = lg.getAdjecencyMatrix(graph)
-
-
-        #print("Number of Nodes: "+str(lg.getNumNodes(graph)))
-        #print("Dimensions of the matrix" + str(lg.getDimensions(adj_mat)))
-
-        #print(str(type(graphLaplacian)))
-
-        #vals, vecs = lg.getEigenValuesandVectors(graphLaplacian)
-
-        #print("Printing Eigen Values")
-
-        #print(vals)
-
-        #print("Printing Eigen Vectors")
-        #print(vecs)
-
-        #spectral clustering
-        #sc = lg.doSpectralClustering(adj_mat)
-
-        #lg.printSpectralClustering(sc, graph, dependencies)
-
-        dependencies = cl.makeCompleteDependencies(_v)
-        originalVariables = cl.getAllOriginalVariables(dependencies)
-
-        featureVectors = cl.getFeatureVectors(dependencies, originalVariables)
-        cl.writeFeatureVectorstoCSV(originalVariables, featureVectors)
-
-
-        # miniBatchKMeansClusterPoints
-        # affinityPropagationClusterPoints
-        # meanShiftClusterPoints
-        # spectralClusteringClusterPoints
-        # agglomerativeClusteringClusterPoints
-        # dBSCANClusteringClusterPoints
-        # BirchClusteringClusterPoints,
-
-        # kmeans = cl.kMeansClusterPoints(dependencies, featureVectors)
-        # cl.writeClusteredResultstoCSV("Kmeans",kmeans, dependencies)
-        #
-        # miniBatchKMeans = cl.miniBatchKMeansClusterPoints(dependencies, featureVectors)
-        # cl.writeClusteredResultstoCSV("MiniBatchKMeans", miniBatchKMeans, dependencies)
-        #
-        # meanShift = cl.meanShiftClusterPoints(dependencies, featureVectors)
-        # cl.writeClusteredResultstoCSV("MeanShift", meanShift, dependencies)
-        #
-        # spectralClustering = cl.spectralClusteringClusterPoints(dependencies, featureVectors)
-        # cl.writeClusteredResultstoCSV("SpectralClustering", spectralClustering, dependencies)
-
-        agglomerative = cl.agglomerativeClusteringClusterPoints(7, featureVectors)
-        cl.writeClusteredResultstoCSV("Agglomerative7", agglomerative, dependencies)
-
-        #gnerating the graph for dependencies
-        graph= lg.makeGraph(_v)
-        lg.printGraph(graph, dependencies, agglomerative)
-
-
-        # dBSCAN = cl.dBSCANClusteringClusterPoints(dependencies, featureVectors)
-        # cl.writeClusteredResultstoCSV("DBSCAN", dBSCAN, dependencies)
-        #
-        # birch = cl.birchClusteringClusterPoints(dependencies, featureVectors)
-        # cl.writeClusteredResultstoCSV("Birch", birch, dependencies)
-
         custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
         rops=0
