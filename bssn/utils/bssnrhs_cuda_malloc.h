@@ -1,4 +1,4 @@
-int size = n * sizeof(double);
+
 
 double * grad_0_alpha; cudaStatus = cudaMalloc((void **) &grad_0_alpha, size);
 if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_alpha cudaMalloc failed!\n"); return;}

@@ -1,18 +1,3 @@
-/*
- *
- *  Created on: March 12, 2018
- *      Author: Eminda, Akila
- */
-
-#ifndef BSSNEQN_SOLVE_H
-#define BSSNEQN_SOLVE_H
-
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
-
-void calc_bssn_eqns(const unsigned int * sz, int * dev_sz, double * dev_pmin, double * dev_dy_hz, double * dev_dy_hy, double * dev_dy_hx, 
-double * dev_var_in, double * dev_var_out,
-
 double *grad_0_alpha,
 double *grad_1_alpha,
 double *grad_2_alpha,
@@ -249,6 +234,3 @@ int *dev_Gt2Int,
 int *dev_B0Int,
 int *dev_B1Int,
 int *dev_B2Int
-);
-
-#endif /* BSSNEQN_SOLVE_H_ */
