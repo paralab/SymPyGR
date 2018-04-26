@@ -12,6 +12,7 @@ class Cluster:
   right_child = None
   ancestor_index = None
   item_list = None
+  level = None
 
 def getArguments(expression, result):
     #Returns the terms in the expression with duplicates removed
@@ -110,7 +111,7 @@ def cluster(feature_vectors):
         leaf_rotation=90.,  # rotates the x axis labels
         leaf_font_size=8.,  # font size for the x axis labels
     )
-    plt.show()
+    #plt.show()
     return Z
 
 def printClusterResults(z):
@@ -136,6 +137,7 @@ def createVariableClusterGraphList(z, original_variables,threshold):
         s.item_list = [i]
         s.index = original_variables.index(i)
         newz.append(s)
+        s.level = 0
 
     index = len(original_variables)
     for i in z:
@@ -146,6 +148,7 @@ def createVariableClusterGraphList(z, original_variables,threshold):
         UpdateChildAncestor(right_child, newz, index)
         s.left_child = left_child
         s.right_child = right_child
+        s.level = max(getClusterLevel(newz, left_child),getClusterLevel(newz, right_child))+1
         s.ancestor_index = None
         s.index = index
         left_dependency_list = getClusterItemList(newz, left_child)
@@ -158,27 +161,27 @@ def createVariableClusterGraphList(z, original_variables,threshold):
         elif(len(i_item_list)==threshold):
             substitutions["Reduction_"+str(substitutions_counter)] =i_item_list
             s.item_list = ["Reduction_"+str(substitutions_counter)]
-            print("Since item at index "+str(index)+"  has "+str(threshold)+
-                  " number of dependencies, it's item list is renamed as  "+"Reduction_"+str(substitutions_counter))
+            #print("Since item at index "+str(index)+"  has "+str(threshold)+
+                  #" number of dependencies, it's item list is renamed as  "+"Reduction_"+str(substitutions_counter))
             substitutions_counter = substitutions_counter+1
         elif (len(i_item_list) > threshold):
             if(len(left_dependency_list)>1):
                 substitutions["Reduction_" + str(substitutions_counter)] = left_dependency_list
                 left_dependency_list = ["Reduction_" + str(substitutions_counter)]
                 updateChildDependencyList(newz, left_child,"Reduction_" + str(substitutions_counter))
-                print("Since item at index " + str(index) + "  has greater than " + str(threshold) +
-                      " number of dependencies, it's left child's (which is at index "+
-                      str(left_child)+ ") item list is renamed as  " +
-                      "Reduction_" + str(substitutions_counter))
+                #print("Since item at index " + str(index) + "  has greater than " + str(threshold) +
+                      #" number of dependencies, it's left child's (which is at index "+
+                      #str(left_child)+ ") item list is renamed as  " +
+                      #"Reduction_" + str(substitutions_counter))
                 substitutions_counter = substitutions_counter + 1
 
             if (len(right_dependency_list) > 1):
                 substitutions["Reduction_" + str(substitutions_counter)] = right_dependency_list
                 right_dependency_list = ["Reduction_" + str(substitutions_counter)]
                 updateChildDependencyList(newz, right_child, "Reduction_" + str(substitutions_counter))
-                print("Since item at index " + str(index) + "  has greater than " + str(threshold) +
-                      " number of dependencies, it's right child's (which is at index " + str(right_child) +
-                      ") item list is renamed as  " + "Reduction_" + str(substitutions_counter))
+                #print("Since item at index " + str(index) + "  has greater than " + str(threshold) +
+                      #" number of dependencies, it's right child's (which is at index " + str(right_child) +
+                      #") item list is renamed as  " + "Reduction_" + str(substitutions_counter))
                 substitutions_counter = substitutions_counter + 1
 
                 s.item_list = left_dependency_list+right_dependency_list
@@ -188,12 +191,33 @@ def createVariableClusterGraphList(z, original_variables,threshold):
 
     return (newz,substitutions)
 
+def getMaxLevel(newz):
+    max_level = 0
+    for i in newz:
+        if (i.level>max_level):
+            max_level = i.level
+    return max_level
+
+def getClustersByLevel(newz, level):
+    clusters = []
+    for i in newz:
+        if (i.level==level):
+            clusters.append(i)
+    return clusters
+
+def isReducedCLuster(cluster):
+    if(len(cluster.item_list)==1):
+        return True
+    else:
+        return False
+
+
 def writeClusterListToFile(newz):
     data = []
-    data.append(["Index","Item List","Left_Child_Index","Right_Child_Index","Parent_Index"])
+    data.append(["Index","Item List","Left_Child_Index","Right_Child_Index","Parent_Index","Level"])
     k = 0
     for i in newz:
-        data.append([str(i.index),str(i.item_list),str(i.left_child),str(i.right_child),str(i.ancestor_index)])
+        data.append([str(i.index),str(i.item_list),str(i.left_child),str(i.right_child),str(i.ancestor_index),str(i.level)])
         k = k + 1
     myFile = open('cluster_results.csv', 'w')
     with myFile:
@@ -204,6 +228,17 @@ def getClusterItemList(newz, index):
     for i in newz:
         if(i.index==index):
             return i.item_list
+    return None
+
+def getClusterItemListUsingCluster(cluster):
+    return cluster.item_list
+
+
+
+def getClusterLevel(newz, index):
+    for i in newz:
+        if(i.index==index):
+            return i.level
     return None
 
 def updateChildDependencyList(newz, index, new_name):
