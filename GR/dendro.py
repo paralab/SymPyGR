@@ -16,7 +16,7 @@ from sympy.tensor.array import *
 from sympy.utilities import numbered_symbols
 import GR.clustering.agglomerative_clustering as ac
 from sympy.printing import print_ccode, ccode
-
+from GR.clustering.helper import *
 # internal variables
 undef = symbols('undefined')
 
@@ -567,7 +567,63 @@ def generate(ex, vnames, idx):
 
     # print(num_e)
     # print(len(lname))
-    with open("bssn.cpp", 'w') as output_file:
+
+    # mex = Matrix(ex)
+    ee_name = 'DENDRO_'  # ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+    ee_syms = numbered_symbols(prefix=ee_name)
+
+    _v = cse(lexp, symbols=ee_syms, optimizations='basic')
+
+    dependencies = ac.makeCompleteDependencies(_v)
+    originalVariables = ac.getAllOriginalVariables(dependencies)
+
+    featureVectors = ac.getFeatureVectors(dependencies, originalVariables)
+
+    #ac.writeFeatureVectorstoCSV(originalVariables, dependencies.keys(), featureVectors)
+
+    z = ac.cluster(featureVectors)
+
+    (newz, substitutions) = ac.createVariableClusterGraphList(z, originalVariables, 3)
+
+    max_level = ac.getMaxLevel(newz)
+    print("Max_level: "+str(max_level))
+    for level in range(1,max_level+1):
+        print("\n \n \nLevel: "+str(level))
+        expressions = []
+        names = []
+        clusters = ac.getClustersByLevel(newz, level)
+        for cluster in clusters:
+            if(ac.isReducedCLuster(cluster)):
+                item_list = substitutions[ac.getClusterItemListUsingCluster(cluster)[0]]
+
+                #replace commas
+
+                item_list = replace_unknown_characters(item_list)
+                expression = symbols(item_list[0])
+                for i in range(1, len(item_list)):
+                    expression = expression+symbols(item_list[i])
+
+
+                expressions.append(expression)
+                s = ac.getClusterItemListUsingCluster(cluster)[0]
+                names.append(s)
+        print(expressions)
+        ee_name = 'DENDRO_'+str(level)+"_"
+        ee_syms = numbered_symbols(prefix=ee_name)
+        _v = cse(expressions, symbols=ee_syms, optimizations='basic')
+        printBSSNCPP(_v, names, expressions, idx)
+
+    #ac.writeClusterListToFile(newz)
+
+    #ac.createClusteringGraph(newz)
+
+    #printBSSNCPP(_v , lname, lexp, filename, idx)
+
+
+
+def printBSSNCPP(_v, lname,lexp, idx):
+    custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
+    with open("bssn.cpp", 'a+') as output_file:
 
         print_n_write('// Dendro: {{{ ', output_file)
         print_n_write('// Dendro: original ops: ' + str(count_ops(lexp)), output_file)
@@ -588,70 +644,42 @@ def generate(ex, vnames, idx):
         #     for (v1,v2) in _v[0]:
         #         print("double %s = %s;" % (v1, v2))
         #     print("%s = %s" % (vnames[i], _v[1][0]))
+        rops = 0
+        print_n_write('// Dendro: printing temp variables', output_file)
+        for (v1, v2) in _v[0]:
+            # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
+            print_n_write('double ', output_file, isNewLineEnd=False)
+            print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
+            rops = rops + count_ops(v2)
 
-        # mex = Matrix(ex)
-        ee_name = 'DENDRO_'  # ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-        ee_syms = numbered_symbols(prefix=ee_name)
+        print_n_write('\n// Dendro: printing variables', output_file)
+        for i, e in enumerate(_v[1]):
+            print_n_write("//--", output_file)
+            # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
+            print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
+            rops = rops + count_ops(e)
 
-        _v = cse(lexp, symbols=ee_syms, optimizations='basic')
+        print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
+        print_n_write('// Dendro: }}} ', output_file)
 
-        dependencies = ac.makeCompleteDependencies(_v)
-        originalVariables = ac.getAllOriginalVariables(dependencies)
+        print_n_write('// Dendro vectorized code: {{{', output_file)
+        oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
+        prevdefvars = set()
+        for (v1, v2) in _v[0]:
+            vv = numbered_symbols('v')
+            vlist = []
+            gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
+            print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
+        for i, e in enumerate(_v[1]):
+            print_n_write("//--", output_file)
+            vv = numbered_symbols('v')
+            vlist = []
+            gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
+            # st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
+            st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
+            print_n_write(st.replace("'", ""), output_file)
 
-        featureVectors = ac.getFeatureVectors(dependencies, originalVariables)
-
-        ac.writeFeatureVectorstoCSV(originalVariables, dependencies.keys(), featureVectors)
-
-        z = ac.cluster(featureVectors)
-
-        (newz, substitutions) = ac.createVariableClusterGraphList(z, originalVariables, 3)
-
-        ac.writeClusterListToFile(newz)
-
-        ac.createClusteringGraph(newz)
-
-        custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
-
-        #printBSSNCPP(_v, output_file, lname, custom_functions, idx)
-
-
-def printBSSNCPP(_v, output_file, lname, custom_functions, idx):
-    rops = 0
-    print_n_write('// Dendro: printing temp variables', output_file)
-    for (v1, v2) in _v[0]:
-        # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
-        print_n_write('double ', output_file, isNewLineEnd=False)
-        print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
-        rops = rops + count_ops(v2)
-
-    print_n_write('\n// Dendro: printing variables', output_file)
-    for i, e in enumerate(_v[1]):
-        print_n_write("//--", output_file)
-        # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
-        print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
-        rops = rops + count_ops(e)
-
-    print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
-    print_n_write('// Dendro: }}} ', output_file)
-
-    print_n_write('// Dendro vectorized code: {{{', output_file)
-    oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
-    prevdefvars = set()
-    for (v1, v2) in _v[0]:
-        vv = numbered_symbols('v')
-        vlist = []
-        gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
-        print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
-    for i, e in enumerate(_v[1]):
-        print_n_write("//--", output_file)
-        vv = numbered_symbols('v')
-        vlist = []
-        gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
-        # st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
-        st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
-        print_n_write(st.replace("'", ""), output_file)
-
-    print_n_write('// Dendro vectorized code: }}} ', output_file)
+        print_n_write('// Dendro vectorized code: }}} ', output_file)
 
 
 def replace_pow(exp_in):
