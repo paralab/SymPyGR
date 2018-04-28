@@ -74,7 +74,7 @@ int main (int argc, char** argv)
         for(unsigned int j=0;j<unzip_dof;j++)
         {
             // some random initialization.
-            var_in[i][j]=sqrt(2)*0.001*j;
+            var_in[i][j]=sin((j%360)*PI/180) + sin(((j+180)%360)*PI/180) + cos(((j+60)%360)*PI/180);
             var_out[i][j]=0.0;
         }
     }
@@ -109,7 +109,7 @@ int main (int argc, char** argv)
             j=0;
         }
         // some random initialization.
-        host_var_in[i]=sqrt(2)*0.001*j;
+        host_var_in[i]=sin((j%360)*PI/180) + sin(((j+180)%360)*PI/180) + cos(((j+60)%360)*PI/180);
         host_var_out[i]=0.0;     
         j++;  
     }

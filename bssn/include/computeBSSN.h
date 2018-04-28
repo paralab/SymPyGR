@@ -10,7 +10,10 @@
 #ifndef BSSN_COMPUTEBSSN_H
 #define BSSN_COMPUTEBSSN_H
 
+#define PI 3.14159265
+
 #include <cmath>
+#include <math.h>
 #include <iostream>
 #include <stdio.h>
 #include <time.h>
