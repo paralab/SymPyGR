@@ -14,7 +14,12 @@ if(CUDA_FOUND)
     set(CUDA_PROPAGATE_HOST_FLAGS ON)
     set(CUDA_SEPARABLE_COMPILATION OFF)
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_30,code=compute_30 )
-    list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_52,code=sm_52 )
+    list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_52,code=sm_52 )	
+    list( APPEND CUDA_NVCC_FLAGS -fmad=false )	
+    list( APPEND CUDA_NVCC_FLAGS -prec-sqrt=true )	
+    list( APPEND CUDA_NVCC_FLAGS -prec-div=true )	
+    list( APPEND CUDA_NVCC_FLAGS -ftz=false )	
+
 endif()
 
 
