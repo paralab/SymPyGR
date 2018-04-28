@@ -44,10 +44,10 @@ def getAllOriginalVariables(dependencies):
 def remove_values_from_list(the_list, val):
    return [value for value in the_list if value != val]
 
-def makeCompleteDependencies(_v):
+def makeCompleteDependencies(_v, lname):
     # Returns a dictionary of dependencies
     dependencies = {}
-    counter = 1
+    counter = 0
     for i in _v[0]:
         result = []
         result = getArguments(i[1], result)
@@ -69,17 +69,18 @@ def makeCompleteDependencies(_v):
                     if (str(k) not in result):
                         result.append(str(k))
                 result = remove_values_from_list(result, str(j))
-        dependencies["Equation" + str(counter)+": "] = list(set(result))
+        dependencies[lname[counter]] = list(set(result))
         counter= counter+1
     return dependencies
 
 def getFeatureVectors(dependencies, originalVariables):
     #Return an an array that is used for clustering
     featureVectors = []
-    for i in originalVariables:
+    for i in dependencies.keys():
         featureVector = []
-        for j in dependencies.values():
-            if(i in j):
+        dependency_list = dependencies[i]
+        for j in originalVariables:
+            if(j in dependency_list):
                 featureVector.append(1)
             else:
                 featureVector.append(0)
@@ -111,7 +112,7 @@ def cluster(feature_vectors):
         leaf_rotation=90.,  # rotates the x axis labels
         leaf_font_size=8.,  # font size for the x axis labels
     )
-    #plt.show()
+    plt.show()
     return Z
 
 def printClusterResults(z):
@@ -119,7 +120,7 @@ def printClusterResults(z):
     np.set_printoptions(threshold=np.nan)
     print(z)
 
-def createVariableClusterGraphList(z, original_variables,threshold):
+def createVariableClusterGraphList(z, dendro_and_equations, threshold):
     # z has the format of [[idx1, idx2, dist, sample_count], [...]]
     # All indices idx >= len(X) actually refer to the cluster formed in Z[idx - len(X)]
     print()
@@ -129,17 +130,17 @@ def createVariableClusterGraphList(z, original_variables,threshold):
     substitutions = {}
     substitutions_counter = 0
     #dealing with the bottom layer variables
-    for i in original_variables:
+    for i in dendro_and_equations:
         s = Cluster()
         s.left_child=None
         s.right_child=None
         s.ancestor_index = None
         s.item_list = [i]
-        s.index = original_variables.index(i)
+        s.index = dendro_and_equations.index(i)
         newz.append(s)
         s.level = 0
 
-    index = len(original_variables)
+    index = len(dendro_and_equations)
     for i in z:
         s = Cluster()
         left_child = int(i[0])
@@ -263,3 +264,6 @@ def createClusteringGraph(newz):
     pos = nx.spring_layout(G, scale=10)  # double distance between all nodes
     nx.draw(G, pos=pos, with_labels=True)
     plt.show()
+
+def createExpression(item_list, graph):
+    return "Expression"

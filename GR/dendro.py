@@ -574,7 +574,7 @@ def generate(ex, vnames, idx):
 
     _v = cse(lexp, symbols=ee_syms, optimizations='basic')
 
-    dependencies = ac.makeCompleteDependencies(_v)
+    dependencies = ac.makeCompleteDependencies(_v, lname)
     originalVariables = ac.getAllOriginalVariables(dependencies)
 
     featureVectors = ac.getFeatureVectors(dependencies, originalVariables)
@@ -583,7 +583,7 @@ def generate(ex, vnames, idx):
 
     z = ac.cluster(featureVectors)
 
-    (newz, substitutions) = ac.createVariableClusterGraphList(z, originalVariables, 3)
+    (newz, substitutions) = ac.createVariableClusterGraphList(z,list(dependencies.keys()), 3)
 
     max_level = ac.getMaxLevel(newz)
     print("Max_level: "+str(max_level))
@@ -596,13 +596,7 @@ def generate(ex, vnames, idx):
             if(ac.isReducedCLuster(cluster)):
                 item_list = substitutions[ac.getClusterItemListUsingCluster(cluster)[0]]
 
-                #replace commas
-
-                item_list = replace_unknown_characters(item_list)
-                expression = symbols(item_list[0])
-                for i in range(1, len(item_list)):
-                    expression = expression+symbols(item_list[i])
-
+                expression = ac.createExpression(item_list, graph)
 
                 expressions.append(expression)
                 s = ac.getClusterItemListUsingCluster(cluster)[0]
