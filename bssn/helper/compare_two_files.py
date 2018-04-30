@@ -24,7 +24,7 @@ else:
         dendroVar = cpul[1].strip()
 
         if cpuline!=gpuline:
-            if round(float(cpuline), 20)==round(float(gpuline), 20): continue # special requirement
+            if round(float(cpuline), 13)==round(float(gpuline), 13): continue # special requirement
             print("line-%d \t| CPU-%s \t| GPU-%s | %s | dif-%.20f"%(count_line, cpuline, gpuline, dendroVar, abs(float(cpuline)-float(gpuline))))
             correct = False
             # break # if you want to print only the first error, uncomment this line
