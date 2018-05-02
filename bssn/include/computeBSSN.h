@@ -32,15 +32,29 @@ const unsigned int PAD_WIDTH=3;
 struct Block 
 {
 
-    unsigned int ele1D;
-    unsigned int node1D_x;
-    unsigned int node1D_y;
-    unsigned int node1D_z;
-    unsigned int offset;
+    unsigned int x;  // x coord
+    unsigned int y;  // y coord
+    unsigned int z;  // z coord
+
+    unsigned int regLevel; // regular grid level
+    unsigned int blkLevel; // block level
+    unsigned int maxDepth; // max depth . note that blkLevel < regLevel < maxDepth
+
+    unsigned int node1D_x; // unzip size in x direction
+    unsigned int node1D_y; // unzip size in y direction
+    unsigned int node1D_z; // unzip size in z direction
+    unsigned int offset;  // offset
+
 
     Block()
     {
-        ele1D=0;
+        x=0;y=0;z=0;
+
+        regLevel=0;
+        blkLevel=0;
+        maxDepth=8;
+
+        regLevel=0;
         node1D_x=0;
         node1D_y=0;
         node1D_z=0;
@@ -48,9 +62,19 @@ struct Block
 
     }
 
-    Block(unsigned int pEle1D)
+    Block(unsigned int px,unsigned int py,unsigned int pz,unsigned int pregLevel,unsigned int pblkLevel,unsigned int pmaxDepth)
     {
-        ele1D=pEle1D; // should be a power of 2
+
+        x=px;
+        y=py;
+        z=pz;
+
+        regLevel=pregLevel;
+        blkLevel=pblkLevel;
+        maxDepth=pmaxDepth;
+
+        const unsigned int ele1D=(1u<<(regLevel-blkLevel));
+
         // 3 sizes kept independent if we need ot experiment with mem. alignment (especially for vectorized code)
         node1D_x=ELE_ORDER*ele1D+1+2*PAD_WIDTH;
         node1D_y=ELE_ORDER*ele1D+1+2*PAD_WIDTH;

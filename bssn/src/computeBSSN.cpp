@@ -42,18 +42,19 @@ int main (int argc, char** argv)
     blk_up=atoi(argv[2]);
     num_blks=atoi(argv[3]);
 
-    const unsigned int total_blks=num_blks*(blk_up-blk_lb+1);
+    const unsigned int total_blks=(blk_up-blk_lb+1);
 
     //1. setup the blk offsets.
     Block * blkList=new Block[total_blks];
     unsigned long unzipSz=0;
     unsigned int index=0;
+    const unsigned int maxDepth=12;//blk_up+1;
     for(unsigned int lev=blk_lb; lev<=blk_up; lev++)
        for(unsigned int i=0;i<num_blks;i++)
        {
            index = (lev-blk_lb)*num_blks+i;
 
-           blkList[index]=Block((1u<<lev)); // lu<<lev = 2**lev
+           blkList[index]=Block(0,0,0,lev+1,lev,maxDepth); // lu<<lev = 2**lev
 
            Block & blk=blkList[index];
            blk.offset=unzipSz;
@@ -66,7 +67,51 @@ int main (int argc, char** argv)
     double ** var_in=new double*[BSSN_NUM_VARS];
     double ** var_out=new double*[BSSN_NUM_VARS];
 
+
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+    {
+        var_in[i] = new double[unzip_dof];
+        var_out[i] = new double[unzip_dof];
+    }
+
+    double x,y,z,hx,hy,hz;
+    unsigned int offset;
+    unsigned int size_x,size_y,size_z;
+    Block tmpBlock;
+    for(unsigned int blk=0;blk<total_blks;blk++)
+    {
+        tmpBlock=blkList[blk];
+        x=(double)tmpBlock.x;
+        y=(double)tmpBlock.y;
+        z=(double)tmpBlock.z;
+
+        hx=0.001;//(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
+        hy=0.001;//(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
+        hz=0.001;//(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
+
+        offset=tmpBlock.offset;
+        size_x=tmpBlock.node1D_x;
+        size_y=tmpBlock.node1D_y;
+        size_z=tmpBlock.node1D_z;
+
+        for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
+        {
+            for(unsigned int k=0;k<tmpBlock.node1D_z;k++)
+                for(unsigned int j=0;j<tmpBlock.node1D_y;j++)
+                    for(unsigned int i=0;i<tmpBlock.node1D_x;i++)
+                    {
+                        var_in[var][offset+k*size_y*size_x+j*size_y+i]=sin(2*PI*(x+i*hx))*sin(2*PI*(y+j*hy))*sin(2*PI*(z+k*hz));
+                        var_out[var][offset+k*size_y*size_x+j*size_y+i]=0;
+                    }
+        }
+
+
+
+
+    }
+
+
+    /*for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
         var_in[i]=new double[unzip_dof];
         var_out[i]=new double[unzip_dof];
@@ -74,10 +119,10 @@ int main (int argc, char** argv)
         for(unsigned int j=0;j<unzip_dof;j++)
         {
             // some random initialization.
-            var_in[i][j]=sin((j%360)*PI/180) + sin(((j+180)%360)*PI/180) + cos(((j+60)%360)*PI/180);
+            var_in[i][j]=//sin((j%360)*PI/180) + sin(((j+180)%360)*PI/180) + cos(((j+60)%360)*PI/180);
             var_out[i][j]=0.0;
         }
-    }
+    }*/
     #endif
     
     // 2. b. Allocate memory on GPU for bssn computation
@@ -102,7 +147,43 @@ int main (int argc, char** argv)
     double * host_var_in = new double[BSSN_NUM_VARS*unzip_dof];
     double * host_var_out = new double[BSSN_NUM_VARS*unzip_dof];
 
-    unsigned int j = 0;
+    for(unsigned int blk=0;blk<total_blks;blk++)
+    {
+        tmpBlock=blkList[blk];
+        x=(double)tmpBlock.x;
+        y=(double)tmpBlock.y;
+        z=(double)tmpBlock.z;
+
+        hx=0.001;//(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
+        hy=0.001;//(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
+        hz=0.001;//(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
+
+        offset=tmpBlock.offset;
+        size_x=tmpBlock.node1D_x;
+        size_y=tmpBlock.node1D_y;
+        size_z=tmpBlock.node1D_z;
+
+        for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
+        {
+            for(unsigned int k=0;k<tmpBlock.node1D_z;k++)
+                for(unsigned int j=0;j<tmpBlock.node1D_y;j++)
+                    for(unsigned int i=0;i<tmpBlock.node1D_x;i++)
+                    {
+
+                        host_var_in[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=sin(2*PI*(x+i*hx))*sin(2*PI*(y+j*hy))*sin(2*PI*(z+k*hz));
+                        host_var_out[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=0;
+                    }
+
+        }
+
+
+
+
+    }
+
+
+
+    /*unsigned int j = 0;
     for(unsigned int i=0;i<BSSN_NUM_VARS*unzip_dof;i++)
     {
         if (j==unzip_dof){
@@ -110,15 +191,15 @@ int main (int argc, char** argv)
         }
         // some random initialization.
         host_var_in[i]=sin((j%360)*PI/180) + sin(((j+180)%360)*PI/180) + cos(((j+60)%360)*PI/180);
-        host_var_out[i]=0.0;     
-        j++;  
-    }
+        host_var_out[i]=0.0;
+        j++;
+    }*/
     
     cudaStatus = cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
     #endif
 
-    unsigned int offset;
+
     double ptmin[3], ptmax[3];
     unsigned int sz[3];
     unsigned int bflag;
@@ -182,13 +263,13 @@ int main (int argc, char** argv)
         for(unsigned int j=0; j<unzip_dof; j++){
             unsigned int abs_index = i*unzip_dof + j;
             double diff = var_out[i][j] - host_var_out[abs_index];
-            if (abs(diff)>threshold){
+            if (fabs(diff)>threshold){
                 error_count++;
                 printf("GPU=%15f \t| CPU=%15f \t| Diff=%15f \t|BSSN_VAR=%d, PP=%d\n", host_var_out[abs_index], var_out[i][j], diff, i, j);
             }
         }
     }
-    printf("Total errors: %d\n", error_count);
+    printf("Total errors: %d total number of dof : %d\n", error_count,BSSN_NUM_VARS*unzip_dof);
     
     #endif
 
