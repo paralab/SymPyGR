@@ -9,7 +9,7 @@
 #include "test_support.h"
 
 #define test 1
-#define threshold 0.0000000000001
+#define threshold 0.00000000001
 #define isGPU 1 // Specify array in rhs_cuda line no. 127
 #define isCPU 1 // Specify array in rhs line no. 133
 
