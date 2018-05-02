@@ -265,7 +265,22 @@ int main (int argc, char** argv)
             double diff = var_out[i][j] - host_var_out[abs_index];
             if (fabs(diff)>threshold){
                 error_count++;
-                printf("GPU=%15f \t| CPU=%15f \t| Diff=%15f \t|BSSN_VAR=%d, PP=%d\n", host_var_out[abs_index], var_out[i][j], diff, i, j);
+                const char separator    = '  ';
+                const int nameWidth     = 20;
+                const int numWidth      = NUM_DIGITS+15;
+
+                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
+                std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << host_var_out[abs_index];
+                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
+                std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  <<var_out[i][j];
+                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
+                std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff;
+                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
+                std::cout << std::left << std::setw(numWidth) << setfill(separator)  << i;
+                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP: ";
+                std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j<<std::endl;
+                //std::cout<<std::setprecision(NUM_DIGITS)<<"GPU="<<host_var_out[abs_index]<<"\t"<<" | CPU="<<var_out[i][j]<<"\t"<<" |Diff="<<diff<<"\t"<<"|BSSN_VAR="<<i<<"\t"<<"|PP="<<j<<std::endl;
+                //printf("GPU=%10.*e \t| CPU=%10.*e \t| Diff=%10.*e \t|BSSN_VAR=%d, PP=%d\n",host_var_out[abs_index], var_out[i][j], diff, i, j);
             }
         }
     }

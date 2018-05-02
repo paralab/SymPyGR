@@ -10,6 +10,7 @@
 
 #define test 1
 #define threshold 1e-15
+#define NUM_DIGITS 10
 #define isGPU 1 // Specify array in rhs_cuda line no. 127
 #define isCPU 1 // Specify array in rhs line no. 133
 
