@@ -171,6 +171,27 @@ int main (int argc, char** argv)
     //-- timer end
     // (time this part of the code. )
 
+    // Copy back dev_var_out to host_var_out 
+    cudaStatus = cudaMemcpy(host_var_out, dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost);
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out to host_var_out cudaMemcpy failed!\n"); return 0;}
+
+    #if test
+    // this will verify the GPU output with CPU output
+    unsigned int error_count = 0;
+    for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
+        for(unsigned int j=0; j<unzip_dof; j++){
+            unsigned int abs_index = i*unzip_dof + j;
+            double diff = var_out[i][j] - host_var_out[abs_index];
+            if (abs(diff)>threshold){
+                error_count++;
+                printf("GPU=%15f \t| CPU=%15f \t| Diff=%15f \t|BSSN_VAR=%d, PP=%d\n", host_var_out[abs_index], var_out[i][j], diff, i, j);
+            }
+        }
+    }
+    printf("Total errors: %d\n", error_count);
+    
+    #endif
+
     // CPU code
     #if isCPU
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
