@@ -277,7 +277,7 @@ int main (int argc, char** argv)
         for(unsigned int j=0; j<unzip_dof; j++){
             unsigned int abs_index = i*unzip_dof + j;
             double diff = var_out[i][j] - host_var_out[abs_index];
-            if (1 || fabs(diff)>threshold){
+            if (fabs(diff)>threshold){
                 error_count++;
                 const char separator    = '  ';
                 const int nameWidth     = 20;
