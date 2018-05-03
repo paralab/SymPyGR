@@ -9,7 +9,6 @@
 #include "computeBSSN.h" 
 #include "test_param.h"
 
-
 int main (int argc, char** argv)
 {
     /**
@@ -62,6 +61,9 @@ int main (int argc, char** argv)
        }
     const unsigned long unzip_dof=unzipSz;
 
+    double coord[3];
+    double u[BSSN_NUM_VARS];
+
     // 2. a. allocate memory for bssn computation on CPU.
     #if isCPU
     double ** var_in=new double*[BSSN_NUM_VARS];
@@ -78,6 +80,7 @@ int main (int argc, char** argv)
     unsigned int offset;
     unsigned int size_x,size_y,size_z;
     Block tmpBlock;
+
     for(unsigned int blk=0;blk<total_blks;blk++)
     {
         tmpBlock=blkList[blk];
@@ -94,18 +97,24 @@ int main (int argc, char** argv)
         size_y=tmpBlock.node1D_y;
         size_z=tmpBlock.node1D_z;
 
-        for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
-        {
-            for(unsigned int k=0;k<tmpBlock.node1D_z;k++)
-                for(unsigned int j=0;j<tmpBlock.node1D_y;j++)
-                    for(unsigned int i=0;i<tmpBlock.node1D_x;i++)
+        for(unsigned int k=0;k<tmpBlock.node1D_z;k++)
+            for(unsigned int j=0;j<tmpBlock.node1D_y;j++)
+                for(unsigned int i=0;i<tmpBlock.node1D_x;i++)
+                {
+                    coord[0]=x+i*hx;
+                    coord[1]=y+j*hy;
+                    coord[2]=z+k*hz;
+
+                    initial_data(u,coord);
+
+                    for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
                     {
-                        var_in[var][offset+k*size_y*size_x+j*size_y+i]=sin(2*PI*(x+i*hx))*sin(2*PI*(y+j*hy))*sin(2*PI*(z+k*hz));
+                        var_in[var][offset+k*size_y*size_x+j*size_y+i]=u[var];
                         var_out[var][offset+k*size_y*size_x+j*size_y+i]=0;
                     }
-        }
 
 
+                }
 
 
     }
@@ -163,20 +172,25 @@ int main (int argc, char** argv)
         size_y=tmpBlock.node1D_y;
         size_z=tmpBlock.node1D_z;
 
-        for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
-        {
-            for(unsigned int k=0;k<tmpBlock.node1D_z;k++)
-                for(unsigned int j=0;j<tmpBlock.node1D_y;j++)
-                    for(unsigned int i=0;i<tmpBlock.node1D_x;i++)
-                    {
 
-                        host_var_in[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=sin(2*PI*(x+i*hx))*sin(2*PI*(y+j*hy))*sin(2*PI*(z+k*hz));
+        for(unsigned int k=0;k<tmpBlock.node1D_z;k++)
+            for(unsigned int j=0;j<tmpBlock.node1D_y;j++)
+                for(unsigned int i=0;i<tmpBlock.node1D_x;i++)
+                {
+                    coord[0]=x+i*hx;
+                    coord[1]=y+j*hy;
+                    coord[2]=z+k*hz;
+
+                    initial_data(u,coord);
+
+                    for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
+                    {
+                        host_var_in[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=u[var];
                         host_var_out[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=0;
                     }
 
-        }
 
-
+                }
 
 
     }
@@ -263,7 +277,7 @@ int main (int argc, char** argv)
         for(unsigned int j=0; j<unzip_dof; j++){
             unsigned int abs_index = i*unzip_dof + j;
             double diff = var_out[i][j] - host_var_out[abs_index];
-            if (fabs(diff)>threshold){
+            if (1 || fabs(diff)>threshold){
                 error_count++;
                 const char separator    = '  ';
                 const int nameWidth     = 20;

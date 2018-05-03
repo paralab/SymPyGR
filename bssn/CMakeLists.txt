@@ -14,11 +14,11 @@ if(CUDA_FOUND)
     set(CUDA_PROPAGATE_HOST_FLAGS ON)
     set(CUDA_SEPARABLE_COMPILATION OFF)
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_30,code=compute_30 )
-    list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_52,code=sm_52 )	
-    list( APPEND CUDA_NVCC_FLAGS -fmad=false )	
-    list( APPEND CUDA_NVCC_FLAGS -prec-sqrt=true )	
-    list( APPEND CUDA_NVCC_FLAGS -prec-div=true )	
-    list( APPEND CUDA_NVCC_FLAGS -ftz=false )	
+    list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_52,code=sm_52 )
+    list( APPEND CUDA_NVCC_FLAGS -fmad=true )
+    list( APPEND CUDA_NVCC_FLAGS -prec-sqrt=true )
+    list( APPEND CUDA_NVCC_FLAGS -prec-div=true )
+    list( APPEND CUDA_NVCC_FLAGS -ftz=true )
 
 endif()
 
@@ -46,18 +46,20 @@ set(INC_FILES
         include/rhs_cuda.h
         include/bssn_profiler.h
         include/profile_param.h
-	include/bssneqn_solve.h
+	    include/bssneqn_solve.h
         include/cuda_bssneqs.h
         include/test_support.h
+        include/utils.h
         )
 
 set(SRC_FILES
         src/derivs.cpp
-	src/computeBSSN.cpp
+	    src/computeBSSN.cpp
         src/bssn_profiler.cpp
-	src/rhs.cpp
+	    src/rhs.cpp
         src/profile_param.cpp
         src/test_support.cpp
+        src/utils.cpp
         )
 
 if(CUDA_FOUND)

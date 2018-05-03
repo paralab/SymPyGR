@@ -19,6 +19,7 @@
 #include <time.h>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
+#include "utils.h"
 
 #include "profile_param.h"
 
@@ -83,6 +84,8 @@ struct Block
 
 
 };
+
+
 
 
 #endif //BSSN_COMPUTEBSSN_H
