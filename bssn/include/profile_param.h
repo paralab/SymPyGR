@@ -24,6 +24,12 @@ namespace bssn
         extern bssn_profiler_t  t_bdyc;
 
 
+        extern bssn_profiler_t t_deriv_gpu;
+        extern bssn_profiler_t t_rhs_gpu;
+        extern bssn_profiler_t t_bdyc_gpu;
+
+
+
         void profileInfo();
     }
 }

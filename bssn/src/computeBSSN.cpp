@@ -33,6 +33,12 @@ int main (int argc, char** argv)
     bssn::timer::t_rhs.start();
     bssn::timer::t_bdyc.start();
 
+
+    bssn::timer::t_deriv_gpu.start();
+    bssn::timer::t_rhs_gpu.start();
+    bssn::timer::t_bdyc_gpu.start();
+
+
     unsigned int num_blks=100;
     unsigned int blk_lb=0;
     unsigned int blk_up=5;

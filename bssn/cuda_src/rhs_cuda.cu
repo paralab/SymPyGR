@@ -88,7 +88,7 @@ const unsigned int& bflag)
     unsigned int n = sz[0]*sz[1]*sz[2];
     int size = n * sizeof(double);
 
-    bssn::timer::t_deriv.start();
+    bssn::timer::t_deriv_gpu.start();
 
     #include "bssnrhs_cuda_malloc.h"
     #include "bssnrhs_cuda_malloc_adv.h"
@@ -98,14 +98,14 @@ const unsigned int& bflag)
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
 
-    bssn::timer::t_deriv.stop();
+    bssn::timer::t_deriv_gpu.stop();
 
 
-    bssn::timer::t_rhs.start();
+    bssn::timer::t_rhs_gpu.start();
     calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
         #include "list_of_args.h"
     );
-    bssn::timer::t_rhs.stop();
+    bssn::timer::t_rhs_gpu.stop();
 
     #if test
     // // Copying specified array to CPU for testing purpose
@@ -117,7 +117,7 @@ const unsigned int& bflag)
     #endif
         
     // if (bflag != 0) {
-    //     bssn::timer::t_bdyc.start();
+    //     bssn::timer::t_bdyc_gpu.start();
 
     //     bssn_bcs(dev_var_out, dev_var_in, dev_alphaInt, grad_0_alpha, grad_1_alpha, grad_2_alpha,
     //         dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
@@ -169,19 +169,20 @@ const unsigned int& bflag)
     //         dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
           
 
-    //     bssn::timer::t_bdyc.stop();
+    //     bssn::timer::t_bdyc_gpu.stop();
     // }
 
-    // bssn::timer::t_deriv.start();
+    // bssn::timer::t_deriv_gpu.start();
     // #include "bssnrhs_cuda_ko_derivs.h"
-    // bssn::timer::t_deriv.stop();
+    // bssn::timer::t_deriv_gpu.stop();
 
-    // bssn::timer::t_rhs.start();
+    // bssn::timer::t_rhs_gpu.start();
     // get_output(dev_var_out, dev_sz, sz,
     //     #include "list_of_args.h"
     // );
-    // bssn::timer::t_rhs.stop();
+    // bssn::timer::t_rhs_gpu.stop();
 
+    bssn::timer::t_deriv_gpu.start();
     #include "bssnrhs_cuda_offset_demalloc.h"
     #include "bssnrhs_cuda_mdealloc.h"
     #include "bssnrhs_cuda_mdealloc_adv.h"
@@ -191,6 +192,7 @@ const unsigned int& bflag)
     cudaFree(dev_sz);
     cudaFree(dev_zero);
     cudaFree(dev_pmin);
+    bssn::timer::t_deriv_gpu.stop();
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,

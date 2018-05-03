@@ -18,6 +18,11 @@ namespace bssn
         bssn_profiler_t	t_deriv;
         bssn_profiler_t	t_rhs;
         bssn_profiler_t t_bdyc;
+
+        bssn_profiler_t t_deriv_gpu;
+        bssn_profiler_t t_rhs_gpu;
+        bssn_profiler_t t_bdyc_gpu;
+
     }
 }
 
@@ -35,6 +40,7 @@ void bssn::timer::profileInfo()
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"+runtime(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
+    std::cout<<"CPU Timings"<<std::endl;
     t_stat=t_deriv.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--deriv(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
@@ -46,6 +52,23 @@ void bssn::timer::profileInfo()
     t_stat=t_bdyc.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--bdy cond.(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
+
+    std::cout<<"GPU Timings"<<std::endl;
+
+
+    t_stat=t_deriv_gpu.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--deriv(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
+    t_stat=t_rhs_gpu.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--rhs(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
+    t_stat=t_bdyc_gpu.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--bdy cond.(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
 
     #if test
     double times[4] = {(double) total_runtime.seconds, (double) t_deriv.seconds, (double) t_rhs.seconds, (double) t_bdyc.seconds};
