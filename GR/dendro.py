@@ -583,10 +583,11 @@ def generate(ex, vnames, idx):
 
     z = ac.cluster(featureVectors)
 
-    (newz, substitutions) = ac.createVariableClusterGraphList(z,list(dependencies.keys()), 3)
+    (newz, substitutions) = ac.createVariableClusterGraphList(z,list(dependencies.keys()), 30)
 
     max_level = ac.getMaxLevel(newz)
     print("Max_level: "+str(max_level))
+    precomputed_variables = []
     for level in range(1,max_level+1):
         print("\n \n \nLevel: "+str(level))
         expressions = []
@@ -595,27 +596,43 @@ def generate(ex, vnames, idx):
         for cluster in clusters:
             if(ac.isReducedCLuster(cluster)):
                 item_list = substitutions[ac.getClusterItemListUsingCluster(cluster)[0]]
+                precomputed_variables = generateSubCode(_v, item_list, precomputed_variables)
 
-                expression = ac.createExpression(item_list, graph)
+def generateSubCode(_v, item_list, precomputed_variables, idx, lname):
 
-                expressions.append(expression)
-                s = ac.getClusterItemListUsingCluster(cluster)[0]
-                names.append(s)
-        print(expressions)
-        ee_name = 'DENDRO_'+str(level)+"_"
-        ee_syms = numbered_symbols(prefix=ee_name)
-        _v = cse(expressions, symbols=ee_syms, optimizations='basic')
-        printBSSNCPP(_v, names, expressions, idx)
+    # if the item is a reduction variable, just ignore that
+    # if it is a dendro variable, append it to the list and append the name to precomputed_variables
+    # if it is an equation, append it to the list
+    # do cse on _v
+    # print Equations
 
-    #ac.writeClusterListToFile(newz)
+    equations = []
+    lname = []
+    for item in item_list:
+        if(item.startswith("Reduction")):
+            print()
+        elif(item.startswith("Dendro")):
+            for dendro in  _v[0]:
+                if(str(dendro[0])==item):
+                    lname.append(item+idx)
+                    equations.append(dendro[1])
+                    break
+        else:
+            for i, e in enumerate(_v[1]):
+                if(str(lname[i])==item):
+                    lname.append(item)
+                    equations.append(e)
+                    break
 
-    #ac.createClusteringGraph(newz)
-
-    #printBSSNCPP(_v , lname, lexp, filename, idx)
 
 
 
-def printBSSNCPP(_v, lname,lexp, idx):
+
+
+
+
+
+def printBSSNCPP(_v, lname,lexp, idx, precomputed_variables):
     custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
     with open("bssn.cpp", 'a+') as output_file:
 
