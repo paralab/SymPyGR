@@ -28,15 +28,15 @@ int main (int argc, char** argv)
 
 
     // initialize profile counters.
-    bssn::timer::total_runtime.start();
-    bssn::timer::t_deriv.start();
-    bssn::timer::t_rhs.start();
-    bssn::timer::t_bdyc.start();
+    // bssn::timer::total_runtime.start();
+    // bssn::timer::t_deriv.start();
+    // bssn::timer::t_rhs.start();
+    // bssn::timer::t_bdyc.start();
 
 
-    bssn::timer::t_deriv_gpu.start();
-    bssn::timer::t_rhs_gpu.start();
-    bssn::timer::t_bdyc_gpu.start();
+    // bssn::timer::t_deriv_gpu.start();
+    // bssn::timer::t_rhs_gpu.start();
+    // bssn::timer::t_bdyc_gpu.start();
 
 
     unsigned int num_blks=100;
@@ -47,7 +47,7 @@ int main (int argc, char** argv)
     blk_up=atoi(argv[2]);
     num_blks=atoi(argv[3]);
 
-    const unsigned int total_blks=(blk_up-blk_lb+1);
+    const unsigned int total_blks=num_blks * (blk_up-blk_lb+1);
 
     //1. setup the blk offsets.
     Block * blkList=new Block[total_blks];
@@ -69,6 +69,10 @@ int main (int argc, char** argv)
 
     double coord[3];
     double u[BSSN_NUM_VARS];
+    double x,y,z,hx,hy,hz;
+    unsigned int offset;
+    unsigned int size_x,size_y,size_z;
+    Block tmpBlock;
 
     // 2. a. allocate memory for bssn computation on CPU.
     #if isCPU
@@ -81,11 +85,6 @@ int main (int argc, char** argv)
         var_in[i] = new double[unzip_dof];
         var_out[i] = new double[unzip_dof];
     }
-
-    double x,y,z,hx,hy,hz;
-    unsigned int offset;
-    unsigned int size_x,size_y,size_z;
-    Block tmpBlock;
 
     for(unsigned int blk=0;blk<total_blks;blk++)
     {
