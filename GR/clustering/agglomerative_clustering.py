@@ -264,6 +264,3 @@ def createClusteringGraph(newz):
     pos = nx.spring_layout(G, scale=10)  # double distance between all nodes
     nx.draw(G, pos=pos, with_labels=True)
     plt.show()
-
-def createExpression(item_list, graph):
-    return "Expression"

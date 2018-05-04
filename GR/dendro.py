@@ -596,9 +596,9 @@ def generate(ex, vnames, idx):
         for cluster in clusters:
             if(ac.isReducedCLuster(cluster)):
                 item_list = substitutions[ac.getClusterItemListUsingCluster(cluster)[0]]
-                precomputed_variables = generateSubCode(_v, item_list, precomputed_variables)
+                precomputed_variables = generateSubCode(_v, item_list, precomputed_variables, lname, idx)
 
-def generateSubCode(_v, item_list, precomputed_variables, idx, lname):
+def generateSubCode(_v, item_list, precomputed_variables, equation_names, idx):
 
     # if the item is a reduction variable, just ignore that
     # if it is a dendro variable, append it to the list and append the name to precomputed_variables
@@ -614,16 +614,25 @@ def generateSubCode(_v, item_list, precomputed_variables, idx, lname):
         elif(item.startswith("Dendro")):
             for dendro in  _v[0]:
                 if(str(dendro[0])==item):
-                    lname.append(item+idx)
+                    lname.append(item)
+                    precomputed_variables.append(item)
                     equations.append(dendro[1])
                     break
         else:
             for i, e in enumerate(_v[1]):
-                if(str(lname[i])==item):
+                if(str(equation_names[i])==item):
                     lname.append(item)
                     equations.append(e)
                     break
 
+    ee_name = 'DENDRO_'  # ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+    ee_syms = numbered_symbols(prefix=ee_name)
+
+    _v = cse(equations, symbols=ee_syms, optimizations='basic')
+
+    printBSSNCPP(_v, lname,  precomputed_variables, equations, idx)
+
+    return precomputed_variables
 
 
 
@@ -632,7 +641,7 @@ def generateSubCode(_v, item_list, precomputed_variables, idx, lname):
 
 
 
-def printBSSNCPP(_v, lname,lexp, idx, precomputed_variables):
+def printBSSNCPP(_v, lname, precomputed_variables, lexp, idx):
     custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
     with open("bssn.cpp", 'a+') as output_file:
 
@@ -658,6 +667,8 @@ def printBSSNCPP(_v, lname,lexp, idx, precomputed_variables):
         rops = 0
         print_n_write('// Dendro: printing temp variables', output_file)
         for (v1, v2) in _v[0]:
+            for precomputed_variable in precomputed_variables:
+                v2 = v2.subs({precomputed_variable:symbols(precomputed_variable+idx)})
             # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
             print_n_write('double ', output_file, isNewLineEnd=False)
             print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
@@ -665,6 +676,8 @@ def printBSSNCPP(_v, lname,lexp, idx, precomputed_variables):
 
         print_n_write('\n// Dendro: printing variables', output_file)
         for i, e in enumerate(_v[1]):
+            for precomputed_variable in precomputed_variables:
+                e = e.subs({precomputed_variable:symbols(precomputed_variable+idx)})
             print_n_write("//--", output_file)
             # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
             print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
