@@ -6,7 +6,7 @@
 *@brief
 */
 //
-#include "computeBSSN.h" 
+#include "computeBSSN.h"
 #include "test_param.h"
 
 int main (int argc, char** argv)
@@ -272,7 +272,11 @@ int main (int argc, char** argv)
 
         unsigned int block_error_count = 0;
         unsigned int total_block_size=sz[0]*sz[1]*sz[2];
-        std::cout <<"Test: Block level : "<<blkList[blk].blkLevel<<" block index : "<<blk<<std::endl;
+        string until="";
+        #if testUntilBssnEqs
+            until="Comparison after BssnEqs exection : ";
+        #endif
+        std::cout <<"Test: Block level : "<<until<<blkList[blk].blkLevel<<" block index : "<<blk<<std::endl;
 
         for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
             for(unsigned int j=0; j<total_block_size; j++){
@@ -293,7 +297,7 @@ int main (int argc, char** argv)
                     std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
                     std::cout << std::left << std::setw(numWidth) << setfill(separator)  << i;
                     std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP: ";
-                    std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j<<std::endl;
+                    std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j+offset<<std::endl;
                     //std::cout<<std::setprecision(NUM_DIGITS)<<"GPU="<<host_var_out[abs_index]<<"\t"<<" | CPU="<<var_out[i][j]<<"\t"<<" |Diff="<<diff<<"\t"<<"|BSSN_VAR="<<i<<"\t"<<"|PP="<<j<<std::endl;
                     //printf("GPU=%10.*e \t| CPU=%10.*e \t| Diff=%10.*e \t|BSSN_VAR=%d, PP=%d\n",host_var_out[abs_index], var_out[i][j], diff, i, j);
                 }
@@ -317,7 +321,7 @@ int main (int argc, char** argv)
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out to host_var_out cudaMemcpy failed!\n"); return 0;}
     #endif
 
-    #if testVarOut && isCPU && isGPU
+    #if test && isCPU && isGPU && !testPerBlock
     // this will verify the GPU output with CPU output
     unsigned int error_count = 0;
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
@@ -346,7 +350,7 @@ int main (int argc, char** argv)
         }
     }
     printf("Total errors: %d total number of dof : %d\n", error_count,BSSN_NUM_VARS*unzip_dof);
-    
+
     #endif
 
     // CPU code
