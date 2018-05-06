@@ -178,6 +178,7 @@ bssn::timer::t_deriv.stop();
   // Take the pointer of specified array
   // test_file_write::writeToFile("output_cpu.txt", agrad_0_alpha, n);
   #endif
+#if !testUntilBssnEqs
 
   if (bflag != 0) {
 
@@ -304,7 +305,7 @@ bssn::timer::t_deriv.stop();
   }
 #endif
 
-
+#endif
 
 }
 

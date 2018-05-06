@@ -106,7 +106,7 @@ const unsigned int& bflag)
         #include "list_of_args.h"
     );
     bssn::timer::t_rhs_gpu.stop();
-
+    #if !testUntilBssnEqs
     #if test
     // // Copying specified array to CPU for testing purpose
     // double * host_array_cpu = (double *) malloc(size);
@@ -193,6 +193,8 @@ const unsigned int& bflag)
     cudaFree(dev_zero);
     cudaFree(dev_pmin);
     bssn::timer::t_deriv_gpu.stop();
+
+    #endif
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
