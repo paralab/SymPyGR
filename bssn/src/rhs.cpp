@@ -174,7 +174,6 @@ bssn::timer::t_deriv.stop();
   }
   bssn::timer::t_rhs.stop();
 
-  
 
   if (bflag != 0) {
 
@@ -305,7 +304,6 @@ bssn::timer::t_deriv.stop();
     std::cout<<"  || dtu("<<m<<")|| = "<<normLInfty(unzipVarsRHS[m] + offset, n)<<std::endl;
   }
 #endif
-
 
 
 }

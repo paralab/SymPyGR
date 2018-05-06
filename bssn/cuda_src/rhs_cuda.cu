@@ -107,7 +107,6 @@ const unsigned int& bflag)
     );
     bssn::timer::t_rhs_gpu.stop();
 
-    
         
     if (bflag != 0) {
         bssn::timer::t_bdyc_gpu.start();
@@ -195,6 +194,7 @@ const unsigned int& bflag)
     cudaFree(dev_zero);
     cudaFree(dev_pmin);
     bssn::timer::t_deriv_gpu.stop();
+
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
