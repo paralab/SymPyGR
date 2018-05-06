@@ -11,6 +11,7 @@
 #define BSSN_PROFILE_PARAM_H
 
 #include "bssn_profiler.h"
+#include "test_param.h"
 
 namespace bssn
 {
@@ -21,6 +22,12 @@ namespace bssn
         extern bssn_profiler_t	t_deriv;
         extern bssn_profiler_t	t_rhs;
         extern bssn_profiler_t  t_bdyc;
+
+
+        extern bssn_profiler_t t_deriv_gpu;
+        extern bssn_profiler_t t_rhs_gpu;
+        extern bssn_profiler_t t_bdyc_gpu;
+
 
 
         void profileInfo();

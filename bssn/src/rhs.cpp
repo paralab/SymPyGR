@@ -134,6 +134,7 @@ bssn::timer::t_deriv.stop();
   double r_coord;
   double eta;
 
+  bssn::timer::t_rhs.start();
   //cout << "begin loop" << endl;
   for (unsigned int k = 3; k < nz-3; k++) {
       z = pmin[2] + k*hz;
@@ -143,6 +144,11 @@ bssn::timer::t_deriv.stop();
 
       for (unsigned int i = 3; i < nx-3; i++) {
          x = pmin[0] + i*hx;
+
+    //          if (i==5 && j==5 && k==6){
+    //     printf("%f | %f | %f\n", z, y ,x);
+    // }
+
          pp = i + nx*(j + ny*k);
          r_coord = sqrt(x*x + y*y + z*z);
          eta=ETA_CONST;
@@ -151,11 +157,8 @@ bssn::timer::t_deriv.stop();
          }
 
 
-bssn::timer::t_rhs.start();
-
         #include "bssneqs.cpp"
 
-bssn::timer::t_rhs.stop();
 
        /* debugging */
         unsigned int qi = 46 - 1;
@@ -169,7 +172,13 @@ bssn::timer::t_rhs.stop();
       }
     }
   }
+  bssn::timer::t_rhs.stop();
 
+  #if test
+  // Take the pointer of specified array
+  // test_file_write::writeToFile("output_cpu.txt", agrad_0_alpha, n);
+  #endif
+#if !testUntilBssnEqs
 
   if (bflag != 0) {
 
@@ -296,7 +305,7 @@ bssn::timer::t_deriv.stop();
   }
 #endif
 
-
+#endif
 
 }
 
