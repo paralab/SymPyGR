@@ -1130,8 +1130,8 @@ __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
    
    //ib, jb, kb values are accumulated to the x, y, z
    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.x * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.x * blockDim.z;
+   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
@@ -1151,7 +1151,6 @@ __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
                     -      dev_var_in[*dev_u_offset + pp+3*nx]
                     );
 
-   
    if ((*dev_bflag & (1u<<OCT_DIR_DOWN)) && (j == 3)) {
 
     output[IDX(i,3,k)] =  (      dev_var_in[*dev_u_offset +IDX(i,6,k)]

@@ -106,15 +106,7 @@ const unsigned int& bflag)
         #include "list_of_args.h"
     );
     bssn::timer::t_rhs_gpu.stop();
-    #if !testUntilBssnEqs
-    #if test
-    // // Copying specified array to CPU for testing purpose
-    // double * host_array_cpu = (double *) malloc(size);
-    // cudaStatus = cudaMemcpy(host_array_cpu, agrad_0_alpha, size, cudaMemcpyDeviceToHost);
-    // if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
-    // test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
-    // free(host_array_cpu);
-    #endif
+
         
     if (bflag != 0) {
         bssn::timer::t_bdyc_gpu.start();
@@ -176,6 +168,15 @@ const unsigned int& bflag)
     #include "bssnrhs_cuda_ko_derivs.h"
     bssn::timer::t_deriv_gpu.stop();
 
+    #if test
+    // // Copying specified array to CPU for testing purpose
+    // double * host_array_cpu = (double *) malloc(size);
+    // cudaStatus = cudaMemcpy(host_array_cpu, grad_1_K, size, cudaMemcpyDeviceToHost);
+    // if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
+    // test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
+    // free(host_array_cpu);
+    #endif
+
     bssn::timer::t_rhs_gpu.start();
     get_output(dev_var_out, dev_sz, sz,
         #include "list_of_args.h"
@@ -194,7 +195,6 @@ const unsigned int& bflag)
     cudaFree(dev_pmin);
     bssn::timer::t_deriv_gpu.stop();
 
-    #endif
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
@@ -414,13 +414,13 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     {
 
         int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-        int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
-        int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+        int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+        int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
         int nx = dev_sz[0];
         int ny = dev_sz[1];
 
-        if(i >= nx-3 || j >= ny-1 || k >= dev_sz[2]-1) return;
+        if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
 
         const  double sigma = 1e-4;
         int pp = i + nx*(j + ny*k);
@@ -447,7 +447,7 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         output[*dev_At5Int + pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
 
         output[*dev_KInt + pp] += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
-
+        
         output[*dev_Gt0Int + pp] += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
         output[*dev_Gt1Int + pp] += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
         output[*dev_Gt2Int + pp] += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
@@ -463,8 +463,8 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     ) 
     {
             const int ie = host_sz[0] - 3;//x direction
-            const int je = host_sz[1] - 1;//y direction
-            const int ke = host_sz[2] - 1;//z direction
+            const int je = host_sz[1] - 3;//y direction
+            const int ke = host_sz[2] - 3;//z direction
   
             int temp_max = (ie>je)? ie : je;
             int maximumIterations = (temp_max>ke) ? temp_max: ke;
