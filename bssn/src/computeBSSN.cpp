@@ -6,7 +6,7 @@
 *@brief
 */
 //
-#include "computeBSSN.h" 
+#include "computeBSSN.h"
 #include "test_param.h"
 
 int main (int argc, char** argv)
@@ -28,15 +28,15 @@ int main (int argc, char** argv)
 
 
     // initialize profile counters.
-    bssn::timer::total_runtime.start();
-    bssn::timer::t_deriv.start();
-    bssn::timer::t_rhs.start();
-    bssn::timer::t_bdyc.start();
+    // bssn::timer::total_runtime.start();
+    // bssn::timer::t_deriv.start();
+    // bssn::timer::t_rhs.start();
+    // bssn::timer::t_bdyc.start();
 
 
-    bssn::timer::t_deriv_gpu.start();
-    bssn::timer::t_rhs_gpu.start();
-    bssn::timer::t_bdyc_gpu.start();
+    // bssn::timer::t_deriv_gpu.start();
+    // bssn::timer::t_rhs_gpu.start();
+    // bssn::timer::t_bdyc_gpu.start();
 
 
     unsigned int num_blks=100;
@@ -47,7 +47,7 @@ int main (int argc, char** argv)
     blk_up=atoi(argv[2]);
     num_blks=atoi(argv[3]);
 
-    const unsigned int total_blks=(blk_up-blk_lb+1);
+    const unsigned int total_blks=num_blks * (blk_up-blk_lb+1);
 
     //1. setup the blk offsets.
     Block * blkList=new Block[total_blks];
@@ -59,7 +59,7 @@ int main (int argc, char** argv)
        {
            index = (lev-blk_lb)*num_blks+i;
 
-           blkList[index]=Block(0,0,0,lev+1,lev,maxDepth); // lu<<lev = 2**lev
+           blkList[index]=Block(0,0,0,2*lev,lev,maxDepth); // lu<<lev = 2**lev
 
            Block & blk=blkList[index];
            blk.offset=unzipSz;
@@ -69,6 +69,10 @@ int main (int argc, char** argv)
 
     double coord[3];
     double u[BSSN_NUM_VARS];
+    double x,y,z,hx,hy,hz;
+    unsigned int offset;
+    unsigned int size_x,size_y,size_z;
+    Block tmpBlock;
 
     // 2. a. allocate memory for bssn computation on CPU.
     #if isCPU
@@ -81,11 +85,6 @@ int main (int argc, char** argv)
         var_in[i] = new double[unzip_dof];
         var_out[i] = new double[unzip_dof];
     }
-
-    double x,y,z,hx,hy,hz;
-    unsigned int offset;
-    unsigned int size_x,size_y,size_z;
-    Block tmpBlock;
 
     for(unsigned int blk=0;blk<total_blks;blk++)
     {
@@ -139,7 +138,7 @@ int main (int argc, char** argv)
         }
     }*/
     #endif
-    
+
     // 2. b. Allocate memory on GPU for bssn computation
     #if isGPU
     cudaError_t cudaStatus;
@@ -214,8 +213,10 @@ int main (int argc, char** argv)
         host_var_out[i]=0.0;
         j++;
     }*/
-    
+
     cudaStatus = cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
+    cudaStatus = cudaMemcpy(dev_var_out, host_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
     #endif
 
@@ -264,7 +265,49 @@ int main (int argc, char** argv)
         cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
         #endif
 
+        #if testPerBlock && isGPU && isCPU
+        //copy host_var_out to cpu to compare
+        cudaStatus = cudaMemcpy(host_var_out, dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost);
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out to host_var_out cudaMemcpy failed!\n"); return 0;}
 
+        unsigned int block_error_count = 0;
+        unsigned int total_block_size=sz[0]*sz[1]*sz[2];
+        string until="";
+        #if testUntilBssnEqs
+            until="Comparison after BssnEqs exection : ";
+        #endif
+        std::cout <<"Test: Block level : "<<until<<blkList[blk].blkLevel<<" block index : "<<blk<<std::endl;
+
+        for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
+            for(unsigned int j=0; j<total_block_size; j++){
+                unsigned int abs_index = i*unzip_dof + offset + j;
+                double diff = var_out[i][offset+j] - host_var_out[abs_index];
+                if (fabs(diff)>threshold){
+                    block_error_count++;
+                    const char separator    = '  ';
+                    const int nameWidth     = 20;
+                    const int numWidth      = NUM_DIGITS+15;
+
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
+                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << host_var_out[abs_index];
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
+                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  <<var_out[i][j];
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
+                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff;
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
+                    std::cout << std::left << std::setw(numWidth) << setfill(separator)  << i;
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP: ";
+                    std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j+offset<<std::endl;
+                    //std::cout<<std::setprecision(NUM_DIGITS)<<"GPU="<<host_var_out[abs_index]<<"\t"<<" | CPU="<<var_out[i][j]<<"\t"<<" |Diff="<<diff<<"\t"<<"|BSSN_VAR="<<i<<"\t"<<"|PP="<<j<<std::endl;
+                    //printf("GPU=%10.*e \t| CPU=%10.*e \t| Diff=%10.*e \t|BSSN_VAR=%d, PP=%d\n",host_var_out[abs_index], var_out[i][j], diff, i, j);
+                }
+            }
+        }
+        std::cout <<"Test: Block level : "<<blkList[blk].blkLevel<<" block index : "<<blk<<std::endl;
+        printf("Total errors of block: %d total number of dof in block: %d\n", block_error_count,BSSN_NUM_VARS*total_block_size);
+        printf("-------------------------\n");
+
+        #endif
 
 
     }
@@ -272,11 +315,13 @@ int main (int argc, char** argv)
     //-- timer end
     // (time this part of the code. )
 
-    // Copy back dev_var_out to host_var_out 
+    // Copy back dev_var_out to host_var_out
+    #if isGPU
     cudaStatus = cudaMemcpy(host_var_out, dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out to host_var_out cudaMemcpy failed!\n"); return 0;}
+    #endif
 
-    #if test
+    #if test && isCPU && isGPU && !testPerBlock
     // this will verify the GPU output with CPU output
     unsigned int error_count = 0;
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
@@ -305,7 +350,7 @@ int main (int argc, char** argv)
         }
     }
     printf("Total errors: %d total number of dof : %d\n", error_count,BSSN_NUM_VARS*unzip_dof);
-    
+
     #endif
 
     // CPU code

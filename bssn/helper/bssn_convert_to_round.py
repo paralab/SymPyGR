@@ -35,4 +35,4 @@ with open('test_bssneqs.cpp') as fCpp:
                 tempLine = l[0];
             fwCpp.write("%s\n" % tempLine)
         else:
-            fw.write(line)
+            fwCpp.write(line)
