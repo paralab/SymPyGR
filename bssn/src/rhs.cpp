@@ -174,10 +174,7 @@ bssn::timer::t_deriv.stop();
   }
   bssn::timer::t_rhs.stop();
 
-  #if test
-  // Take the pointer of specified array
-  // test_file_write::writeToFile("output_cpu.txt", agrad_0_alpha, n);
-  #endif
+  
 
   if (bflag != 0) {
 
@@ -244,6 +241,11 @@ bssn::timer::t_deriv.stop();
 bssn::timer::t_deriv.start();
 #include "bssnrhs_ko_derivs.h"
 bssn::timer::t_deriv.stop();
+
+#if test
+  // Take the pointer of specified array
+  // test_file_write::writeToFile("output_cpu.txt", grad_1_K, n);
+  #endif
 
 bssn::timer::t_rhs.start();
 

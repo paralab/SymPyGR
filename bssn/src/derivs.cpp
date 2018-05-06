@@ -1172,8 +1172,8 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
        for (int k = kb; k < ke; k++) {
-          int pp = IDX(i,j,j);
-          Du[IDX(i,j,j)] = pre_factor_6_dz *
+          int pp = IDX(i,j,k);
+          Du[pp] = pre_factor_6_dz *
                          (
                          -      u[pp-3*n]
                          +  6.0*u[pp-2*n]
