@@ -112,7 +112,7 @@ def cluster(feature_vectors):
         leaf_rotation=90.,  # rotates the x axis labels
         leaf_font_size=8.,  # font size for the x axis labels
     )
-    plt.show()
+    #plt.show()
     return Z
 
 def printClusterResults(z):
