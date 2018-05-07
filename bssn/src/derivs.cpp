@@ -1234,7 +1234,19 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
-       for (int k = kb; k < ke; k++) {
+        
+        Du[IDX(i,j,kb)] = pre_factor_6_dz *
+                         (
+                         -      u[IDX(i,j,kb+4)]                             
+                         +  6.0*u[IDX(i,j,kb+3)]
+                         - 15.0*u[IDX(i,j,kb+2)]
+                         + 20.0*u[IDX(i,j,kb+1)]
+                         - 15.0*u[IDX(i,j,kb)]
+                         +  6.0*u[IDX(i,j,kb-1)]
+                         -      u[IDX(i,j,kb-2)]
+                         );
+        
+       for (int k = kb+1; k < ke-1; k++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dz *
                          (
@@ -1247,6 +1259,19 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
                          -      u[pp+3*n]
                          );
        }
+       
+       Du[IDX(i,j,ke-1)] = pre_factor_6_dz *
+                         (
+                         -      u[IDX(i,j,ke+1)]                             
+                         +  6.0*u[IDX(i,j,ke)]
+                         - 15.0*u[IDX(i,j,ke-1)]
+                         + 20.0*u[IDX(i,j,ke-2)]
+                         - 15.0*u[IDX(i,j,ke-3)]
+                         +  6.0*u[IDX(i,j,ke-4)]
+                         -      u[IDX(i,j,ke-5)]
+                         );
+       
+       
     }
   }
 
