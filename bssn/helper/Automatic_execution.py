@@ -9,7 +9,7 @@ os.system("cmake ..")
 os.system("make all")
 
 testcases = [
-    "0 0 1"
+    "3 3 1"
     ]
 
 for test in testcases:
