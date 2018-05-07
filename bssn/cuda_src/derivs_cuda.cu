@@ -1026,14 +1026,28 @@ __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
     double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
    
    //ib, jb, kb values are accumulated to the x, y, z
-   int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+   int i = 4 + threadIdx.x + blockIdx.x * blockDim.x;
    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
 
-   if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+   if(i >= nx-4 || j >= ny-3 || k >= dev_sz[2]-3) return;
+
+    if(i==4) {
+        int ib=3;
+        output[IDX(3, j, k)] = (-1.0 / 64.0 / dev_dx[0]) *
+                         (
+                         -      dev_var_in[*dev_u_offset + IDX(ib+4,j,k)]
+                         +  6.0*dev_var_in[*dev_u_offset + IDX(ib+3,j,k)]
+                         - 15.0*dev_var_in[*dev_u_offset + IDX(ib+2,j,k)]
+                         + 20.0*dev_var_in[*dev_u_offset + IDX(ib+1,j,k)]
+                         - 15.0*dev_var_in[*dev_u_offset + IDX(ib,j,k)]
+                         +  6.0*dev_var_in[*dev_u_offset + IDX(ib-1,j,k)]
+                         -      dev_var_in[*dev_u_offset + IDX(ib-2,j,k)]
+                         );
+    }
 
    int pp = IDX(i, j, k);
    
@@ -1047,8 +1061,22 @@ __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
                          +  6.0*dev_var_in[*dev_u_offset + pp + 2]
                          -      dev_var_in[*dev_u_offset + pp + 3]
                          );
+
+    if(i==5) {
+        int ie = nx-3;
+        output[IDX(ie-1, j, k)] = (-1.0 / 64.0 / dev_dx[0]) *
+                         (
+                         -      dev_var_in[*dev_u_offset + IDX(ie+1,j,k)]
+                         +  6.0*dev_var_in[*dev_u_offset + IDX(ie,j,k)]
+                         - 15.0*dev_var_in[*dev_u_offset + IDX(ie-1,j,k)]
+                         + 20.0*dev_var_in[*dev_u_offset + IDX(ie-2,j,k)]
+                         - 15.0*dev_var_in[*dev_u_offset + IDX(ie-3,j,k)]
+                         +  6.0*dev_var_in[*dev_u_offset + IDX(ie-4,j,k)]
+                         -      dev_var_in[*dev_u_offset + IDX(ie-5,j,k)]
+                         );
+    }
    
-   if ((*dev_bflag & (1u<<OCT_DIR_LEFT)) && (i == 3)) {
+   if ((*dev_bflag & (1u<<OCT_DIR_LEFT)) && (i == 4)) {
 
     output[IDX(3,j,k)] =  (      dev_var_in[*dev_u_offset + IDX(6,j,k)]
                                 - 3.0*dev_var_in[*dev_u_offset + IDX(5,j,k)]
@@ -1070,7 +1098,7 @@ __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
                                 )/49.0/48.0*64*dev_dx[0];
     }
 
-   if ((*dev_bflag & (1u<<OCT_DIR_RIGHT)) && (i == 4)) {
+   if ((*dev_bflag & (1u<<OCT_DIR_RIGHT)) && (i == 5)) {
        
        const int ie = nx - 3;
        output[IDX(ie-3,j,k)] = ( dev_var_in[*dev_u_offset + IDX(ie-6,j,k)]
@@ -1102,7 +1130,7 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
    int* dev_bflag, const unsigned int * host_sz)
 {
    cudaError_t cudaStatus;
-   const int ie = host_sz[0] - 3;//x direction
+   const int ie = host_sz[0] - 4;//x direction
    const int je = host_sz[1] - 3;//y direction
    const int ke = host_sz[2] - 3;//z direction
 
@@ -1130,13 +1158,27 @@ __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
    
    //ib, jb, kb values are accumulated to the x, y, z
    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+   int j = 4 + threadIdx.y + blockIdx.y * blockDim.y;
    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
 
-   if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+   if(i >= nx-3 || j >= ny-4 || k >= dev_sz[2]-3) return;
+
+   if(j==4) {
+    int jb=3;
+    output[IDX(i,jb,k)] = (-1.0 / 64.0 / dev_dy[0]) *
+                (
+                    -      dev_var_in[*dev_u_offset + IDX(i,jb+4,k)]
+                    +  6.0*dev_var_in[*dev_u_offset + IDX(i,jb+3,k)]
+                    - 15.0*dev_var_in[*dev_u_offset + IDX(i,jb+2,k)]
+                    + 20.0*dev_var_in[*dev_u_offset + IDX(i,jb+1,k)]
+                    - 15.0*dev_var_in[*dev_u_offset + IDX(i,jb,k)]
+                    +  6.0*dev_var_in[*dev_u_offset + IDX(i,jb-1,k)]
+                    -      dev_var_in[*dev_u_offset + IDX(i,jb-2,k)]
+                    );
+    }
 
    int pp = IDX(i, j, k);
    
@@ -1151,7 +1193,20 @@ __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
                     -      dev_var_in[*dev_u_offset + pp+3*nx]
                     );
 
-   if ((*dev_bflag & (1u<<OCT_DIR_DOWN)) && (j == 3)) {
+    if(j==5) {
+        int je = ny - 3;
+        output[IDX(i,je-1,k)] = (-1.0 / 64.0 / dev_dy[0]) *
+                (
+                    -      dev_var_in[*dev_u_offset + IDX(i,je+1,k)]
+                    +  6.0*dev_var_in[*dev_u_offset + IDX(i,je,k)]
+                    - 15.0*dev_var_in[*dev_u_offset + IDX(i,je-1,k)]
+                    + 20.0*dev_var_in[*dev_u_offset + IDX(i,je-2,k)]
+                    - 15.0*dev_var_in[*dev_u_offset + IDX(i,je-3,k)]
+                    +  6.0*dev_var_in[*dev_u_offset + IDX(i,je-4,k)]
+                    -      dev_var_in[*dev_u_offset + IDX(i,je-5,k)]
+                    );                   
+    }
+   if ((*dev_bflag & (1u<<OCT_DIR_DOWN)) && (j == 4)) {
 
     output[IDX(i,3,k)] =  (      dev_var_in[*dev_u_offset +IDX(i,6,k)]
                                 - 3.0*dev_var_in[*dev_u_offset +IDX(i,5,k)]
@@ -1173,7 +1228,7 @@ __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
                                 )/49.0/48.0*64*dev_dy[0];
     }
 
-   if ((*dev_bflag & (1u<<OCT_DIR_UP)) && (j == 4)) {
+   if ((*dev_bflag & (1u<<OCT_DIR_UP)) && (j == 5)) {
        
        const int je = ny - 3;
        output[IDX(i,je-3,k)] = (dev_var_in[*dev_u_offset + IDX(i,je-6,k)]
@@ -1206,7 +1261,7 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
 {
    cudaError_t cudaStatus;
    const int ie = host_sz[0] - 3;//x direction
-   const int je = host_sz[1] - 3;//y direction
+   const int je = host_sz[1] - 4;//y direction
    const int ke = host_sz[2] - 3;//z direction
 
    int temp_max = (ie>je)? ie : je;
@@ -1234,17 +1289,30 @@ __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
    //ib, jb, kb values are accumulated to the x, y, z
    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+   int k = 4 + threadIdx.z + blockIdx.z * blockDim.z;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
 
-   if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+   if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-4) return;
 
-   int pp = IDX(i, j, k);
-   int n = nx * ny;
-   
-   output[pp] = (-1.0 / 64.0 / dev_dz[0]) *
+   if(k==4) {
+    int kb=3;
+    output[IDX(i,j,kb)] = (-1.0 / 64.0 / dev_dz[0]) *
+                (
+                    -      dev_var_in[*dev_u_offset + IDX(i,j,kb+4)]
+                    +  6.0*dev_var_in[*dev_u_offset + IDX(i,j,kb+3)]
+                    - 15.0*dev_var_in[*dev_u_offset + IDX(i,j,kb+2)]
+                    + 20.0*dev_var_in[*dev_u_offset + IDX(i,j,kb+1)]
+                    - 15.0*dev_var_in[*dev_u_offset + IDX(i,j,kb)]
+                    +  6.0*dev_var_in[*dev_u_offset + IDX(i,j,kb-1)]
+                    -      dev_var_in[*dev_u_offset + IDX(i,j,kb-2)]
+                    );
+    }
+
+    int pp = IDX(i, j, k);
+    int n = nx * ny;
+    output[pp] = (-1.0 / 64.0 / dev_dz[0]) *
                 (
                     -      dev_var_in[*dev_u_offset + pp-3*n]
                     +  6.0*dev_var_in[*dev_u_offset + pp-2*n]
@@ -1255,8 +1323,24 @@ __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
                     -      dev_var_in[*dev_u_offset + pp+3*n]
                     );
 
+    if(k==5) {
+        int ke = dev_sz[2] - 3;
+        output[IDX(i,j,ke-1)] = (-1.0 / 64.0 / dev_dz[0]) *
+        (
+            -      dev_var_in[*dev_u_offset + IDX(i,j,ke+1)]
+            +  6.0*dev_var_in[*dev_u_offset + IDX(i,j,ke)]
+            - 15.0*dev_var_in[*dev_u_offset + IDX(i,j,ke-1)]
+            + 20.0*dev_var_in[*dev_u_offset + IDX(i,j,ke-2)]
+            - 15.0*dev_var_in[*dev_u_offset + IDX(i,j,ke-3)]
+            +  6.0*dev_var_in[*dev_u_offset + IDX(i,j,ke-4)]
+            -      dev_var_in[*dev_u_offset + IDX(i,j,ke-5)]
+            );               
+    }
    
-   if ((*dev_bflag & (1u<<OCT_DIR_DOWN)) && (k == 3)) {
+   
+
+   
+   if ((*dev_bflag & (1u<<OCT_DIR_BACK)) && (k == 4)) {
 
     output[IDX(i,3,k)] =  (      dev_var_in[*dev_u_offset +IDX(i,k,6)]
                                 - 3.0*dev_var_in[*dev_u_offset +IDX(i,k,5)]
@@ -1278,7 +1362,7 @@ __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
                                 )/49.0/48.0*64*dev_dz[0];
     }
 
-   if ((*dev_bflag & (1u<<OCT_DIR_UP)) && (k == 4)) {
+   if ((*dev_bflag & (1u<<OCT_DIR_FRONT)) && (k == 5)) {
        
        const int ke = dev_sz[2] - 3;
        output[IDX(i,j,ke-3)] = (    dev_var_in[*dev_u_offset + IDX(i,j,ke-6)]
@@ -1312,7 +1396,7 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
    cudaError_t cudaStatus;
    const int ie = host_sz[0] - 3;//x direction
    const int je = host_sz[1] - 3;//y direction
-   const int ke = host_sz[2] - 3;//z direction
+   const int ke = host_sz[2] - 4;//z direction
 
    int temp_max = (ie>je)? ie : je;
    int maximumIterations = (temp_max>ke) ? temp_max: ke;
