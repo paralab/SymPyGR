@@ -171,10 +171,9 @@ const unsigned int& bflag)
     #if test
     // // Copying specified array to CPU for testing purpose
     // double * host_array_cpu = (double *) malloc(size);
-    // cudaStatus = cudaMemcpy(host_array_cpu, grad_1_K, size, cudaMemcpyDeviceToHost);
-    // if (cudaStatus != cudaSuccess) {fprintf(stderr, "TEST: host_array_cpu cudaMemcpy from GPU to CPU failed!\n"); return;}
-    // test_file_write::writeToFile("output_cuda.txt", host_array_cpu, n);
-    // free(host_array_cpu);
+    // #include "test_GPU_derivs.h" // only one of both at a time
+    // #include "test_GPU_adv_derivs.h"
+    // free(host_array_cpu); 
     #endif
 
     bssn::timer::t_rhs_gpu.start();

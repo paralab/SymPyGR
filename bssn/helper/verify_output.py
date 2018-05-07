@@ -9,7 +9,7 @@ import numpy as np
 # change test_param.h accordingly.
 # test 1
 # isGPU 1
-# isCPU 1
+# isCPU 1 
 
 os.chdir("../build") # Change to build folder
 
@@ -17,12 +17,12 @@ os.system("cmake ..")
 os.system("make all")
 
 testcases = [
-    "0 0 1", 
-    "1 1 1", 
-    "2 2 1", 
-    "2 2 3", 
-    "0 2 2",
-    "0 2 1",
+    "3 3 1", 
+    # "1 1 1", 
+    # "2 2 1", 
+    # "2 2 3", 
+    # "0 2 2",
+    # "0 2 1",
     ]
 
 isCorrect = True
@@ -38,16 +38,19 @@ for test in testcases:
     else:
         correct = True
         count_line = 0
+        error_count = 0
+        roundingTo = 5
         while(True):
             count_line += 1
             cpuline = cpu.readline().strip()
             gpuline = gpu.readline().strip()
             if cpuline!=gpuline:
-                # if round(float(cpuline), 20)==round(float(gpuline), 20): continue # special requirement
-                print("line-%d \t| CPU-%s \t| GPU-%s"%(count_line, cpuline, gpuline))
+                if round(float(cpuline), roundingTo)==round(float(gpuline), roundingTo): continue # special requirement
+                error_count += 1
+                print("line-%d \t| CPU:%s \t| GPU:%s \t| DIFF:%.13f"%(count_line, cpuline, gpuline, round(float(cpuline), roundingTo)-round(float(gpuline), roundingTo)))
                 correct = False
                 isCorrect = False
-                break # if you want to print only the first error, uncomment this line
+                # break # if you want to print only the first error, uncomment this line
                 
             if cpuline=="":
                 if correct:
@@ -63,3 +66,4 @@ if isCorrect:
     print("Output is correct")
 else:
     print("Output is not correct")
+    print("Error count", error_count)
