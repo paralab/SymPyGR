@@ -116,47 +116,52 @@ const unsigned int& bflag)
         bssn_bcs(dev_var_out, dev_var_in, dev_chiInt, grad_0_chi, grad_1_chi, grad_2_chi,
             dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_KInt, grad_0_K, grad_1_K, grad_2_K,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
+
         bssn_bcs(dev_var_out, dev_var_in, dev_beta0Int, grad_0_beta0, grad_1_beta0, grad_2_beta0,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_beta1Int, grad_0_beta1, grad_1_beta1, grad_2_beta1,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_beta2Int, grad_0_beta2, grad_1_beta2, grad_2_beta2,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
+
         bssn_bcs(dev_var_out, dev_var_in, dev_Gt0Int, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_Gt1Int, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_Gt2Int, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
+
         bssn_bcs(dev_var_out, dev_var_in, dev_B0Int, grad_0_B0, grad_1_B0, grad_2_B0,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_B1Int, grad_0_B1, grad_1_B1, grad_2_B1,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_B2Int, grad_0_B2, grad_1_B2, grad_2_B2,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
+
         bssn_bcs(dev_var_out, dev_var_in, dev_At0Int, grad_0_At0, grad_1_At0, grad_2_At0,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_At1Int, grad_0_At1, grad_1_At1, grad_2_At1,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_At2Int, grad_0_At2, grad_1_At2, grad_2_At2,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_At3Int, grad_0_At3, grad_1_At3, grad_2_At3,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_At4Int, grad_0_At4, grad_1_At4, grad_2_At4,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_At5Int, grad_0_At5, grad_1_At5, grad_2_At5,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);    
+            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz); 
+
         bssn_bcs(dev_var_out, dev_var_in, dev_gt0Int, grad_0_gt0, grad_1_gt0, grad_2_gt0,
                 dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_gt1Int, grad_0_gt1, grad_1_gt1, grad_2_gt1,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_gt2Int, grad_0_gt2, grad_1_gt2, grad_2_gt2,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_gt3Int, grad_0_gt3, grad_1_gt3, grad_2_gt3,
             dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_gt4Int, grad_0_gt4, grad_1_gt4, grad_2_gt4,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
+            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz);
         bssn_bcs(dev_var_out, dev_var_in, dev_gt5Int, grad_0_gt5, grad_1_gt5, grad_2_gt5,
             dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
           
@@ -168,12 +173,12 @@ const unsigned int& bflag)
     #include "bssnrhs_cuda_ko_derivs.h"
     bssn::timer::t_deriv_gpu.stop();
 
-    #if test
-    // // Copying specified array to CPU for testing purpose
-    // double * host_array_cpu = (double *) malloc(size);
-    // #include "test_GPU_derivs.h" // only one of both at a time
-    // #include "test_GPU_adv_derivs.h"
-    // free(host_array_cpu); 
+    #if test && 0
+    // Copying specified array to CPU for testing purpose
+    double * host_array_cpu = (double *) malloc(size);
+    #include "test_GPU_derivs.h" // only one of both at a time
+    #include "test_GPU_adv_derivs.h"
+    free(host_array_cpu); 
     #endif
 
     bssn::timer::t_rhs_gpu.start();
@@ -213,7 +218,8 @@ __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u
         double hx = (pmax[0] - pmin[0]) / (nx - 1);
         double hy = (pmax[1] - pmin[1]) / (ny - 1);
         double hz = (pmax[2] - pmin[2]) / (nz - 1);
-        int x, y, z, pp;
+        double x, y, z;
+        int pp;
 
         if (*dev_bflag & (1u<<OCT_DIR_LEFT)) {
             
@@ -221,14 +227,13 @@ __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u
             z = pmin[2] + k*hz;
             y = pmin[1] + j*hy;
             pp = IDX(3,j,k);
-            inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+            inv_r = 1.0 / sqrt(x*x + y*y + z*z);
    
             output[*dev_u_offset + pp] = -  inv_r * (
                             x * dxf[pp]
                           + y * dyf[pp]
                           + z * dzf[pp]
                           + f_falloff * (   dev_var_in[*dev_u_offset + pp] - f_asymptotic ) );
-            
           }
         
           if (*dev_bflag & (1u<<OCT_DIR_RIGHT)) {
@@ -236,14 +241,13 @@ __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u
              z = pmin[2] + k*hz;
              y = pmin[1] + j*hy;
              pp = IDX((nx - 3),j,k);
-             inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+             inv_r = 1.0 / sqrt(x*x + y*y + z*z);
     
              output[*dev_u_offset + pp] = -  inv_r * (
                              x * dxf[pp]
                            + y * dyf[pp]
                            + z * dzf[pp]
                            + f_falloff * (   dev_var_in[*dev_u_offset + pp] - f_asymptotic ) );
-               
           }
 
 }
@@ -265,7 +269,8 @@ __global__ void cacl_bssn_bcs_y(double * output, double * dev_var_in, int* dev_u
         double hx = (pmax[0] - pmin[0]) / (nx - 1);
         double hy = (pmax[1] - pmin[1]) / (ny - 1);
         double hz = (pmax[2] - pmin[2]) / (nz - 1);
-        int x, y, z, pp;
+        double x, y, z;
+        int pp;
 
         if (*dev_bflag & (1u<<OCT_DIR_DOWN)) {
             
@@ -273,7 +278,7 @@ __global__ void cacl_bssn_bcs_y(double * output, double * dev_var_in, int* dev_u
             z = pmin[2] + k*hz;
             x = pmin[0] + i*hx;
             pp = IDX(i,3,k);
-            inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+            inv_r = 1.0 / sqrt(x*x + y*y + z*z);
    
             output[*dev_u_offset + pp] = -  inv_r * (
                             x * dxf[pp]
@@ -288,7 +293,7 @@ __global__ void cacl_bssn_bcs_y(double * output, double * dev_var_in, int* dev_u
              z = pmin[2] + k*hz;
              y = pmin[1] + (ny-3)*hy;
              pp = IDX(i,(ny - 3),k);
-             inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+             inv_r = 1.0 / sqrt(x*x + y*y + z*z);
     
              output[*dev_u_offset + pp] = -  inv_r * (
                              x * dxf[pp]
@@ -316,7 +321,8 @@ __global__ void cacl_bssn_bcs_z(double * output, double * dev_var_in, int* dev_u
             double hx = (pmax[0] - pmin[0]) / (nx - 1);
             double hy = (pmax[1] - pmin[1]) / (ny - 1);
             double hz = (pmax[2] - pmin[2]) / (nz - 1);
-            int x, y, z, pp;
+            double x, y, z;
+            int pp;
 
             if (*dev_bflag & (1u<<OCT_DIR_BACK)) {
             
@@ -324,7 +330,7 @@ __global__ void cacl_bssn_bcs_z(double * output, double * dev_var_in, int* dev_u
             z = pmin[2] + 3*hz;
             x = pmin[0] + i*hx;
             pp = IDX(i,j,3);
-            inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+            inv_r = 1.0 / sqrt(x*x + y*y + z*z);
    
             output[*dev_u_offset + pp] = -  inv_r * (
                             x * dxf[pp]
@@ -339,7 +345,7 @@ __global__ void cacl_bssn_bcs_z(double * output, double * dev_var_in, int* dev_u
             z = pmin[2] + (nz-3)*hz;
             y = pmin[1] + j*hy;
             pp = IDX(i,j,3);
-            inv_r = 1.0 / sqrt((float)(x*x + y*y + z*z));
+            inv_r = 1.0 / sqrt(x*x + y*y + z*z);
     
             output[*dev_u_offset + pp] = -  inv_r * (
                              x * dxf[pp]

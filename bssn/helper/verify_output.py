@@ -39,7 +39,7 @@ for test in testcases:
         correct = True
         count_line = 0
         error_count = 0
-        roundingTo = 5
+        roundingTo = 9
         while(True):
             count_line += 1
             cpuline = cpu.readline().strip()
