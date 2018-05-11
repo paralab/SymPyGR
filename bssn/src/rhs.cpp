@@ -241,10 +241,10 @@ bssn::timer::t_deriv.start();
 #include "bssnrhs_ko_derivs.h"
 bssn::timer::t_deriv.stop();
 
-#if test
-// // Take the pointer of specified array
-// #include "test_CPU_derivs.h"
-// #include "test_CPU_adv_derivs.h"
+#if test && 0
+// Take the pointer of specified array
+#include "test_CPU_derivs.h"
+#include "test_CPU_adv_derivs.h"
 #endif
 
 bssn::timer::t_rhs.start();
@@ -378,7 +378,6 @@ void bssn_bcs(double *f_rhs, const double *f,
                        + y * dyf[pp]
                        + z * dzf[pp]
                        + f_falloff * (   f[pp] - f_asymptotic ) );
-
       }
     }
   }
