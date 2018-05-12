@@ -589,13 +589,15 @@ def generate(ex, vnames, idx):
     print("Max_level: "+str(max_level))
     precomputed_variables = []
     computed_equations = []
+    cluster_count = 0
     for level in range(1,3):
         print_n_write("\n \n \nLevel: "+str(level), output_file)
         clusters = ac.getClustersByLevel(newz, level)
         for cluster in clusters:
             if(ac.isReducedCLuster(cluster)):
+                cluster_count = cluster_count+1
                 item_list = substitutions[ac.getClusterItemListUsingCluster(cluster)[0]]
-
+                print_n_write("\n \n \nCluster: " + str(cluster_count), output_file)
                 precomputed_variables, computed_equations = generateSubCode(_v, item_list, precomputed_variables, lname, idx, computed_equations, output_file)
 
     dendros = []
