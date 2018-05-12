@@ -522,16 +522,16 @@ def print_n_write(value, fileToWrite=None, isCExp=False, isNewLineEnd=True, **se
     if isCExp:
         # C/C++ output write and print
         c_output = ccode(value, **settings)
-        print(c_output, end="")
+        # print(c_output, end="")
         if (fileToWrite != None): fileToWrite.write(c_output)
     else:
         # normal print and write
-        print(str(value), end="")
+        # print(str(value), end="")
         if (fileToWrite != None): fileToWrite.write(str(value))
 
     # Adding new line
     if isNewLineEnd:
-        print()
+        # print()
         if (fileToWrite != None): fileToWrite.write("\n")
 
 
@@ -583,20 +583,20 @@ def generate(ex, vnames, idx):
 
     z = ac.cluster(featureVectors)
 
-    (newz, substitutions) = ac.createVariableClusterGraphList(z,list(dependencies.keys()), 30)
-
+    (newz, substitutions) = ac.createVariableClusterGraphList(z,list(dependencies.keys()), 30, dependencies)
+    output_file = open("bssn.cpp", 'a+')
     max_level = ac.getMaxLevel(newz)
     print("Max_level: "+str(max_level))
     precomputed_variables = []
     computed_equations = []
-    for level in range(1,max_level):
-        print("\n \n \nLevel: "+str(level))
+    for level in range(1,3):
+        print_n_write("\n \n \nLevel: "+str(level), output_file)
         clusters = ac.getClustersByLevel(newz, level)
         for cluster in clusters:
             if(ac.isReducedCLuster(cluster)):
                 item_list = substitutions[ac.getClusterItemListUsingCluster(cluster)[0]]
-                print(str(item_list))
-                precomputed_variables,computed_equations = generateSubCode(_v, item_list, precomputed_variables, lname, idx, computed_equations)
+
+                precomputed_variables, computed_equations = generateSubCode(_v, item_list, precomputed_variables, lname, idx, computed_equations, output_file)
 
     dendros = []
     equations = []
@@ -613,14 +613,14 @@ def generate(ex, vnames, idx):
     _v = (dendros, equations)
     lname = new_lname
 
-    print("Printing Remaining Items")
+    print_n_write("Printing Remaining Items", output_file)
     print(_v)
     print(lname)
 
-    printBSSNCPP(_v, lname, precomputed_variables, lexp, idx, _v, True)
+    printBSSNCPP(_v, lname, precomputed_variables, lexp, idx, _v, True, output_file)
 
 
-def generateSubCode(_v, item_list, precomputed_variables, equation_names, idx,computed_equations):
+def generateSubCode(_v, item_list, precomputed_variables, equation_names, idx,computed_equations, output_file):
 
     # if the item is a reduction variable, just ignore that
     # if it is a dendro variable, append it to the list and append the name to precomputed_variables
@@ -643,6 +643,7 @@ def generateSubCode(_v, item_list, precomputed_variables, equation_names, idx,co
             for i, e in enumerate(_v[1]):
                 if(str(equation_names[i])==item):
                     lname.append(item)
+                    precomputed_variables.append(item)
                     equations.append(e)
                     computed_equations.append(item)
                     break
@@ -654,7 +655,7 @@ def generateSubCode(_v, item_list, precomputed_variables, equation_names, idx,co
     _printable_equations = ([],equations)
 
 
-    printBSSNCPP(_printable_equations, lname,  precomputed_variables, equations, idx, _v, False)
+    printBSSNCPP(_printable_equations, lname,  precomputed_variables, equations, idx, _v, False, output_file)
 
     return (precomputed_variables, computed_equations)
 
@@ -678,72 +679,85 @@ def replace_expressions(_v, expression):
 
 
 
-def printBSSNCPP(_v, lname, precomputed_variables, lexp, idx, original_v, final_stage):
+def printBSSNCPP(_v, lname, precomputed_variables, lexp, idx, original_v, final_stage, output_file):
     custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
-    with open("bssn.cpp", 'a+') as output_file:
 
-        # print_n_write('// Dendro: {{{ ', output_file)
-        # print_n_write('// Dendro: original ops: ' + str(count_ops(lexp)), output_file)
 
-        # print("--------------------------------------------------------")
-        # print("Now trying Common Subexpression Detection and Collection")
-        # print("--------------------------------------------------------")
+    # print_n_write('// Dendro: {{{ ', output_file)
+    # print_n_write('// Dendro: original ops: ' + str(count_ops(lexp)), output_file)
 
-        # Common Subexpression Detection and Collection
-        # for i in range(len(ex)):
-        #     # print("--------------------------------------------------------")
-        #     # print(ex[i])
-        #     # print("--------------------------------------------------------")
-        #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-        #     ee_syms = numbered_symbols(prefix=ee_name)
-        #     _v = cse(ex[i],symbols=ee_syms)
-        #     # print(type(_v))
-        #     for (v1,v2) in _v[0]:
-        #         print("double %s = %s;" % (v1, v2))
-        #     print("%s = %s" % (vnames[i], _v[1][0]))
-        rops = 0
-        # print_n_write('// Dendro: printing temp variables', output_file)
-        for (v1, v2) in _v[0]:
-            for precomputed_variable in precomputed_variables:
+    # print("--------------------------------------------------------")
+    # print("Now trying Common Subexpression Detection and Collection")
+    # print("--------------------------------------------------------")
+
+    # Common Subexpression Detection and Collection
+    # for i in range(len(ex)):
+    #     # print("--------------------------------------------------------")
+    #     # print(ex[i])
+    #     # print("--------------------------------------------------------")
+    #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+    #     ee_syms = numbered_symbols(prefix=ee_name)
+    #     _v = cse(ex[i],symbols=ee_syms)
+    #     # print(type(_v))
+    #     for (v1,v2) in _v[0]:
+    #         print("double %s = %s;" % (v1, v2))
+    #     print("%s = %s" % (vnames[i], _v[1][0]))
+    rops = 0
+    # print_n_write('// Dendro: printing temp variables', output_file)
+    for (v1, v2) in _v[0]:
+        for precomputed_variable in precomputed_variables:
+            if(precomputed_variable.startswith("DENDRO")):
                 v2 = v2.subs({precomputed_variable:symbols(precomputed_variable+idx)})
-            # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
-            print_n_write('double ', output_file, isNewLineEnd=False)
-            print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
-            rops = rops + count_ops(v2)
+        # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
+        print_n_write('double ', output_file, isNewLineEnd=False)
+        print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
+        rops = rops + count_ops(v2)
 
-        # print_n_write('\n// Dendro: printing variables', output_file)
-        for i, e in enumerate(_v[1]):
-            if(final_stage):
-                for precomputed_variable in precomputed_variables:
-                    e = e.subs({precomputed_variable:symbols(precomputed_variable+idx)})
-            if(not final_stage):
-                e = replace_expressions(original_v, e)
-            # print_n_write("//--", output_file)
-            # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
-            print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
-            rops = rops + count_ops(e)
+    # print_n_write('\n// Dendro: printing variables', output_file)
+    for i, e in enumerate(_v[1]):
 
-        # print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
-        # print_n_write('// Dendro: }}} ', output_file)
-        #
-        # print_n_write('// Dendro vectorized code: {{{', output_file)
-        # oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
-        # prevdefvars = set()
-        # for (v1, v2) in _v[0]:
-        #     vv = numbered_symbols('v')
-        #     vlist = []
-        #     gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
-        #     print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
-        # for i, e in enumerate(_v[1]):
-        #     print_n_write("//--", output_file)
-        #     vv = numbered_symbols('v')
-        #     vlist = []
-        #     gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
-        #     # st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
-        #     st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
-        #     print_n_write(st.replace("'", ""), output_file)
-        #
-        # print_n_write('// Dendro vectorized code: }}} ', output_file)
+        if (final_stage):
+            for precomputed_variable in precomputed_variables:
+                if (precomputed_variable.startswith("DENDRO")):
+                    e = e.subs({precomputed_variable: symbols(precomputed_variable + idx)})
+        else:
+            name = lname[i]
+            if (name.startswith("DENDRO") and name.endswith("[pp]")):
+                name = name.replace("[pp]", "")
+            for precomputed_variable in precomputed_variables:
+                if (precomputed_variable.startswith("DENDRO")):
+                    if (precomputed_variables.index(name) > precomputed_variables.index(precomputed_variable)):
+                        e = e.subs({precomputed_variable: symbols(precomputed_variable + idx)})
+
+        if(not final_stage):
+            e = replace_expressions(original_v, e)
+
+        # print_n_write("//--", output_file)
+        # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
+        print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
+        rops = rops + count_ops(e)
+
+    # print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
+    # print_n_write('// Dendro: }}} ', output_file)
+    #
+    # print_n_write('// Dendro vectorized code: {{{', output_file)
+    # oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
+    # prevdefvars = set()
+    # for (v1, v2) in _v[0]:
+    #     vv = numbered_symbols('v')
+    #     vlist = []
+    #     gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
+    #     print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
+    # for i, e in enumerate(_v[1]):
+    #     print_n_write("//--", output_file)
+    #     vv = numbered_symbols('v')
+    #     vlist = []
+    #     gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
+    #     # st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
+    #     st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
+    #     print_n_write(st.replace("'", ""), output_file)
+    #
+    # print_n_write('// Dendro vectorized code: }}} ', output_file)
 
 
 def replace_pow(exp_in):

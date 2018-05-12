@@ -120,7 +120,18 @@ def printClusterResults(z):
     np.set_printoptions(threshold=np.nan)
     print(z)
 
-def createVariableClusterGraphList(z, dendro_and_equations, threshold):
+def getDependencySize(i_item_list, dendro_and_equations, dependencies, substitutions):
+    size = 0
+    for i in i_item_list:
+        if i in dendro_and_equations:
+            size = size +1
+        elif i in substitutions.keys():
+            size = size + len(substitutions[i])
+        else:
+            size = size + len(dependencies[i])
+    return size
+
+def createVariableClusterGraphList(z, dendro_and_equations, threshold, dependencies):
     # z has the format of [[idx1, idx2, dist, sample_count], [...]]
     # All indices idx >= len(X) actually refer to the cluster formed in Z[idx - len(X)]
     print()
@@ -157,15 +168,17 @@ def createVariableClusterGraphList(z, dendro_and_equations, threshold):
 
         i_item_list = list(set(left_dependency_list+right_dependency_list))
 
-        if(len(i_item_list)<threshold):
+        dependency_size = getDependencySize(i_item_list, dendro_and_equations, dependencies, substitutions)
+
+        if(dependency_size<threshold):
             s.item_list = i_item_list
-        elif(len(i_item_list)==threshold):
+        elif(dependency_size==threshold):
             substitutions["Reduction_"+str(substitutions_counter)] =i_item_list
             s.item_list = ["Reduction_"+str(substitutions_counter)]
             #print("Since item at index "+str(index)+"  has "+str(threshold)+
                   #" number of dependencies, it's item list is renamed as  "+"Reduction_"+str(substitutions_counter))
             substitutions_counter = substitutions_counter+1
-        elif (len(i_item_list) > threshold):
+        elif(dependency_size > threshold):
             if(len(left_dependency_list)>1):
                 substitutions["Reduction_" + str(substitutions_counter)] = left_dependency_list
                 left_dependency_list = ["Reduction_" + str(substitutions_counter)]
@@ -185,7 +198,7 @@ def createVariableClusterGraphList(z, dendro_and_equations, threshold):
                       #") item list is renamed as  " + "Reduction_" + str(substitutions_counter))
                 substitutions_counter = substitutions_counter + 1
 
-                s.item_list = left_dependency_list+right_dependency_list
+            s.item_list = left_dependency_list+right_dependency_list
 
         newz.append(s)
         index=index+1
