@@ -26,17 +26,6 @@ int main (int argc, char** argv)
         exit(0);
     }
 
-
-    // initialize profile counters.
-    // bssn::timer::total_runtime.start();
-    // bssn::timer::t_deriv.start();
-    // bssn::timer::t_rhs.start();
-    // bssn::timer::t_bdyc.start();
-    // bssn::timer::t_deriv_gpu.start();
-    // bssn::timer::t_rhs_gpu.start();
-    // bssn::timer::t_bdyc_gpu.start();
-
-
     unsigned int num_blks=100;
     unsigned int blk_lb=0;
     unsigned int blk_up=5;
@@ -59,7 +48,7 @@ int main (int argc, char** argv)
        {
            index = (lev-blk_lb)*num_blks+i;
 
-           blkList[index]=Block(0, 0, 0, 2*lev, lev, maxDepth); // lu<<lev = 2**lev
+           blkList[index]=Block(0, 0, 0, 2*lev, lev, maxDepth);
 
            Block & blk=blkList[index];
            blk.offset=unzipSz;
@@ -76,6 +65,8 @@ int main (int argc, char** argv)
 
     // 2. a. allocate memory for bssn computation on CPU.
     #if isCPU || test
+    bssn::timer::t_cpu_runtime.start();
+
     double ** var_in=new double*[BSSN_NUM_VARS];
     double ** var_out=new double*[BSSN_NUM_VARS];
 
@@ -86,43 +77,14 @@ int main (int argc, char** argv)
         var_out[i] = new double[unzip_dof];
     }
 
-    for(unsigned int blk=0;blk<total_blks;blk++)
-    {
-        tmpBlock=blkList[blk];
-        x=(double)tmpBlock.x;
-        y=(double)tmpBlock.y;
-        z=(double)tmpBlock.z;
-
-        hx=0.001;  //(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
-        hy=0.001;  //(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
-        hz=0.001;  //(1u<<(maxDepth-tmpBlock.regLevel))/(double)(ELE_ORDER);//(1u<<(tmpBlock.regLevel-tmpBlock.blkLevel))/(double)ELE_ORDER;
-
-        offset=tmpBlock.offset;
-        size_x=tmpBlock.node1D_x;
-        size_y=tmpBlock.node1D_y;
-        size_z=tmpBlock.node1D_z;
-
-        for(unsigned int k=0;k<tmpBlock.node1D_z;k++)
-            for(unsigned int j=0;j<tmpBlock.node1D_y;j++)
-                for(unsigned int i=0;i<tmpBlock.node1D_x;i++)
-                {
-                    coord[0]=x+i*hx;
-                    coord[1]=y+j*hy;
-                    coord[2]=z+k*hz;
-
-                    initial_data(u,coord);
-
-                    for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
-                    {
-                        var_in[var][offset+k*size_y*size_x+j*size_y+i]=u[var];
-                        var_out[var][offset+k*size_y*size_x+j*size_y+i]=0;
-                    }
-                }
-    }
+    bssn::timer::t_cpu_runtime.stop();
     #endif
 
     // 2. b. Allocate memory on GPU for bssn computation
     #if isGPU || test
+    bssn::timer::t_gpu_runtime.start();
+    
+
     cudaError_t cudaStatus;
     // Choose which GPU to run on, change this on a multi-GPU system.
      cudaStatus = cudaSetDevice(0);
@@ -131,6 +93,8 @@ int main (int argc, char** argv)
          return 0;
      }
 
+    bssn::timer::t_mem_handling_gpu.start();
+    bssn::timer::t_rhs_gpu.start();
     double * dev_var_in;
     double * dev_var_out;
     cudaStatus = cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
@@ -138,10 +102,15 @@ int main (int argc, char** argv)
 
     cudaStatus = cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_out cudaMalloc failed!\n"); return 0;}
+    bssn::timer::t_rhs_gpu.stop();
+    bssn::timer::t_mem_handling_gpu.stop();
 
     // GPU usage requirement
     double * host_var_in = new double[BSSN_NUM_VARS*unzip_dof];
     double * host_var_out = new double[BSSN_NUM_VARS*unzip_dof];
+
+    bssn::timer::t_gpu_runtime.stop();
+    #endif
 
     for(unsigned int blk=0;blk<total_blks;blk++)
     {
@@ -171,16 +140,40 @@ int main (int argc, char** argv)
 
                     for(unsigned int var=0;var<BSSN_NUM_VARS;var++)
                     {
+                        #if isCPU || test
+                        bssn::timer::t_cpu_runtime.start();
+
+                        var_in[var][offset+k*size_y*size_x+j*size_y+i]=u[var];
+                        var_out[var][offset+k*size_y*size_x+j*size_y+i]=0;
+
+                        bssn::timer::t_cpu_runtime.stop();
+                        #endif
+
+                        #if isGPU || test
+                        bssn::timer::t_gpu_runtime.start();
+
                         host_var_in[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=u[var];
                         host_var_out[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=0;
+
+                        bssn::timer::t_gpu_runtime.stop();
+                        #endif
                     }
                 }
     }
+
+    #if isGPU || test
+    bssn::timer::t_gpu_runtime.start();
+    bssn::timer::t_mem_handling_gpu.start();
+    bssn::timer::t_rhs_gpu.start();
 
     cudaStatus = cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
     cudaStatus = cudaMemcpy(dev_var_out, host_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
+
+    bssn::timer::t_rhs_gpu.stop();
+    bssn::timer::t_mem_handling_gpu.stop();
+    bssn::timer::t_gpu_runtime.stop();
     #endif
 
 
@@ -217,25 +210,43 @@ int main (int argc, char** argv)
 
         // CPU bssnrhs call
         #if isCPU || test
+        bssn::timer::t_cpu_runtime.start();
+
         #include "rhs.h"
         bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+
+        bssn::timer::t_cpu_runtime.stop();
         #endif
 
           // CUDA_bssnrhs call
         #if isGPU || test
+        bssn::timer::t_gpu_runtime.start();
+
         #include "rhs_cuda.h"
         cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag);
+
+        bssn::timer::t_gpu_runtime.stop();
         #endif
     }
     printf("-------------------------\n");
     //-- timer end
     // (time this part of the code. )
 
-    #if test
+    #if isGPU || test
+    bssn::timer::t_gpu_runtime.start();
+    bssn::timer::t_mem_handling_gpu.start();
+    bssn::timer::t_rhs_gpu.start();
+
     // Copy back dev_var_out to host_var_out
     cudaStatus = cudaMemcpy(host_var_out, dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out to host_var_out cudaMemcpy failed!\n"); return 0;}
 
+    bssn::timer::t_rhs_gpu.stop();
+    bssn::timer::t_mem_handling_gpu.stop();
+    bssn::timer::t_gpu_runtime.stop();
+    #endif
+
+    #if test
     // this will verify the GPU output with CPU output
     unsigned int error_count = 0;
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
@@ -270,6 +281,8 @@ int main (int argc, char** argv)
 
     // CPU code
     #if isCPU || test
+    bssn::timer::t_cpu_runtime.start();
+
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
         delete [] var_in[i];
@@ -277,15 +290,24 @@ int main (int argc, char** argv)
     }
     delete [] var_in;
     delete [] var_out;
+
+    bssn::timer::t_cpu_runtime.stop();
     #endif
 
     // GPU code
     #if isGPU || test
+    bssn::timer::t_gpu_runtime.start();
+    
     delete [] host_var_in;
     delete [] host_var_out;
+    
     // Free up GPU memory
+    bssn::timer::t_mem_handling_gpu.start();
     cudaFree(dev_var_in);
     cudaFree(dev_var_out);
+    bssn::timer::t_mem_handling_gpu.stop();
+
+    bssn::timer::t_gpu_runtime.stop();
     #endif
 
     delete [] blkList;
