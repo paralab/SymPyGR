@@ -271,7 +271,7 @@ int main (int argc, char** argv)
                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
                 std::cout << std::left << std::setw(4) << setfill(separator)  << i;
 
-                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP(meaning is valid only for single block): ";
+                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP(valid when total_blks=1): ";
                 std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j << std::endl;
             }
         }
