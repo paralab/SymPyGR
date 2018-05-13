@@ -70,10 +70,13 @@ int main (int argc, char** argv)
     double ** var_in=new double*[BSSN_NUM_VARS];
     double ** var_out=new double*[BSSN_NUM_VARS];
 
+    double ** pre_computed = new double*[20];
+
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
         var_in[i]=new double[unzip_dof];
         var_out[i]=new double[unzip_dof];
+        pre_computed[i] = new double[unzip_dof];
 
         for(unsigned int j=0;j<unzip_dof;j++)
         {
@@ -115,7 +118,7 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+        bssnrhs(var_out, (const double **)var_in, pre_computed, offset, ptmin, ptmax, sz, bflag);
 
     }
     //-- timer end

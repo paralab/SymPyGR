@@ -1,4 +1,4 @@
-// Dendro: {{{ 
+// Dendro: {{{
 // Dendro: original ops:  667747
 // Dendro: printing temp variables
 double DENDRO_0 = 2*alpha[pp];
@@ -1044,4 +1044,4 @@ B_rhs1[pp] = -B1[pp]*eta - DENDRO_16*DENDRO_969 + DENDRO_275*DENDRO_957 - DENDRO
 //--
 B_rhs2[pp] = -B2[pp]*eta - DENDRO_989*lambda[3] + DENDRO_991 + lambda[2]*(beta0[pp]*agrad_0_B2[pp] + beta1[pp]*agrad_1_B2[pp] + beta2[pp]*agrad_2_B2[pp]);
 // Dendro: reduced ops:  4484
-// Dendro: }}} 
+// Dendro: }}}

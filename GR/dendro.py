@@ -612,14 +612,15 @@ def generate(ex, vnames, idx):
             equations.append(e)
             new_lname.append(lname[i])
 
-    _v = (dendros, equations)
-    lname = new_lname
+    _new_v = (dendros, equations)
+    _new_lname = new_lname
 
     print_n_write("Printing Remaining Items", output_file)
-    print(_v)
-    print(lname)
 
-    printBSSNCPP(_v, lname, precomputed_variables, lexp, idx, _v, True, output_file)
+    printBSSNCPP(_new_v, _new_lname, precomputed_variables, lexp, idx, _v, True, output_file)
+
+    output_file = open("bssnOriginal.cpp", 'w')
+    printBSSNCPP(_v, lname, [], lexp, idx, _v, True, output_file)
 
 
 def generateSubCode(_v, item_list, precomputed_variables, equation_names, idx,computed_equations, output_file):
