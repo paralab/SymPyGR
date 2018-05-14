@@ -99,7 +99,10 @@ const unsigned int& bflag)
     bssn::timer::t_mem_handling_gpu.stop();
     
     // Deriv calls are follows
-    #include "bssnrhs_cuda_derivs.h"
+    cuda_calc_all(dev_var_in, dev_dy_hx,dev_dy_hy,dev_dy_hz,dev_zero, dev_sz, dev_bflag, sz,
+#include "list_of_args.h"
+    );
+
     #include "bssnrhs_cuda_derivs_adv.h"
 
     bssn::timer::t_deriv_gpu.stop();

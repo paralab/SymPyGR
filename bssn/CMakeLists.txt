@@ -62,7 +62,7 @@ if(CUDA_FOUND)
     #compile cuda files and add the compiled object files to your normal source files
     FILE(GLOB_RECURSE CUDA_SRC  *.cu)
     cuda_compile(cuda_objs ${CUDA_SRC})
-    SET(SRC ${SRC} ${cuda_objs})
+    SET(SRC ${SRC} ${cuda_objs} utils/bssnrhs_cuda_derivs_secondd_part.h)
 endif()
 
 add_executable(computeBSSN ${INC_FILES} ${SRC_FILES} ${SRC} src/computeBSSN.cpp)
