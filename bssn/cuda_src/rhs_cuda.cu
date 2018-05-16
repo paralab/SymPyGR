@@ -40,6 +40,7 @@ const unsigned int& bflag)
     double hy = (pmax[1] - pmin[1]) / (sz[1] - 1);
     double hz = (pmax[2] - pmin[2]) / (sz[2] - 1);
 
+    bssn::timer::t_mem_handling_gpu.start();
     // Send above values to GPU memory
     cudaError_t cudaStatus;
     #include "bssnrhs_cuda_offset_malloc.h"
@@ -84,6 +85,8 @@ const unsigned int& bflag)
     cudaStatus = cudaMemcpy(dev_pmax, pmax, sizeof(pmax)*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMemcpy failed!\n"); return;}
 
+    bssn::timer::t_mem_handling_gpu.stop();
+
     // Allocate memory to store the output of derivs
     unsigned int n = sz[0]*sz[1]*sz[2];
     int size = n * sizeof(double);
@@ -92,8 +95,7 @@ const unsigned int& bflag)
 
     #include "bssnrhs_cuda_malloc.h"
     #include "bssnrhs_cuda_malloc_adv.h"
-   
-
+    
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
@@ -188,17 +190,20 @@ const unsigned int& bflag)
     bssn::timer::t_rhs_gpu.stop();
 
     bssn::timer::t_deriv_gpu.start();
-    #include "bssnrhs_cuda_offset_demalloc.h"
     #include "bssnrhs_cuda_mdealloc.h"
     #include "bssnrhs_cuda_mdealloc_adv.h"
+    bssn::timer::t_deriv_gpu.stop();
+
+    bssn::timer::t_mem_handling_gpu.start();
+    #include "bssnrhs_cuda_offset_demalloc.h"
     cudaFree(dev_dy_hx);
     cudaFree(dev_dy_hy);
     cudaFree(dev_dy_hz);
     cudaFree(dev_sz);
     cudaFree(dev_zero);
     cudaFree(dev_pmin);
-    bssn::timer::t_deriv_gpu.stop();
-
+    cudaFree(dev_pmax);
+    bssn::timer::t_mem_handling_gpu.stop();
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
