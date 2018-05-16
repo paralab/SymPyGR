@@ -93,10 +93,8 @@ const unsigned int& bflag)
 
     bssn::timer::t_deriv_gpu.start();
 
-    bssn::timer::t_mem_handling_gpu.start();
     #include "bssnrhs_cuda_malloc.h"
     #include "bssnrhs_cuda_malloc_adv.h"
-    bssn::timer::t_mem_handling_gpu.stop();
     
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
@@ -191,14 +189,12 @@ const unsigned int& bflag)
     );
     bssn::timer::t_rhs_gpu.stop();
 
-    
-    bssn::timer::t_mem_handling_gpu.start();
-
     bssn::timer::t_deriv_gpu.start();
     #include "bssnrhs_cuda_mdealloc.h"
     #include "bssnrhs_cuda_mdealloc_adv.h"
     bssn::timer::t_deriv_gpu.stop();
 
+    bssn::timer::t_mem_handling_gpu.start();
     #include "bssnrhs_cuda_offset_demalloc.h"
     cudaFree(dev_dy_hx);
     cudaFree(dev_dy_hy);
@@ -207,7 +203,6 @@ const unsigned int& bflag)
     cudaFree(dev_zero);
     cudaFree(dev_pmin);
     cudaFree(dev_pmax);
-
     bssn::timer::t_mem_handling_gpu.stop();
 }
 

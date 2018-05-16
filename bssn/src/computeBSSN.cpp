@@ -164,14 +164,12 @@ int main (int argc, char** argv)
     #if isGPU || test
     bssn::timer::t_gpu_runtime.start();
     bssn::timer::t_mem_handling_gpu.start();
-    bssn::timer::t_rhs_gpu.start();
 
     cudaStatus = cudaMemcpy(dev_var_in, host_var_in, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
     cudaStatus = cudaMemcpy(dev_var_out, host_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in cudaMemcpy failed!\n"); return 0;}
 
-    bssn::timer::t_rhs_gpu.stop();
     bssn::timer::t_mem_handling_gpu.stop();
     bssn::timer::t_gpu_runtime.stop();
     #endif
@@ -235,13 +233,11 @@ int main (int argc, char** argv)
     #if isGPU || test
     bssn::timer::t_gpu_runtime.start();
     bssn::timer::t_mem_handling_gpu.start();
-    bssn::timer::t_rhs_gpu.start();
 
     // Copy back dev_var_out to host_var_out
     cudaStatus = cudaMemcpy(host_var_out, dev_var_out, BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out to host_var_out cudaMemcpy failed!\n"); return 0;}
 
-    bssn::timer::t_rhs_gpu.stop();
     bssn::timer::t_mem_handling_gpu.stop();
     bssn::timer::t_gpu_runtime.stop();
     #endif
