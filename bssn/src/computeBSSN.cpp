@@ -68,19 +68,41 @@ int main (int argc, char** argv)
 
     //2. allocate memory for bssn computation.
     double ** var_in=new double*[BSSN_NUM_VARS];
-    double ** var_out=new double*[BSSN_NUM_VARS];
+    double ** var_out=new double*[27];
+
+    double ** pre_computed = new double*[22];
 
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
         var_in[i]=new double[unzip_dof];
-        var_out[i]=new double[unzip_dof];
 
         for(unsigned int j=0;j<unzip_dof;j++)
         {
             // some random initialization.
             var_in[i][j]=sqrt(2)*0.001*j;
+        }
+
+
+    }
+
+    for(unsigned int i=0;i<27;i++)
+    {
+         var_out[i]=new double[unzip_dof];
+
+        for(unsigned int j=0;j<unzip_dof;j++)
+        {
+            // some random initialization.
             var_out[i][j]=0.0;
         }
+
+
+    }
+
+    for(unsigned int i=0;i<22;i++)
+    {
+        pre_computed[i] = new double[unzip_dof];
+
+
 
 
     }
@@ -115,7 +137,7 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+        bssnrhs(var_out, (const double **)var_in, pre_computed, offset, ptmin, ptmax, sz, bflag);
 
     }
     //-- timer end

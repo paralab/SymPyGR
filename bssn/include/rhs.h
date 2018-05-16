@@ -28,7 +28,7 @@
 #define ko_deriv_y ko_deriv42_y
 #define ko_deriv_z ko_deriv42_z
 
-void bssnrhs(double **uzipVarsRHS, const double **uZipVars,
+void bssnrhs(double **uzipVarsRHS, const double **uZipVars, double **pre_computed,
              const unsigned int &offset,
              const double *ptmin, const double *ptmax, const unsigned int *sz,
              const unsigned int &bflag);
