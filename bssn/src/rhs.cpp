@@ -1,7 +1,7 @@
 #include "rhs.h"
 
 using namespace std;
-enum VAR {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_BETA3 ,U_BETA4 ,U_BETA5, U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};
+enum VAR {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2, U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};
 enum VAR_CONSTRAINT {C_HAM=0, C_MOM0, C_MOM1,C_MOM2};
 
 double ETA_CONST=0.1;
@@ -65,9 +65,9 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars, double **precompute
   double *b_rhs0 = &unzipVarsRHS[VAR::U_BETA0][offset];
   double *b_rhs1 = &unzipVarsRHS[VAR::U_BETA1][offset];
   double *b_rhs2 = &unzipVarsRHS[VAR::U_BETA2][offset];
-  double *b_rhs3 = &unzipVarsRHS[VAR::U_BETA3][offset];
-  double *b_rhs4 = &unzipVarsRHS[VAR::U_BETA4][offset];
-  double *b_rhs5 = &unzipVarsRHS[VAR::U_BETA5][offset];
+//  double *b_rhs3 = &unzipVarsRHS[VAR::U_BETA3][offset];
+//  double *b_rhs4 = &unzipVarsRHS[VAR::U_BETA4][offset];
+//  double *b_rhs5 = &unzipVarsRHS[VAR::U_BETA5][offset];
 
   double *At_rhs00 = &unzipVarsRHS[VAR::U_SYMAT0][offset];
   double *At_rhs01 = &unzipVarsRHS[VAR::U_SYMAT1][offset];
@@ -85,28 +85,28 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars, double **precompute
   double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
 
 
-  double *DENDRO_257 = &precomputed_vars[1][offset];
-  double *DENDRO_258 = &precomputed_vars[2][offset];
-  double *DENDRO_870 = &precomputed_vars[3][offset];
-  double *DENDRO_861 = &precomputed_vars[4][offset];
-  double *DENDRO_652 = &precomputed_vars[5][offset];
-  double *DENDRO_318 = &precomputed_vars[6][offset];
-  double *DENDRO_744 = &precomputed_vars[7][offset];
-  double *DENDRO_326 = &precomputed_vars[8][offset];
-  double *DENDRO_232 = &precomputed_vars[9][offset];
-  double *DENDRO_522 = &precomputed_vars[10][offset];
-  double *DENDRO_952 = &precomputed_vars[11][offset];
-  double *DENDRO_507 = &precomputed_vars[12][offset];
-  double *DENDRO_514 = &precomputed_vars[13][offset];
-  double *DENDRO_346 = &precomputed_vars[14][offset];
-  double *DENDRO_693 = &precomputed_vars[15][offset];
-  double *DENDRO_796 = &precomputed_vars[16][offset];
-  double *DENDRO_706 = &precomputed_vars[17][offset];
-  double *DENDRO_729 = &precomputed_vars[18][offset];
-  double *DENDRO_752 = &precomputed_vars[19][offset];
-  double *DENDRO_431 = &precomputed_vars[20][offset];
-  double *DENDRO_109 = &precomputed_vars[19][offset];
-  double *DENDRO_751 = &precomputed_vars[20][offset];
+  double *DENDRO_257 = &precomputed_vars[0][offset];
+  double *DENDRO_258 = &precomputed_vars[1][offset];
+  double *DENDRO_870 = &precomputed_vars[2][offset];
+  double *DENDRO_861 = &precomputed_vars[3][offset];
+  double *DENDRO_652 = &precomputed_vars[4][offset];
+  double *DENDRO_318 = &precomputed_vars[5][offset];
+  double *DENDRO_744 = &precomputed_vars[6][offset];
+  double *DENDRO_326 = &precomputed_vars[7][offset];
+  double *DENDRO_232 = &precomputed_vars[8][offset];
+  double *DENDRO_522 = &precomputed_vars[9][offset];
+  double *DENDRO_952 = &precomputed_vars[10][offset];
+  double *DENDRO_507 = &precomputed_vars[11][offset];
+  double *DENDRO_514 = &precomputed_vars[12][offset];
+  double *DENDRO_346 = &precomputed_vars[13][offset];
+  double *DENDRO_693 = &precomputed_vars[14][offset];
+  double *DENDRO_796 = &precomputed_vars[15][offset];
+  double *DENDRO_706 = &precomputed_vars[16][offset];
+  double *DENDRO_729 = &precomputed_vars[17][offset];
+  double *DENDRO_752 = &precomputed_vars[18][offset];
+  double *DENDRO_431 = &precomputed_vars[19][offset];
+  double *DENDRO_109 = &precomputed_vars[20][offset];
+  double *DENDRO_751 = &precomputed_vars[21][offset];
 
 
   const unsigned int nx = sz[0];
@@ -473,44 +473,44 @@ bssn::timer::t_rhs.start();
       }
     }
   }
-
-  //9
-  for (unsigned int k = 3; k < nz-3; k++) {
-    z = pmin[2] + k*hz;
-
-    for (unsigned int j = 3; j < ny-3; j++) {
-      y = pmin[1] + j*hy;
-
-      for (unsigned int i = 3; i < nx-3; i++) {
-        x = pmin[0] + i*hx;
-        pp = i + nx*(j + ny*k);
-        r_coord = sqrt(x*x + y*y + z*z);
-        eta=ETA_CONST;
-        if (r_coord >= ETA_R0) {
-          eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
-        }
-
-
-        bssn::timer::t_rhs.start();
-
-        b_rhs5[pp] = kograd_0_beta2[pp] + kograd_1_beta2[pp] + kograd_2_beta2[pp];
-        b_rhs3[pp] = kograd_0_beta0[pp] + kograd_1_beta0[pp] + kograd_2_beta0[pp];
-        b_rhs4[pp] = kograd_0_beta1[pp] + kograd_1_beta1[pp] + kograd_2_beta1[pp];
-
-        bssn::timer::t_rhs.stop();
-
-        /* debugging */
-        unsigned int qi = 46 - 1;
-        unsigned int qj = 10 - 1;
-        unsigned int qk = 60 - 1;
-        unsigned int qidx = qi + nx*(qj + ny*qk);
-        if (0 && qidx == pp) {
-          std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;
-        }
-
-      }
-    }
-  }
+//
+//  //9
+//  for (unsigned int k = 3; k < nz-3; k++) {
+//    z = pmin[2] + k*hz;
+//
+//    for (unsigned int j = 3; j < ny-3; j++) {
+//      y = pmin[1] + j*hy;
+//
+//      for (unsigned int i = 3; i < nx-3; i++) {
+//        x = pmin[0] + i*hx;
+//        pp = i + nx*(j + ny*k);
+//        r_coord = sqrt(x*x + y*y + z*z);
+//        eta=ETA_CONST;
+//        if (r_coord >= ETA_R0) {
+//          eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
+//        }
+//
+//
+//        bssn::timer::t_rhs.start();
+//
+//        b_rhs5[pp] = kograd_0_beta2[pp] + kograd_1_beta2[pp] + kograd_2_beta2[pp];
+//        b_rhs3[pp] = kograd_0_beta0[pp] + kograd_1_beta0[pp] + kograd_2_beta0[pp];
+//        b_rhs4[pp] = kograd_0_beta1[pp] + kograd_1_beta1[pp] + kograd_2_beta1[pp];
+//
+//        bssn::timer::t_rhs.stop();
+//
+//        /* debugging */
+//        unsigned int qi = 46 - 1;
+//        unsigned int qj = 10 - 1;
+//        unsigned int qk = 60 - 1;
+//        unsigned int qidx = qi + nx*(qj + ny*qk);
+//        if (0 && qidx == pp) {
+//          std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;
+//        }
+//
+//      }
+//    }
+//  }
 
   //10
 

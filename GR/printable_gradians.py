@@ -39,3 +39,12 @@ code = change_deriv_names(code)
 bssn.close()
 bssn = open("bssn.cpp", "w")
 code = bssn.write(code)
+
+bssn = open("bssnOriginal.cpp", "r")
+code = bssn.read()
+code = change_deriv_names(code)
+bssn.close()
+bssn = open("bssnOriginal.cpp", "w")
+code = bssn.write(code)
+
+

@@ -68,7 +68,7 @@ int main (int argc, char** argv)
 
     //2. allocate memory for bssn computation.
     double ** var_in=new double*[BSSN_NUM_VARS];
-    double ** var_out=new double*[27];
+    double ** var_out=new double*[BSSN_NUM_VARS];
 
     double ** pre_computed = new double*[22];
 
@@ -85,7 +85,7 @@ int main (int argc, char** argv)
 
     }
 
-    for(unsigned int i=0;i<27;i++)
+    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
          var_out[i]=new double[unzip_dof];
 
@@ -101,9 +101,6 @@ int main (int argc, char** argv)
     for(unsigned int i=0;i<22;i++)
     {
         pre_computed[i] = new double[unzip_dof];
-
-
-
 
     }
 
@@ -148,6 +145,11 @@ int main (int argc, char** argv)
     {
         delete [] var_in[i];
         delete [] var_out[i];
+    }
+
+    for(unsigned int i=0;i<22;i++)
+    {
+        delete [] pre_computed[i];
     }
 
     delete [] blkList;
