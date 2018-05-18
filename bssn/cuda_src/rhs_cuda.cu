@@ -100,6 +100,12 @@ const unsigned int& bflag)
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
 
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+        return;
+    }
+
     bssn::timer::t_deriv_gpu.stop();
 
 
@@ -167,7 +173,11 @@ const unsigned int& bflag)
         bssn_bcs(dev_var_out, dev_var_in, dev_gt5Int, grad_0_gt5, grad_1_gt5, grad_2_gt5,
             dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz);
           
-
+        cudaStatus = cudaDeviceSynchronize();
+        if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+            return;
+        }
         bssn::timer::t_bdyc_gpu.stop();
     }
 
@@ -187,6 +197,11 @@ const unsigned int& bflag)
     get_output(dev_var_out, dev_sz, sz,
         #include "list_of_args.h"
     );
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+        return;
+    }
     bssn::timer::t_rhs_gpu.stop();
 
     bssn::timer::t_deriv_gpu.start();
@@ -384,36 +399,32 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         
         cacl_bssn_bcs_x <<< dim3(threads_y,threads_z), dim3(threads_y,threads_z) >>> (output, dev_var_in,
            dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
-
-        cudaStatus = cudaDeviceSynchronize();
-           if (cudaStatus != cudaSuccess) {
-                   fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_x kernal!\n", cudaStatus);
-                   return;
-           }
-        
+           cudaStatus = cudaGetLastError();
+        if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "cacl_bssn_bcs_x Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+            return;
+        }
         maximumIterations = (ke>ie) ? ke : ie ;
         requiredBlocks = (9 + maximumIterations)/10;
         int threads_x = (requiredBlocks-1+ie) / requiredBlocks;
         threads_z = (requiredBlocks-1+ke) / requiredBlocks;
         cacl_bssn_bcs_y <<< dim3(threads_x,threads_z), dim3(threads_x,threads_z) >>> (output, dev_var_in,
             dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
- 
-        cudaStatus = cudaDeviceSynchronize();
+
+        cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_y kernal!\n", cudaStatus);
+            fprintf(stderr, "cacl_bssn_bcs_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
             return;
         }
-
         maximumIterations = (je>ie) ? je : ie ;
         requiredBlocks = (9 + maximumIterations)/10;
         threads_x = (requiredBlocks-1+ie) / requiredBlocks;
         threads_y = (requiredBlocks-1+je) / requiredBlocks;
         cacl_bssn_bcs_z <<< dim3(threads_x,threads_y), dim3(threads_x,threads_y) >>> (output, dev_var_in,
             dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
- 
-        cudaStatus = cudaDeviceSynchronize();
+        cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+            fprintf(stderr, "cacl_bssn_bcs_z Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
             return;
         }
     }
@@ -487,4 +498,12 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
                       (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_sz, 
                         #include "list_of_args.h"
                       );
+            // Check for any errors launching the kernel
+            cudaError_t cudaStatus;
+            cudaStatus = cudaGetLastError();
+            if (cudaStatus != cudaSuccess) {
+                fprintf(stderr, "kernal_get_output Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+                return;
+            }
+
     }
