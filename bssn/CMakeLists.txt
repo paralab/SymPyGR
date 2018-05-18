@@ -15,6 +15,7 @@ if(CUDA_FOUND)
     set(CUDA_SEPARABLE_COMPILATION OFF)
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_30,code=compute_30 )
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_52,code=sm_52 )
+    list( APPEND CUDA_NVCC_FLAGS -use_fast_math )
 
 endif()
 
