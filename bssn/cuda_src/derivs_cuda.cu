@@ -70,16 +70,10 @@
      cudaError_t cudaStatus;
      cudaStatus = cudaGetLastError();
      if (cudaStatus != cudaSuccess) {
-         fprintf(stderr, "cuda_deriv42_x_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+         fprintf(stderr, "calc_deriv42_x Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
          return;
      }
-     // cudaDeviceSynchronize waits for the kernel to finish, and returns
-     // any errors encountered during the launch.
-     cudaStatus = cudaDeviceSynchronize();
-     if (cudaStatus != cudaSuccess) {
-         fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_x_firstThreeForLoops kernal!\n", cudaStatus);
-         return;
-     }
+     
  
      // No GPU code for the following part
      // #ifdef DEBUG_DERIVS_COMP
@@ -164,13 +158,7 @@ void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, do
         fprintf(stderr, "calc_deriv42_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching calc_deriv42_y kernal!\n", cudaStatus);
-        return;
-    }
+    
 
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
@@ -249,16 +237,10 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset,
     cudaError_t cudaStatus;
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_z_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        fprintf(stderr, "calc_deriv42_z Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_z_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
+    
 
     //   #ifdef DEBUG_DERIVS_COMP
     //     for (int k = kb; k < ke; k++) {
@@ -357,17 +339,10 @@ void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset,
     cudaError_t cudaStatus;
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_xx_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        fprintf(stderr, "calc_deriv42_xx Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_xx_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
-
+    
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
     // for (int k = kb; k < ke; k++) {
@@ -469,16 +444,10 @@ void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, d
     cudaError_t cudaStatus;
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_yy_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        fprintf(stderr, "calc_deriv42_yy Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_yy_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
+    
 
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
@@ -580,16 +549,10 @@ void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset,
     cudaError_t cudaStatus;
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_zz_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        fprintf(stderr, "calc_deriv42_zz Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_zz_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
+    
 
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
@@ -733,11 +696,13 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betax,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
     
-    cudaStatus = cudaDeviceSynchronize();
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_x kernal!\n", cudaStatus);
-            return;
+        fprintf(stderr, "calc_deriv42_adv_x Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        return;
     }
+    
                     
     // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
 
@@ -874,10 +839,11 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
                             dev_dy, dev_bflag, dev_sz, dev_u_offset);
         
     
-    cudaStatus = cudaDeviceSynchronize();
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_y kernal!\n", cudaStatus);
-            return;
+        fprintf(stderr, "calc_deriv42_adv_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        return;
     }
                     
     // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
@@ -1015,10 +981,11 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betaz,
                             dev_dz, dev_bflag, dev_sz, dev_u_offset);
     
-    cudaStatus = cudaDeviceSynchronize();
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_z kernal!\n", cudaStatus);
-            return;
+        fprintf(stderr, "calc_deriv42_adv_z Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        return;
     }
 }
 
@@ -1145,10 +1112,11 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
    
-   cudaStatus = cudaDeviceSynchronize();
+   // Check for any errors launching the kernel
+   cudaStatus = cudaGetLastError();
    if (cudaStatus != cudaSuccess) {
-           fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_x kernal!\n", cudaStatus);
-           return;
+       fprintf(stderr, "calc_ko_deriv42_x Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+       return;
    }
 
 }
@@ -1275,10 +1243,11 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
                     (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
                         dev_dy, dev_bflag, dev_sz, dev_u_offset);
 
-    cudaStatus = cudaDeviceSynchronize();
+    // Check for any errors launching the kernel
+    cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_y kernal!\n", cudaStatus);
-            return;
+        fprintf(stderr, "calc_ko_deriv42_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+        return;
     }
 
 }
@@ -1409,9 +1378,10 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
                     (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
                         dev_dz, dev_bflag, dev_sz, dev_u_offset);
    
-   cudaStatus = cudaDeviceSynchronize();
+   // Check for any errors launching the kernel
+   cudaStatus = cudaGetLastError();
    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_z kernal!\n", cudaStatus);
-        return;
+       fprintf(stderr, "calc_ko_deriv42_z Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
+       return;
    }
 }
