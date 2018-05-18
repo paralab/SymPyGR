@@ -94,7 +94,7 @@ int main (int argc, char** argv)
      }
 
     bssn::timer::t_mem_handling_gpu.start();
-    bssn::timer::t_rhs_gpu.start();
+
     double * dev_var_in;
     double * dev_var_out;
     cudaStatus = cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double));
@@ -102,7 +102,7 @@ int main (int argc, char** argv)
 
     cudaStatus = cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double));
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_out cudaMalloc failed!\n"); return 0;}
-    bssn::timer::t_rhs_gpu.stop();
+
     bssn::timer::t_mem_handling_gpu.stop();
 
     // GPU usage requirement
