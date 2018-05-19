@@ -50,7 +50,7 @@ int main (int argc, char** argv)
     blk_up=atoi(argv[2]);
     num_blks=atoi(argv[3]);
 
-    const unsigned int total_blks=num_blks*(blk_up-blk_lb+1);
+    unsigned int total_blks=num_blks*(blk_up-blk_lb+1);
 
     //1. setup the blk offsets.
     Block * blkList=new Block[total_blks];
@@ -64,13 +64,14 @@ int main (int argc, char** argv)
 
        }
 
-    const unsigned long unzip_dof=unzipSz;
+    unsigned long unzip_dof=unzipSz;
 
     //2. allocate memory for bssn computation.
     double ** var_in=new double*[BSSN_NUM_VARS];
-    double ** var_out=new double*[BSSN_NUM_VARS];
+    double ** var_out1=new double*[BSSN_NUM_VARS];
 
-    double ** pre_computed = new double*[22];
+
+    double ** pre_computed = new double*[20];
 
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
@@ -87,18 +88,18 @@ int main (int argc, char** argv)
 
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
-         var_out[i]=new double[unzip_dof];
+         var_out1[i]=new double[unzip_dof];
 
         for(unsigned int j=0;j<unzip_dof;j++)
         {
             // some random initialization.
-            var_out[i][j]=0.0;
+            var_out1[i][j]=0.0;
         }
 
 
     }
 
-    for(unsigned int i=0;i<22;i++)
+    for(unsigned int i=0;i<20;i++)
     {
         pre_computed[i] = new double[unzip_dof];
 
@@ -134,7 +135,7 @@ int main (int argc, char** argv)
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        bssnrhs(var_out, (const double **)var_in, pre_computed, offset, ptmin, ptmax, sz, bflag);
+        bssnrhs_stagged(var_out1, (const double **)var_in, pre_computed, offset, ptmin, ptmax, sz, bflag);
 
     }
     //-- timer end
@@ -144,17 +145,17 @@ int main (int argc, char** argv)
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
         delete [] var_in[i];
-        delete [] var_out[i];
+//        delete [] var_out1[i];
     }
 
     for(unsigned int i=0;i<22;i++)
     {
         delete [] pre_computed[i];
     }
-
     delete [] blkList;
     delete [] var_in;
-    delete [] var_out;
+//    delete [] var_out1;
+
 
     bssn::timer::total_runtime.stop();
 

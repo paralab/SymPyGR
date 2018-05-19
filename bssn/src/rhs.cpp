@@ -16,7 +16,7 @@ double BSSN_LAMBDA_F[2]={0.8,0.9};
  * vector form of RHS
  *
  *----------------------------------------------------------------------*/
-void bssnrhs(double **unzipVarsRHS, const double **uZipVars, double **precomputed_vars,
+void bssnrhs_stagged(double **unzipVarsRHS, const double **uZipVars, double **precomputed_vars,
              const unsigned int& offset,
              const double *pmin, const double *pmax, const unsigned int *sz,
              const unsigned int& bflag)
@@ -85,28 +85,34 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars, double **precompute
   double *B_rhs2 = &unzipVarsRHS[VAR::U_B2][offset];
 
 
-  double *DENDRO_257 = &precomputed_vars[0][offset];
-  double *DENDRO_258 = &precomputed_vars[1][offset];
-  double *DENDRO_870 = &precomputed_vars[2][offset];
-  double *DENDRO_861 = &precomputed_vars[3][offset];
-  double *DENDRO_652 = &precomputed_vars[4][offset];
-  double *DENDRO_318 = &precomputed_vars[5][offset];
-  double *DENDRO_744 = &precomputed_vars[6][offset];
-  double *DENDRO_326 = &precomputed_vars[7][offset];
-  double *DENDRO_232 = &precomputed_vars[8][offset];
-  double *DENDRO_522 = &precomputed_vars[9][offset];
-  double *DENDRO_952 = &precomputed_vars[10][offset];
-  double *DENDRO_507 = &precomputed_vars[11][offset];
-  double *DENDRO_514 = &precomputed_vars[12][offset];
-  double *DENDRO_346 = &precomputed_vars[13][offset];
-  double *DENDRO_693 = &precomputed_vars[14][offset];
-  double *DENDRO_796 = &precomputed_vars[15][offset];
-  double *DENDRO_706 = &precomputed_vars[16][offset];
-  double *DENDRO_729 = &precomputed_vars[17][offset];
-  double *DENDRO_752 = &precomputed_vars[18][offset];
-  double *DENDRO_431 = &precomputed_vars[19][offset];
-  double *DENDRO_109 = &precomputed_vars[20][offset];
-  double *DENDRO_751 = &precomputed_vars[21][offset];
+  double *DENDRO_858 = &precomputed_vars[0][offset];
+  double *DENDRO_630 = &precomputed_vars[1][offset];
+
+  double *DENDRO_257 = &precomputed_vars[2][offset];
+  double *DENDRO_258 = &precomputed_vars[3][offset];
+
+  double *DENDRO_861 = &precomputed_vars[4][offset];
+  double *DENDRO_870 = &precomputed_vars[5][offset];
+
+  double *DENDRO_318 = &precomputed_vars[6][offset];
+  double *DENDRO_652 = &precomputed_vars[7][offset];
+
+  double *DENDRO_744 = &precomputed_vars[8][offset];
+  double *DENDRO_326 = &precomputed_vars[9][offset];
+
+  double *DENDRO_514 = &precomputed_vars[10][offset];
+  double *DENDRO_346 = &precomputed_vars[11][offset];
+  double *DENDRO_507 = &precomputed_vars[12][offset];
+
+  double *DENDRO_347 = &precomputed_vars[13][offset];
+  double *DENDRO_642 = &precomputed_vars[14][offset];
+  double *DENDRO_646 = &precomputed_vars[15][offset];
+
+  double *DENDRO_729 = &precomputed_vars[16][offset];
+  double *DENDRO_693 = &precomputed_vars[17][offset];
+  double *DENDRO_796 = &precomputed_vars[18][offset];
+  double *DENDRO_706 = &precomputed_vars[19][offset];
+
 
 
   const unsigned int nx = sz[0];
@@ -189,10 +195,10 @@ bssn::timer::t_deriv.stop();
 
 bssn::timer::t_rhs.start();
 
-        DENDRO_257[pp] = grad_1_gt3[pp];
-        DENDRO_258[pp] = 0.5*DENDRO_257[pp];
+          DENDRO_858[pp] = (0.25*grad_0_gt5[pp] - 0.5*grad_2_gt2[pp])*((gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(grad_0_gt4[pp] + grad_1_gt2[pp] - grad_2_gt1[pp]) - (gt1[pp]*gt5[pp] - gt2[pp]*gt4[pp])*grad_0_gt3[pp] + (gt3[pp]*gt5[pp] - pow(gt4[pp], 2))*grad_1_gt0[pp]);
+          DENDRO_630[pp] = -(0.25*grad_0_gt5[pp] - 0.5*grad_2_gt2[pp])*(-(gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(grad_0_gt4[pp] + grad_1_gt2[pp] - grad_2_gt1[pp]) + (gt1[pp]*gt5[pp] - gt2[pp]*gt4[pp])*grad_0_gt3[pp] - (gt3[pp]*gt5[pp] - pow(gt4[pp], 2))*grad_1_gt0[pp]);
 
-        bssn::timer::t_rhs.stop();
+          bssn::timer::t_rhs.stop();
 
        /* debugging */
         unsigned int qi = 46 - 1;
@@ -225,10 +231,11 @@ bssn::timer::t_rhs.start();
 
         bssn::timer::t_rhs.start();
 
-        DENDRO_870[pp] = (1.0L/3.0L)*At4[pp];
-        DENDRO_861[pp] = 2*At4[pp];
+          DENDRO_257[pp] = grad_1_gt3[pp];
+          DENDRO_258[pp] = 0.5*DENDRO_257[pp];
 
-        bssn::timer::t_rhs.stop();
+
+          bssn::timer::t_rhs.stop();
 
         /* debugging */
         unsigned int qi = 46 - 1;
@@ -262,8 +269,8 @@ bssn::timer::t_rhs.start();
 
         bssn::timer::t_rhs.start();
 
-        DENDRO_652[pp] = -grad2_1_2_chi[pp];
-        DENDRO_318[pp] = grad2_1_2_chi[pp];
+          DENDRO_861[pp] = 2*At4[pp];
+          DENDRO_870[pp] = (1.0L/3.0L)*At4[pp];
 
         bssn::timer::t_rhs.stop();
 
@@ -299,8 +306,8 @@ bssn::timer::t_rhs.start();
 
         bssn::timer::t_rhs.start();
 
-        DENDRO_744[pp] = -grad2_0_1_chi[pp];
-        DENDRO_326[pp] = grad2_0_1_chi[pp];
+          DENDRO_318[pp] = grad2_1_2_chi[pp];
+          DENDRO_652[pp] = -DENDRO_318[pp];
 
         bssn::timer::t_rhs.stop();
 
@@ -337,10 +344,8 @@ bssn::timer::t_rhs.start();
 
         bssn::timer::t_rhs.start();
 
-        DENDRO_232[pp] = grad_2_chi[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
-        DENDRO_522[pp] = 0.5*grad_2_chi[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
-        DENDRO_952[pp] = 9*grad_2_chi[pp]/(chi[pp]*(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]));
-
+          DENDRO_744[pp] = -grad2_0_1_chi[pp];
+          DENDRO_326[pp] = grad2_0_1_chi[pp];
         bssn::timer::t_rhs.stop();
 
         /* debugging */
@@ -375,11 +380,12 @@ bssn::timer::t_rhs.start();
 
         bssn::timer::t_rhs.start();
 
-        DENDRO_507[pp] = (gt0[pp]*gt3[pp] - pow(gt1[pp], 2))*grad_0_gt5[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
-        DENDRO_514[pp] = (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*grad_0_gt5[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
-        DENDRO_346[pp] = (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(0.5*grad_0_gt5[pp] - 1.0*grad_2_gt2[pp])/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
+          DENDRO_514[pp] = (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*grad_0_gt5[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
+          DENDRO_346[pp] = (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(0.5*grad_0_gt5[pp] - 1.0*grad_2_gt2[pp])/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
+          DENDRO_507[pp] = (gt0[pp]*gt3[pp] - pow(gt1[pp], 2))*grad_0_gt5[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
 
-        bssn::timer::t_rhs.stop();
+
+          bssn::timer::t_rhs.stop();
 
         /* debugging */
         unsigned int qi = 46 - 1;
@@ -412,14 +418,13 @@ bssn::timer::t_rhs.start();
 
         bssn::timer::t_rhs.start();
 
-        DENDRO_693[pp] = 0.5*(-(gt0[pp]*gt3[pp] - pow(gt1[pp], 2))*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt0[pp]*gt4[pp] - gt1[pp]*gt2[pp])*grad_1_gt3[pp] + (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]))*grad_0_gt5[pp];
-        DENDRO_796[pp] = (0.5*grad_0_gt5[pp] - 1.0*grad_2_gt2[pp])*(-(gt0[pp]*gt3[pp] - pow(gt1[pp], 2))*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt0[pp]*gt4[pp] - gt1[pp]*gt2[pp])*grad_1_gt3[pp] + (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]));
-        DENDRO_706[pp] = 0.5*(-(gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt1[pp]*gt5[pp] - gt2[pp]*gt4[pp])*grad_1_gt3[pp] + (gt3[pp]*gt5[pp] - pow(gt4[pp], 2))*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]))*grad_0_gt5[pp];
-        DENDRO_729[pp] = (0.5*grad_0_gt5[pp] - 1.0*grad_2_gt2[pp])*(-(gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt1[pp]*gt5[pp] - gt2[pp]*gt4[pp])*grad_1_gt3[pp] + (gt3[pp]*gt5[pp] - pow(gt4[pp], 2))*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]));
+          DENDRO_347[pp] = (gt0[pp]*gt4[pp] - gt1[pp]*gt2[pp])*(0.5*grad_1_gt5[pp] - 1.0*grad_2_gt4[pp])/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
+          DENDRO_642[pp] = (gt0[pp]*gt4[pp] - gt1[pp]*gt2[pp])*grad_1_gt5[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
+          DENDRO_646[pp] = (gt0[pp]*gt3[pp] - pow(gt1[pp], 2))*grad_1_gt5[pp]/(-gt0[pp]*gt3[pp]*gt5[pp] + gt0[pp]*pow(gt4[pp], 2) + pow(gt1[pp], 2)*gt5[pp] - 2*gt1[pp]*gt2[pp]*gt4[pp] + pow(gt2[pp], 2)*gt3[pp]);
 
 
 
-        bssn::timer::t_rhs.stop();
+          bssn::timer::t_rhs.stop();
 
         /* debugging */
         unsigned int qi = 46 - 1;
@@ -453,13 +458,13 @@ bssn::timer::t_rhs.start();
 
         bssn::timer::t_rhs.start();
 
-        DENDRO_752[pp] = 2.0*gt1[pp]*grad_1_Gt1[pp];
-        DENDRO_431[pp] = grad_1_Gt1[pp];
-        DENDRO_109[pp] = grad_0_Gt0[pp];
-        DENDRO_751[pp] = 2.0*DENDRO_109[pp]*gt1[pp];
+          DENDRO_729[pp] = (0.5*grad_0_gt5[pp] - 1.0*grad_2_gt2[pp])*(-(gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt1[pp]*gt5[pp] - gt2[pp]*gt4[pp])*grad_1_gt3[pp] + (gt3[pp]*gt5[pp] - pow(gt4[pp], 2))*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]));
+          DENDRO_693[pp] = 0.5*(-(gt0[pp]*gt3[pp] - pow(gt1[pp], 2))*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt0[pp]*gt4[pp] - gt1[pp]*gt2[pp])*grad_1_gt3[pp] + (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]))*grad_0_gt5[pp];
+          DENDRO_796[pp] = (0.5*grad_0_gt5[pp] - 1.0*grad_2_gt2[pp])*(-(gt0[pp]*gt3[pp] - pow(gt1[pp], 2))*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt0[pp]*gt4[pp] - gt1[pp]*gt2[pp])*grad_1_gt3[pp] + (gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]));
+          DENDRO_706[pp] = 0.5*(-(gt1[pp]*gt4[pp] - gt2[pp]*gt3[pp])*(1.0*grad_1_gt4[pp] - 0.5*grad_2_gt3[pp]) + 0.5*(gt1[pp]*gt5[pp] - gt2[pp]*gt4[pp])*grad_1_gt3[pp] + (gt3[pp]*gt5[pp] - pow(gt4[pp], 2))*(0.5*grad_0_gt3[pp] - 1.0*grad_1_gt1[pp]))*grad_0_gt5[pp];
 
 
-        bssn::timer::t_rhs.stop();
+          bssn::timer::t_rhs.stop();
 
         /* debugging */
         unsigned int qi = 46 - 1;
@@ -679,6 +684,7 @@ bssn::timer::t_deriv.stop();
 
 
 }
+
 
 
 /*----------------------------------------------------------------------;
