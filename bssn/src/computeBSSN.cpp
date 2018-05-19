@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include "computeBSSN.h"
+#include <fstream>
 
 
 int main (int argc, char** argv)
@@ -145,21 +146,50 @@ int main (int argc, char** argv)
     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
     {
         delete [] var_in[i];
-//        delete [] var_out1[i];
+//        delete [] var_out[i];
     }
 
-    for(unsigned int i=0;i<22;i++)
-    {
-        delete [] pre_computed[i];
-    }
     delete [] blkList;
     delete [] var_in;
-//    delete [] var_out1;
-
+//    delete [] var_out;
 
     bssn::timer::total_runtime.stop();
 
     bssn::timer::profileInfo();
+
+    //printing var_out to file
+    std::ofstream myfile ("results-stagged.txt");
+
+    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+    {
+
+        for(unsigned int j=0;j<unzip_dof;j++)
+        {
+            if (myfile.is_open())
+            {
+                myfile << std::to_string(var_out1[i][j])+" ";
+
+
+            }
+
+
+        }
+        myfile << "\n";
+
+
+    }
+    myfile.close();
+
+    for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+    {
+//        delete [] var_in[i];
+        delete [] var_out1[i];
+    }
+
+//    delete [] blkList;
+//    delete [] var_in;
+    delete [] var_out1;
+
 
     return 0;
 
