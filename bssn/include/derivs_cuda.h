@@ -18,9 +18,10 @@ void cuda_calc_all(double * dev_var_in, double * dev_dy_hx, double * dev_dy_hy, 
                    const unsigned int * host_sz,
                     #include "list_of_para.h"
 );
-void cuda_deriv42_adv_x(double * output, double * dev_var_in, 
-                    int * dev_u_offset, double * dev_dy, int * dev_sz,
-                    int * dev_betax, int* dev_bflag, const unsigned int * host_sz);
+void cuda_deriv42_adv_x(double * dev_var_in, int * dev_sz, int* dev_bflag, const unsigned int * host_sz,
+                        double *dev_dy_hx,double * dev_dy_hy,double *dev_dy_hz,
+#include "list_of_para.h"
+);
 void cuda_deriv42_adv_y(double * output, double * dev_var_in, 
     int * dev_u_offset, double * dev_dy, int * dev_sz,
     int * dev_betay, int* dev_bflag, const unsigned int * host_sz);

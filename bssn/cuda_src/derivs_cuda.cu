@@ -955,8 +955,15 @@ void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset,
 }
 
 
-__global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * dev_betax,
-                                   double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+__global__ void calc_deriv42_adv_x( double * dev_var_in, int* dev_bflag, int* dev_sz,
+    double *dev_dy_hx,double * dev_dy_hy,double *dev_dy_hz,
+
+#include "list_of_para.h"
+) {
+    int * dev_betax=dev_beta0Int;
+    double * output=agrad_0_gt0;
+    int* dev_u_offset=dev_gt0Int;
+    double *dev_dx=dev_dy_hx;
 
     //ib, jb, kb values are accumulated to the x, y, z
     int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -1062,9 +1069,10 @@ __global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * d
     }
 }
 
-void cuda_deriv42_adv_x(double * output, double * dev_var_in,
-                        int * dev_u_offset, double * dev_dx, int * dev_sz,
-                        int * dev_betax, int* dev_bflag, const unsigned int * host_sz)
+void cuda_deriv42_adv_x(double * dev_var_in, int * dev_sz, int* dev_bflag, const unsigned int * host_sz,
+                        double *dev_dy_hx,double * dev_dy_hy,double *dev_dy_hz,
+#include "list_of_para.h"
+)
 {
     cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
@@ -1080,8 +1088,10 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     calc_deriv42_adv_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
             dim3((ie + requiredBlocks -1)/requiredBlocks,
                  (je + requiredBlocks -1)/requiredBlocks,
-                 (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betax,
-                    dev_dx, dev_bflag, dev_sz, dev_u_offset);
+                 (ke + requiredBlocks -1)/requiredBlocks) >>> (dev_var_in, dev_bflag, dev_sz,
+            dev_dy_hx,dev_dy_hy,dev_dy_hz,
+#include "list_of_args.h"
+);
 
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
