@@ -168,21 +168,17 @@ const unsigned int& bflag, cudaStream_t stream)
         , stream
     );
 
-    // bssn::timer::t_deriv_gpu.start();
-    // #include "bssnrhs_cuda_mdealloc.h"
-    // #include "bssnrhs_cuda_mdealloc_adv.h"
-    // bssn::timer::t_deriv_gpu.stop();
+    #include "bssnrhs_cuda_mdealloc.h"
+    #include "bssnrhs_cuda_mdealloc_adv.h"
 
-    // bssn::timer::t_mem_handling_gpu.start();
-    // #include "bssnrhs_cuda_offset_demalloc.h"
-    // cudaFree(dev_dy_hx);
-    // cudaFree(dev_dy_hy);
-    // cudaFree(dev_dy_hz);
-    // cudaFree(dev_sz);
-    // cudaFree(dev_zero);
-    // cudaFree(dev_pmin);
-    // cudaFree(dev_pmax);
-    // bssn::timer::t_mem_handling_gpu.stop();
+    #include "bssnrhs_cuda_offset_demalloc.h"
+    cudaFree(dev_dy_hx);
+    cudaFree(dev_dy_hy);
+    cudaFree(dev_dy_hz);
+    cudaFree(dev_sz);
+    cudaFree(dev_zero);
+    cudaFree(dev_pmin);
+    cudaFree(dev_pmax);
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,

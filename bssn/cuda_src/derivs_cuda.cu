@@ -73,14 +73,7 @@
          fprintf(stderr, "cuda_deriv42_x_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
          return;
      }
-     // cudaDeviceSynchronize waits for the kernel to finish, and returns
-     // any errors encountered during the launch.
-     cudaStatus = cudaDeviceSynchronize();
-     if (cudaStatus != cudaSuccess) {
-         fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_x_firstThreeForLoops kernal!\n", cudaStatus);
-         return;
-     }
- 
+
      // No GPU code for the following part
      // #ifdef DEBUG_DERIVS_COMP
      //     #pragma message("DEBUG_DERIVS_COMP: ON")
@@ -164,13 +157,6 @@ void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, do
         fprintf(stderr, "calc_deriv42_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching calc_deriv42_y kernal!\n", cudaStatus);
-        return;
-    }
 
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
@@ -250,13 +236,6 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset,
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cuda_deriv42_z_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_z_firstThreeForLoops kernal!\n", cudaStatus);
         return;
     }
 
@@ -358,13 +337,6 @@ void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset,
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "cuda_deriv42_xx_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_xx_firstThreeForLoops kernal!\n", cudaStatus);
         return;
     }
 
@@ -472,13 +444,7 @@ void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, d
         fprintf(stderr, "cuda_deriv42_yy_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_yy_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
+
 
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
@@ -583,13 +549,7 @@ void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset,
         fprintf(stderr, "cuda_deriv42_zz_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
         return;
     }
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_zz_firstThreeForLoops kernal!\n", cudaStatus);
-        return;
-    }
+
 
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
@@ -716,7 +676,6 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dx, int * dev_sz,
     int * dev_betax, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -733,11 +692,6 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betax,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
     
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_x kernal!\n", cudaStatus);
-            return;
-    }
                     
     // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
 
@@ -857,7 +811,6 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dy, int * dev_sz,
     int * dev_betay, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -874,11 +827,6 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
                             dev_dy, dev_bflag, dev_sz, dev_u_offset);
         
     
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_y kernal!\n", cudaStatus);
-            return;
-    }
                     
     // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
 
@@ -999,7 +947,6 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dz, int * dev_sz,
     int * dev_betaz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -1015,11 +962,6 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betaz,
                             dev_dz, dev_bflag, dev_sz, dev_u_offset);
     
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_deriv42_adv_z kernal!\n", cudaStatus);
-            return;
-    }
 }
 
 __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
@@ -1129,7 +1071,6 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dx, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-   cudaError_t cudaStatus;
    const int ie = host_sz[0] - 4;//x direction
    const int je = host_sz[1] - 3;//y direction
    const int ke = host_sz[2] - 3;//z direction
@@ -1144,12 +1085,6 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
                         (je + requiredBlocks -1)/requiredBlocks, 
                         (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
-   
-   cudaStatus = cudaDeviceSynchronize();
-   if (cudaStatus != cudaSuccess) {
-           fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_x kernal!\n", cudaStatus);
-           return;
-   }
 
 }
 
@@ -1259,7 +1194,6 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dy, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-   cudaError_t cudaStatus;
    const int ie = host_sz[0] - 3;//x direction
    const int je = host_sz[1] - 4;//y direction
    const int ke = host_sz[2] - 3;//z direction
@@ -1274,12 +1208,6 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
                     (je + requiredBlocks -1)/requiredBlocks, 
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_dy, dev_bflag, dev_sz, dev_u_offset);
-
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_y kernal!\n", cudaStatus);
-            return;
-    }
 
 }
 
@@ -1393,7 +1321,6 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dz, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-   cudaError_t cudaStatus;
    const int ie = host_sz[0] - 3;//x direction
    const int je = host_sz[1] - 3;//y direction
    const int ke = host_sz[2] - 4;//z direction
@@ -1409,9 +1336,4 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_dz, dev_bflag, dev_sz, dev_u_offset);
    
-   cudaStatus = cudaDeviceSynchronize();
-   if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_z kernal!\n", cudaStatus);
-        return;
-   }
 }

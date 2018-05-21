@@ -36,17 +36,16 @@ int main (int argc, char** argv)
     num_blks=atoi(argv[3]);
 
     // Create pointers to hold arrays
-    double ** var_in_array = new double*[num_blks*blk_up-blk_lb];
-    double ** var_out_array = new double*[num_blks*blk_up-blk_lb];
-    double ** dev_var_in_array = new double*[num_blks*blk_up-blk_lb];
-    double ** dev_var_out_array = new double*[num_blks*blk_up-blk_lb];;
+    double ** var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
+    double ** var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
+    double ** dev_var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
+    double ** dev_var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];;
 
     int absIndex;
     // #pragma omp parallel for
     for(int level=0; level<=(blk_up-blk_lb); level++){
         for (int block_no=0; block_no<num_blks; block_no++){
             absIndex = num_blks*level + block_no;
-            printf("%d\n", absIndex);
 
             Block * blkList=new Block[1];
             const unsigned int maxDepth=12;
@@ -151,17 +150,15 @@ int main (int argc, char** argv)
             ptmax[2]=1.0;
 
             std::cout << "Block no: " << absIndex << " Total Points: " << total_points << std::endl;
-            printf("%d | %d\n", absIndex, total_points);
             
             cuda_bssnrhs(dev_var_out_array[absIndex], dev_var_in_array[absIndex], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream);
 
             cudaStatus = cudaMemcpyAsync(var_out_per_block, dev_var_out_array[absIndex], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream);
-            printf("inside\n");
+            
         }
     }
-    printf("outside\n");
-    cudaError_t cudaStatus;
-    cudaStatus = cudaDeviceSynchronize();
+    // cudaError_t cudaStatus;
+    // cudaStatus = cudaDeviceSynchronize();
 
 
     // delete [] host_var_in;
