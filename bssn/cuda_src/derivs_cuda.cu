@@ -48,7 +48,7 @@
  }
 
  void cuda_deriv42_x(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
-        int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+        int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
  {
  
     const int ie = host_sz[0] - 3;//x direction
@@ -63,7 +63,7 @@
     calc_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                       dim3((ie + requiredBlocks -1)/requiredBlocks,
                       (je + requiredBlocks -1)/requiredBlocks, 
-                      (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                      (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_u_offset, dev_dy, dev_sz, dev_bflag);
  
      // Check for any errors launching the kernel
@@ -140,7 +140,7 @@ __global__ void calc_deriv42_y(double* output, double * dev_var_in, const int * 
 }
 
 void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
-                int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+                int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
  {
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
@@ -154,7 +154,7 @@ void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, do
     calc_deriv42_y<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                     dim3((ie + requiredBlocks -1)/requiredBlocks,
                     (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
@@ -228,7 +228,7 @@ __global__ void calc_deriv42_z(double * output, double * dev_var_in, const int *
 }
 
 void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset, 
-    double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+    double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
      const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
@@ -242,7 +242,7 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset,
     calc_deriv42_z<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                     dim3((ie + requiredBlocks -1)/requiredBlocks,
                     (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
@@ -336,7 +336,7 @@ __global__ void calc_deriv42_xx(double * output, double * dev_var_in, const int 
 }
 
 void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset, 
-                double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+                double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
@@ -350,7 +350,7 @@ void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset,
     calc_deriv42_xx<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                     dim3((ie + requiredBlocks -1)/requiredBlocks,
                     (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
@@ -448,7 +448,7 @@ __global__ void calc_deriv42_yy(double * output, double * dev_var_in, const int 
 }
 
 void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
-                int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+                int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
@@ -462,7 +462,7 @@ void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, d
     calc_deriv42_yy<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                     dim3((ie + requiredBlocks -1)/requiredBlocks,
                     (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
@@ -559,7 +559,7 @@ __global__ void calc_deriv42_zz(double * output, double * dev_var_in, const int 
 
 
 void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset, 
-        double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz)
+        double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
@@ -573,7 +573,7 @@ void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset,
     calc_deriv42_zz<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                     dim3((ie + requiredBlocks -1)/requiredBlocks,
                     (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks)>>> 
+                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
@@ -714,7 +714,7 @@ __global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * d
 
 void cuda_deriv42_adv_x(double * output, double * dev_var_in, 
     int * dev_u_offset, double * dev_dx, int * dev_sz,
-    int * dev_betax, int* dev_bflag, const unsigned int * host_sz)
+    int * dev_betax, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
     cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
@@ -730,7 +730,7 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     calc_deriv42_adv_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                         dim3((ie + requiredBlocks -1)/requiredBlocks,
                         (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betax,
+                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betax,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
     
     cudaStatus = cudaDeviceSynchronize();
@@ -855,7 +855,7 @@ __global__ void calc_deriv42_adv_y(double * output, double * dev_var_in, int * d
 
 void cuda_deriv42_adv_y(double * output, double * dev_var_in, 
     int * dev_u_offset, double * dev_dy, int * dev_sz,
-    int * dev_betay, int* dev_bflag, const unsigned int * host_sz)
+    int * dev_betay, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
     cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
@@ -870,7 +870,7 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
     calc_deriv42_adv_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                         dim3((ie + requiredBlocks -1)/requiredBlocks,
                         (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betay,
+                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betay,
                             dev_dy, dev_bflag, dev_sz, dev_u_offset);
         
     
@@ -997,7 +997,7 @@ __global__ void calc_deriv42_adv_z(double * output, double * dev_var_in, int * d
 
 void cuda_deriv42_adv_z(double * output, double * dev_var_in, 
     int * dev_u_offset, double * dev_dz, int * dev_sz,
-    int * dev_betaz, int* dev_bflag, const unsigned int * host_sz)
+    int * dev_betaz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
     cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
@@ -1012,7 +1012,7 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
     calc_deriv42_adv_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                         dim3((ie + requiredBlocks -1)/requiredBlocks,
                         (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betaz,
+                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betaz,
                             dev_dz, dev_bflag, dev_sz, dev_u_offset);
     
     cudaStatus = cudaDeviceSynchronize();
@@ -1127,7 +1127,7 @@ __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
 
 void cuda_ko_deriv42_x(double * output, double * dev_var_in, 
    int * dev_u_offset, double * dev_dx, int * dev_sz,
-   int* dev_bflag, const unsigned int * host_sz)
+   int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
    cudaError_t cudaStatus;
    const int ie = host_sz[0] - 4;//x direction
@@ -1142,7 +1142,7 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
    calc_ko_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                         dim3((ie + requiredBlocks -1)/requiredBlocks,
                         (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
    
    cudaStatus = cudaDeviceSynchronize();
@@ -1257,7 +1257,7 @@ __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
 
 void cuda_ko_deriv42_y(double * output, double * dev_var_in, 
    int * dev_u_offset, double * dev_dy, int * dev_sz,
-   int* dev_bflag, const unsigned int * host_sz)
+   int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
    cudaError_t cudaStatus;
    const int ie = host_sz[0] - 3;//x direction
@@ -1272,7 +1272,7 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
    calc_ko_deriv42_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                     dim3((ie + requiredBlocks -1)/requiredBlocks,
                     (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_dy, dev_bflag, dev_sz, dev_u_offset);
 
     cudaStatus = cudaDeviceSynchronize();
@@ -1391,7 +1391,7 @@ __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
 
 void cuda_ko_deriv42_z(double * output, double * dev_var_in, 
    int * dev_u_offset, double * dev_dz, int * dev_sz,
-   int* dev_bflag, const unsigned int * host_sz)
+   int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
    cudaError_t cudaStatus;
    const int ie = host_sz[0] - 3;//x direction
@@ -1406,7 +1406,7 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
    calc_ko_deriv42_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
                     dim3((ie + requiredBlocks -1)/requiredBlocks,
                     (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_dz, dev_bflag, dev_sz, dev_u_offset);
    
    cudaStatus = cudaDeviceSynchronize();

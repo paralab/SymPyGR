@@ -31,7 +31,7 @@
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, 
 const unsigned int unzip_dof, const unsigned int& offset, 
 const double *pmin,const double *pmax, const unsigned int *sz, 
-const unsigned int& bflag);
+const unsigned int& bflag, cudaStream_t stream);
 
 void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
@@ -41,6 +41,7 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
 
 void get_output (double* output, int* dev_sz, const unsigned int* host_sz, 
         #include "list_of_para.h"
+        , cudaStream_t stream
         );
 
 #endif
