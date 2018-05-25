@@ -7,9 +7,17 @@
 
 __device__ void device_calc_deriv_x(double * output, double * dev_var_in,
                                     const int * dev_u_offset, double * dev_dy, int* dev_bflag,
-                                    int i,int j,int k,int nx,int ny,int nz,int pp){
+                                    int nx,int ny,int nz){
+//    printf("nx : %d ny %d nz %d\n",nx,ny,nz);
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+
     if(i >= nx-3 || j >= ny-1 || k >= nz-1) return;
 
+    int pp = IDX(i, j, k);
+
+//    printf("i : %d j %d k %d\n",i,j,k);
     output[pp] = (dev_var_in[(*dev_u_offset) + pp - 2] - 8.0*dev_var_in[(*dev_u_offset)
                                                                         + pp - 1] + 8.0*dev_var_in[(*dev_u_offset) + pp + 1]
                   - dev_var_in[(*dev_u_offset) + pp + 2] )*((1.0/dev_dy[0])/12.0);
@@ -39,8 +47,14 @@ __device__ void device_calc_deriv_x(double * output, double * dev_var_in,
 
 __device__ void device_calc_deriv_y(double * output, double * dev_var_in,
                                     const int * dev_u_offset, double * dev_dy, int* dev_bflag,
-                                    int i,int j,int k,int nx,int ny,int nz,int pp){
+                                    int nx,int ny,int nz){
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+
     if(i >= nx-3 || j >= ny-3 || k >= nz-1) return;
+
+    int pp = IDX(i, j, k);
 
     output[pp] = (dev_var_in[*dev_u_offset + pp - 2*nx]
                   - 8.0*dev_var_in[*dev_u_offset + pp - nx]
@@ -76,8 +90,14 @@ __device__ void device_calc_deriv_y(double * output, double * dev_var_in,
 
 __device__ void device_calc_deriv_z(double * output, double * dev_var_in,
                                     const int * dev_u_offset, double * dev_dy, int* dev_bflag,
-                                    int i,int j,int k,int nx,int ny,int nz,int pp){
+                                    int nx,int ny,int nz){
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+
     if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
+
+    int pp = IDX(i, j, k);
 
     int n = nx * ny;
 
@@ -111,8 +131,14 @@ __device__ void device_calc_deriv_z(double * output, double * dev_var_in,
 }
 __device__ void device_calc_deriv_xx(double * output, double * dev_var_in,
                                      const int * dev_u_offset, double * dev_dy, int* dev_bflag,
-                                     int i,int j,int k,int nx,int ny,int nz,int pp){
+                                     int nx,int ny,int nz){
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+
     if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
+
+    int pp = IDX(i, j, k);
 
     output[pp] = ((-1)*dev_var_in[(*dev_u_offset) + pp - 2]
                   + 16.0*dev_var_in[(*dev_u_offset) + pp - 1]
@@ -166,8 +192,14 @@ __device__ void device_calc_deriv_xx(double * output, double * dev_var_in,
 
 __device__ void device_calc_deriv_yy(double * output, double * dev_var_in,
                                      const int * dev_u_offset, double * dev_dy, int* dev_bflag,
-                                     int i,int j,int k,int nx,int ny,int nz,int pp){
+                                     int nx,int ny,int nz){
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+
     if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
+
+    int pp = IDX(i, j, k);
 
     output[pp] = ((-1)*dev_var_in[(*dev_u_offset) + pp - 2*nx]
                   + 16.0*dev_var_in[(*dev_u_offset) + pp - nx]
@@ -221,8 +253,14 @@ __device__ void device_calc_deriv_yy(double * output, double * dev_var_in,
 
 __device__ void device_calc_deriv_zz(double * output, double * dev_var_in,
                                      const int * dev_u_offset, double * dev_dy, int* dev_bflag,
-                                     int i,int j,int k,int nx,int ny,int nz,int pp){
+                                     int nx,int ny,int nz){
+    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
+    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
+    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+
     if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
+
+    int pp = IDX(i, j, k);
 
     int n = nx * ny;
 
@@ -279,15 +317,9 @@ __global__ void calc_deriv42_first_part(double *dev_var_in,double * dev_dy_hx,do
 #include "list_of_para.h"
 ){
 
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
-
     int nx = dev_sz[0];
     int ny = dev_sz[1];
     int nz = dev_sz[2];
-
-    int pp = IDX(i, j, k);
 
 #include "bssnrhs_cuda_derivs_first_part.h"
 
@@ -298,15 +330,9 @@ __global__ void calc_deriv42_second_part(double *dev_var_in,double * dev_dy_hx,d
 #include "list_of_para.h"
 ){
 
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
-
     int nx = dev_sz[0];
     int ny = dev_sz[1];
     int nz = dev_sz[2];
-
-    int pp = IDX(i, j, k);
 
 #include "bssnrhs_cuda_derivs_secondd_part.h"
 
@@ -317,7 +343,7 @@ void cuda_calc_all(double * dev_var_in, double * dev_dy_hx,double * dev_dy_hy, d
 #include "list_of_para.h"
 ){
 
-    const int ie = host_sz[0] - 3;//x direction
+    const int ie = host_sz[0] - 1;//x direction
     const int je = host_sz[1] - 1;//y direction
     const int ke = host_sz[2] - 1;//z direction
 
