@@ -103,16 +103,18 @@ const unsigned int& bflag)
 #include "list_of_args.h"
     );
 
-    #include "bssnrhs_cuda_derivs_adv.h"
+    cuda_deriv_calc_all_adv(dev_var_in,dev_sz,dev_bflag,sz,dev_dy_hx,dev_dy_hy,dev_dy_hz,
+#include "list_of_args.h"
+);
 
     bssn::timer::t_deriv_gpu.stop();
 
 
-    bssn::timer::t_rhs_gpu.start();
-    calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
-        #include "list_of_args.h"
-    );
-    bssn::timer::t_rhs_gpu.stop();
+//    bssn::timer::t_rhs_gpu.start();
+//    calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
+//        #include "list_of_args.h"
+//    );
+//    bssn::timer::t_rhs_gpu.stop();
 
         
     if (bflag != 0) {
@@ -176,22 +178,26 @@ const unsigned int& bflag)
         bssn::timer::t_bdyc_gpu.stop();
     }
 
-    bssn::timer::t_deriv_gpu.start();
-    #include "bssnrhs_cuda_ko_derivs.h"
-    bssn::timer::t_deriv_gpu.stop();
-
-    #if test && 0
+//    bssn::timer::t_deriv_gpu.start();
+//    #include "bssnrhs_cuda_ko_derivs.h"
+//    bssn::timer::t_deriv_gpu.stop();
+    cudaStatus = cudaDeviceSynchronize();
+    if (cudaStatus != cudaSuccess) {
+        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+        return;
+    }
+    #if test && 1
     // Copying specified array to CPU for testing purpose
     double * host_array_cpu = (double *) malloc(size);
-    #include "test_GPU_derivs.h" // only one of both at a time
+//    #include "test_GPU_derivs.h" // only one of both at a time
     #include "test_GPU_adv_derivs.h"
-    free(host_array_cpu); 
+    free(host_array_cpu);
     #endif
 
     bssn::timer::t_rhs_gpu.start();
-    get_output(dev_var_out, dev_sz, sz,
-        #include "list_of_args.h"
-    );
+//    get_output(dev_var_out, dev_sz, sz,
+//        #include "list_of_args.h"
+//    );
     bssn::timer::t_rhs_gpu.stop();
 
     

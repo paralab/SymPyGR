@@ -33,7 +33,7 @@
   deriv_x(grad_0_At3, At3, hx, sz, bflag);
   deriv_x(grad_0_At4, At4, hx, sz, bflag);
   deriv_x(grad_0_At5, At5, hx, sz, bflag);
-  deriv_y(grad_1_alpha, alpha, hy, sz, bflag); 
+  deriv_y(grad_1_alpha, alpha, hy, sz, bflag);
   deriv_yy(grad2_1_1_alpha, alpha, hy, sz, bflag);
   deriv_y(grad_1_beta0, beta0, hy, sz, bflag);
   deriv_yy(grad2_1_1_beta0, beta0, hy, sz, bflag);
