@@ -9,89 +9,63 @@ enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,
 
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, 
 const unsigned int& offset, const double *pmin, const double *pmax, const unsigned int *sz, 
-const unsigned int& bflag, cudaStream_t stream)
+const unsigned int& bflag, cudaStream_t stream,
+#include "list_of_para.h"
+, double * dev_dy_hx, double * dev_dy_hy, double * dev_dy_hz, int * dev_sz, int * dev_zero, double * dev_pmin, double * dev_pmax, int * dev_bflag
+)
 { 
-    int alphaInt = (VAR_CU::U_ALPHA) * unzip_dof + offset;
-    int chiInt = (VAR_CU::U_CHI) * unzip_dof + offset;
-    int KInt = (VAR_CU::U_K) * unzip_dof + offset;
-    int gt0Int = (VAR_CU::U_SYMGT0) * unzip_dof + offset;
-    int gt1Int = (VAR_CU::U_SYMGT1) * unzip_dof + offset;
-    int gt2Int =  (VAR_CU::U_SYMGT2) * unzip_dof + offset;
-    int gt3Int =(VAR_CU::U_SYMGT3) * unzip_dof + offset;
-    int gt4Int = (VAR_CU::U_SYMGT4) * unzip_dof + offset;
-    int gt5Int = (VAR_CU::U_SYMGT5) * unzip_dof + offset;
-    int beta0Int = (VAR_CU::U_BETA0) * unzip_dof + offset;
-    int beta1Int = (VAR_CU::U_BETA1) * unzip_dof + offset;
-    int beta2Int =(VAR_CU::U_BETA2) * unzip_dof + offset;
-    int At0Int = (VAR_CU::U_SYMAT0) * unzip_dof + offset;
-    int At1Int = (VAR_CU::U_SYMAT1) * unzip_dof + offset;
-    int At2Int = (VAR_CU::U_SYMAT2) * unzip_dof + offset;
-    int At3Int = (VAR_CU::U_SYMAT3) * unzip_dof + offset;
-    int At4Int = (VAR_CU::U_SYMAT4) * unzip_dof + offset;
-    int At5Int = (VAR_CU::U_SYMAT5) * unzip_dof + offset;
-    int Gt0Int = (VAR_CU::U_GT0) * unzip_dof + offset;
-    int Gt1Int = (VAR_CU::U_GT1) * unzip_dof + offset;
-    int Gt2Int = (VAR_CU::U_GT2) * unzip_dof + offset;
-    int B0Int = (VAR_CU::U_B0) * unzip_dof + offset;
-    int B1Int = (VAR_CU::U_B1) * unzip_dof + offset;
-    int B2Int = (VAR_CU::U_B2) * unzip_dof + offset;
+    int alphaInt = (VAR_CU::U_ALPHA) * unzip_dof;
+    int chiInt = (VAR_CU::U_CHI) * unzip_dof;
+    int KInt = (VAR_CU::U_K) * unzip_dof;
+    int gt0Int = (VAR_CU::U_SYMGT0) * unzip_dof;
+    int gt1Int = (VAR_CU::U_SYMGT1) * unzip_dof;
+    int gt2Int =  (VAR_CU::U_SYMGT2) * unzip_dof;
+    int gt3Int =(VAR_CU::U_SYMGT3) * unzip_dof;
+    int gt4Int = (VAR_CU::U_SYMGT4) * unzip_dof;
+    int gt5Int = (VAR_CU::U_SYMGT5) * unzip_dof;
+    int beta0Int = (VAR_CU::U_BETA0) * unzip_dof;
+    int beta1Int = (VAR_CU::U_BETA1) * unzip_dof;
+    int beta2Int =(VAR_CU::U_BETA2) * unzip_dof;
+    int At0Int = (VAR_CU::U_SYMAT0) * unzip_dof;
+    int At1Int = (VAR_CU::U_SYMAT1) * unzip_dof;
+    int At2Int = (VAR_CU::U_SYMAT2) * unzip_dof;
+    int At3Int = (VAR_CU::U_SYMAT3) * unzip_dof;
+    int At4Int = (VAR_CU::U_SYMAT4) * unzip_dof;
+    int At5Int = (VAR_CU::U_SYMAT5) * unzip_dof;
+    int Gt0Int = (VAR_CU::U_GT0) * unzip_dof;
+    int Gt1Int = (VAR_CU::U_GT1) * unzip_dof;
+    int Gt2Int = (VAR_CU::U_GT2) * unzip_dof;
+    int B0Int = (VAR_CU::U_B0) * unzip_dof;
+    int B1Int = (VAR_CU::U_B1) * unzip_dof;
+    int B2Int = (VAR_CU::U_B2) * unzip_dof;
 
     double hx = (pmax[0] - pmin[0]) / (sz[0] - 1);
     double hy = (pmax[1] - pmin[1]) / (sz[1] - 1);
     double hz = (pmax[2] - pmin[2]) / (sz[2] - 1);
 
     cudaError_t cudaStatus;
-    #include "bssnrhs_cuda_offset_malloc.h"
+    #include "bssnrhs_cuda_offset_memcopy.h"
 
-    double * dev_dy_hx; //similar to hx in cpu code
-    cudaStatus = cudaMalloc((void **) &dev_dy_hx, sizeof(double));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "hx cudaMalloc failed!\n"); return;}
     cudaStatus = cudaMemcpyAsync(dev_dy_hx, &hx, sizeof(double), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "hx cudaMemcpy failed!\n"); return;}
 
-    double * dev_dy_hy;
-    cudaStatus = cudaMalloc((void **) &dev_dy_hy, sizeof(double));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "hy cudaMalloc failed!\n"); return;}
     cudaStatus = cudaMemcpyAsync(dev_dy_hy, &hy, sizeof(double), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "hy cudaMemcpy failed!\n"); return;}
 
-    double * dev_dy_hz;
-    cudaStatus = cudaMalloc((void **) &dev_dy_hz, sizeof(double));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "hz cudaMalloc failed!\n"); return;}
     cudaStatus = cudaMemcpyAsync(dev_dy_hz, &hz, sizeof(double), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "hz cudaMemcpy failed!\n"); return;}
 
-    int * dev_sz;
-    cudaStatus = cudaMalloc((void **) &dev_sz, 3*sizeof(int));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "sz cudaMalloc failed!\n"); return;}
     cudaStatus = cudaMemcpyAsync(dev_sz, sz, 3*sizeof(int), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "sz cudaMemcpy failed!\n"); return;}
 
-    int * dev_zero;
-    cudaStatus = cudaMalloc((void **) &dev_zero, sizeof(int));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "0 cudaMalloc failed!\n"); return;}
-
-    double * dev_pmin;
-    cudaStatus = cudaMalloc((void **) &dev_pmin, 3*sizeof(double));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMalloc failed!\n"); return;}
     cudaStatus = cudaMemcpyAsync(dev_pmin, pmin, 3*sizeof(double), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMemcpy failed!\n"); return;}
 
-    double *dev_pmax;
-    cudaStatus = cudaMalloc((void **) &dev_pmax, sizeof(pmax)*sizeof(double));
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMalloc failed!\n"); return;}
-    cudaStatus = cudaMemcpyAsync(dev_pmax, pmax, sizeof(pmax)*sizeof(double), cudaMemcpyHostToDevice, stream);
+    cudaStatus = cudaMemcpyAsync(dev_pmax, pmax, 3*sizeof(double), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMemcpy failed!\n"); return;}
-
+    
     cudaStreamSynchronize(stream);
 
-    // Allocate memory to store the output of derivs
-    unsigned int n = sz[0]*sz[1]*sz[2];
-    int size = n * sizeof(double);
-
-    #include "bssnrhs_cuda_malloc.h"
-    #include "bssnrhs_cuda_malloc_adv.h"
-    
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
@@ -103,8 +77,6 @@ const unsigned int& bflag, cudaStream_t stream)
         , stream
     );
     bssn::timer::t_rhs_gpu.stop();
-
-    cudaStreamSynchronize(stream);
 
     // if (bflag != 0) {
 
@@ -170,18 +142,9 @@ const unsigned int& bflag, cudaStream_t stream)
         #include "list_of_args.h"
         , stream
     );
+    
+    cudaStreamSynchronize(stream);
 
-    // #include "bssnrhs_cuda_mdealloc.h"
-    // #include "bssnrhs_cuda_mdealloc_adv.h"
-
-    // #include "bssnrhs_cuda_offset_demalloc.h"
-    // cudaFree(dev_dy_hx);
-    // cudaFree(dev_dy_hy);
-    // cudaFree(dev_dy_hz);
-    // cudaFree(dev_sz);
-    // cudaFree(dev_zero);
-    // cudaFree(dev_pmin);
-    // cudaFree(dev_pmax);
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
