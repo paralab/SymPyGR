@@ -83,6 +83,8 @@ const unsigned int& bflag, cudaStream_t stream)
     cudaStatus = cudaMemcpyAsync(dev_pmax, pmax, sizeof(pmax)*sizeof(double), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMemcpy failed!\n"); return;}
 
+    cudaStreamSynchronize(stream);
+
     // Allocate memory to store the output of derivs
     unsigned int n = sz[0]*sz[1]*sz[2];
     int size = n * sizeof(double);
@@ -102,7 +104,8 @@ const unsigned int& bflag, cudaStream_t stream)
     );
     bssn::timer::t_rhs_gpu.stop();
 
-        
+    cudaStreamSynchronize(stream);
+
     // if (bflag != 0) {
 
     //     bssn_bcs(dev_var_out, dev_var_in, dev_alphaInt, grad_0_alpha, grad_1_alpha, grad_2_alpha,
@@ -168,17 +171,17 @@ const unsigned int& bflag, cudaStream_t stream)
         , stream
     );
 
-    #include "bssnrhs_cuda_mdealloc.h"
-    #include "bssnrhs_cuda_mdealloc_adv.h"
+    // #include "bssnrhs_cuda_mdealloc.h"
+    // #include "bssnrhs_cuda_mdealloc_adv.h"
 
-    #include "bssnrhs_cuda_offset_demalloc.h"
-    cudaFree(dev_dy_hx);
-    cudaFree(dev_dy_hy);
-    cudaFree(dev_dy_hz);
-    cudaFree(dev_sz);
-    cudaFree(dev_zero);
-    cudaFree(dev_pmin);
-    cudaFree(dev_pmax);
+    // #include "bssnrhs_cuda_offset_demalloc.h"
+    // cudaFree(dev_dy_hx);
+    // cudaFree(dev_dy_hy);
+    // cudaFree(dev_dy_hz);
+    // cudaFree(dev_sz);
+    // cudaFree(dev_zero);
+    // cudaFree(dev_pmin);
+    // cudaFree(dev_pmax);
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
