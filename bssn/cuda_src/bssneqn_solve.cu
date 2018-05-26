@@ -63,7 +63,8 @@ double * dev_var_in, double * dev_var_out,
         int * dev_offset;
         cudaStatus = cudaMalloc((void **) &dev_offset, sizeof(int));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_offset cudaMalloc failed!\n"); return;}
-        cudaStatus = cudaMemcpy(dev_offset, &offset, sizeof(int), cudaMemcpyHostToDevice);
+
+        cudaStatus = cudaMemcpyAsync(dev_offset, &offset, sizeof(int), cudaMemcpyHostToDevice, stream);
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_offset cudaMemcpy failed!\n"); return;}
 
         cuda_bssn_eqns_points<<< blocks_cpu, threads_per_block_cpu, 0, stream >>>(dev_offset, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
@@ -77,7 +78,8 @@ double * dev_var_in, double * dev_var_out,
             fprintf(stderr, "cuda_bssn_eqns_points Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
             return;
         }
-        cudaFree(dev_offset);
+        cudaStatus = cudaFree(dev_offset);
+        if (cudaStatus != cudaSuccess) { fprintf(stderr, "dev_offset cudaFree failed: %s\n", cudaGetErrorString(cudaStatus));};
     } 
     // cudaDeviceSynchronize waits for the kernel to finish, and returns
     // any errors encountered during the launch.
