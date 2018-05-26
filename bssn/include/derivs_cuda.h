@@ -23,15 +23,10 @@ void cuda_deriv_calc_all_adv(double * dev_var_in, int * dev_sz, int* dev_bflag, 
 #include "list_of_para.h"
 );
 
-void cuda_ko_deriv42_x(double * output, double * dev_var_in, 
-   int * dev_u_offset, double * dev_dx, int * dev_sz,
-   int* dev_bflag, const unsigned int * host_sz);
-   
-void cuda_ko_deriv42_y(double * output, double * dev_var_in, 
-   int * dev_u_offset, double * dev_dy, int * dev_sz,
-   int* dev_bflag, const unsigned int * host_sz);
-void cuda_ko_deriv42_z(double * output, double * dev_var_in, 
-   int * dev_u_offset, double * dev_dz, int * dev_sz,
-   int* dev_bflag, const unsigned int * host_sz);
+void calc_ko_deriv_all(double * dev_var_in,double * dev_dy_hx,double * dev_dy_hy, double * dev_dy_hz, int * dev_sz,
+                       int* dev_bflag, const unsigned int * host_sz,
+#include "list_of_para.h"
+);
+
    
 #endif

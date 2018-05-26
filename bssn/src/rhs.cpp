@@ -124,56 +124,56 @@ bssn::timer::t_deriv.start();
 #include "bssnrhs_derivs.h"
 #include "bssnrhs_derivs_adv.h"
 
-//bssn::timer::t_deriv.stop();
-//
-//  register double x;
-//  register double y;
-//  register double z;
-//  register unsigned int pp;
-//
-//  double r_coord;
-//  double eta;
-//
-//  bssn::timer::t_rhs.start();
-//  //cout << "begin loop" << endl;
-//  for (unsigned int k = 3; k < nz-3; k++) {
-//      z = pmin[2] + k*hz;
-//
-//    for (unsigned int j = 3; j < ny-3; j++) {
-//       y = pmin[1] + j*hy;
-//
-//      for (unsigned int i = 3; i < nx-3; i++) {
-//         x = pmin[0] + i*hx;
-//
-//    //          if (i==5 && j==5 && k==6){
-//    //     printf("%f | %f | %f\n", z, y ,x);
-//    // }
-//
-//         pp = i + nx*(j + ny*k);
-//         r_coord = sqrt(x*x + y*y + z*z);
-//         eta=ETA_CONST;
-//         if (r_coord >= ETA_R0) {
-//          eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
-//         }
-//
-//
-//        #include "bssneqs.cpp"
-//
-//
-//       /* debugging */
-//        unsigned int qi = 46 - 1;
-//        unsigned int qj = 10 - 1;
-//        unsigned int qk = 60 - 1;
-//        unsigned int qidx = qi + nx*(qj + ny*qk);
-//        if (0 && qidx == pp) {
-//          std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;
-//        }
-//
-//      }
-//    }
-//  }
-//  bssn::timer::t_rhs.stop();
-//
+bssn::timer::t_deriv.stop();
+
+  register double x;
+  register double y;
+  register double z;
+  register unsigned int pp;
+
+  double r_coord;
+  double eta;
+
+  bssn::timer::t_rhs.start();
+  //cout << "begin loop" << endl;
+  for (unsigned int k = 3; k < nz-3; k++) {
+      z = pmin[2] + k*hz;
+
+    for (unsigned int j = 3; j < ny-3; j++) {
+       y = pmin[1] + j*hy;
+
+      for (unsigned int i = 3; i < nx-3; i++) {
+         x = pmin[0] + i*hx;
+
+    //          if (i==5 && j==5 && k==6){
+    //     printf("%f | %f | %f\n", z, y ,x);
+    // }
+
+         pp = i + nx*(j + ny*k);
+         r_coord = sqrt(x*x + y*y + z*z);
+         eta=ETA_CONST;
+         if (r_coord >= ETA_R0) {
+          eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
+         }
+
+
+        #include "bssneqs.cpp"
+
+
+       /* debugging */
+        unsigned int qi = 46 - 1;
+        unsigned int qj = 10 - 1;
+        unsigned int qk = 60 - 1;
+        unsigned int qidx = qi + nx*(qj + ny*qk);
+        if (0 && qidx == pp) {
+          std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;
+        }
+
+      }
+    }
+  }
+  bssn::timer::t_rhs.stop();
+
 
   if (bflag != 0) {
 
@@ -237,62 +237,62 @@ bssn::timer::t_deriv.start();
   }
 
 
-//bssn::timer::t_deriv.start();
-//#include "bssnrhs_ko_derivs.h"
-//bssn::timer::t_deriv.stop();
+bssn::timer::t_deriv.start();
+#include "bssnrhs_ko_derivs.h"
+bssn::timer::t_deriv.stop();
 
-#if test && 1
+#if test && 0
 // Take the pointer of specified array
-//#include "test_CPU_derivs.h"
+#include "test_CPU_derivs.h"
 #include "test_CPU_adv_derivs.h"
 #endif
 
-//bssn::timer::t_rhs.start();
-//
-//  const  double sigma = KO_DISS_SIGMA;
-//
-//
-//  for (unsigned int k = 3; k < nz-3; k++) {
-//    for (unsigned int j = 3; j < ny-3; j++) {
-//      for (unsigned int i = 3; i < nx-3; i++) {
-//        pp = i + nx*(j + ny*k);
-//
-//        a_rhs[pp]  += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
-//        b_rhs0[pp] += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
-//        b_rhs1[pp] += sigma * (grad_0_beta1[pp] + grad_1_beta1[pp] + grad_2_beta1[pp]);
-//        b_rhs2[pp] += sigma * (grad_0_beta2[pp] + grad_1_beta2[pp] + grad_2_beta2[pp]);
-//
-//        gt_rhs00[pp] += sigma * (grad_0_gt0[pp] + grad_1_gt0[pp] + grad_2_gt0[pp]);
-//        gt_rhs01[pp] += sigma * (grad_0_gt1[pp] + grad_1_gt1[pp] + grad_2_gt1[pp]);
-//        gt_rhs02[pp] += sigma * (grad_0_gt2[pp] + grad_1_gt2[pp] + grad_2_gt2[pp]);
-//        gt_rhs11[pp] += sigma * (grad_0_gt3[pp] + grad_1_gt3[pp] + grad_2_gt3[pp]);
-//        gt_rhs12[pp] += sigma * (grad_0_gt4[pp] + grad_1_gt4[pp] + grad_2_gt4[pp]);
-//        gt_rhs22[pp] += sigma * (grad_0_gt5[pp] + grad_1_gt5[pp] + grad_2_gt5[pp]);
-//
-//        chi_rhs[pp]  += sigma * (grad_0_chi[pp] + grad_1_chi[pp] + grad_2_chi[pp]);
-//
-//        At_rhs00[pp] += sigma * (grad_0_At0[pp] + grad_1_At0[pp] + grad_2_At0[pp]);
-//        At_rhs01[pp] += sigma * (grad_0_At1[pp] + grad_1_At1[pp] + grad_2_At1[pp]);
-//        At_rhs02[pp] += sigma * (grad_0_At2[pp] + grad_1_At2[pp] + grad_2_At2[pp]);
-//        At_rhs11[pp] += sigma * (grad_0_At3[pp] + grad_1_At3[pp] + grad_2_At3[pp]);
-//        At_rhs12[pp] += sigma * (grad_0_At4[pp] + grad_1_At4[pp] + grad_2_At4[pp]);
-//        At_rhs22[pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
-//
-//        K_rhs[pp] += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
-//
-//        Gt_rhs0[pp] += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
-//        Gt_rhs1[pp] += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
-//        Gt_rhs2[pp] += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
-//
-//        B_rhs0[pp] += sigma * (grad_0_B0[pp] + grad_1_B0[pp] + grad_2_B0[pp]);
-//        B_rhs1[pp] += sigma * (grad_0_B1[pp] + grad_1_B1[pp] + grad_2_B1[pp]);
-//        B_rhs2[pp] += sigma * (grad_0_B2[pp] + grad_1_B2[pp] + grad_2_B2[pp]);
-//      }
-//    }
-//  }
-//
-//bssn::timer::t_rhs.stop();
-//
+bssn::timer::t_rhs.start();
+
+  const  double sigma = KO_DISS_SIGMA;
+
+
+  for (unsigned int k = 3; k < nz-3; k++) {
+    for (unsigned int j = 3; j < ny-3; j++) {
+      for (unsigned int i = 3; i < nx-3; i++) {
+        pp = i + nx*(j + ny*k);
+
+        a_rhs[pp]  += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
+        b_rhs0[pp] += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
+        b_rhs1[pp] += sigma * (grad_0_beta1[pp] + grad_1_beta1[pp] + grad_2_beta1[pp]);
+        b_rhs2[pp] += sigma * (grad_0_beta2[pp] + grad_1_beta2[pp] + grad_2_beta2[pp]);
+
+        gt_rhs00[pp] += sigma * (grad_0_gt0[pp] + grad_1_gt0[pp] + grad_2_gt0[pp]);
+        gt_rhs01[pp] += sigma * (grad_0_gt1[pp] + grad_1_gt1[pp] + grad_2_gt1[pp]);
+        gt_rhs02[pp] += sigma * (grad_0_gt2[pp] + grad_1_gt2[pp] + grad_2_gt2[pp]);
+        gt_rhs11[pp] += sigma * (grad_0_gt3[pp] + grad_1_gt3[pp] + grad_2_gt3[pp]);
+        gt_rhs12[pp] += sigma * (grad_0_gt4[pp] + grad_1_gt4[pp] + grad_2_gt4[pp]);
+        gt_rhs22[pp] += sigma * (grad_0_gt5[pp] + grad_1_gt5[pp] + grad_2_gt5[pp]);
+
+        chi_rhs[pp]  += sigma * (grad_0_chi[pp] + grad_1_chi[pp] + grad_2_chi[pp]);
+
+        At_rhs00[pp] += sigma * (grad_0_At0[pp] + grad_1_At0[pp] + grad_2_At0[pp]);
+        At_rhs01[pp] += sigma * (grad_0_At1[pp] + grad_1_At1[pp] + grad_2_At1[pp]);
+        At_rhs02[pp] += sigma * (grad_0_At2[pp] + grad_1_At2[pp] + grad_2_At2[pp]);
+        At_rhs11[pp] += sigma * (grad_0_At3[pp] + grad_1_At3[pp] + grad_2_At3[pp]);
+        At_rhs12[pp] += sigma * (grad_0_At4[pp] + grad_1_At4[pp] + grad_2_At4[pp]);
+        At_rhs22[pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
+
+        K_rhs[pp] += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
+
+        Gt_rhs0[pp] += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
+        Gt_rhs1[pp] += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
+        Gt_rhs2[pp] += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
+
+        B_rhs0[pp] += sigma * (grad_0_B0[pp] + grad_1_B0[pp] + grad_2_B0[pp]);
+        B_rhs1[pp] += sigma * (grad_0_B1[pp] + grad_1_B1[pp] + grad_2_B1[pp]);
+        B_rhs2[pp] += sigma * (grad_0_B2[pp] + grad_1_B2[pp] + grad_2_B2[pp]);
+      }
+    }
+  }
+
+bssn::timer::t_rhs.stop();
+
 
 
 bssn::timer::t_deriv.start();

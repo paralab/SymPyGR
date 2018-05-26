@@ -754,8 +754,8 @@ void cuda_deriv_calc_all_adv(double * dev_var_in, int * dev_sz, int* dev_bflag, 
 
 }
 
-__global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
-                                  double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+__device__ void device_calc_ko_deriv_x(double * output, double * dev_var_in,int* dev_u_offset,
+                                  double *dev_dx, int* dev_sz,int* dev_bflag) {
 
     //ib, jb, kb values are accumulated to the x, y, z
     int i = 4 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -857,36 +857,8 @@ __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
     }
 }
 
-void cuda_ko_deriv42_x(double * output, double * dev_var_in,
-                       int * dev_u_offset, double * dev_dx, int * dev_sz,
-                       int* dev_bflag, const unsigned int * host_sz)
-{
-    cudaError_t cudaStatus;
-    const int ie = host_sz[0] - 4;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
-
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
-
-    int requiredBlocks = (9+maximumIterations) / 10;
-
-    calc_ko_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-            dim3((ie + requiredBlocks -1)/requiredBlocks,
-                 (je + requiredBlocks -1)/requiredBlocks,
-                 (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
-                    dev_dx, dev_bflag, dev_sz, dev_u_offset);
-
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_x kernal!\n", cudaStatus);
-        return;
-    }
-
-}
-
-__global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
-                                  double *dev_dy, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+__device__ void device_calc_ko_deriv_y(double * output, double * dev_var_in, int* dev_u_offset,
+                                  double *dev_dy, int* dev_sz, int* dev_bflag) {
 
     //ib, jb, kb values are accumulated to the x, y, z
     int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -987,36 +959,8 @@ __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
     }
 }
 
-void cuda_ko_deriv42_y(double * output, double * dev_var_in,
-                       int * dev_u_offset, double * dev_dy, int * dev_sz,
-                       int* dev_bflag, const unsigned int * host_sz)
-{
-    cudaError_t cudaStatus;
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 4;//y direction
-    const int ke = host_sz[2] - 3;//z direction
-
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
-
-    int requiredBlocks = (9+maximumIterations) / 10;
-
-    calc_ko_deriv42_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-            dim3((ie + requiredBlocks -1)/requiredBlocks,
-                 (je + requiredBlocks -1)/requiredBlocks,
-                 (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
-                    dev_dy, dev_bflag, dev_sz, dev_u_offset);
-
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_ko_deriv42_y kernal!\n", cudaStatus);
-        return;
-    }
-
-}
-
-__global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
-                                  double *dev_dz, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+__device__ void device_calc_ko_deriv_z(double * output, double * dev_var_in, int* dev_u_offset,
+                                  double *dev_dz, int* dev_sz, int* dev_bflag) {
 
     //ib, jb, kb values are accumulated to the x, y, z
     int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
@@ -1121,25 +1065,35 @@ __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
     }
 }
 
-void cuda_ko_deriv42_z(double * output, double * dev_var_in,
-                       int * dev_u_offset, double * dev_dz, int * dev_sz,
-                       int* dev_bflag, const unsigned int * host_sz)
+__global__ void cuda_calc_ko_deriv_all(double * dev_var_in,double * dev_dy_hx,double *dev_dy_hy, double *dev_dy_hz,
+                                    int *dev_sz,int *dev_bflag,
+#include "list_of_para.h"
+){
+    #include "bssnrhs_cuda_ko_derivs.h"
+}
+
+void calc_ko_deriv_all(double * dev_var_in,double * dev_dy_hx,double * dev_dy_hy, double * dev_dy_hz, int * dev_sz,
+                       int* dev_bflag, const unsigned int * host_sz,
+#include "list_of_para.h"
+)
 {
     cudaError_t cudaStatus;
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 4;//z direction
+    const int ke = host_sz[2] - 3;//z direction
 
     int temp_max = (ie>je)? ie : je;
     int maximumIterations = (temp_max>ke) ? temp_max: ke;
 
     int requiredBlocks = (9+maximumIterations) / 10;
 
-    calc_ko_deriv42_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+    cuda_calc_ko_deriv_all <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
             dim3((ie + requiredBlocks -1)/requiredBlocks,
                  (je + requiredBlocks -1)/requiredBlocks,
-                 (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
-                    dev_dz, dev_bflag, dev_sz, dev_u_offset);
+                 (ke + requiredBlocks -1)/requiredBlocks) >>> ( dev_var_in,
+                    dev_dy_hx,dev_dy_hy,dev_dy_hz, dev_sz,dev_bflag,
+                    #include "list_of_args.h"
+                    );
 
     cudaStatus = cudaDeviceSynchronize();
     if (cudaStatus != cudaSuccess) {
