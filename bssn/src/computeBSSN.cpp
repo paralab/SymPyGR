@@ -80,7 +80,7 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
     }
 
     // Start processing
-    #pragma omp parallel for num_threads(2)
+    #pragma omp parallel for num_threads(4)
     for (int index=0; index<num_blks*(blk_up-blk_lb+1); index++){
         int block_no = index%num_blks;
         int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
@@ -119,44 +119,43 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
         // Check for GPU
         cudaError_t cudaStatus;
         cudaStatus = cudaSetDevice(0);
-        // if (cudaStatus != cudaSuccess) {
-        //     fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
-        //     return 0;
-        // }
+        if (cudaStatus != cudaSuccess) {
+            fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
+        }
 
         // GPU Memory allocations
         cudaStatus = cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_in_array cudaMalloc failed!\n"); return 0;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_in_array cudaMalloc failed!\n");}
 
         cudaStatus = cudaMalloc((void**)&dev_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_out cudaMalloc failed!\n"); return 0;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_out cudaMalloc failed!\n");}
 
         #include "bssnrhs_cuda_offset_malloc.h"
 
         double * dev_dy_hx; //similar to hx in cpu code
         cudaStatus = cudaMalloc((void **) &dev_dy_hx, sizeof(double));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "hx cudaMalloc failed!\n"); return;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "hx cudaMalloc failed!\n");}
         double * dev_dy_hy;
         cudaStatus = cudaMalloc((void **) &dev_dy_hy, sizeof(double));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "hy cudaMalloc failed!\n"); return;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "hy cudaMalloc failed!\n");}
         double * dev_dy_hz;
         cudaStatus = cudaMalloc((void **) &dev_dy_hz, sizeof(double));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "hz cudaMalloc failed!\n"); return;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "hz cudaMalloc failed!\n");}
         int * dev_sz;
         cudaStatus = cudaMalloc((void **) &dev_sz, 3*sizeof(int));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "sz cudaMalloc failed!\n"); return;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "sz cudaMalloc failed!\n");}
         int * dev_zero;
         cudaStatus = cudaMalloc((void **) &dev_zero, sizeof(int));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "0 cudaMalloc failed!\n"); return;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "0 cudaMalloc failed!\n");}
         double * dev_pmin;
         cudaStatus = cudaMalloc((void **) &dev_pmin, 3*sizeof(double));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMalloc failed!\n"); return;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMalloc failed!\n");}
         double *dev_pmax;
         cudaStatus = cudaMalloc((void **) &dev_pmax, 3*sizeof(double));
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMalloc failed!\n"); return;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMalloc failed!\n");}
         int * dev_bflag;
         cudaStatus = cudaMalloc((void **) &dev_bflag, sizeof(int));
-        // if (cudaStatus != cudaSuccess)fprintf(stderr, "bflag cudaMalloc failed!\n");
+        if (cudaStatus != cudaSuccess)fprintf(stderr, "bflag cudaMalloc failed!\n");
 
         int size = total_points * sizeof(double);
 
@@ -164,14 +163,12 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
         #include "bssnrhs_cuda_malloc_adv.h"
 
         cudaStream_t stream;
-        cudaError_t result;
-        result = cudaStreamCreate(&stream);
-        // if (result != cudaSuccess) {fprintf(stderr, "cudaStream creation failed!\n"); return 0;}
+        cudaStatus = cudaStreamCreate(&stream);
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "cudaStream creation failed!\n");}
 
         cudaStatus = cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in_per_block asyncCudaMemcpy failed!\n"); return 0;}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in_per_block asyncCudaMemcpy failed!\n");}
 
-    
         cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream,
         #include "list_of_args.h"
         , dev_dy_hx, dev_dy_hy, dev_dy_hz, dev_sz, dev_zero, dev_pmin, dev_pmax, dev_bflag
@@ -183,10 +180,13 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
 
         cudaStreamDestroy(stream);
 
-        #include "bssnrhs_cuda_mdealloc.h"
-        #include "bssnrhs_cuda_mdealloc_adv.h"
+        // cudaStatus = cudaDeviceSynchronize();
+        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "cudaDeviceSynchronize failed!\n");}
 
-        #include "bssnrhs_cuda_offset_demalloc.h"
+        // #include "bssnrhs_cuda_mdealloc.h"
+        // #include "bssnrhs_cuda_mdealloc_adv.h"
+
+        // #include "bssnrhs_cuda_offset_demalloc.h"
         cudaFree(dev_dy_hx);
         cudaFree(dev_dy_hy);
         cudaFree(dev_dy_hz);
@@ -195,8 +195,8 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
         cudaFree(dev_pmin);
         cudaFree(dev_pmax);
 
-        cudaFree(dev_var_in_array[index]);
-        cudaFree(dev_var_out_array[index]);
+        // cudaFree(dev_var_in_array[index]);
+        // cudaFree(dev_var_out_array[index]);
 
         delete [] var_in_array[index];
     }
@@ -350,33 +350,33 @@ int main (int argc, char** argv)
         int unzip_dof = CPU_sequence(level, level, 1, var_out, index);
 
         unsigned int error_count = 0;
-        for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
-            for(unsigned int j=0; j<unzip_dof; j++){
-                unsigned int abs_index = i*unzip_dof + j;
-                double diff = var_out[i][j] - var_out_array[index][abs_index];
-                if (fabs(diff)>threshold){
-                    error_count++;
-                    const char separator    = ' ';
-                    const int nameWidth     = 6;
-                    const int numWidth      = NUM_DIGITS+10;
+        // for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
+        //     for(unsigned int j=0; j<unzip_dof; j++){
+        //         unsigned int abs_index = i*unzip_dof + j;
+        //         double diff = var_out[i][j] - var_out_array[index][abs_index];
+        //         if (fabs(diff)>threshold){
+        //             error_count++;
+        //             const char separator    = ' ';
+        //             const int nameWidth     = 6;
+        //             const int numWidth      = NUM_DIGITS+10;
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
-                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[index][abs_index];
+        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
+        //             std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[index][abs_index];
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
-                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  <<var_out[i][j];
+        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
+        //             std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  <<var_out[i][j];
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
-                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff;
+        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
+        //             std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff;
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
-                    std::cout << std::left << std::setw(4) << setfill(separator)  << i;
+        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
+        //             std::cout << std::left << std::setw(4) << setfill(separator)  << i;
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP(valid when total_blks=1): ";
-                    std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j << std::endl;
-                }
-            }
-        }
+        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP(valid when total_blks=1): ";
+        //             std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j << std::endl;
+        //         }
+        //     }
+        // }
         for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
         {
             delete [] var_out[i];
