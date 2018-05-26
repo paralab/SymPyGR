@@ -71,12 +71,10 @@ const unsigned int& bflag, cudaStream_t stream,
     #include "bssnrhs_cuda_derivs_adv.h"
 
 
-    bssn::timer::t_rhs_gpu.start();
     calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
         #include "list_of_args.h"
         , stream
     );
-    bssn::timer::t_rhs_gpu.stop();
 
     // if (bflag != 0) {
 

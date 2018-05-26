@@ -1,72 +1,72 @@
-cudaFree(agrad_0_gt0);
-cudaFree(agrad_1_gt0);
-cudaFree(agrad_2_gt0);
-cudaFree(agrad_0_gt1);
-cudaFree(agrad_1_gt1);
-cudaFree(agrad_2_gt1);
-cudaFree(agrad_0_gt2);
-cudaFree(agrad_1_gt2);
-cudaFree(agrad_2_gt2);
-cudaFree(agrad_0_gt3);
-cudaFree(agrad_1_gt3);
-cudaFree(agrad_2_gt3);
-cudaFree(agrad_0_gt4);
-cudaFree(agrad_1_gt4);
-cudaFree(agrad_2_gt4);
-cudaFree(agrad_0_gt5);
-cudaFree(agrad_1_gt5);
-cudaFree(agrad_2_gt5);
-cudaFree(agrad_0_At0);
-cudaFree(agrad_1_At0);
-cudaFree(agrad_2_At0);
-cudaFree(agrad_0_At1);
-cudaFree(agrad_1_At1);
-cudaFree(agrad_2_At1);
-cudaFree(agrad_0_At2);
-cudaFree(agrad_1_At2);
-cudaFree(agrad_2_At2);
-cudaFree(agrad_0_At3);
-cudaFree(agrad_1_At3);
-cudaFree(agrad_2_At3);
-cudaFree(agrad_0_At4);
-cudaFree(agrad_1_At4);
-cudaFree(agrad_2_At4);
-cudaFree(agrad_0_At5);
-cudaFree(agrad_1_At5);
-cudaFree(agrad_2_At5);
-cudaFree(agrad_0_alpha);
-cudaFree(agrad_1_alpha);
-cudaFree(agrad_2_alpha);
-cudaFree(agrad_0_beta0);
-cudaFree(agrad_1_beta0);
-cudaFree(agrad_2_beta0);
-cudaFree(agrad_0_beta1);
-cudaFree(agrad_1_beta1);
-cudaFree(agrad_2_beta1);
-cudaFree(agrad_0_beta2);
-cudaFree(agrad_1_beta2);
-cudaFree(agrad_2_beta2);
-cudaFree(agrad_0_chi);
-cudaFree(agrad_1_chi);
-cudaFree(agrad_2_chi);
-cudaFree(agrad_0_Gt0);
-cudaFree(agrad_1_Gt0);
-cudaFree(agrad_2_Gt0);
-cudaFree(agrad_0_Gt1);
-cudaFree(agrad_1_Gt1);
-cudaFree(agrad_2_Gt1);
-cudaFree(agrad_0_Gt2);
-cudaFree(agrad_1_Gt2);
-cudaFree(agrad_2_Gt2);
-cudaFree(agrad_0_K);
-cudaFree(agrad_1_K);
-cudaFree(agrad_2_K);
-cudaFree(agrad_0_B0);
-cudaFree(agrad_1_B0);
-cudaFree(agrad_2_B0);
-cudaFree(agrad_0_B1);
-cudaFree(agrad_1_B1);
-cudaFree(agrad_2_B1);
-cudaFree(agrad_0_B2);
-cudaFree(agrad_1_B2);
-cudaFree(agrad_2_B2);
+cudaStatus = cudaFree(agrad_0_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_gt0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_gt0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_gt0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_gt1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_gt1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_gt1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_gt2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_gt2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_gt2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_gt3 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_gt3 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_gt3 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_gt4 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_gt4 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_gt4 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_gt5 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_gt5 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_gt5 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_At0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_At0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_At0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_At0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_At0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_At0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_At1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_At1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_At1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_At1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_At1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_At1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_At2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_At2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_At2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_At2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_At2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_At2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_At3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_At3 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_At3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_At3 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_At3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_At3 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_At4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_At4 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_At4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_At4 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_At4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_At4 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_At5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_At5 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_At5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_At5 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_At5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_At5 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_alpha cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_alpha cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_alpha cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_beta0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_beta0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_beta0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_beta1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_beta1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_beta1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_beta2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_beta2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_beta2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_chi cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_chi cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_chi cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_Gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_Gt0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_Gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_Gt0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_Gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_Gt0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_Gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_Gt1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_Gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_Gt1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_Gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_Gt1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_Gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_Gt2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_Gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_Gt2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_Gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_Gt2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_K); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_K cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_K); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_K cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_K); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_K cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_B0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_B0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_B0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_B0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_B0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_B0 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_B1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_B1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_B1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_B1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_B1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_B1 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_0_B2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_0_B2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_1_B2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_1_B2 cudafree failed!\n");}
+cudaStatus = cudaFree(agrad_2_B2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "agrad_2_B2 cudafree failed!\n");}

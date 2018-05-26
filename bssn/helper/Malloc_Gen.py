@@ -20,7 +20,7 @@ def bssnrhs_cudo_malloc_gen():
             if len(line)>1:
                 output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(line[1][1:], line[1][1:])
                 output_memalloc_error_check = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(line[1][1:])
-                output_memdealloc = "cudaFree(%s);\n"%(line[1][1:])
+                output_memdealloc = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(line[1][1:], line[1][1:])
 
                 output_file1.write(output_memalloc)
                 output_file1.write(output_memalloc_error_check)
@@ -58,6 +58,9 @@ def allocate_memory_for_offset_ints():
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dy cudaMalloc failed!\n"); return;}
     cudaStatus = cudaMemcpy(dev_u_offset, &u_offset, sizeof(int), cudaMemcpyHostToDevice);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dy cudaMemcpy failed!\n"); return;}
+
+    cudaStatus = cudaMemcpyAsync(dev_KInt, &KInt, sizeof(int), cudaMemcpyHostToDevice, stream);
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "KInt cudaMemcpy failed!\n"); return;}
     """
 
     "cudaFree(grad_2_B1);"
@@ -71,17 +74,17 @@ def allocate_memory_for_offset_ints():
     for i in readyToUse:
         variableName = "dev_"+i
         line1 = "int * %s;\n"%(variableName)
-        line2 = "cudaStatus = cudaMalloc((void **) &%s, sizeof(int));\n"%(variableName)
-        line3 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n'%(i)
-        line4 = "cudaStatus = cudaMemcpy(%s, &%s, sizeof(int), cudaMemcpyHostToDevice);\n"%(variableName, i)
-        line5 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMemcpy failed!\\n"); return;}\n\n'%(i)
+        # line2 = "cudaStatus = cudaMalloc((void **) &%s, sizeof(int));\n"%(variableName)
+        # line3 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(i)
+        line4 = "cudaStatus = cudaMemcpyAsync(%s, &%s, sizeof(int), cudaMemcpyHostToDevice, stream);\n"%(variableName, i)
+        line5 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMemcpyAsync failed!\\n");}\n\n'%(i)
         f.write(line1)
-        f.write(line2)
-        f.write(line3)
+        # f.write(line2)
+        # f.write(line3)
         f.write(line4)
         f.write(line5)
 
-        line6 = "cudaFree(%s);\n"%(variableName)
+        line6 = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(variableName, variableName)
         f2.write(line6)
 
     f.close()
@@ -143,7 +146,7 @@ def bssnrhs_cudo_malloc_adv_gen():
                 variable_name = line[1][1:].strip()
                 output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(variable_name, variable_name)
                 output_memalloc_error_check = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(variable_name)
-                output_memdealloc = "cudaFree(%s);\n"%(variable_name)
+                output_memdealloc = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(variable_name, variable_name)
 
                 output_file1.write(output_memalloc)
                 output_file1.write(output_memalloc_error_check)
@@ -185,9 +188,9 @@ def bssnrhs_ko_derivs_gen():
 def main():
     allocate_memory_for_offset_ints()
     bssnrhs_cudo_malloc_gen()
-    bssnrhs_derivs_gen()
+    # bssnrhs_derivs_gen()
     bssnrhs_cudo_malloc_adv_gen()
-    bssnrhs_adv_derivs_gen()
-    bssnrhs_ko_derivs_gen()
+    # bssnrhs_adv_derivs_gen()
+    # bssnrhs_ko_derivs_gen()
 
 main()
