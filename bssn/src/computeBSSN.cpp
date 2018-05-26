@@ -193,7 +193,7 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
         #include "bssnrhs_cuda_mdealloc.h"
         #include "bssnrhs_cuda_mdealloc_adv.h"
 
-        #include "bssnrhs_cuda_offset_demalloc.h"
+        // #include "bssnrhs_cuda_offset_demalloc.h"
 
         cudaStatus = cudaFree(dev_dy_hx);
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_dy_hx cudaFree failed!\n");}
@@ -362,51 +362,51 @@ int main (int argc, char** argv)
     #include "rhs_cuda.h"
     double ** var_out_array = GPU_sequence(blk_lb, blk_up, num_blks);
 
-    //CPU Call for test GPU result
-    #include "rhs.h"
+    // //CPU Call for test GPU result
+    // #include "rhs.h"
     
-    for (int index=0; index<num_blks*(blk_up-blk_lb+1); index++){
-        double ** var_out=new double*[BSSN_NUM_VARS];
+    // for (int index=0; index<num_blks*(blk_up-blk_lb+1); index++){
+    //     double ** var_out=new double*[BSSN_NUM_VARS];
 
-        int block_no = index%num_blks;
-        int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
+    //     int block_no = index%num_blks;
+    //     int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
 
-        int unzip_dof = CPU_sequence(level, level, 1, var_out, index);
+    //     int unzip_dof = CPU_sequence(level, level, 1, var_out, index);
 
-        unsigned int error_count = 0;
-        // for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
-        //     for(unsigned int j=0; j<unzip_dof; j++){
-        //         unsigned int abs_index = i*unzip_dof + j;
-        //         double diff = var_out[i][j] - var_out_array[index][abs_index];
-        //         if (fabs(diff)>threshold){
-        //             error_count++;
-        //             const char separator    = ' ';
-        //             const int nameWidth     = 6;
-        //             const int numWidth      = NUM_DIGITS+10;
+    //     unsigned int error_count = 0;
+    //     for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
+    //         for(unsigned int j=0; j<unzip_dof; j++){
+    //             unsigned int abs_index = i*unzip_dof + j;
+    //             double diff = var_out[i][j] - var_out_array[index][abs_index];
+    //             if (fabs(diff)>threshold){
+    //                 error_count++;
+    //                 const char separator    = ' ';
+    //                 const int nameWidth     = 6;
+    //                 const int numWidth      = NUM_DIGITS+10;
 
-        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
-        //             std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[index][abs_index];
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
+    //                 std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[index][abs_index];
 
-        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
-        //             std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  <<var_out[i][j];
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
+    //                 std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  <<var_out[i][j];
 
-        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
-        //             std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff;
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
+    //                 std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff;
 
-        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
-        //             std::cout << std::left << std::setw(4) << setfill(separator)  << i;
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "BSSN_VAR: ";
+    //                 std::cout << std::left << std::setw(4) << setfill(separator)  << i;
 
-        //             std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP(valid when total_blks=1): ";
-        //             std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j << std::endl;
-        //         }
-        //     }
-        // }
-        for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
-        {
-            delete [] var_out[i];
-        }
-        delete [] var_out; 
-    }
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "PP(valid when total_blks=1): ";
+    //                 std::cout << std::left << std::setw(numWidth) << setfill(separator)  << j << std::endl;
+    //             }
+    //         }
+    //     }
+    //     for(unsigned int i=0;i<BSSN_NUM_VARS;i++)
+    //     {
+    //         delete [] var_out[i];
+    //     }
+    //     delete [] var_out; 
+    // }
     return 0;
 }
 

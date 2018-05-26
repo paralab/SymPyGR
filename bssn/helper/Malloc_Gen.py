@@ -77,14 +77,14 @@ def allocate_memory_for_offset_ints():
         # line2 = "cudaStatus = cudaMalloc((void **) &%s, sizeof(int));\n"%(variableName)
         # line3 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(i)
         line4 = "cudaStatus = cudaMemcpyAsync(%s, &%s, sizeof(int), cudaMemcpyHostToDevice, stream);\n"%(variableName, i)
-        line5 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMemcpyAsync failed!\\n");}\n\n'%(i)
-        f.write(line1)
+        line5 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMemcpyAsync failed!\\n"); return;}\n\n'%(i)
+        # f.write(line1)
         # f.write(line2)
         # f.write(line3)
         f.write(line4)
         f.write(line5)
 
-        line6 = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(variableName, variableName)
+        line6 = "cudaStatus = cudaFree(%s);\nif (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n\n"%(variableName, variableName)
         f2.write(line6)
 
     f.close()
