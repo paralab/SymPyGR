@@ -39,7 +39,7 @@ const unsigned int& bflag, cudaStream_t stream,
 void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,
     double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
-    const unsigned int *host_sz, int* dev_bflag, int* dev_sz);
+    const unsigned int *host_sz, int* dev_bflag, int* dev_sz, cudaStream_t stream);
 
 
 void get_output (double* output, int* dev_sz, const unsigned int* host_sz, 
