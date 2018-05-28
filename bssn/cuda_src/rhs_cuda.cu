@@ -183,11 +183,11 @@ const unsigned int& bflag)
 #include "list_of_args.h"
 );
     bssn::timer::t_deriv_gpu.stop();
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
-        return;
-    }
+//    cudaStatus = cudaDeviceSynchronize();
+//    if (cudaStatus != cudaSuccess) {
+//        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+//        return;
+//    }
     #if test && 0
     // Copying specified array to CPU for testing purpose
     double * host_array_cpu = (double *) malloc(size);
@@ -382,7 +382,7 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
     const unsigned int *host_sz, int* dev_bflag, int* dev_sz) {
         
-        cudaError_t cudaStatus;
+//        cudaError_t cudaStatus;
         const unsigned int nx = host_sz[0];
         const unsigned int ny = host_sz[1];
         const unsigned int nz = host_sz[2];
@@ -401,11 +401,11 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         cacl_bssn_bcs_x <<< dim3(threads_y,threads_z), dim3(threads_y,threads_z) >>> (output, dev_var_in,
            dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
 
-        cudaStatus = cudaDeviceSynchronize();
-           if (cudaStatus != cudaSuccess) {
-                   fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_x kernal!\n", cudaStatus);
-                   return;
-           }
+//        cudaStatus = cudaDeviceSynchronize();
+//           if (cudaStatus != cudaSuccess) {
+//                   fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_x kernal!\n", cudaStatus);
+//                   return;
+//           }
         
         maximumIterations = (ke>ie) ? ke : ie ;
         requiredBlocks = (9 + maximumIterations)/10;
@@ -414,11 +414,11 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         cacl_bssn_bcs_y <<< dim3(threads_x,threads_z), dim3(threads_x,threads_z) >>> (output, dev_var_in,
             dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
  
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_y kernal!\n", cudaStatus);
-            return;
-        }
+//        cudaStatus = cudaDeviceSynchronize();
+//        if (cudaStatus != cudaSuccess) {
+//            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_y kernal!\n", cudaStatus);
+//            return;
+//        }
 
         maximumIterations = (je>ie) ? je : ie ;
         requiredBlocks = (9 + maximumIterations)/10;
@@ -427,11 +427,11 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         cacl_bssn_bcs_z <<< dim3(threads_x,threads_y), dim3(threads_x,threads_y) >>> (output, dev_var_in,
             dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
  
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
-            return;
-        }
+//        cudaStatus = cudaDeviceSynchronize();
+//        if (cudaStatus != cudaSuccess) {
+//            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
+//            return;
+//        }
     }
 
     __global__ void kernal_get_output (double * output, int * dev_sz, 

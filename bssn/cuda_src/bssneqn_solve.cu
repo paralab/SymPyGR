@@ -80,9 +80,9 @@ double * dev_var_in, double * dev_var_out,
     } 
     // cudaDeviceSynchronize waits for the kernel to finish, and returns
     // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_bssn_eqns_points kernals!\n", cudaStatus);
-        return;
-    }
+//    cudaStatus = cudaDeviceSynchronize();
+//    if (cudaStatus != cudaSuccess) {
+//        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_bssn_eqns_points kernals!\n", cudaStatus);
+//        return;
+//    }
 }
