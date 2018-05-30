@@ -76,6 +76,16 @@ def vec3(name, idx):
     vname = ' '.join([name + repr(i) + idx for i in [0, 1, 2]])
     return symbols(vname)
 
+def vec3_cuda(name,arrIdx, idx):
+    """
+    Create a 3D vector variable with the corresponding name. The 'name' will be during code generation, so should match
+    the variable name used in the C++ code. The returned array Index variable can be indexed(0,1,2), i.e.,
+
+    b = dendro.vec3_cuda("beta")
+    b[1] = x^2
+    """
+    vname = ' '.join([name +idx[:1]+arrIdx+ repr(i) + idx[1:] for i in [0, 1, 2]])
+    return symbols(vname)
 
 def sym_3x3(name, idx):
     """
@@ -91,6 +101,20 @@ def sym_3x3(name, idx):
 
     return Matrix([[m1, m2, m3], [m2, m4, m5], [m3, m5, m6]])
 
+
+def sym_3x3_cuda(name,arrIdx, idx):
+    """
+    Create a symmetric 3x3 matrix variables with the corresponding name. The 'name' will be during code generation, so
+    should match the variable name used in the C++ code. The returned variable array Index name can be indexed(0,1,2)^2, i.e.,
+
+    gt = dendro.sym_3x3_cuda("gt")
+    gt[0,2] = x^2
+    """
+
+    vname = ' '.join([name + idx[:1]+ arrIdx+ repr(i) + idx[1:] for i in range(6)])
+    m1, m2, m3, m4, m5, m6 = symbols(vname)
+
+    return Matrix([[m1, m2, m3], [m2, m4, m5], [m3, m5, m6]])
 
 ##########################################################################
 # derivative related functions
@@ -615,6 +639,104 @@ def generate(ex, vnames, idx):
 
         print_n_write('// Dendro vectorized code: }}} ', output_file)
 
+
+def generate_cuda(ex,vname, arrIdx, idx):
+    """
+    Generate the Cuda code by simplifying the expressions.
+    """
+    # print(ex)
+
+    mi = [0, 1, 2, 4, 5, 8]
+    midx = ['0', '1','2', '3', '4', '5']
+
+    # total number of expressions
+    # print("--------------------------------------------------------")
+    num_e = 0
+    lexp = []
+    lname = []
+    for i, e in enumerate(ex):
+        if type(e) == list:
+            num_e = num_e + len(e)
+            for j, ev in enumerate(e):
+                lexp.append(ev)
+                lname.append(vname+idx[:1]+arrIdx[i]+repr(j)+idx[1:])
+        elif type(e) == Matrix:
+            num_e = num_e + len(e)
+            for j, k in enumerate(mi):
+                lexp.append(e[k])
+                lname.append(vname+idx[:1]+arrIdx[i]+midx[j]+idx[1:])
+        else:
+            num_e = num_e + 1
+            lexp.append(e)
+            lname.append(vname+idx[:1]+arrIdx[i]+idx[1:])
+
+    # print(num_e)
+    # print(len(lname))
+    with open("bssneq.cu", 'w') as output_file:
+        
+        print_n_write('// Dendro: {{{ ', output_file)
+        print_n_write('// Dendro: original ops: ' + str(count_ops(lexp)), output_file)
+
+        # print("--------------------------------------------------------")
+        # print("Now trying Common Subexpression Detection and Collection")
+        # print("--------------------------------------------------------")
+
+        # Common Subexpression Detection and Collection
+        # for i in range(len(ex)):
+        #     # print("--------------------------------------------------------")
+        #     # print(ex[i])
+        #     # print("--------------------------------------------------------")
+        #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+        #     ee_syms = numbered_symbols(prefix=ee_name)
+        #     _v = cse(ex[i],symbols=ee_syms)
+        #     # print(type(_v))
+        #     for (v1,v2) in _v[0]:
+        #         print("double %s = %s;" % (v1, v2))
+        #     print("%s = %s" % (vnames[i], _v[1][0]))
+
+        #mex = Matrix(ex)
+        ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+        ee_syms = numbered_symbols(prefix=ee_name)
+        _v = cse(lexp, symbols=ee_syms, optimizations='basic')
+        custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
+
+        rops=0
+        print_n_write('// Dendro: printing temp variables', output_file)
+        for (v1, v2) in _v[0]:
+            # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
+            print_n_write('double ', output_file, isNewLineEnd=False)
+            print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
+            rops = rops + count_ops(v2)
+
+        print_n_write('\n// Dendro: printing variables', output_file)
+        for i, e in enumerate(_v[1]):
+            print_n_write("//--", output_file)
+            # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
+            print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
+            rops = rops + count_ops(e)
+
+        print_n_write('// Dendro: reduced ops: ' + str(rops), output_file)
+        print_n_write('// Dendro: }}} ', output_file)
+
+        print_n_write('// Dendro vectorized code: {{{', output_file)
+        oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
+        prevdefvars = set()
+        for (v1, v2) in _v[0]:
+            vv = numbered_symbols('v')
+            vlist = []
+            gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx, output_file)
+            print_n_write('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';', output_file)
+        for i, e in enumerate(_v[1]):
+            print_n_write("//--", output_file)
+            vv = numbered_symbols('v')
+            vlist = []
+            gen_vector_code(e, vv, vlist, oper, prevdefvars, idx, output_file)
+            #st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
+            st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
+            print_n_write(st.replace("'",""), output_file)
+
+        print_n_write('// Dendro vectorized code: }}} ', output_file)
+
 def replace_pow(exp_in):
     """
     Convert integer powers in an expression to Muls, like a**2 => a*a
@@ -626,7 +748,6 @@ def replace_pow(exp_in):
          raise ValueError("Dendro: Non integer power encountered.")
     repl = zip(pows, (Mul(*[b]*e, evaluate=False) for b, e in (i.as_base_exp() for i in pows)))
     return exp_in.xreplace(dict(repl))
-
 
 def generate_debug (ex, vnames):
     """
