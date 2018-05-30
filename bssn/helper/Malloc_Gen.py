@@ -18,13 +18,15 @@ def bssnrhs_cudo_malloc_gen():
         for line in f:
             line = line.strip().split()
             if len(line)>1:
-                output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(line[1][1:], line[1][1:])
+                # output_memalloc = "double * %s;\n"%(line[1][1:])
+                # output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(line[1][1:], line[1][1:])
+                output_memalloc = "cudaStatus = cudaMalloc((void **) &%s, size);\n"%(line[1][1:])
                 output_memalloc_error_check = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(line[1][1:])
-                output_memdealloc = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(line[1][1:], line[1][1:])
+                # output_memdealloc = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(line[1][1:], line[1][1:])
 
                 output_file1.write(output_memalloc)
                 output_file1.write(output_memalloc_error_check)
-                output_file2.write(output_memdealloc)
+                # output_file2.write(output_memdealloc)
     output_file1.close()
     output_file2.close()
 
@@ -73,16 +75,16 @@ def allocate_memory_for_offset_ints():
 
     for i in readyToUse:
         variableName = "dev_"+i
-        line1 = "int * %s;\n"%(variableName)
-        # line2 = "cudaStatus = cudaMalloc((void **) &%s, sizeof(int));\n"%(variableName)
-        # line3 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(i)
-        line4 = "cudaStatus = cudaMemcpyAsync(%s, &%s, sizeof(int), cudaMemcpyHostToDevice, stream);\n"%(variableName, i)
-        line5 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMemcpyAsync failed!\\n"); return;}\n\n'%(i)
+        # line1 = "int * %s;\n"%(variableName)
+        line2 = "cudaStatus = cudaMalloc((void **) &%s, sizeof(int));\n"%(variableName)
+        line3 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(i)
+        # line4 = "cudaStatus = cudaMemcpyAsync(%s, &%s, sizeof(int), cudaMemcpyHostToDevice, stream);\n"%(variableName, i)
+        # line5 = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMemcpyAsync failed!\\n"); return;}\n\n'%(i)
         # f.write(line1)
-        # f.write(line2)
-        # f.write(line3)
-        f.write(line4)
-        f.write(line5)
+        f.write(line2)
+        f.write(line3)
+        # f.write(line4)
+        # f.write(line5)
 
         line6 = "cudaStatus = cudaFree(%s);\nif (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n\n"%(variableName, variableName)
         f2.write(line6)
@@ -144,13 +146,15 @@ def bssnrhs_cudo_malloc_adv_gen():
             line = line.strip().split()
             if len(line)>1:
                 variable_name = line[1][1:].strip()
-                output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(variable_name, variable_name)
+                # output_memalloc = "double * %s;\n"%(variable_name)
+                # output_memalloc = "double * %s; cudaStatus = cudaMalloc((void **) &%s, size);\n"%(variable_name, variable_name)
+                output_memalloc = "cudaStatus = cudaMalloc((void **) &%s, size);\n"%(variable_name)
                 output_memalloc_error_check = 'if (cudaStatus != cudaSuccess) {fprintf(stderr, "%s cudaMalloc failed!\\n"); return;}\n\n'%(variable_name)
-                output_memdealloc = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(variable_name, variable_name)
+                # output_memdealloc = "cudaStatus = cudaFree(%s); if (cudaStatus != cudaSuccess) {fprintf(stderr, \"%s cudafree failed!\\n\");}\n"%(variable_name, variable_name)
 
                 output_file1.write(output_memalloc)
                 output_file1.write(output_memalloc_error_check)
-                output_file2.write(output_memdealloc)
+                # output_file2.write(output_memdealloc)
     output_file1.close()
     output_file2.close()
 

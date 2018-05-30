@@ -63,9 +63,10 @@ const unsigned int& bflag, cudaStream_t stream,
 
     cudaStatus = cudaMemcpyAsync(dev_pmax, pmax, 3*sizeof(double), cudaMemcpyHostToDevice, stream);
     if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMemcpyAsync failed!\n"); return;}
-    
-    cudaStreamSynchronize(stream);
 
+    cudaStatus = cudaStreamSynchronize(stream);
+    if (cudaStatus != cudaSuccess) {fprintf(stderr, "1 stream cudaStreamSynchronize failed!\n");}
+    
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
@@ -76,63 +77,63 @@ const unsigned int& bflag, cudaStream_t stream,
         , stream
     );
 
-    if (bflag != 0) {
+    // if (bflag != 0) {
 
-        bssn_bcs(dev_var_out, dev_var_in, dev_alphaInt, grad_0_alpha, grad_1_alpha, grad_2_alpha,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_chiInt, grad_0_chi, grad_1_chi, grad_2_chi,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_KInt, grad_0_K, grad_1_K, grad_2_K,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_alphaInt, grad_0_alpha, grad_1_alpha, grad_2_alpha,
+    //         dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_chiInt, grad_0_chi, grad_1_chi, grad_2_chi,
+    //         dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_KInt, grad_0_K, grad_1_K, grad_2_K,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
 
-        bssn_bcs(dev_var_out, dev_var_in, dev_beta0Int, grad_0_beta0, grad_1_beta0, grad_2_beta0,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_beta1Int, grad_0_beta1, grad_1_beta1, grad_2_beta1,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_beta2Int, grad_0_beta2, grad_1_beta2, grad_2_beta2,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_beta0Int, grad_0_beta0, grad_1_beta0, grad_2_beta0,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_beta1Int, grad_0_beta1, grad_1_beta1, grad_2_beta1,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_beta2Int, grad_0_beta2, grad_1_beta2, grad_2_beta2,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
 
-        bssn_bcs(dev_var_out, dev_var_in, dev_Gt0Int, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_Gt1Int, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_Gt2Int, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_Gt0Int, grad_0_Gt0, grad_1_Gt0, grad_2_Gt0,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_Gt1Int, grad_0_Gt1, grad_1_Gt1, grad_2_Gt1,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_Gt2Int, grad_0_Gt2, grad_1_Gt2, grad_2_Gt2,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
 
-        bssn_bcs(dev_var_out, dev_var_in, dev_B0Int, grad_0_B0, grad_1_B0, grad_2_B0,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_B1Int, grad_0_B1, grad_1_B1, grad_2_B1,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_B2Int, grad_0_B2, grad_1_B2, grad_2_B2,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_B0Int, grad_0_B0, grad_1_B0, grad_2_B0,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_B1Int, grad_0_B1, grad_1_B1, grad_2_B1,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_B2Int, grad_0_B2, grad_1_B2, grad_2_B2,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
 
-        bssn_bcs(dev_var_out, dev_var_in, dev_At0Int, grad_0_At0, grad_1_At0, grad_2_At0,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_At1Int, grad_0_At1, grad_1_At1, grad_2_At1,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_At2Int, grad_0_At2, grad_1_At2, grad_2_At2,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_At3Int, grad_0_At3, grad_1_At3, grad_2_At3,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_At4Int, grad_0_At4, grad_1_At4, grad_2_At4,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_At5Int, grad_0_At5, grad_1_At5, grad_2_At5,
-            dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream); 
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_At0Int, grad_0_At0, grad_1_At0, grad_2_At0,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_At1Int, grad_0_At1, grad_1_At1, grad_2_At1,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_At2Int, grad_0_At2, grad_1_At2, grad_2_At2,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_At3Int, grad_0_At3, grad_1_At3, grad_2_At3,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_At4Int, grad_0_At4, grad_1_At4, grad_2_At4,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_At5Int, grad_0_At5, grad_1_At5, grad_2_At5,
+    //         dev_pmin, dev_pmax, 2.0, 0.0, sz, dev_bflag, dev_sz, stream); 
 
-        bssn_bcs(dev_var_out, dev_var_in, dev_gt0Int, grad_0_gt0, grad_1_gt0, grad_2_gt0,
-                dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_gt1Int, grad_0_gt1, grad_1_gt1, grad_2_gt1,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_gt2Int, grad_0_gt2, grad_1_gt2, grad_2_gt2,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_gt3Int, grad_0_gt3, grad_1_gt3, grad_2_gt3,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_gt4Int, grad_0_gt4, grad_1_gt4, grad_2_gt4,
-            dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
-        bssn_bcs(dev_var_out, dev_var_in, dev_gt5Int, grad_0_gt5, grad_1_gt5, grad_2_gt5,
-            dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_gt0Int, grad_0_gt0, grad_1_gt0, grad_2_gt0,
+    //             dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_gt1Int, grad_0_gt1, grad_1_gt1, grad_2_gt1,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_gt2Int, grad_0_gt2, grad_1_gt2, grad_2_gt2,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_gt3Int, grad_0_gt3, grad_1_gt3, grad_2_gt3,
+    //         dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_gt4Int, grad_0_gt4, grad_1_gt4, grad_2_gt4,
+    //         dev_pmin, dev_pmax, 1.0, 0.0, sz, dev_bflag, dev_sz, stream);
+    //     bssn_bcs(dev_var_out, dev_var_in, dev_gt5Int, grad_0_gt5, grad_1_gt5, grad_2_gt5,
+    //         dev_pmin, dev_pmax, 1.0, 1.0, sz, dev_bflag, dev_sz, stream);
         
-    }
+    // }
 
     #include "bssnrhs_cuda_ko_derivs.h"
 
@@ -140,9 +141,6 @@ const unsigned int& bflag, cudaStream_t stream,
         #include "list_of_args.h"
         , stream
     );
-    
-    cudaStreamSynchronize(stream);
-
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,

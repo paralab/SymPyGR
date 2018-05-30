@@ -123,6 +123,23 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
             fprintf(stderr, "cudaSetDevice failed!  Do you have a CUDA-capable GPU installed?\n");
         }
 
+
+        #include "bssnrhs_cuda_offset_variable_malloc.h"
+        #include "bssnrhs_cuda_variable_malloc.h"
+        #include "bssnrhs_cuda_variable_malloc_adv.h"
+        double * dev_dy_hx; //similar to hx in cpu code
+        double * dev_dy_hy;
+        double * dev_dy_hz;
+        int * dev_sz;
+        int * dev_zero;
+        double * dev_pmin;
+        double *dev_pmax;
+        int * dev_bflag;
+
+        int size = total_points * sizeof(double);
+
+        // #pragma omp critical (global_data_lock)
+        // {
         // GPU Memory allocations
         cudaStatus = cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_in_array cudaMalloc failed!\n");}
@@ -132,42 +149,33 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
 
         #include "bssnrhs_cuda_offset_malloc.h"
 
-        double * dev_dy_hx; //similar to hx in cpu code
         cudaStatus = cudaMalloc((void **) &dev_dy_hx, sizeof(double));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "hx cudaMalloc failed!\n");}
 
-        double * dev_dy_hy;
         cudaStatus = cudaMalloc((void **) &dev_dy_hy, sizeof(double));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "hy cudaMalloc failed!\n");}
 
-        double * dev_dy_hz;
         cudaStatus = cudaMalloc((void **) &dev_dy_hz, sizeof(double));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "hz cudaMalloc failed!\n");}
 
-        int * dev_sz;
         cudaStatus = cudaMalloc((void **) &dev_sz, 3*sizeof(int));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "sz cudaMalloc failed!\n");}
 
-        int * dev_zero;
         cudaStatus = cudaMalloc((void **) &dev_zero, sizeof(int));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "0 cudaMalloc failed!\n");}
 
-        double * dev_pmin;
         cudaStatus = cudaMalloc((void **) &dev_pmin, 3*sizeof(double));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMalloc failed!\n");}
 
-        double *dev_pmax;
         cudaStatus = cudaMalloc((void **) &dev_pmax, 3*sizeof(double));
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMalloc failed!\n");}
 
-        int * dev_bflag;
         cudaStatus = cudaMalloc((void **) &dev_bflag, sizeof(int));
         if (cudaStatus != cudaSuccess)fprintf(stderr, "bflag cudaMalloc failed!\n");
 
-        int size = total_points * sizeof(double);
-
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
+        // }
 
         cudaStream_t stream;
         cudaStatus = cudaStreamCreate(&stream);
@@ -175,9 +183,6 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
 
         cudaStatus = cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream);
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_in_array[index] cudaMemcpyAsync failed!\n");}
-
-        cudaStatus = cudaStreamSynchronize(stream);
-        if (cudaStatus != cudaSuccess) {fprintf(stderr, "1 stream cudaStreamSynchronize failed!\n");}
 
         cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream,
         #include "list_of_args.h"
@@ -188,43 +193,46 @@ double ** GPU_sequence(unsigned int blk_lb, unsigned int blk_up, unsigned int nu
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "var_out_array[index] cudaMemcpyAsync failed!\n");}
 
         cudaStatus = cudaStreamSynchronize(stream);
-        if (cudaStatus != cudaSuccess) {fprintf(stderr, "stream cudaStreamSynchronize failed!\n");}
+        if (cudaStatus != cudaSuccess) {fprintf(stderr, "3 stream cudaStreamSynchronize failed!\n");}
 
         cudaStatus = cudaStreamDestroy(stream);
         if (cudaStatus != cudaSuccess) {fprintf(stderr, "stream cudaStreamDestroy failed!\n");}
 
-        // #include "bssnrhs_cuda_mdealloc.h"
-        // #include "bssnrhs_cuda_mdealloc_adv.h"
+        // // #pragma omp critical (global_data_lock)
+        // // {
 
-        // #include "bssnrhs_cuda_offset_demalloc.h"
+        //     #include "bssnrhs_cuda_mdealloc.h"
+        //     #include "bssnrhs_cuda_mdealloc_adv.h"
 
-        // cudaStatus = cudaFree(dev_dy_hx);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_dy_hx cudaFree failed!\n");}
+        //     #include "bssnrhs_cuda_offset_demalloc.h"
 
-        // cudaStatus = cudaFree(dev_dy_hy);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_dy_hy cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_dy_hx);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_dy_hx cudaFree failed!\n");}
 
-        // cudaStatus = cudaFree(dev_dy_hz);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_dy_hz cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_dy_hy);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_dy_hy cudaFree failed!\n");}
 
-        // cudaStatus = cudaFree(dev_sz);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_sz cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_dy_hz);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_dy_hz cudaFree failed!\n");}
 
-        // cudaStatus = cudaFree(dev_zero);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_zero cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_sz);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_sz cudaFree failed!\n");}
 
-        // cudaStatus = cudaFree(dev_pmin);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_pmin cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_zero);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_zero cudaFree failed!\n");}
 
-        // cudaStatus = cudaFree(dev_pmax);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_pmax cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_pmin);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_pmin cudaFree failed!\n");}
 
-        // cudaStatus = cudaFree(dev_var_in_array[index]);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_in_array[index] cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_pmax);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_pmax cudaFree failed!\n");}
 
-        // cudaStatus = cudaFree(dev_var_out_array[index]);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out_array[index] cudaFree failed!\n");}
+        //     cudaStatus = cudaFree(dev_var_in_array[index]);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_in_array[index] cudaFree failed!\n");}
 
+        //     cudaStatus = cudaFree(dev_var_out_array[index]);
+        //     if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_var_out_array[index] cudaFree failed!\n");}
+        // // }
         delete [] var_in_array[index];
     }
 
