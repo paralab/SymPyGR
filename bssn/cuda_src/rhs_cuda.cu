@@ -43,34 +43,18 @@ const unsigned int& bflag, cudaStream_t stream,
     double hy = (pmax[1] - pmin[1]) / (sz[1] - 1);
     double hz = (pmax[2] - pmin[2]) / (sz[2] - 1);
 
-    cudaError_t cudaStatus;
     #include "bssnrhs_cuda_offset_memcopy.h"
 
-    cudaStatus = cudaMemcpyAsync(dev_dy_hx, &hx, sizeof(double), cudaMemcpyHostToDevice, stream);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "hx cudaMemcpyAsync failed!\n"); return;}
+    CHECK_ERROR(cudaMemcpyAsync(dev_dy_hx, &hx, sizeof(double), cudaMemcpyHostToDevice, stream), "dev_dy_hx cudaMemcpyHostToDevice");
+    CHECK_ERROR(cudaMemcpyAsync(dev_dy_hy, &hy, sizeof(double), cudaMemcpyHostToDevice, stream), "dev_dy_hy cudaMemcpyHostToDevice");
+    CHECK_ERROR(cudaMemcpyAsync(dev_dy_hz, &hz, sizeof(double), cudaMemcpyHostToDevice, stream), "dev_dy_hz cudaMemcpyHostToDevice");
+    CHECK_ERROR(cudaMemcpyAsync(dev_sz, sz, 3*sizeof(int), cudaMemcpyHostToDevice, stream), "dev_sz cudaMemcpyHostToDevice");
+    CHECK_ERROR(cudaMemcpyAsync(dev_pmin, pmin, 3*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_pmin cudaMemcpyHostToDevice");
+    CHECK_ERROR(cudaMemcpyAsync(dev_pmax, pmax, 3*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_pmax cudaMemcpyHostToDevice");
 
-    cudaStatus = cudaMemcpyAsync(dev_dy_hy, &hy, sizeof(double), cudaMemcpyHostToDevice, stream);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "hy cudaMemcpyAsync failed!\n"); return;}
-
-    cudaStatus = cudaMemcpyAsync(dev_dy_hz, &hz, sizeof(double), cudaMemcpyHostToDevice, stream);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "hz cudaMemcpyAsync failed!\n"); return;}
-
-    cudaStatus = cudaMemcpyAsync(dev_sz, sz, 3*sizeof(int), cudaMemcpyHostToDevice, stream);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "sz cudaMemcpyAsync failed!\n"); return;}
-
-    cudaStatus = cudaMemcpyAsync(dev_pmin, pmin, 3*sizeof(double), cudaMemcpyHostToDevice, stream);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmin cudaMemcpyAsync failed!\n"); return;}
-
-    cudaStatus = cudaMemcpyAsync(dev_pmax, pmax, 3*sizeof(double), cudaMemcpyHostToDevice, stream);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "pmax cudaMemcpyAsync failed!\n"); return;}
-
-    cudaStatus = cudaStreamSynchronize(stream);
-    if (cudaStatus != cudaSuccess) {fprintf(stderr, "1 stream cudaStreamSynchronize failed!\n");}
-    
     // Deriv calls are follows
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
-
 
     calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
         #include "list_of_args.h"

@@ -1,138 +1,138 @@
-cudaStatus = cudaFree(grad_0_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_B0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_B0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_B0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_B0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_B0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_B0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_B1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_B1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_B1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_B1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_B1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_B1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_B2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_B2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_B2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_B2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_B2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_B2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_Gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_Gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_Gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_Gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_Gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_Gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_Gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_Gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_Gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_Gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_Gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_Gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_Gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_Gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_Gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_Gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_Gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_Gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_K); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_K cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_K); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_K cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_K); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_K cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_At0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_At0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_At0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_At0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_At0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_At0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_At1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_At1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_At1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_At1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_At1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_At1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_At2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_At2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_At2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_At2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_At2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_At2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_At3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_At3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_At3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_At3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_At3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_At3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_At4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_At4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_At4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_At4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_At4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_At4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_0_At5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_0_At5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_1_At5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_1_At5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad_2_At5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad_2_At5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_gt0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_gt0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_gt1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_gt1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_gt2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_gt2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_gt3); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_gt3 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_gt4); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_gt4 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_gt5); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_gt5 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_chi); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_chi cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_alpha); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_alpha cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_beta0); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_beta0 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_beta1); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_beta1 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_0_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_0_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_1_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_1_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_0_2_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_0_2_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_1_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_1_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_1_2_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_1_2_beta2 cudafree failed!\n");}
-cudaStatus = cudaFree(grad2_2_2_beta2); if (cudaStatus != cudaSuccess) {fprintf(stderr, "grad2_2_2_beta2 cudafree failed!\n");}
+CHECK_ERROR(cudaFree(grad_0_alpha), "grad_0_alpha cudafree");
+CHECK_ERROR(cudaFree(grad_1_alpha), "grad_1_alpha cudafree");
+CHECK_ERROR(cudaFree(grad_2_alpha), "grad_2_alpha cudafree");
+CHECK_ERROR(cudaFree(grad_0_beta0), "grad_0_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad_1_beta0), "grad_1_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad_2_beta0), "grad_2_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad_0_beta1), "grad_0_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad_1_beta1), "grad_1_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad_2_beta1), "grad_2_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad_0_beta2), "grad_0_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad_1_beta2), "grad_1_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad_2_beta2), "grad_2_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad_0_B0), "grad_0_B0 cudafree");
+CHECK_ERROR(cudaFree(grad_1_B0), "grad_1_B0 cudafree");
+CHECK_ERROR(cudaFree(grad_2_B0), "grad_2_B0 cudafree");
+CHECK_ERROR(cudaFree(grad_0_B1), "grad_0_B1 cudafree");
+CHECK_ERROR(cudaFree(grad_1_B1), "grad_1_B1 cudafree");
+CHECK_ERROR(cudaFree(grad_2_B1), "grad_2_B1 cudafree");
+CHECK_ERROR(cudaFree(grad_0_B2), "grad_0_B2 cudafree");
+CHECK_ERROR(cudaFree(grad_1_B2), "grad_1_B2 cudafree");
+CHECK_ERROR(cudaFree(grad_2_B2), "grad_2_B2 cudafree");
+CHECK_ERROR(cudaFree(grad_0_chi), "grad_0_chi cudafree");
+CHECK_ERROR(cudaFree(grad_1_chi), "grad_1_chi cudafree");
+CHECK_ERROR(cudaFree(grad_2_chi), "grad_2_chi cudafree");
+CHECK_ERROR(cudaFree(grad_0_Gt0), "grad_0_Gt0 cudafree");
+CHECK_ERROR(cudaFree(grad_1_Gt0), "grad_1_Gt0 cudafree");
+CHECK_ERROR(cudaFree(grad_2_Gt0), "grad_2_Gt0 cudafree");
+CHECK_ERROR(cudaFree(grad_0_Gt1), "grad_0_Gt1 cudafree");
+CHECK_ERROR(cudaFree(grad_1_Gt1), "grad_1_Gt1 cudafree");
+CHECK_ERROR(cudaFree(grad_2_Gt1), "grad_2_Gt1 cudafree");
+CHECK_ERROR(cudaFree(grad_0_Gt2), "grad_0_Gt2 cudafree");
+CHECK_ERROR(cudaFree(grad_1_Gt2), "grad_1_Gt2 cudafree");
+CHECK_ERROR(cudaFree(grad_2_Gt2), "grad_2_Gt2 cudafree");
+CHECK_ERROR(cudaFree(grad_0_K), "grad_0_K cudafree");
+CHECK_ERROR(cudaFree(grad_1_K), "grad_1_K cudafree");
+CHECK_ERROR(cudaFree(grad_2_K), "grad_2_K cudafree");
+CHECK_ERROR(cudaFree(grad_0_gt0), "grad_0_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad_1_gt0), "grad_1_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad_2_gt0), "grad_2_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad_0_gt1), "grad_0_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad_1_gt1), "grad_1_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad_2_gt1), "grad_2_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad_0_gt2), "grad_0_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad_1_gt2), "grad_1_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad_2_gt2), "grad_2_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad_0_gt3), "grad_0_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad_1_gt3), "grad_1_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad_2_gt3), "grad_2_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad_0_gt4), "grad_0_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad_1_gt4), "grad_1_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad_2_gt4), "grad_2_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad_0_gt5), "grad_0_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad_1_gt5), "grad_1_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad_2_gt5), "grad_2_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad_0_At0), "grad_0_At0 cudafree");
+CHECK_ERROR(cudaFree(grad_1_At0), "grad_1_At0 cudafree");
+CHECK_ERROR(cudaFree(grad_2_At0), "grad_2_At0 cudafree");
+CHECK_ERROR(cudaFree(grad_0_At1), "grad_0_At1 cudafree");
+CHECK_ERROR(cudaFree(grad_1_At1), "grad_1_At1 cudafree");
+CHECK_ERROR(cudaFree(grad_2_At1), "grad_2_At1 cudafree");
+CHECK_ERROR(cudaFree(grad_0_At2), "grad_0_At2 cudafree");
+CHECK_ERROR(cudaFree(grad_1_At2), "grad_1_At2 cudafree");
+CHECK_ERROR(cudaFree(grad_2_At2), "grad_2_At2 cudafree");
+CHECK_ERROR(cudaFree(grad_0_At3), "grad_0_At3 cudafree");
+CHECK_ERROR(cudaFree(grad_1_At3), "grad_1_At3 cudafree");
+CHECK_ERROR(cudaFree(grad_2_At3), "grad_2_At3 cudafree");
+CHECK_ERROR(cudaFree(grad_0_At4), "grad_0_At4 cudafree");
+CHECK_ERROR(cudaFree(grad_1_At4), "grad_1_At4 cudafree");
+CHECK_ERROR(cudaFree(grad_2_At4), "grad_2_At4 cudafree");
+CHECK_ERROR(cudaFree(grad_0_At5), "grad_0_At5 cudafree");
+CHECK_ERROR(cudaFree(grad_1_At5), "grad_1_At5 cudafree");
+CHECK_ERROR(cudaFree(grad_2_At5), "grad_2_At5 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_gt0), "grad2_0_0_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_gt0), "grad2_0_1_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_gt0), "grad2_0_2_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_gt0), "grad2_1_1_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_gt0), "grad2_1_2_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_gt0), "grad2_2_2_gt0 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_gt1), "grad2_0_0_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_gt1), "grad2_0_1_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_gt1), "grad2_0_2_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_gt1), "grad2_1_1_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_gt1), "grad2_1_2_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_gt1), "grad2_2_2_gt1 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_gt2), "grad2_0_0_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_gt2), "grad2_0_1_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_gt2), "grad2_0_2_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_gt2), "grad2_1_1_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_gt2), "grad2_1_2_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_gt2), "grad2_2_2_gt2 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_gt3), "grad2_0_0_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_gt3), "grad2_0_1_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_gt3), "grad2_0_2_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_gt3), "grad2_1_1_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_gt3), "grad2_1_2_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_gt3), "grad2_2_2_gt3 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_gt4), "grad2_0_0_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_gt4), "grad2_0_1_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_gt4), "grad2_0_2_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_gt4), "grad2_1_1_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_gt4), "grad2_1_2_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_gt4), "grad2_2_2_gt4 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_gt5), "grad2_0_0_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_gt5), "grad2_0_1_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_gt5), "grad2_0_2_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_gt5), "grad2_1_1_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_gt5), "grad2_1_2_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_gt5), "grad2_2_2_gt5 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_chi), "grad2_0_0_chi cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_chi), "grad2_0_1_chi cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_chi), "grad2_0_2_chi cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_chi), "grad2_1_1_chi cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_chi), "grad2_1_2_chi cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_chi), "grad2_2_2_chi cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_alpha), "grad2_0_0_alpha cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_alpha), "grad2_0_1_alpha cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_alpha), "grad2_0_2_alpha cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_alpha), "grad2_1_1_alpha cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_alpha), "grad2_1_2_alpha cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_alpha), "grad2_2_2_alpha cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_beta0), "grad2_0_0_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_beta0), "grad2_0_1_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_beta0), "grad2_0_2_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_beta0), "grad2_1_1_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_beta0), "grad2_1_2_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_beta0), "grad2_2_2_beta0 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_beta1), "grad2_0_0_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_beta1), "grad2_0_1_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_beta1), "grad2_0_2_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_beta1), "grad2_1_1_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_beta1), "grad2_1_2_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_beta1), "grad2_2_2_beta1 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_0_beta2), "grad2_0_0_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_1_beta2), "grad2_0_1_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad2_0_2_beta2), "grad2_0_2_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_1_beta2), "grad2_1_1_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad2_1_2_beta2), "grad2_1_2_beta2 cudafree");
+CHECK_ERROR(cudaFree(grad2_2_2_beta2), "grad2_2_2_beta2 cudafree");
