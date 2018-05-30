@@ -134,6 +134,7 @@ bssn::timer::t_deriv.stop();
   double r_coord;
   double eta;
 
+  bssn::timer::t_rhs.start();
   //cout << "begin loop" << endl;
   for (unsigned int k = 3; k < nz-3; k++) {
       z = pmin[2] + k*hz;
@@ -143,6 +144,11 @@ bssn::timer::t_deriv.stop();
 
       for (unsigned int i = 3; i < nx-3; i++) {
          x = pmin[0] + i*hx;
+
+    //          if (i==5 && j==5 && k==6){
+    //     printf("%f | %f | %f\n", z, y ,x);
+    // }
+
          pp = i + nx*(j + ny*k);
          r_coord = sqrt(x*x + y*y + z*z);
          eta=ETA_CONST;
@@ -151,11 +157,8 @@ bssn::timer::t_deriv.stop();
          }
 
 
-bssn::timer::t_rhs.start();
-
         #include "bssneqs.cpp"
 
-bssn::timer::t_rhs.stop();
 
        /* debugging */
         unsigned int qi = 46 - 1;
@@ -169,6 +172,7 @@ bssn::timer::t_rhs.stop();
       }
     }
   }
+  bssn::timer::t_rhs.stop();
 
 
   if (bflag != 0) {
@@ -237,6 +241,12 @@ bssn::timer::t_deriv.start();
 #include "bssnrhs_ko_derivs.h"
 bssn::timer::t_deriv.stop();
 
+#if test && 0
+// Take the pointer of specified array
+#include "test_CPU_derivs.h"
+#include "test_CPU_adv_derivs.h"
+#endif
+
 bssn::timer::t_rhs.start();
 
   const  double sigma = KO_DISS_SIGMA;
@@ -295,7 +305,6 @@ bssn::timer::t_deriv.stop();
     std::cout<<"  || dtu("<<m<<")|| = "<<normLInfty(unzipVarsRHS[m] + offset, n)<<std::endl;
   }
 #endif
-
 
 
 }
@@ -369,7 +378,6 @@ void bssn_bcs(double *f_rhs, const double *f,
                        + y * dyf[pp]
                        + z * dzf[pp]
                        + f_falloff * (   f[pp] - f_asymptotic ) );
-
       }
     }
   }

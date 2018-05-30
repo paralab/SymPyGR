@@ -1,7 +1,24 @@
 cmake_minimum_required(VERSION 2.8)
-project(bssn)
+project(bssn) 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+
+# CUDA PACKAGE
+find_package(CUDA REQUIRED)
+
+if(CUDA_FOUND)
+    include_directories(${CUDA_INCLUDE_DIRS})
+    SET(ALL_CUDA_LIBS ${CUDA_LIBRARIES} ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY})
+    SET(LIBS ${LIBS} ${ALL_CUDA_LIBS})
+    message(STATUS "CUDA_LIBRARIES: ${CUDA_INCLUDE_DIRS} ${ALL_CUDA_LIBS}")
+    set(CUDA_PROPAGATE_HOST_FLAGS ON)
+    set(CUDA_SEPARABLE_COMPILATION OFF)
+    list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_30,code=compute_30 )
+    list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_52,code=sm_52 )
+    list( APPEND CUDA_NVCC_FLAGS -use_fast_math )
+
+endif()
+
 
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
@@ -10,27 +27,44 @@ if(OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 include_directories(${PROJECT_BINARY_DIR}
         include
         utils
         )
 
-
 set(INC_FILES
         include/computeBSSN.h
         include/derivs.h
         include/rhs.h
         include/def.h
+        include/derivs_cuda.h
+        include/rhs_cuda.h
         include/bssn_profiler.h
         include/profile_param.h
+	    include/bssneqn_solve.h
+        include/cuda_bssneqs.h
+        include/test_support.h
+        include/utils.h
         )
 
 set(SRC_FILES
         src/derivs.cpp
-        src/rhs.cpp
+	    src/computeBSSN.cpp
         src/bssn_profiler.cpp
+	    src/rhs.cpp
         src/profile_param.cpp
+        src/test_support.cpp
+        src/utils.cpp
         )
 
-add_executable(computeBSSN ${INC_FILES} ${SRC_FILES} src/computeBSSN.cpp)
+if(CUDA_FOUND)
+    #compile cuda files and add the compiled object files to your normal source files
+    FILE(GLOB_RECURSE CUDA_SRC  *.cu)
+    cuda_compile(cuda_objs ${CUDA_SRC})
+    SET(SRC ${SRC} ${cuda_objs})
+endif()
+
+add_executable(computeBSSN ${INC_FILES} ${SRC_FILES} ${SRC} src/computeBSSN.cpp)
+target_link_libraries(computeBSSN ${LIBS} )
