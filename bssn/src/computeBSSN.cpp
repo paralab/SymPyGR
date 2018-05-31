@@ -318,9 +318,12 @@ int main (int argc, char** argv){
 
     std::cout << std::endl;
 
+    #if test || cpu
     data_generation_2D(blk_lb, blk_up, num_blks, var_in, var_out_CPU, blkList);
     CPU_2D(blk_lb, blk_up, num_blks, var_in, var_out_CPU, blkList);
+    #endif
 
+    #if test
     // Verify output
     unsigned int unzip_dof=0;
     for (int blk=0; blk<num_blks*(blk_up-blk_lb+1); blk++){
@@ -347,5 +350,6 @@ int main (int argc, char** argv){
             }
         }
     }
+    #endif
     return 0;
 }
