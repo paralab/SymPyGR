@@ -11,7 +11,6 @@
 #include "rhs.h"
 #include "rhs_cuda.h"
 
-
 void data_generation_3D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, double ** var_out_array, Block * blkList){
 
     // double ** var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
@@ -142,48 +141,32 @@ void data_generation_2D(const unsigned int blk_lb, const unsigned int blk_up, co
     }
 }
 
-void GPU_2D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in, double ** var_out, Block * blkList){
-    // This function accepts only 2D input format
-    unsigned long unzip_dof = 0;
+void GPU_3D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, double ** var_out_array, Block * blkList){
+    // This function accepts only 3D input format
+    double ** dev_var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
+    double ** dev_var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
+
     for (int index=0; index<num_blks*(blk_up-blk_lb+1); index++){
-        unzip_dof += blkList[index].node1D_x * blkList[index].node1D_y * blkList[index].node1D_z;
-    }
+        int block_no = index%num_blks;
+        int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
 
-    double * dev_var_in;
-    double * dev_var_out;
+        Block & blk=blkList[index];
 
-    CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
+        const unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
+        unsigned int offset=blk.offset;
 
-    CHECK_ERROR(cudaMalloc((void**)&dev_var_in, unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in");
-    CHECK_ERROR(cudaMalloc((void**)&dev_var_out, unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out");
+        unsigned int sz[3];
+        sz[0]=blk.node1D_x; 
+        sz[1]=blk.node1D_y;
+        sz[2]=blk.node1D_z;
 
-    // #pragma omp parallel for DO NOT USE IT MAKES SLOW
-    for (int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
-        CHECK_ERROR(cudaMemcpy(dev_var_in+bssn_var*unzip_dof, var_in[bssn_var], unzip_dof*sizeof(double), cudaMemcpyHostToDevice), "dev_var_in cudaMemcpyHostToDevice");
-    }
+        unsigned int  bflag=0;
 
-    double ptmin[3], ptmax[3];
-    unsigned int sz[3];
-    unsigned int bflag;
-    unsigned int offset;
-    double dx, dy, dz;
+        double dx=0.1;
+        double dy=0.1;
+        double dz=0.1;
 
-    for(unsigned int blk=0;blk<num_blks*(blk_up-blk_lb+1);blk++){
-        int block_no = blk%num_blks;
-        int level = ((blk/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
-
-        offset=blkList[blk].offset;
-        sz[0]=blkList[blk].node1D_x; 
-        sz[1]=blkList[blk].node1D_y;
-        sz[2]=blkList[blk].node1D_z;
-        int total_points = sz[0]*sz[1]*sz[2];
-
-        bflag=0;
-
-        dx=0.1;
-        dy=0.1;
-        dz=0.1;
-
+        double ptmin[3], ptmax[3];
         ptmin[0]=0.0;
         ptmin[1]=0.0;
         ptmin[2]=0.0;
@@ -192,8 +175,10 @@ void GPU_2D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        std::cout << "GPU - Block no: " << std::setw(2) << blk << "  Total Points: " << std::setw(7) << total_points << "  level: " << level << std::endl;
+        CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
 
+        std::cout << "GPU - Block no: " << std::setw(2) << index << "  Total Points: " << std::setw(7) << unzip_dof << "  level: " << level << std::endl;
+        
         #include "bssnrhs_cuda_offset_variable_malloc.h"
         #include "bssnrhs_cuda_variable_malloc.h"
         #include "bssnrhs_cuda_variable_malloc_adv.h"
@@ -208,6 +193,9 @@ void GPU_2D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned
 
         int size = unzip_dof * sizeof(double);
 
+        CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
+        CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
+
         #include "bssnrhs_cuda_offset_malloc.h"
         CHECK_ERROR(cudaMalloc((void **) &dev_dy_hx, sizeof(double)), "dev_dy_hx");
         CHECK_ERROR(cudaMalloc((void **) &dev_dy_hy, sizeof(double)), "dev_dy_hy");
@@ -220,29 +208,33 @@ void GPU_2D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
 
-        cuda_bssnrhs(dev_var_out, dev_var_in, unzip_dof , offset, ptmin, ptmax, sz, bflag,
+        CHECK_ERROR(cudaMemcpy(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice), "dev_var_in cudaMemcpyHostToDevice");
+
+        cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag,
         #include "list_of_args.h"
         , dev_dy_hx, dev_dy_hy, dev_dy_hz, dev_sz, dev_zero, dev_pmin, dev_pmax, dev_bflag
         );
 
-        #include "bssnrhs_cuda_mdealloc.h"
-        #include "bssnrhs_cuda_mdealloc_adv.h"
-        #include "bssnrhs_cuda_offset_demalloc.h"
-        CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
-        CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
-        CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
-        CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
-        CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
-        CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
-        CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
-    }
+        CHECK_ERROR(cudaMemcpy(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost), "dev_var_out[bssn_var*unzip_dof] cudaMemcpyDeviceToHost");
 
-    for (int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
-        CHECK_ERROR(cudaMemcpy(var_out[bssn_var], dev_var_out+bssn_var*unzip_dof, unzip_dof*sizeof(double), cudaMemcpyDeviceToHost), "dev_var_out[bssn_var*unzip_dof] cudaMemcpyDeviceToHost");
-    }
+        // #include "bssnrhs_cuda_mdealloc.h"
+        // #include "bssnrhs_cuda_mdealloc_adv.h"
+        // #include "bssnrhs_cuda_offset_demalloc.h"
 
-    CHECK_ERROR(cudaFree(dev_var_in), "dev_var_in cudaFree");
-    CHECK_ERROR(cudaFree(dev_var_out), "dev_var_out cudaFree");
+        // CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
+        // CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
+        // CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
+        // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+        // CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
+        // CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
+        // CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
+        // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+
+        // CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
+        // CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
+
+        delete [] var_in_array[index];
+    }
 
     CHECK_ERROR(cudaDeviceSynchronize(), "cudaDeviceSynchronize in computeBSSN");
     CHECK_ERROR(cudaDeviceReset(), "cudaDeviceReset in computeBSSN");
@@ -250,8 +242,6 @@ void GPU_2D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned
 
 void CPU_2D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in, double ** var_out, Block * blkList){
     // This function accepts only 2D version of the input
-
-
     double ptmin[3], ptmax[3];
     unsigned int sz[3];
     unsigned int bflag;
@@ -309,44 +299,45 @@ int main (int argc, char** argv){
     unsigned int num_blks=atoi(argv[3]);
 
     Block * blkList = new Block[num_blks*(blk_up-blk_lb+1)];
-    double ** var_in = new double*[BSSN_NUM_VARS];
-    double ** var_out_GPU = new double*[BSSN_NUM_VARS];
-    double ** var_out_CPU = new double*[BSSN_NUM_VARS];
+    double ** var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
+    double ** var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
 
-    data_generation_2D(blk_lb, blk_up, num_blks, var_in, var_out_GPU, blkList);
-    GPU_2D(blk_lb, blk_up, num_blks, var_in, var_out_GPU, blkList);
+    double ** var_in = new double*[BSSN_NUM_VARS];
+    double ** var_out = new double*[BSSN_NUM_VARS];
+
+    data_generation_3D(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
+    #include "rhs_cuda.h"
+    GPU_3D(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
 
     std::cout << std::endl;
 
     #if test || cpu
-    data_generation_2D(blk_lb, blk_up, num_blks, var_in, var_out_CPU, blkList);
-    CPU_2D(blk_lb, blk_up, num_blks, var_in, var_out_CPU, blkList);
+    data_generation_2D(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
+    CPU_2D(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
     #endif
 
     #if test
     // Verify output
-    unsigned int unzip_dof=0;
+    // Verify outputs
     for (int blk=0; blk<num_blks*(blk_up-blk_lb+1); blk++){
-        unzip_dof += blkList[blk].node1D_x * blkList[blk].node1D_y * blkList[blk].node1D_z;
-    }
-    unsigned int error_count = 0;
-    for(unsigned int i=0;i<BSSN_NUM_VARS;i++){
-        for(unsigned int j=0; j<unzip_dof; j++){
-            double diff = var_out_CPU[i][j] - var_out_GPU[i][j];
-            if (fabs(diff)>threshold){
-                error_count++;
-                const char separator    = ' ';
-                const int nameWidth     = 6;
-                const int numWidth      = NUM_DIGITS+10;
+        for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
+            int sizeofBlock = blkList[blk].node1D_x * blkList[blk].node1D_y * blkList[blk].node1D_z;
+            for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
+                double diff = var_out_array[blk][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
+                if (fabs(diff)>threshold){
+                    const char separator    = ' ';
+                    const int nameWidth     = 6;
+                    const int numWidth      = NUM_DIGITS+10;
 
-                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
-                std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator) << var_out_GPU[i][j];
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
+                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blk][bssn_var*sizeofBlock+pointInd];
 
-                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
-                std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator) << var_out_CPU[i][j];
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
+                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out[bssn_var][blkList[blk].offset+pointInd];
 
-                std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
-                std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator) << diff << std::endl;
+                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
+                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff << std::endl;
+                }
             }
         }
     }
