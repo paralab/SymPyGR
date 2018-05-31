@@ -142,117 +142,141 @@ void data_generation_2D(const unsigned int blk_lb, const unsigned int blk_up, co
     }
 }
 
-void GPU_sequence(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, double ** var_out_array, Block * blkList){
+void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, double ** var_out_array, Block * blkList){
     // This function accepts only 3D input format
 
     double ** dev_var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
     double ** dev_var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
 
-    #pragma omp parallel for
-    for (int index=0; index<num_blks*(blk_up-blk_lb+1); index++){
-        int block_no = index%num_blks;
-        int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
+    // Check number of blocks can handle at onece
+    int current_block = 0;
+    int init_block = 0;
+    int total_points;
+    double current_usage;
+    double gpu_capacity_limit = 4000;
+    Block blk;
 
-        Block & blk=blkList[index];
-
-        const unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
-        unsigned int offset=blk.offset;
-
-        unsigned int sz[3];
-        sz[0]=blk.node1D_x; 
-        sz[1]=blk.node1D_y;
-        sz[2]=blk.node1D_z;
-
-        unsigned int  bflag=0;
-
-        double dx=0.1;
-        double dy=0.1;
-        double dz=0.1;
-
-        double ptmin[3], ptmax[3];
-        ptmin[0]=0.0;
-        ptmin[1]=0.0;
-        ptmin[2]=0.0;
-
-        ptmax[0]=1.0;
-        ptmax[1]=1.0;
-        ptmax[2]=1.0;
-
-        CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
-
-        std::cout << "GPU - Block no: " << std::setw(2) << index << "  Total Points: " << std::setw(7) << unzip_dof << "  level: " << level << std::endl;
+    while (current_block<num_blks*(blk_up-blk_lb+1)){
+        current_usage=0;
+        init_block=current_block;
+        while ((current_usage<gpu_capacity_limit) && (current_block<num_blks*(blk_up-blk_lb+1))){
+            blk = blkList[current_block];
+            total_points = blk.node1D_x*blk.node1D_y*blk.node1D_z;
+            current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2 + 27*sizeof(int) + 5*sizeof(double) + (138+72)*total_points*sizeof(double))/1024/1024;
+            // std::cout << "\tUsage: " << current_usage << " BlockNumber: " << current_block << std::endl;
+            current_block++;
+        }
+        if (current_usage>gpu_capacity_limit){
+            current_block--;
+        }
         
-        #include "bssnrhs_cuda_offset_variable_malloc.h"
-        #include "bssnrhs_cuda_variable_malloc.h"
-        #include "bssnrhs_cuda_variable_malloc_adv.h"
-        double * dev_dy_hx;
-        double * dev_dy_hy;
-        double * dev_dy_hz;
-        int * dev_sz;
-        int * dev_zero;
-        double * dev_pmin;
-        double *dev_pmax;
-        int * dev_bflag;
+        // std::cout << "start: " << init_block << " end: " << current_block-1 << std::endl;
 
-        int size = unzip_dof * sizeof(double);
+        #pragma omp parallel for
+        for (int index=init_block; index<=current_block-1; index++){
+            int block_no = index%num_blks;
+            int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
 
-        CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
-        CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
+            Block & blk=blkList[index];
 
-        #include "bssnrhs_cuda_offset_malloc.h"
-        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hx, sizeof(double)), "dev_dy_hx");
-        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hy, sizeof(double)), "dev_dy_hy");
-        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hz, sizeof(double)), "dev_dy_hz");
-        CHECK_ERROR(cudaMalloc((void **) &dev_sz, 3*sizeof(int)), "dev_sz");
-        CHECK_ERROR(cudaMalloc((void **) &dev_zero, sizeof(int)), "dev_zero");
-        CHECK_ERROR(cudaMalloc((void **) &dev_pmin, 3*sizeof(double)), "dev_pmin");
-        CHECK_ERROR(cudaMalloc((void **) &dev_pmax, 3*sizeof(double)), "dev_pmax");
-        CHECK_ERROR(cudaMalloc((void **) &dev_bflag, sizeof(int)), "dev_bflag");
-        #include "bssnrhs_cuda_malloc.h"
-        #include "bssnrhs_cuda_malloc_adv.h"
+            const unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
+            unsigned int offset=blk.offset;
 
-        cudaStream_t stream;
-        CHECK_ERROR(cudaStreamCreate(&stream), "cudaStream creation");
+            unsigned int sz[3];
+            sz[0]=blk.node1D_x; 
+            sz[1]=blk.node1D_y;
+            sz[2]=blk.node1D_z;
 
-        CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+            unsigned int  bflag=0;
 
-        cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream,
-        #include "list_of_args.h"
-        , dev_dy_hx, dev_dy_hy, dev_dy_hz, dev_sz, dev_zero, dev_pmin, dev_pmax, dev_bflag
-        );
+            double dx=0.1;
+            double dy=0.1;
+            double dz=0.1;
 
-        CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+            double ptmin[3], ptmax[3];
+            ptmin[0]=0.0;
+            ptmin[1]=0.0;
+            ptmin[2]=0.0;
 
-        CHECK_ERROR(cudaStreamSynchronize(stream), "cudaStreamSynchronize in computeBSSN");
+            ptmax[0]=1.0;
+            ptmax[1]=1.0;
+            ptmax[2]=1.0;
 
-        CHECK_ERROR(cudaStreamDestroy(stream), "cudaStreamDestroy");
+            CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
 
-        // #include "bssnrhs_cuda_mdealloc.h"
-        // #include "bssnrhs_cuda_mdealloc_adv.h"
-        // #include "bssnrhs_cuda_offset_demalloc.h"
+            std::cout << "GPU - Block no: " << std::setw(2) << index << "  Total Points: " << std::setw(7) << unzip_dof << "  level: " << level << std::endl;
+            
+            #include "bssnrhs_cuda_offset_variable_malloc.h"
+            #include "bssnrhs_cuda_variable_malloc.h"
+            #include "bssnrhs_cuda_variable_malloc_adv.h"
+            double * dev_dy_hx;
+            double * dev_dy_hy;
+            double * dev_dy_hz;
+            int * dev_sz;
+            int * dev_zero;
+            double * dev_pmin;
+            double *dev_pmax;
+            int * dev_bflag;
 
-        // CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
-        // CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
-        // CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
-        // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
-        // CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
-        // CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
-        // CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
-        // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+            int size = unzip_dof * sizeof(double);
 
-        // CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
-        // CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
+            CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
+            CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
 
-        delete [] var_in_array[index];
+            #include "bssnrhs_cuda_offset_malloc.h"
+            CHECK_ERROR(cudaMalloc((void **) &dev_dy_hx, sizeof(double)), "dev_dy_hx");
+            CHECK_ERROR(cudaMalloc((void **) &dev_dy_hy, sizeof(double)), "dev_dy_hy");
+            CHECK_ERROR(cudaMalloc((void **) &dev_dy_hz, sizeof(double)), "dev_dy_hz");
+            CHECK_ERROR(cudaMalloc((void **) &dev_sz, 3*sizeof(int)), "dev_sz");
+            CHECK_ERROR(cudaMalloc((void **) &dev_zero, sizeof(int)), "dev_zero");
+            CHECK_ERROR(cudaMalloc((void **) &dev_pmin, 3*sizeof(double)), "dev_pmin");
+            CHECK_ERROR(cudaMalloc((void **) &dev_pmax, 3*sizeof(double)), "dev_pmax");
+            CHECK_ERROR(cudaMalloc((void **) &dev_bflag, sizeof(int)), "dev_bflag");
+            #include "bssnrhs_cuda_malloc.h"
+            #include "bssnrhs_cuda_malloc_adv.h"
+
+            cudaStream_t stream;
+            CHECK_ERROR(cudaStreamCreate(&stream), "cudaStream creation");
+
+            CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+
+            cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream,
+            #include "list_of_args.h"
+            , dev_dy_hx, dev_dy_hy, dev_dy_hz, dev_sz, dev_zero, dev_pmin, dev_pmax, dev_bflag
+            );
+
+            CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+
+            CHECK_ERROR(cudaStreamSynchronize(stream), "cudaStreamSynchronize in computeBSSN");
+
+            CHECK_ERROR(cudaStreamDestroy(stream), "cudaStreamDestroy");
+
+            // #include "bssnrhs_cuda_mdealloc.h"
+            // #include "bssnrhs_cuda_mdealloc_adv.h"
+            // #include "bssnrhs_cuda_offset_demalloc.h"
+
+            // CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
+            // CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
+            // CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
+            // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+            // CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
+            // CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
+            // CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
+            // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+
+            // CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
+            // CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
+
+            delete [] var_in_array[index];
+        }
+
+        CHECK_ERROR(cudaDeviceSynchronize(), "cudaDeviceSynchronize in computeBSSN");
+        CHECK_ERROR(cudaDeviceReset(), "cudaDeviceReset in computeBSSN");
     }
-
-    CHECK_ERROR(cudaDeviceSynchronize(), "cudaDeviceSynchronize in computeBSSN");
-    CHECK_ERROR(cudaDeviceReset(), "cudaDeviceReset in computeBSSN");
 }
 
 void CPU_sequence(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in, double ** var_out, Block * blkList){
     // This function accepts only 2D version of the input
-
 
     double ptmin[3], ptmax[3];
     unsigned int sz[3];
@@ -316,7 +340,7 @@ int main (int argc, char** argv){
     
     data_generation_3D(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
     #include "rhs_cuda.h"
-    GPU_sequence(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
+    GPU_Async_Iteration_Wise(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
 
     std::cout << "" << std::endl;
 
