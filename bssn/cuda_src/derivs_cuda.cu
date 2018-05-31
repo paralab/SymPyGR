@@ -66,14 +66,7 @@
                       (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
                         dev_u_offset, dev_dy, dev_sz, dev_bflag);
  
-     // Check for any errors launching the kernel
-     cudaError_t cudaStatus;
-     cudaStatus = cudaGetLastError();
-     if (cudaStatus != cudaSuccess) {
-         fprintf(stderr, "calc_deriv42_x Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-         return;
-     }
-     
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_x Kernel launch failed");
  
      // No GPU code for the following part
      // #ifdef DEBUG_DERIVS_COMP
@@ -151,13 +144,7 @@ void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, do
                     (ke + requiredBlocks -1)/requiredBlocks)>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_y Kernel launch failed");
     
 
     // No GPU code for the following part
@@ -233,14 +220,7 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset,
                     (ke + requiredBlocks -1)/requiredBlocks)>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_z Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-    
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_z Kernel launch failed");
 
     //   #ifdef DEBUG_DERIVS_COMP
     //     for (int k = kb; k < ke; k++) {
@@ -340,7 +320,7 @@ void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset,
     cudaStatus = cudaGetLastError();
     if (cudaStatus != cudaSuccess) {
         fprintf(stderr, "calc_deriv42_xx Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
+        exit(0);
     }
     
     // No GPU code for the following part
@@ -440,13 +420,7 @@ void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, d
                     (ke + requiredBlocks -1)/requiredBlocks)>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_yy Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_yy Kernel launch failed");
     
 
     // No GPU code for the following part
@@ -545,13 +519,7 @@ void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset,
                     (ke + requiredBlocks -1)/requiredBlocks)>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_zz Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_zz Kernel launch failed");
     
 
     // No GPU code for the following part
@@ -696,16 +664,7 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betax,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
     
-    // Check for any errors launching the kernel
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_adv_x Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-    
-                    
-    // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
-
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_adv_x Kernel launch failed Kernel launch failed");
 }
 
 __global__ void calc_deriv42_adv_y(double * output, double * dev_var_in, int * dev_betay,
@@ -838,16 +797,7 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betay,
                             dev_dy, dev_bflag, dev_sz, dev_u_offset);
         
-    
-    // Check for any errors launching the kernel
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_adv_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-                    
-    // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
-
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_adv_y Kernel launch failed Kernel launch failed");
 }
 
 __global__ void calc_deriv42_adv_z(double * output, double * dev_var_in, int * dev_betaz,
@@ -981,12 +931,7 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in, dev_betaz,
                             dev_dz, dev_bflag, dev_sz, dev_u_offset);
     
-    // Check for any errors launching the kernel
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_adv_z Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_adv_z Kernel launch failed Kernel launch failed");
 }
 
 __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
@@ -1096,29 +1041,23 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dx, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz)
 {
-   cudaError_t cudaStatus;
-   const int ie = host_sz[0] - 4;//x direction
-   const int je = host_sz[1] - 3;//y direction
-   const int ke = host_sz[2] - 3;//z direction
+    cudaError_t cudaStatus;
+    const int ie = host_sz[0] - 4;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 3;//z direction
 
-   int temp_max = (ie>je)? ie : je;
-   int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
 
-   int requiredBlocks = (9+maximumIterations) / 10;
-  
-   calc_ko_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                        dim3((ie + requiredBlocks -1)/requiredBlocks,
-                        (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
-                            dev_dx, dev_bflag, dev_sz, dev_u_offset);
-   
-   // Check for any errors launching the kernel
-   cudaStatus = cudaGetLastError();
-   if (cudaStatus != cudaSuccess) {
-       fprintf(stderr, "calc_ko_deriv42_x Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-       return;
-   }
-
+    int requiredBlocks = (9+maximumIterations) / 10;
+    
+    calc_ko_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                            dim3((ie + requiredBlocks -1)/requiredBlocks,
+                            (je + requiredBlocks -1)/requiredBlocks, 
+                            (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                                dev_dx, dev_bflag, dev_sz, dev_u_offset);
+    
+    CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_x Kernel launch failed Kernel launch failed");
 }
 
 __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
@@ -1227,29 +1166,23 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dy, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz)
 {
-   cudaError_t cudaStatus;
-   const int ie = host_sz[0] - 3;//x direction
-   const int je = host_sz[1] - 4;//y direction
-   const int ke = host_sz[2] - 3;//z direction
+    cudaError_t cudaStatus;
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 4;//y direction
+    const int ke = host_sz[2] - 3;//z direction
 
-   int temp_max = (ie>je)? ie : je;
-   int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
 
-   int requiredBlocks = (9+maximumIterations) / 10;
-  
-   calc_ko_deriv42_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
-                        dev_dy, dev_bflag, dev_sz, dev_u_offset);
+    int requiredBlocks = (9+maximumIterations) / 10;
+    
+    calc_ko_deriv42_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                        dim3((ie + requiredBlocks -1)/requiredBlocks,
+                        (je + requiredBlocks -1)/requiredBlocks, 
+                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                            dev_dy, dev_bflag, dev_sz, dev_u_offset);
 
-    // Check for any errors launching the kernel
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_ko_deriv42_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-
+    CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_y Kernel launch failed Kernel launch failed");
 }
 
 __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
@@ -1362,26 +1295,21 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dz, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz)
 {
-   cudaError_t cudaStatus;
-   const int ie = host_sz[0] - 3;//x direction
-   const int je = host_sz[1] - 3;//y direction
-   const int ke = host_sz[2] - 4;//z direction
+    cudaError_t cudaStatus;
+    const int ie = host_sz[0] - 3;//x direction
+    const int je = host_sz[1] - 3;//y direction
+    const int ke = host_sz[2] - 4;//z direction
 
-   int temp_max = (ie>je)? ie : je;
-   int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    int temp_max = (ie>je)? ie : je;
+    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    
+    int requiredBlocks = (9+maximumIterations) / 10;
+    
+    calc_ko_deriv42_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
+                        dim3((ie + requiredBlocks -1)/requiredBlocks,
+                        (je + requiredBlocks -1)/requiredBlocks, 
+                        (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
+                            dev_dz, dev_bflag, dev_sz, dev_u_offset);
    
-   int requiredBlocks = (9+maximumIterations) / 10;
-  
-   calc_ko_deriv42_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks) >>> (output, dev_var_in,
-                        dev_dz, dev_bflag, dev_sz, dev_u_offset);
-   
-   // Check for any errors launching the kernel
-   cudaStatus = cudaGetLastError();
-   if (cudaStatus != cudaSuccess) {
-       fprintf(stderr, "calc_ko_deriv42_z Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-       return;
-   }
+    CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_z Kernel launch failed Kernel launch failed");
 }

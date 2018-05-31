@@ -28,10 +28,15 @@
 #define ko_deriv_y cuda_ko_deriv42_y
 #define ko_deriv_z cuda_ko_deriv42_z
 
+#define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
+
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, 
 const unsigned int unzip_dof, const unsigned int& offset, 
 const double *pmin,const double *pmax, const unsigned int *sz, 
-const unsigned int& bflag);
+const unsigned int& bflag,
+#include "list_of_para.h"
+, double * dev_dy_hx, double * dev_dy_hy, double * dev_dy_hz, int * dev_sz, int * dev_zero, double * dev_pmin, double * dev_pmax, int * dev_bflag
+);
 
 void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     double *dxf, double *dyf, double *dzf,

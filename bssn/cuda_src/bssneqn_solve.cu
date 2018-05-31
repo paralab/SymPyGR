@@ -54,35 +54,16 @@ double * dev_var_in, double * dev_var_out,
     int points_at_once = threads_per_block_cpu*blocks_cpu;
     int loops = ceil(1.0*total_points/points_at_once);
 
-    cudaError_t cudaStatus;
-    // full
+    int * dev_offset;
+    CHECK_ERROR(cudaMalloc((void **) &dev_offset, sizeof(int)), "dev_offset cudaMalloc in bssneqn_solve.cu");
     for(int i=0; i<loops; i++){
         int offset = i*points_at_once;
-
-        int * dev_offset;
-        cudaStatus = cudaMalloc((void **) &dev_offset, sizeof(int));
-        if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_offset cudaMalloc failed!\n"); return;}
-        cudaStatus = cudaMemcpy(dev_offset, &offset, sizeof(int), cudaMemcpyHostToDevice);
-        if (cudaStatus != cudaSuccess) {fprintf(stderr, "dev_offset cudaMemcpy failed!\n"); return;}
+        CHECK_ERROR(cudaMemcpy(dev_offset, &offset, sizeof(int), cudaMemcpyHostToDevice), "dev_offset cudaMemcpy in bssneqn_solve.cu");
 
         cuda_bssn_eqns_points<<< blocks_cpu, threads_per_block_cpu >>>(dev_offset, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
             #include "list_of_args.h"
         );
-        
-        // Check for any errors launching the kernel
-        cudaError_t cudaStatus;
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cuda_bssn_eqns_points Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return;
-        }
-        cudaFree(dev_offset);
+        CHECK_ERROR(cudaGetLastError(), "cuda_bssn_eqns_points Kernel launch failed");
     } 
-    // cudaDeviceSynchronize waits for the kernel to finish, and returns
-    // any errors encountered during the launch.
-    cudaStatus = cudaDeviceSynchronize();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching cuda_bssn_eqns_points kernals!\n", cudaStatus);
-        return;
-    }
+    // CHECK_ERROR(cudaFree(dev_offset), "dev_offset cudaFree in bssneqn_solve.cu");
 }

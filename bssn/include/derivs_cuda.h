@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <iostream>
 #include "def.h"
+#define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
 
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 
