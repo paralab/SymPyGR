@@ -223,7 +223,7 @@ void GPU_sequence(const unsigned int blk_lb, const unsigned int blk_up, const un
 
         CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
 
-        // CHECK_ERROR(cudaStreamSynchronize(stream), "cudaStreamSynchronize in computeBSSN");
+        CHECK_ERROR(cudaStreamSynchronize(stream), "cudaStreamSynchronize in computeBSSN");
 
         CHECK_ERROR(cudaStreamDestroy(stream), "cudaStreamDestroy");
 
@@ -292,14 +292,23 @@ void CPU_sequence(const unsigned int blk_lb, const unsigned int blk_up, const un
 }
 
 int main (int argc, char** argv){
-    
-    unsigned int blk_lb=0;
-    unsigned int blk_up=3;
-    unsigned int num_blks=2;
+    /**
+     *
+     * parameters:
+     * blk_lb: block element 1d lower bound (int)
+     * blk_up: block element 1d upper bound (int) (blk_up>=blk_lb)
+     * numblks : number of blocks needed for each block sizes. (total_blks= (blk_up-blk_lb+1)*numblks)
+     *
+     * */
 
-    blk_lb=atoi(argv[1]);
-    blk_up=atoi(argv[2]);
-    num_blks=atoi(argv[3]);
+    if(argc<2){
+        std::cout<<"Usage: "<<argv[0]<<"blk_lb blk_up numblks"<<std::endl;
+        exit(0);
+    }
+
+    unsigned int blk_lb=atoi(argv[1]);
+    unsigned int blk_up=atoi(argv[2]);
+    unsigned int num_blks=atoi(argv[3]);
 
     double ** var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
     double ** var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
@@ -308,6 +317,8 @@ int main (int argc, char** argv){
     data_generation_3D(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
     #include "rhs_cuda.h"
     GPU_sequence(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
+
+    std::cout << "" << std::endl;
 
     double ** var_in = new double*[BSSN_NUM_VARS];
     double ** var_out = new double*[BSSN_NUM_VARS];
