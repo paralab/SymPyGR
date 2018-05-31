@@ -316,13 +316,8 @@ void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset,
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
     // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_xx Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        exit(0);
-    }
     
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_xx Kernel launch failed");
     // No GPU code for the following part
     // #ifdef DEBUG_DERIVS_COMP
     // for (int k = kb; k < ke; k++) {
@@ -647,7 +642,7 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dx, int * dev_sz,
     int * dev_betax, int* dev_bflag, const unsigned int * host_sz)
 {
-    cudaError_t cudaStatus;
+    
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -781,7 +776,7 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dy, int * dev_sz,
     int * dev_betay, int* dev_bflag, const unsigned int * host_sz)
 {
-    cudaError_t cudaStatus;
+    
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -915,7 +910,7 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dz, int * dev_sz,
     int * dev_betaz, int* dev_bflag, const unsigned int * host_sz)
 {
-    cudaError_t cudaStatus;
+    
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -1041,7 +1036,7 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dx, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz)
 {
-    cudaError_t cudaStatus;
+    
     const int ie = host_sz[0] - 4;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -1166,7 +1161,7 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dy, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz)
 {
-    cudaError_t cudaStatus;
+    
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 4;//y direction
     const int ke = host_sz[2] - 3;//z direction
@@ -1295,7 +1290,7 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dz, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz)
 {
-    cudaError_t cudaStatus;
+    
     const int ie = host_sz[0] - 3;//x direction
     const int je = host_sz[1] - 3;//y direction
     const int ke = host_sz[2] - 4;//z direction
