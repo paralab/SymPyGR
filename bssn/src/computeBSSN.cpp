@@ -149,30 +149,81 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
     double ** dev_var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
 
     // Check number of blocks can handle at onece
+    double gpu_capacity_limit = 4000;
+
+    Block blk;
     int current_block = 0;
     int init_block = 0;
     int total_points;
-    double current_usage;
-    double gpu_capacity_limit = 4000;
-    Block blk;
+    double current_usage, fixed_usage;
 
     while (current_block<num_blks*(blk_up-blk_lb+1)){
         current_usage=0;
+        fixed_usage=0;
         init_block=current_block;
-        while ((current_usage<gpu_capacity_limit) && (current_block<num_blks*(blk_up-blk_lb+1))){
+
+        while ((current_usage+fixed_usage<gpu_capacity_limit) && (current_block<num_blks*(blk_up-blk_lb+1))){
             blk = blkList[current_block];
             total_points = blk.node1D_x*blk.node1D_y*blk.node1D_z;
-            current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2 + 27*sizeof(int) + 5*sizeof(double) + (138+72)*total_points*sizeof(double))/1024/1024;
-            // std::cout << "\tUsage: " << current_usage << " BlockNumber: " << current_block << std::endl;
+
+            fixed_usage = (138+72)*total_points*sizeof(double)/1024/1024;
+            current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2 + 27*sizeof(int) + 5*sizeof(double))/1024/1024;
+
+            // std::cout << "\tUsage: " << current_usage+fixed_usage << " BlockNumber: " << current_block << " Fixed Usage: " << fixed_usage << std::endl;
             current_block++;
         }
-        if (current_usage>gpu_capacity_limit){
+        if (current_usage+fixed_usage>gpu_capacity_limit){
             current_block--;
         }
         
-        // std::cout << "start: " << init_block << " end: " << current_block-1 << std::endl;
+        std::cout << "start: " << init_block << " end: " << current_block-1 << std::endl;
 
-        #pragma omp parallel for
+        // CUDA Malloc operations
+        #include "bssnrhs_cuda_offset_variable_malloc.h"
+        #include "bssnrhs_cuda_variable_malloc.h"
+        #include "bssnrhs_cuda_variable_malloc_adv.h"
+        double * dev_dy_hx;
+        double * dev_dy_hy;
+        double * dev_dy_hz;
+        int * dev_sz;
+        int * dev_zero;
+        double * dev_pmin;
+        double *dev_pmax;
+        int * dev_bflag;
+
+        CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
+
+        int unzip_dof;
+        for (int index=init_block; index<=current_block-1; index++){
+            blk = blkList[index];
+            unzip_dof = blk.node1D_x*blk.node1D_y*blk.node1D_z;
+            CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
+            CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
+        }
+
+        int size = unzip_dof * sizeof(double);
+
+        #include "bssnrhs_cuda_offset_malloc.h"
+        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hx, sizeof(double)), "dev_dy_hx");
+        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hy, sizeof(double)), "dev_dy_hy");
+        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hz, sizeof(double)), "dev_dy_hz");
+        CHECK_ERROR(cudaMalloc((void **) &dev_sz, 3*sizeof(int)), "dev_sz");
+        CHECK_ERROR(cudaMalloc((void **) &dev_zero, sizeof(int)), "dev_zero");
+        CHECK_ERROR(cudaMalloc((void **) &dev_pmin, 3*sizeof(double)), "dev_pmin");
+        CHECK_ERROR(cudaMalloc((void **) &dev_pmax, 3*sizeof(double)), "dev_pmax");
+        CHECK_ERROR(cudaMalloc((void **) &dev_bflag, sizeof(int)), "dev_bflag");
+        #include "bssnrhs_cuda_malloc.h"
+        #include "bssnrhs_cuda_malloc_adv.h"
+
+
+        // cuda stream creation
+        cudaStream_t stream;
+        cudaStream_t streams[current_block-init_block];
+        for (int index=0; index<current_block-init_block; index++){
+            CHECK_ERROR(cudaStreamCreate(&streams[index]), "cudaStream creation");
+        }
+
+        // #pragma omp parallel for
         for (int index=init_block; index<=current_block-1; index++){
             int block_no = index%num_blks;
             int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
@@ -202,42 +253,10 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
             ptmax[1]=1.0;
             ptmax[2]=1.0;
 
-            CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
-
             std::cout << "GPU - Block no: " << std::setw(2) << index << "  Total Points: " << std::setw(7) << unzip_dof << "  level: " << level << std::endl;
             
-            #include "bssnrhs_cuda_offset_variable_malloc.h"
-            #include "bssnrhs_cuda_variable_malloc.h"
-            #include "bssnrhs_cuda_variable_malloc_adv.h"
-            double * dev_dy_hx;
-            double * dev_dy_hy;
-            double * dev_dy_hz;
-            int * dev_sz;
-            int * dev_zero;
-            double * dev_pmin;
-            double *dev_pmax;
-            int * dev_bflag;
-
-            int size = unzip_dof * sizeof(double);
-
-            CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
-            CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
-
-            #include "bssnrhs_cuda_offset_malloc.h"
-            CHECK_ERROR(cudaMalloc((void **) &dev_dy_hx, sizeof(double)), "dev_dy_hx");
-            CHECK_ERROR(cudaMalloc((void **) &dev_dy_hy, sizeof(double)), "dev_dy_hy");
-            CHECK_ERROR(cudaMalloc((void **) &dev_dy_hz, sizeof(double)), "dev_dy_hz");
-            CHECK_ERROR(cudaMalloc((void **) &dev_sz, 3*sizeof(int)), "dev_sz");
-            CHECK_ERROR(cudaMalloc((void **) &dev_zero, sizeof(int)), "dev_zero");
-            CHECK_ERROR(cudaMalloc((void **) &dev_pmin, 3*sizeof(double)), "dev_pmin");
-            CHECK_ERROR(cudaMalloc((void **) &dev_pmax, 3*sizeof(double)), "dev_pmax");
-            CHECK_ERROR(cudaMalloc((void **) &dev_bflag, sizeof(int)), "dev_bflag");
-            #include "bssnrhs_cuda_malloc.h"
-            #include "bssnrhs_cuda_malloc_adv.h"
-
-            cudaStream_t stream;
-            CHECK_ERROR(cudaStreamCreate(&stream), "cudaStream creation");
-
+            stream = streams[index-init_block];
+            
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
             cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream,
@@ -246,10 +265,6 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
             );
 
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
-
-            CHECK_ERROR(cudaStreamSynchronize(stream), "cudaStreamSynchronize in computeBSSN");
-
-            CHECK_ERROR(cudaStreamDestroy(stream), "cudaStreamDestroy");
 
             // #include "bssnrhs_cuda_mdealloc.h"
             // #include "bssnrhs_cuda_mdealloc_adv.h"
@@ -262,7 +277,6 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
             // CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
             // CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
             // CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
-            // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
 
             // CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
             // CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
@@ -270,7 +284,9 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
             delete [] var_in_array[index];
         }
 
-        CHECK_ERROR(cudaDeviceSynchronize(), "cudaDeviceSynchronize in computeBSSN");
+        for (int index=0; index<current_block-init_block; index++){
+            CHECK_ERROR(cudaStreamDestroy(streams[index]), "cudaStreamDestroy");
+        }
         CHECK_ERROR(cudaDeviceReset(), "cudaDeviceReset in computeBSSN");
     }
 }
@@ -342,37 +358,37 @@ int main (int argc, char** argv){
     #include "rhs_cuda.h"
     GPU_Async_Iteration_Wise(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
 
-    std::cout << "" << std::endl;
+    // std::cout << "" << std::endl;
 
-    double ** var_in = new double*[BSSN_NUM_VARS];
-    double ** var_out = new double*[BSSN_NUM_VARS];
+    // double ** var_in = new double*[BSSN_NUM_VARS];
+    // double ** var_out = new double*[BSSN_NUM_VARS];
 
-    data_generation_2D(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
-    #include "rhs.h"
-    CPU_sequence(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
+    // data_generation_2D(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
+    // #include "rhs.h"
+    // CPU_sequence(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
 
-    // Verify outputs
-    for (int blk=0; blk<num_blks*(blk_up-blk_lb+1); blk++){
-        for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
-            int sizeofBlock = blkList[blk].node1D_x * blkList[blk].node1D_y * blkList[blk].node1D_z;
-            for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
-                double diff = var_out_array[blk][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
-                if (fabs(diff)>threshold){
-                    const char separator    = ' ';
-                    const int nameWidth     = 6;
-                    const int numWidth      = NUM_DIGITS+10;
+    // // Verify outputs
+    // for (int blk=0; blk<num_blks*(blk_up-blk_lb+1); blk++){
+    //     for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
+    //         int sizeofBlock = blkList[blk].node1D_x * blkList[blk].node1D_y * blkList[blk].node1D_z;
+    //         for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
+    //             double diff = var_out_array[blk][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
+    //             if (fabs(diff)>threshold){
+    //                 const char separator    = ' ';
+    //                 const int nameWidth     = 6;
+    //                 const int numWidth      = NUM_DIGITS+10;
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
-                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blk][bssn_var*sizeofBlock+pointInd];
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
+    //                 std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blk][bssn_var*sizeofBlock+pointInd];
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
-                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out[bssn_var][blkList[blk].offset+pointInd];
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
+    //                 std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out[bssn_var][blkList[blk].offset+pointInd];
 
-                    std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
-                    std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff << std::endl;
-                }
-            }
-        }
-    }
+    //                 std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
+    //                 std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff << std::endl;
+    //             }
+    //         }
+    //     }
+    // }
     return 0;
 }
