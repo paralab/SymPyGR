@@ -217,21 +217,20 @@ void GPU_3D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned
 
         CHECK_ERROR(cudaMemcpy(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost), "dev_var_out[bssn_var*unzip_dof] cudaMemcpyDeviceToHost");
 
-        // #include "bssnrhs_cuda_mdealloc.h"
-        // #include "bssnrhs_cuda_mdealloc_adv.h"
-        // #include "bssnrhs_cuda_offset_demalloc.h"
+        #include "bssnrhs_cuda_mdealloc.h"
+        #include "bssnrhs_cuda_mdealloc_adv.h"
+        #include "bssnrhs_cuda_offset_demalloc.h"
 
-        // CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
-        // CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
-        // CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
-        // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
-        // CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
-        // CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
-        // CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
-        // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+        CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
+        CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
+        CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
+        CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+        CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
+        CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
+        CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
 
-        // CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
-        // CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
+        CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
+        CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
 
         delete [] var_in_array[index];
     }
