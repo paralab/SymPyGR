@@ -252,7 +252,8 @@ int *dev_B0Int,
 int *dev_B1Int,
 int *dev_B2Int,
 
-cudaStream_t stream
+cudaStream_t stream,
+cudaStream_t streamAlt
 );
 
 #endif /* BSSNEQN_SOLVE_H_ */

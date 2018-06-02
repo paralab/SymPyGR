@@ -33,7 +33,7 @@
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, 
 const unsigned int unzip_dof, const unsigned int& offset, 
 const double *pmin,const double *pmax, const unsigned int *sz, 
-const unsigned int& bflag, cudaStream_t stream,
+const unsigned int& bflag, cudaStream_t stream, cudaStream_t streamAlt,
 #include "list_of_para.h"
 , double * dev_dy_hx, double * dev_dy_hy, double * dev_dy_hz, int * dev_sz, int * dev_zero, double * dev_pmin, double * dev_pmax, int * dev_bflag
 );

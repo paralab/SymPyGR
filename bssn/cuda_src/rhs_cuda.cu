@@ -9,7 +9,7 @@ enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,
 
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, 
 const unsigned int& offset, const double *pmin, const double *pmax, const unsigned int *sz, 
-const unsigned int& bflag, cudaStream_t stream,
+const unsigned int& bflag, cudaStream_t stream, cudaStream_t streamAlt,
 #include "list_of_para.h"
 , double * dev_dy_hx, double * dev_dy_hy, double * dev_dy_hz, int * dev_sz, int * dev_zero, double * dev_pmin, double * dev_pmax, int * dev_bflag
 )
@@ -58,7 +58,7 @@ const unsigned int& bflag, cudaStream_t stream,
 
     calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
         #include "list_of_args.h"
-        , stream
+        , stream, streamAlt
     );
 
     // if (bflag != 0) {
