@@ -75,7 +75,9 @@ double * dev_var_in, double * dev_var_out,
 
     int points_at_once = threads_per_block_cpu*blocks_cpu;
     int loops = ceil(1.0*total_points/points_at_once);
-    cudaStreamSynchronize(stream);
+
+    CHECK_ERROR(cudaStreamSynchronize(stream), "cudaStreamSynchronize stream in bssnsolve");
+
     for(int i=0; i<loops; i++){
         int offset = i*points_at_once;
 
@@ -91,20 +93,4 @@ double * dev_var_in, double * dev_var_out,
             CHECK_ERROR(cudaGetLastError(), "cuda_bssn_eqns_points Kernel launch failed");
         }      
     }
-    // const int ie = sz[0] - 3;//x direction
-    // const int je = sz[1] - 3;//y direction
-    // const int ke = sz[2] - 3;//z direction
-  
-    // int temp_max = (ie>je)? ie : je;
-    // int maximumIterations = (temp_max>ke) ? temp_max: ke;
-     
-    // int requiredBlocks = (5+maximumIterations) / 6;
-    // cuda_bssn_eqns_points<<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-    // dim3((ie + requiredBlocks -1)/requiredBlocks,
-    // (je + requiredBlocks -1)/requiredBlocks, 
-    // (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>>(0, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
-    //     #include "list_of_args.h"
-    // );
-
-    // CHECK_ERROR(cudaGetLastError(), "cuda_bssn_eqns_points Kernel launch failed");
 }
