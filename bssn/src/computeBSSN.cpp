@@ -266,28 +266,30 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
 
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
 
-            // #include "bssnrhs_cuda_mdealloc.h"
-            // #include "bssnrhs_cuda_mdealloc_adv.h"
-            // #include "bssnrhs_cuda_offset_demalloc.h"
-
-            // CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
-            // CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
-            // CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
-            // CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
-            // CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
-            // CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
-            // CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
-
-            // CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
-            // CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
-
             delete [] var_in_array[index];
         }
 
         for (int index=0; index<current_block-init_block; index++){
             CHECK_ERROR(cudaStreamDestroy(streams[index]), "cudaStreamDestroy");
         }
-        CHECK_ERROR(cudaDeviceReset(), "cudaDeviceReset in computeBSSN");
+
+        #include "bssnrhs_cuda_mdealloc.h"
+        #include "bssnrhs_cuda_mdealloc_adv.h"
+        #include "bssnrhs_cuda_offset_demalloc.h"
+
+        CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
+        CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
+        CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
+        CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
+        CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
+        CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
+        CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
+
+        for (int index=init_block; index<=current_block-1; index++){
+            CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
+            CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
+        }
+        // CHECK_ERROR(cudaDeviceReset(), "cudaDeviceReset in computeBSSN");
     }
 }
 
