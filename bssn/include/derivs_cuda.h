@@ -13,6 +13,8 @@
 #include <iostream>
 #include "def.h"
 
+#define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
+
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 
 void cuda_deriv42_x(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream);

@@ -65,27 +65,8 @@
                       (je + requiredBlocks -1)/requiredBlocks, 
                       (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_u_offset, dev_dy, dev_sz, dev_bflag);
- 
-     // Check for any errors launching the kernel
-     cudaError_t cudaStatus;
-     cudaStatus = cudaGetLastError();
-     if (cudaStatus != cudaSuccess) {
-         fprintf(stderr, "cuda_deriv42_x_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-         return;
-     }
 
-     // No GPU code for the following part
-     // #ifdef DEBUG_DERIVS_COMP
-     //     #pragma message("DEBUG_DERIVS_COMP: ON")
-     //     for (int k = 3; k < sz[2]-3; k++) {
-     //         for (int j = 3; j < sz[1]-3; j++) {
-     //             for (int i = 3; i < sz[0]-3; i++) {
-     //                 int pp = IDX(i,j,k);
-     //                 if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-     //                 }
-     //             }
-     //         }
-     // #endif
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_x Kernel launch failed");
  }
 
 __global__ void calc_deriv42_y(double* output, double * dev_var_in, const int * dev_u_offset,
@@ -149,26 +130,9 @@ void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, do
                     (je + requiredBlocks -1)/requiredBlocks, 
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
+    
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_y Kernel launch failed");
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "calc_deriv42_y Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    //   for (int k = 3; k < sz[2]-3; k++) {
-    //     for (int j = 3; j < sz[1]-3; j++) {
-    //       for (int i = 3; i < sz[0]-3; i++) {
-    //         int pp = IDX(i,j,k);
-    //         if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //       }
-    //     }
-    //   }
-    // #endif
  }
 
 __global__ void calc_deriv42_z(double * output, double * dev_var_in, const int * dev_u_offset,
@@ -231,24 +195,7 @@ void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset,
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_z_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-
-    //   #ifdef DEBUG_DERIVS_COMP
-    //     for (int k = kb; k < ke; k++) {
-    //       for (int j = jb; j < je; j++) {
-    //         for (int i = ib; i < ie; i++) {
-    //           int pp = IDX(i,j,k);
-    //           if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //         }
-    //       }
-    //     }
-    //   #endif
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_z Kernel launch failed");
 }
 
 __global__ void calc_deriv42_xx(double * output, double * dev_var_in, const int * dev_u_offset,
@@ -332,25 +279,7 @@ void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset,
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_xx_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    // for (int k = kb; k < ke; k++) {
-    //   for (int j = jb; j < je; j++) {
-    //     for (int i = ib; i < ie; i++) {
-    //       int pp = IDX(i,j,k);
-    //       if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //     }
-    //   }
-    // }
-    // #endif    
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_xx Kernel launch failed");
 }
 
 
@@ -437,26 +366,7 @@ void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, d
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_yy_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    // for (int k = kb; k < ke; k++) {
-    // for (int j = jb; j < je; j++) {
-    //     for (int i = ib; i < ie; i++) {
-    //     int pp = IDX(i,j,k);
-    //     if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //     }
-    // }
-    // }
-    // #endif 
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_yy Kernel launch failed");
 }
 
 
@@ -542,26 +452,7 @@ void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset,
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
                     (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_deriv42_zz_firstThreeForLoops Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-
-
-    // No GPU code for the following part
-    // #ifdef DEBUG_DERIVS_COMP
-    // for (int k = kb; k < ke; k++) {
-    //   for (int j = jb; j < je; j++) {
-    //     for (int i = ib; i < ie; i++) {
-    //       int pp = IDX(i,j,k);
-    //       if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
-    //     }
-    //   }
-    // }
-    // #endif
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_zz Kernel launch failed");
 }
 
 
@@ -693,7 +584,7 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
     
                     
-    // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_adv_x Kernel launch failed");
 
 }
 
@@ -826,9 +717,7 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betay,
                             dev_dy, dev_bflag, dev_sz, dev_u_offset);
         
-    
-                    
-    // cudaMemcpy(Dxu, dev_Dxu, sizeof(double)*sizeof(Dxu), cudaMemcpyDeviceToHost);
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_adv_y Kernel launch failed");
 
 }
 
@@ -962,6 +851,7 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betaz,
                             dev_dz, dev_bflag, dev_sz, dev_u_offset);
     
+    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_adv_z Kernel launch failed");
 }
 
 __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
@@ -1086,6 +976,7 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
                         (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
 
+    CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_x Kernel launch failed");
 }
 
 __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
@@ -1209,6 +1100,7 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_dy, dev_bflag, dev_sz, dev_u_offset);
 
+    CHECK_ERROR(cudaGetLastError(), "cuda_ko_deriv42_y Kernel launch failed");
 }
 
 __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
@@ -1336,4 +1228,5 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
                     (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
                         dev_dz, dev_bflag, dev_sz, dev_u_offset);
    
+    CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_z Kernel launch failed");
 }

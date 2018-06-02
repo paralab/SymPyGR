@@ -64,13 +64,6 @@ double * dev_var_in, double * dev_var_out,
     (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>>(0, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
         #include "list_of_args.h"
     );
-    
-    // Check for any errors launching the kernel
-    cudaError_t cudaStatus;
-    cudaStatus = cudaGetLastError();
-    if (cudaStatus != cudaSuccess) {
-        fprintf(stderr, "cuda_bssn_eqns_points Kernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-        return;
-    }
-   
+
+    CHECK_ERROR(cudaGetLastError(), "cuda_bssn_eqns_points Kernel launch failed");
 }

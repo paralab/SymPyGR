@@ -287,7 +287,6 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
     double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
     const unsigned int *host_sz, int* dev_bflag, int* dev_sz, cudaStream_t stream) {
         
-        cudaError_t cudaStatus;
         const unsigned int nx = host_sz[0];
         const unsigned int ny = host_sz[1];
         const unsigned int nz = host_sz[2];
@@ -305,16 +304,9 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         
         cacl_bssn_bcs_x <<< dim3(threads_y,threads_z), dim3(threads_y,threads_z), 0, stream >>> (output, dev_var_in,
            dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
-
-           
-        // cudaStatus = cudaStreamSynchronize(stream);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "bcs x stream cudaStreamSynchronize failed!\n");}
-        cudaStatus = cudaDeviceSynchronize();
-           if (cudaStatus != cudaSuccess) {
-                   fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_x kernal!\n", cudaStatus);
-                   return;
-           }
         
+        CHECK_ERROR(cudaGetLastError(), "cacl_bssn_bcs_x Kernel launch failed");
+           
         maximumIterations = (ke>ie) ? ke : ie ;
         requiredBlocks = (9 + maximumIterations)/10;
         int threads_x = (requiredBlocks-1+ie) / requiredBlocks;
@@ -322,13 +314,7 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         cacl_bssn_bcs_y <<< dim3(threads_x,threads_z), dim3(threads_x,threads_z), 0, stream >>> (output, dev_var_in,
             dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
  
-        // cudaStatus = cudaStreamSynchronize(stream);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "bcs y stream cudaStreamSynchronize failed!\n");}
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_y kernal!\n", cudaStatus);
-            return;
-        }
+        CHECK_ERROR(cudaGetLastError(), "cacl_bssn_bcs_y Kernel launch failed");
 
         maximumIterations = (je>ie) ? je : ie ;
         requiredBlocks = (9 + maximumIterations)/10;
@@ -336,14 +322,8 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
         threads_y = (requiredBlocks-1+je) / requiredBlocks;
         cacl_bssn_bcs_z <<< dim3(threads_x,threads_y), dim3(threads_x,threads_y), 0, stream >>> (output, dev_var_in,
             dev_u_offset, dxf, dyf, dzf, pmin, pmax, f_falloff, f_asymptotic, dev_sz, dev_bflag );
- 
-        // cudaStatus = cudaStreamSynchronize(stream);
-        // if (cudaStatus != cudaSuccess) {fprintf(stderr, "bcs z stream cudaStreamSynchronize failed!\n");}
-        cudaStatus = cudaDeviceSynchronize();
-        if (cudaStatus != cudaSuccess) {
-            fprintf(stderr, "cudaDeviceSynchronize returned error code %d after launching bssn_bcs_z kernal!\n", cudaStatus);
-            return;
-        }
+
+        CHECK_ERROR(cudaGetLastError(), "cacl_bssn_bcs_z Kernel launch failed");
     }
 
     __global__ void kernal_get_output (double * output, int * dev_sz, 
@@ -416,4 +396,6 @@ void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
                       (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_sz, 
                         #include "list_of_args.h"
                       );
+            
+            CHECK_ERROR(cudaGetLastError(), "kernal_get_output Kernel launch failed");
     }
