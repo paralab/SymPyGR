@@ -11,7 +11,7 @@
 #include "rhs.h"
 #include "rhs_cuda.h"
 
-void data_generation_3D(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, double ** var_out_array, Block * blkList){
+void data_generation_3D_GPU_Async_supported(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, Block * blkList){
 
     // double ** var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
     // double ** var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
@@ -33,7 +33,6 @@ void data_generation_3D(const unsigned int blk_lb, const unsigned int blk_up, co
         double * var_in_per_block = new double[unzip_dof*BSSN_NUM_VARS];
         double * var_out_per_block = new double[unzip_dof*BSSN_NUM_VARS];
         var_in_array[index] = var_in_per_block;
-        var_out_array[index] = var_out_per_block;
 
         double coord[3];
         double u[BSSN_NUM_VARS];
@@ -65,7 +64,6 @@ void data_generation_3D(const unsigned int blk_lb, const unsigned int blk_up, co
 
                     for(unsigned int var=0; var<BSSN_NUM_VARS; var++){
                         var_in_per_block[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=u[var];
-                        var_out_per_block[var*unzip_dof+offset+k*size_y*size_x+j*size_y+i]=0;
                     }
                 }
             }
@@ -141,11 +139,12 @@ void data_generation_2D(const unsigned int blk_lb, const unsigned int blk_up, co
     }
 }
 
-void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, double ** var_out_array, Block * blkList){
+double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in_array, Block * blkList){
     // This function accepts only 3D input format
 
     double ** dev_var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
     double ** dev_var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
+    double ** host_var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
 
     // Check number of blocks can handle at onece
     double gpu_capacity_limit = 4000;
@@ -198,6 +197,7 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
             unzip_dof = blk.node1D_x*blk.node1D_y*blk.node1D_z;
             CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
             CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
+            CHECK_ERROR(cudaMallocHost((void**)&host_var_out_array[index], unzip_dof*BSSN_NUM_VARS*sizeof(double)), "host_var_out_array[index]");
         }
 
         int size = unzip_dof * sizeof(double);
@@ -268,10 +268,10 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
             );
             
             if (index-init_block>0){
-                CHECK_ERROR(cudaMemcpyAsync(var_out_array[index-1], dev_var_out_array[index-1], BSSN_NUM_VARS*unzip_dof_prev*sizeof(double), cudaMemcpyDeviceToHost, streams[index-init_block-1]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+                CHECK_ERROR(cudaMemcpyAsync(host_var_out_array[index-1], dev_var_out_array[index-1], BSSN_NUM_VARS*unzip_dof_prev*sizeof(double), cudaMemcpyDeviceToHost, streams[index-init_block-1]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
             }
             if(index==current_block-1){
-                CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, streams[index-init_block]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+                CHECK_ERROR(cudaMemcpyAsync(host_var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, streams[index-init_block]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
             }
 
             unzip_dof_prev=unzip_dof;
@@ -299,6 +299,7 @@ void GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int blk_
             CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
         }
     }
+    return host_var_out_array;
 }
 
 void CPU_sequence(const unsigned int blk_lb, const unsigned int blk_up, const unsigned int num_blks, double ** var_in, double ** var_out, Block * blkList){
@@ -362,12 +363,11 @@ int main (int argc, char** argv){
     unsigned int num_blks=atoi(argv[3]);
 
     double ** var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
-    double ** var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
     Block * blkList = new Block[num_blks*(blk_up-blk_lb+1)];
     
-    data_generation_3D(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
+    data_generation_3D_GPU_Async_supported(blk_lb, blk_up, num_blks, var_in_array, blkList);
     #include "rhs_cuda.h"
-    GPU_Async_Iteration_Wise(blk_lb, blk_up, num_blks, var_in_array, var_out_array, blkList);
+    double ** var_out_array = GPU_Async_Iteration_Wise(blk_lb, blk_up, num_blks, var_in_array, blkList);
 
     std::cout << "" << std::endl;
 
