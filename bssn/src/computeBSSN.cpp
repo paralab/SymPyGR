@@ -402,5 +402,10 @@ int main (int argc, char** argv){
             }
         }
     }
+
+    //Free host memory
+    for (int blk=0; blk<num_blks*(blk_up-blk_lb+1); blk++){
+        CHECK_ERROR(cudaFreeHost(var_out_array[blk]), "free host memory");
+    }
     return 0;
 }
