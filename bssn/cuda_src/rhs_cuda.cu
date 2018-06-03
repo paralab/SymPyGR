@@ -56,10 +56,17 @@ const unsigned int& bflag, cudaStream_t stream, cudaStream_t streamAlt,
     #include "bssnrhs_cuda_derivs.h"
     #include "bssnrhs_cuda_derivs_adv.h"
 
+    cudaEvent_t syncEvent;
+    cudaEventCreate(&syncEvent);
+    
     calc_bssn_eqns(sz, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out,
         #include "list_of_args.h"
         , stream, streamAlt
     );
+
+    cudaEventRecord(syncEvent, streamAlt);
+
+    cudaStreamWaitEvent(stream, syncEvent, 0);
 
     // if (bflag != 0) {
 
@@ -125,6 +132,8 @@ const unsigned int& bflag, cudaStream_t stream, cudaStream_t streamAlt,
         #include "list_of_args.h"
         , stream
     );
+
+    cudaEventDestroy(syncEvent);
 }
 
 __global__ void cacl_bssn_bcs_x(double * output, double * dev_var_in, int* dev_u_offset,
