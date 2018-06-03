@@ -363,21 +363,31 @@ int main (int argc, char** argv){
     unsigned int num_blks=atoi(argv[3]);
 
     double ** var_in_array = new double*[num_blks*(blk_up-blk_lb+1)];
+    double ** var_in = new double*[BSSN_NUM_VARS];
+    double ** var_out = new double*[BSSN_NUM_VARS];
     Block * blkList = new Block[num_blks*(blk_up-blk_lb+1)];
     
+    #if isGPU
     data_generation_3D_GPU_Async_supported(blk_lb, blk_up, num_blks, var_in_array, blkList);
     #include "rhs_cuda.h"
+
+    bssn::timer::t_gpu_runtime.start();
     double ** var_out_array = GPU_Async_Iteration_Wise(blk_lb, blk_up, num_blks, var_in_array, blkList);
+    bssn::timer::t_gpu_runtime.stop();
+    #endif
 
     std::cout << "" << std::endl;
 
-    double ** var_in = new double*[BSSN_NUM_VARS];
-    double ** var_out = new double*[BSSN_NUM_VARS];
-
+    #if isCPU
     data_generation_2D(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
     #include "rhs.h"
-    CPU_sequence(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
 
+    bssn::timer::t_cpu_runtime.start();
+    CPU_sequence(blk_lb, blk_up, num_blks, var_in, var_out, blkList);
+    bssn::timer::t_cpu_runtime.stop();
+    #endif
+
+    #if test
     // Verify outputs
     for (int blk=0; blk<num_blks*(blk_up-blk_lb+1); blk++){
         for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
@@ -402,10 +412,15 @@ int main (int argc, char** argv){
             }
         }
     }
+    #endif
 
+    #if isGPU
     //Free host memory
     for (int blk=0; blk<num_blks*(blk_up-blk_lb+1); blk++){
         CHECK_ERROR(cudaFreeHost(var_out_array[blk]), "free host memory");
     }
+    #endif
+    
+    bssn::timer::profileInfo();
     return 0;
 }
