@@ -68,7 +68,7 @@ __global__ void cuda_bssn_eqns_points(int * dev_offset, int * dev_sz, double * d
 void calc_bssn_eqns(const unsigned int * sz, int * dev_sz, double * dev_pmin, double * dev_dy_hz, double * dev_dy_hy, double * dev_dy_hx, 
 double * dev_var_in, double * dev_var_out, 
 #include "list_of_para.h"
-, cudaStream_t stream, cudaStream_t streamAlt
+, cudaStream_t stream
 )
 {
     int total_points = (sz[2]-6)*(sz[1]-6)*(sz[0]-6);
@@ -76,21 +76,10 @@ double * dev_var_in, double * dev_var_out,
     int points_at_once = threads_per_block_cpu*blocks_cpu;
     int loops = ceil(1.0*total_points/points_at_once);
 
-    CHECK_ERROR(cudaStreamSynchronize(stream), "cudaStreamSynchronize stream in bssnsolve");
-
     for(int i=0; i<loops; i++){
         int offset = i*points_at_once;
-
-        if(i%2==0){
-            cuda_bssn_eqns_points<<< blocks_cpu, threads_per_block_cpu, 0, stream >>>(0, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out, offset,
-                #include "list_of_args.h"
-            );
-            CHECK_ERROR(cudaGetLastError(), "cuda_bssn_eqns_points Kernel launch failed");
-        }else{
-            cuda_bssn_eqns_points<<< blocks_cpu, threads_per_block_cpu, 0, streamAlt >>>(0, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out, offset,
-                #include "list_of_args.h"
-            );
-            CHECK_ERROR(cudaGetLastError(), "cuda_bssn_eqns_points Kernel launch failed");
-        }      
+        cuda_bssn_eqns_points<<< blocks_cpu, threads_per_block_cpu, 0, stream >>>(0, dev_sz, dev_pmin, dev_dy_hz, dev_dy_hy, dev_dy_hx, dev_var_in, dev_var_out, offset,
+            #include "list_of_args.h"
+        );     
     }
 }

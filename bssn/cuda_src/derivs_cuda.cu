@@ -5,18 +5,24 @@
 
  #include "derivs_cuda.h"
  
+int threads_per_block_deriv_cpu=256;
+
+__constant__ int threads_per_block_deriv_gpu=256;
+
 
  __global__ void calc_deriv42_x(double * output, double * dev_var_in, 
         const int * dev_u_offset, double * dev_dy, int * dev_sz, int* dev_bflag)
  {
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
 
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-2)) + 1;
+    int k = (id/(dev_sz[1]-2)/(dev_sz[0]-6)) + 1;
+
+    if (k>=dev_sz[2]-1) return;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
-    if(i >= nx-3 || j >= ny-1 || k >= dev_sz[2]-1) return;
     
     int pp = IDX(i, j, k);
  
@@ -50,35 +56,34 @@
  void cuda_deriv42_x(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
         int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
  {
+    const int ib = 3;
+    const int jb = 1;
+    const int kb = 1;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 1;
+    const int ke = host_sz[2] - 1;
  
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 1;//y direction
-    const int ke = host_sz[2] - 1;//z direction
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
   
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    calc_deriv42_x <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
      
-    int requiredBlocks = (9+maximumIterations) / 10;
-    
-    calc_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                      dim3((ie + requiredBlocks -1)/requiredBlocks,
-                      (je + requiredBlocks -1)/requiredBlocks, 
-                      (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
-                        dev_u_offset, dev_dy, dev_sz, dev_bflag);
-
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_x Kernel launch failed");
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_x Kernel launch failed");
  }
 
 __global__ void calc_deriv42_y(double* output, double * dev_var_in, const int * dev_u_offset,
                          double * dev_dy, int * dev_sz, int* dev_bflag)
 {
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 1;
+
+    if (k>=dev_sz[2]-1) return;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
-    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-1) return;
     
     int pp = IDX(i, j, k);
 
@@ -116,35 +121,34 @@ __global__ void calc_deriv42_y(double* output, double * dev_var_in, const int * 
 void cuda_deriv42_y(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
                 int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
  {
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 1;//z direction
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 1;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 1;
   
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
      
-    int requiredBlocks = (9+maximumIterations) / 10;
+    calc_deriv42_y <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    calc_deriv42_y<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
-                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
-    
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_y Kernel launch failed");
-
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_y Kernel launch failed");
  }
 
 __global__ void calc_deriv42_z(double * output, double * dev_var_in, const int * dev_u_offset,
                              double * dev_dy, int * dev_sz, int* dev_bflag)
 {
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
+
+    if (k>=dev_sz[2]-3) return;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
-    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
 
     int n = nx * ny;
     int pp = IDX(i, j, k);
@@ -180,34 +184,34 @@ __global__ void calc_deriv42_z(double * output, double * dev_var_in, const int *
 void cuda_deriv42_z(double * output, double * dev_var_in, int * dev_u_offset, 
     double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-     const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 3;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 3;
   
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
      
-    int requiredBlocks = (9+maximumIterations) / 10;
+    calc_deriv42_z <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
 
-    calc_deriv42_z<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
-                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
-
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_z Kernel launch failed");
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_z Kernel launch failed");
 }
 
 __global__ void calc_deriv42_xx(double * output, double * dev_var_in, const int * dev_u_offset,
              double * dev_dy, int * dev_sz, int* dev_bflag)
  {
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
+
+    if (k>=dev_sz[2]-3) return;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
-    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
 
     int pp = IDX(i, j, k);
 
@@ -264,22 +268,19 @@ __global__ void calc_deriv42_xx(double * output, double * dev_var_in, const int 
 void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset, 
                 double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 3;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 3;
   
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
      
-    int requiredBlocks = (9+maximumIterations) / 10;
+    calc_deriv42_xx <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);               
 
-    calc_deriv42_xx<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
-                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
-
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_xx Kernel launch failed");
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_xx Kernel launch failed");
 }
 
 
@@ -287,13 +288,16 @@ void cuda_deriv42_xx(double * output, double * dev_var_in, int * dev_u_offset,
 __global__ void calc_deriv42_yy(double * output, double * dev_var_in, const int * dev_u_offset, 
                 double * dev_dy, int * dev_sz, int* dev_bflag)
  {
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
+
+    if (k>=dev_sz[2]-3) return;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
-    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
 
     int pp = IDX(i, j, k);
 
@@ -351,35 +355,35 @@ __global__ void calc_deriv42_yy(double * output, double * dev_var_in, const int 
 void cuda_deriv42_yy(double * output, double * dev_var_in, int * dev_u_offset, double * dev_dy, 
                 int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 3;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 3;
   
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
      
-    int requiredBlocks = (9+maximumIterations) / 10;
+    calc_deriv42_yy <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);               
 
-    calc_deriv42_yy<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
-                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
-
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_yy Kernel launch failed");
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_yy Kernel launch failed");
 }
 
 
 __global__ void calc_deriv42_zz(double * output, double * dev_var_in, const int * dev_u_offset,
                  double * dev_dy, int * dev_sz, int* dev_bflag)
  {
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
+
+    if (k>=dev_sz[2]-3) return;
 
     int nx = dev_sz[0]; 
     int ny = dev_sz[1]; 
-    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
 
     int pp = IDX(i, j, k);
     int n = nx * ny;
@@ -437,42 +441,41 @@ __global__ void calc_deriv42_zz(double * output, double * dev_var_in, const int 
 void cuda_deriv42_zz(double * output, double * dev_var_in, int * dev_u_offset, 
         double * dev_dy, int * dev_sz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 3;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 3;
   
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
      
-    int requiredBlocks = (9+maximumIterations) / 10;
+    calc_deriv42_zz <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);               
 
-    calc_deriv42_zz<<<dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream>>> 
-                    (output, dev_var_in, dev_u_offset, dev_dy, dev_sz, dev_bflag);
-
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_zz Kernel launch failed");
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_zz Kernel launch failed");
 }
 
 
 __global__ void calc_deriv42_adv_x(double * output, double * dev_var_in, int * dev_betax,
-     double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+     double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) 
+{
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
     
-    //ib, jb, kb values are accumulated to the x, y, z
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
 
-    double idx_by_2 = 0.50 * (1.0 / dev_dx[0]);
-    double idx_by_12 = (1.0 / dev_dx[0])/12;
+    if (k>=dev_sz[2]-3) return;
+
     int nx = dev_sz[0];
     int ny = dev_sz[1];
 
-    if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+    double idx_by_2 = 0.50 * (1.0 / dev_dx[0]);
+    double idx_by_12 = (1.0 / dev_dx[0])/12;
     
     int pp = IDX(i, j, k);
-    //printf("ie = %d, je = %d, ke = %d\n", i, j, k);
+
     if (dev_var_in[*dev_betax + pp] > 0.0 ) {
         output[pp] = ( -  3.0 * dev_var_in[*dev_u_offset + pp - 1]
                     - 10.0 * dev_var_in[*dev_u_offset + pp]
@@ -567,44 +570,41 @@ void cuda_deriv42_adv_x(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dx, int * dev_sz,
     int * dev_betax, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
-    //printf("ie = %d, je = %d, ke = %d\n", ie, je, ke);
-
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 3;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 3;
     
-    int requiredBlocks = (9+maximumIterations) / 10;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
   
-    calc_deriv42_adv_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                        dim3((ie + requiredBlocks -1)/requiredBlocks,
-                        (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betax,
+    calc_deriv42_adv_x <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_betax,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
     
-                    
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_adv_x Kernel launch failed");
-
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_adv_x Kernel launch failed");
 }
 
 __global__ void calc_deriv42_adv_y(double * output, double * dev_var_in, int * dev_betay,
-    double *dev_dy, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
-   
-   //ib, jb, kb values are accumulated to the x, y, z
-   int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    double *dev_dy, int* dev_bflag, int* dev_sz, int* dev_u_offset) 
+{
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
 
-   double idy_by_2 = 0.50 * (1.0 / dev_dy[0]);
-   double idy_by_12 = (1.0 / dev_dy[0])/12.0;
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
+   
+    if (k>=dev_sz[2]-3) return;
+
    int nx = dev_sz[0];
    int ny = dev_sz[1];
    
-   if(i >= nx-3 || j >= dev_sz[1]-3 || k >= dev_sz[2]-3) return;
+   double idy_by_2 = 0.50 * (1.0 / dev_dy[0]);
+   double idy_by_12 = (1.0 / dev_dy[0])/12.0;
   
    int pp = IDX(i, j, k);
-   //printf("pp = %f\n", dev_var_in[*dev_betax + pp]);
+
    if (dev_var_in[*dev_betay + pp] > 0.0 ) {
         output[pp] = ( -  3.0 * dev_var_in[*dev_u_offset + pp - nx]
                     - 10.0 * dev_var_in[*dev_u_offset + pp]
@@ -702,39 +702,38 @@ void cuda_deriv42_adv_y(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dy, int * dev_sz,
     int * dev_betay, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
-
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 3;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 3;
     
-    int requiredBlocks = (9+maximumIterations) / 10;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
   
-    calc_deriv42_adv_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                        dim3((ie + requiredBlocks -1)/requiredBlocks,
-                        (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betay,
+    calc_deriv42_adv_y <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_betay,
                             dev_dy, dev_bflag, dev_sz, dev_u_offset);
         
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_adv_y Kernel launch failed");
-
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_adv_y Kernel launch failed");
 }
 
 __global__ void calc_deriv42_adv_z(double * output, double * dev_var_in, int * dev_betaz,
-    double *dev_dz, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
-   
-   //ib, jb, kb values are accumulated to the x, y, z
-   int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    double *dev_dz, int* dev_bflag, int* dev_sz, int* dev_u_offset) 
+{
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
 
-   double idz_by_2 = 0.50 * (1.0 / dev_dz[0]);
-   double idz_by_12 = (1.0 / dev_dz[0])/12.0;
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
+   
+    if (k>=dev_sz[2]-3) return;
+
    int nx = dev_sz[0];
    int ny = dev_sz[1];
    
-   if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-3) return;
+   double idz_by_2 = 0.50 * (1.0 / dev_dz[0]);
+   double idz_by_12 = (1.0 / dev_dz[0])/12.0;
 
    int n = nx * ny;
    int pp = IDX(i, j, k);
@@ -836,36 +835,35 @@ void cuda_deriv42_adv_z(double * output, double * dev_var_in,
     int * dev_u_offset, double * dev_dz, int * dev_sz,
     int * dev_betaz, int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-    const int ie = host_sz[0] - 3;//x direction
-    const int je = host_sz[1] - 3;//y direction
-    const int ke = host_sz[2] - 3;//z direction
-
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
+    const int ib = 3;
+    const int jb = 3;
+    const int kb = 3;
+    const int ie = host_sz[0] - 3;
+    const int je = host_sz[1] - 3;
+    const int ke = host_sz[2] - 3;
     
-    int requiredBlocks = (9+maximumIterations) / 10;
+    const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+    int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
   
-    calc_deriv42_adv_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                        dim3((ie + requiredBlocks -1)/requiredBlocks,
-                        (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in, dev_betaz,
+    calc_deriv42_adv_z <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in, dev_betaz,
                             dev_dz, dev_bflag, dev_sz, dev_u_offset);
     
-    CHECK_ERROR(cudaGetLastError(), "cuda_deriv42_adv_z Kernel launch failed");
+    CHECK_ERROR(cudaGetLastError(), "calc_deriv42_adv_z Kernel launch failed");
 }
 
 __global__ void calc_ko_deriv42_x(double * output, double * dev_var_in,
-    double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+    double *dev_dx, int* dev_bflag, int* dev_sz, int* dev_u_offset) 
+{
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
    
-   //ib, jb, kb values are accumulated to the x, y, z
-   int i = 4 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    if (k>=dev_sz[2]-3) return;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
-
-   if(i >= nx-4 || j >= ny-3 || k >= dev_sz[2]-3) return;
 
     if(i==4) {
         int ib=3;
@@ -961,36 +959,36 @@ void cuda_ko_deriv42_x(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dx, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-   const int ie = host_sz[0] - 4;//x direction
-   const int je = host_sz[1] - 3;//y direction
-   const int ke = host_sz[2] - 3;//z direction
+   const int ib = 3;
+   const int jb = 3;
+   const int kb = 3;
+   const int ie = host_sz[0] - 3;
+   const int je = host_sz[1] - 3;
+   const int ke = host_sz[2] - 3;
 
-   int temp_max = (ie>je)? ie : je;
-   int maximumIterations = (temp_max>ke) ? temp_max: ke;
-
-   int requiredBlocks = (9+maximumIterations) / 10;
+   const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+   int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
   
-   calc_ko_deriv42_x <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                        dim3((ie + requiredBlocks -1)/requiredBlocks,
-                        (je + requiredBlocks -1)/requiredBlocks, 
-                        (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
+   calc_ko_deriv42_x <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in,
                             dev_dx, dev_bflag, dev_sz, dev_u_offset);
 
     CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_x Kernel launch failed");
+
 }
 
 __global__ void calc_ko_deriv42_y(double * output, double * dev_var_in,
-    double *dev_dy, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+    double *dev_dy, int* dev_bflag, int* dev_sz, int* dev_u_offset) 
+{
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
    
-   //ib, jb, kb values are accumulated to the x, y, z
-   int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 4 + threadIdx.y + blockIdx.y * blockDim.y;
-   int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    if (k>=dev_sz[2]-3) return;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
-
-   if(i >= nx-3 || j >= ny-4 || k >= dev_sz[2]-3) return;
 
    if(j==4) {
     int jb=3;
@@ -1085,36 +1083,36 @@ void cuda_ko_deriv42_y(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dy, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-   const int ie = host_sz[0] - 3;//x direction
-   const int je = host_sz[1] - 4;//y direction
-   const int ke = host_sz[2] - 3;//z direction
+   const int ib = 3;
+   const int jb = 3;
+   const int kb = 3;
+   const int ie = host_sz[0] - 3;
+   const int je = host_sz[1] - 3;
+   const int ke = host_sz[2] - 3;
 
-   int temp_max = (ie>je)? ie : je;
-   int maximumIterations = (temp_max>ke) ? temp_max: ke;
-
-   int requiredBlocks = (9+maximumIterations) / 10;
+   const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+   int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
   
-   calc_ko_deriv42_y <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
+   calc_ko_deriv42_y <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in,
                         dev_dy, dev_bflag, dev_sz, dev_u_offset);
 
-    CHECK_ERROR(cudaGetLastError(), "cuda_ko_deriv42_y Kernel launch failed");
+    CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_y Kernel launch failed");
+
 }
 
 __global__ void calc_ko_deriv42_z(double * output, double * dev_var_in,
-    double *dev_dz, int* dev_bflag, int* dev_sz, int* dev_u_offset) {
+    double *dev_dz, int* dev_bflag, int* dev_sz, int* dev_u_offset) 
+{
+    int id = blockIdx.x*threads_per_block_deriv_gpu + threadIdx.x;
+
+    int i = id%(dev_sz[0]-6) + 3;
+    int j = ((id/(dev_sz[0]-6))%(dev_sz[1]-6)) + 3;
+    int k = (id/(dev_sz[1]-6)/(dev_sz[0]-6)) + 3;
    
-   //ib, jb, kb values are accumulated to the x, y, z
-   int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-   int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-   int k = 4 + threadIdx.z + blockIdx.z * blockDim.z;
+    if (k>=dev_sz[2]-3) return;
 
    int nx = dev_sz[0];
    int ny = dev_sz[1];
-
-   if(i >= nx-3 || j >= ny-3 || k >= dev_sz[2]-4) return;
 
    if(k==4) {
     int kb=3;
@@ -1213,19 +1211,17 @@ void cuda_ko_deriv42_z(double * output, double * dev_var_in,
    int * dev_u_offset, double * dev_dz, int * dev_sz,
    int* dev_bflag, const unsigned int * host_sz, cudaStream_t stream)
 {
-   const int ie = host_sz[0] - 3;//x direction
-   const int je = host_sz[1] - 3;//y direction
-   const int ke = host_sz[2] - 4;//z direction
-
-   int temp_max = (ie>je)? ie : je;
-   int maximumIterations = (temp_max>ke) ? temp_max: ke;
+   const int ib = 3;
+   const int jb = 3;
+   const int kb = 3;
+   const int ie = host_sz[0] - 3;
+   const int je = host_sz[1] - 3;
+   const int ke = host_sz[2] - 3;
    
-   int requiredBlocks = (9+maximumIterations) / 10;
+   const int number_of_threads_required = (ie-ib)*(je-jb)*(ke-kb);
+   int number_of_blocks = ceil(1.0*number_of_threads_required/threads_per_block_deriv_cpu);
   
-   calc_ko_deriv42_z <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-                    dim3((ie + requiredBlocks -1)/requiredBlocks,
-                    (je + requiredBlocks -1)/requiredBlocks, 
-                    (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (output, dev_var_in,
+   calc_ko_deriv42_z <<< number_of_blocks, threads_per_block_deriv_cpu >>> (output, dev_var_in,
                         dev_dz, dev_bflag, dev_sz, dev_u_offset);
    
     CHECK_ERROR(cudaGetLastError(), "calc_ko_deriv42_z Kernel launch failed");

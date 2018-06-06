@@ -17,7 +17,7 @@ void data_generation_3D_GPU_Async_supported(const unsigned int blk_lb, const uns
     // double ** var_out_array = new double*[num_blks*(blk_up-blk_lb+1)];
     // Block * blkList = new Block[num_blks*(blk_up-blk_lb+1)];
 
-    #pragma omp parallel for
+    #pragma omp parallel for num_threads(4)
     for (int index=0; index<num_blks*(blk_up-blk_lb+1); index++){
 
         int block_no = index%num_blks;
