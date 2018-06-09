@@ -13,11 +13,11 @@ def replaceAndWrite(line):
 		matches=list(re.finditer('[/\+\*\-( ]' +varInArray[i]+'\[pp\]',line));
 		x=0;
 		while(len(matches)>0):
-			line=line[0:matches[0].start(0)+1]+'dev_var_in[*dev_'+varInArray[i]+'Int+pp]'+line[matches[0].end(0):];
+			line=line[0:matches[0].start(0)+1]+'dev_var_in['+varInArray[i]+'Int+pp]'+line[matches[0].end(0):];
 			matches=list(re.finditer('[/\+\*\-( ]' +varInArray[i]+'\[pp\]',line)) ;
 		matches=list(re.finditer(varOutArray[i]+'\[pp\]',line)) ;
 		while(len(list(matches))>0):
-			line=line[0:matches[0].start(0)]+'dev_var_out[*dev_'+varInArray[i]+'Int+pp]'+line[matches[0].end(0):];
+			line=line[0:matches[0].start(0)]+'dev_var_out['+varInArray[i]+'Int+pp]'+line[matches[0].end(0):];
 			matches=list(re.finditer(varOutArray[i]+'\[pp\]',line)) ;
 	fw.write(line);
 

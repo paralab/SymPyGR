@@ -177,18 +177,6 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
         std::cout << "start: " << init_block << " end: " << current_block-1 << std::endl;
 
         // CUDA Malloc operations
-        #include "bssnrhs_cuda_offset_variable_malloc.h"
-        #include "bssnrhs_cuda_variable_malloc.h"
-        #include "bssnrhs_cuda_variable_malloc_adv.h"
-        double * dev_dy_hx;
-        double * dev_dy_hy;
-        double * dev_dy_hz;
-        int * dev_sz;
-        int * dev_zero;
-        double * dev_pmin;
-        double *dev_pmax;
-        int * dev_bflag;
-
         CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
 
         int unzip_dof;
@@ -202,18 +190,10 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
 
         int size = unzip_dof * sizeof(double);
 
-        #include "bssnrhs_cuda_offset_malloc.h"
-        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hx, sizeof(double)), "dev_dy_hx");
-        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hy, sizeof(double)), "dev_dy_hy");
-        CHECK_ERROR(cudaMalloc((void **) &dev_dy_hz, sizeof(double)), "dev_dy_hz");
-        CHECK_ERROR(cudaMalloc((void **) &dev_sz, 3*sizeof(int)), "dev_sz");
-        CHECK_ERROR(cudaMalloc((void **) &dev_zero, sizeof(int)), "dev_zero");
-        CHECK_ERROR(cudaMalloc((void **) &dev_pmin, 3*sizeof(double)), "dev_pmin");
-        CHECK_ERROR(cudaMalloc((void **) &dev_pmax, 3*sizeof(double)), "dev_pmax");
-        CHECK_ERROR(cudaMalloc((void **) &dev_bflag, sizeof(int)), "dev_bflag");
+        #include "bssnrhs_cuda_variable_malloc.h"
+        #include "bssnrhs_cuda_variable_malloc_adv.h"
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
-
 
         // cuda stream creation
         cudaStream_t stream;
@@ -264,7 +244,6 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
 
             cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream, streams[index-init_block+2],
             #include "list_of_args.h"
-            , dev_dy_hx, dev_dy_hy, dev_dy_hz, dev_sz, dev_zero, dev_pmin, dev_pmax, dev_bflag
             );
             
             if (index-init_block>0){
@@ -283,15 +262,6 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
 
         #include "bssnrhs_cuda_mdealloc.h"
         #include "bssnrhs_cuda_mdealloc_adv.h"
-        #include "bssnrhs_cuda_offset_demalloc.h"
-
-        CHECK_ERROR(cudaFree(dev_dy_hx), "dev_dy_hx cudaFree");
-        CHECK_ERROR(cudaFree(dev_dy_hy), "dev_dy_hy cudaFree");
-        CHECK_ERROR(cudaFree(dev_dy_hz), "dev_dy_hz cudaFree");
-        CHECK_ERROR(cudaFree(dev_sz), "dev_sz cudaFree");
-        CHECK_ERROR(cudaFree(dev_zero), "dev_zero cudaFree");
-        CHECK_ERROR(cudaFree(dev_pmin), "dev_pmin cudaFree");
-        CHECK_ERROR(cudaFree(dev_pmax), "dev_pmax cudaFree");
 
         for (int index=init_block; index<=current_block-1; index++){
             delete [] var_in_array[index];

@@ -32,21 +32,21 @@
 
 void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, 
 const unsigned int unzip_dof, const unsigned int& offset, 
-const double *pmin,const double *pmax, const unsigned int *sz, 
+const double * pmin,const double * pmax, const unsigned int *sz, 
 const unsigned int& bflag, cudaStream_t stream, cudaStream_t streamAlt,
 #include "list_of_para.h"
-, double * dev_dy_hx, double * dev_dy_hy, double * dev_dy_hz, int * dev_sz, int * dev_zero, double * dev_pmin, double * dev_pmax, int * dev_bflag
 );
 
-void bssn_bcs(double * output, double * dev_var_in, int* dev_u_offset,
-    double *dxf, double *dyf, double *dzf,
-    double *pmin, double *pmax, const double f_falloff, const double f_asymptotic,
-    const unsigned int *host_sz, int* dev_bflag, int* dev_sz, cudaStream_t stream);
+void bssn_bcs(double * dev_var_out, double * dev_var_in, 
+    int u_offset, double * dxf, double * dyf, double * dzf,
+    const double * pmin, const double * pmax, const double f_falloff, const double f_asymptotic,
+    const unsigned int * host_sz, int bflag, cudaStream_t stream);
 
 
-void get_output (double* output, int* dev_sz, const unsigned int* host_sz, 
+void get_output (double * dev_var_out, const unsigned int * host_sz, cudaStream_t stream,
+        #include "list_of_offset_para.h"
+        ,
         #include "list_of_para.h"
-        , cudaStream_t stream
-        );
+    );
 
 #endif

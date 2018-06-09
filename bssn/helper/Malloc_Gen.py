@@ -37,6 +37,7 @@ def bssnrhs_derivs_gen():
     "deriv_y(grad_1_alpha, alpha, hy, sz, bflag);" #original
     "deriv_y(grad_1_B0, dev_var_in, B0Int, hy, sz, bflag);"
     "deriv_y(grad_1_alpha, dev_var_in, dev_alphaInt, dev_dy_hy, dev_sz, bflag, sz);"
+    # deriv_x(grad_0_alpha, dev_var_in, alphaInt, hx, bflag, sz, stream);
 
     readyToUse = ["alphaInt", "chiInt", "KInt", "gt0Int", "gt1Int", "gt2Int", "gt3Int", "gt4Int", "gt5Int", "beta0Int", "beta1Int", "beta2Int",
     "At0Int", "At1Int", "At2Int", "At3Int", "At4Int", "At5Int", "Gt0Int", "Gt1Int", "Gt2Int", "B0Int", "B1Int", "B2Int"]
@@ -49,9 +50,9 @@ def bssnrhs_derivs_gen():
             firstPara = line1[1].split(",")[0].strip() 
             line2 = line.strip().split(",")
             if (line2[1].strip()+"Int") in readyToUse:
-                output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_sz, bflag, sz);\n"%(line1[0], firstPara, line2[1].strip(), line2[2].strip())
+                output_method_call = "%s(%s, dev_var_in, %sInt, %s, bflag, sz, stream);\n"%(line1[0], firstPara, line2[1].strip(), line2[2].strip())
             else:
-                output_method_call = "%s(%s, %s, dev_zero, dev_dy_%s, dev_sz, bflag, sz);\n"%(line1[0], firstPara, line2[1].strip(), line2[2].strip())
+                output_method_call = "%s(%s, %s, 0, %s, bflag, sz, stream);\n"%(line1[0], firstPara, line2[1].strip(), line2[2].strip())
             output_file1.write(output_method_call)
     output_file1.close()
 
@@ -102,6 +103,8 @@ def bssnrhs_adv_derivs_gen():
     adv_deriv_x(agrad_0_gt0, gt0, hx, sz, beta0, bflag); // old
 
     adv_deriv_x(agrad_0_gt0, dev_var_in, dev_gt0Int, dev_dy_hx, dev_sz, dev_beta0Int, dev_bflag, sz); // new
+
+    adv_deriv_x(agrad_0_gt0, dev_var_in, gt0Int, hx, beta0Int, bflag, sz, stream); 
     """
 
     output_file1 = open("t_bssnrhs_derivs_adv.h", 'w')
@@ -121,7 +124,7 @@ def bssnrhs_adv_derivs_gen():
 
             # print(method_name, para1, para2, para3, para4, para5, para6)
 
-            output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_sz, dev_%sInt, dev_bflag, sz);\n"%(method_name, para1, para2, para3, para5)
+            output_method_call = "%s(%s, dev_var_in, %sInt, %s, %sInt, bflag, sz, stream);\n"%(method_name, para1, para2, para3, para5)
 
             # print(output_method_call)
 
@@ -169,6 +172,8 @@ def bssnrhs_ko_derivs_gen():
       ko_deriv_x(grad_0_gt0, gt0, hx, sz, bflag); // old
 
       ko_deriv_x(grad_0_gt0, dev_var_in, dev_gt0Int, dev_dy_hx, dev_sz, dev_bflag, sz); // new
+
+      ko_deriv_x(grad_0_gt0, dev_var_in, gt0Int, hx, bflag, sz, stream);
     """
 
     output_file1 = open("t_bssnrhs_ko_derivs.h", 'w')
@@ -187,7 +192,7 @@ def bssnrhs_ko_derivs_gen():
 
             # print(method_name, para1, para2, para3, para4, para5)
 
-            output_method_call = "%s(%s, dev_var_in, dev_%sInt, dev_dy_%s, dev_%s, dev_%s, sz);\n"%(method_name, para1, para2, para3, para4, para5)
+            output_method_call = "%s(%s, dev_var_in, %sInt, %s, %s, sz, stream);\n"%(method_name, para1, para2, para3, para5)
 
             # print(output_method_call)
 
@@ -196,11 +201,11 @@ def bssnrhs_ko_derivs_gen():
     output_file1.close()
 
 def main():
-    allocate_memory_for_offset_ints()
-    bssnrhs_cudo_malloc_gen()
-    # bssnrhs_derivs_gen()
-    bssnrhs_cudo_malloc_adv_gen()
-    # bssnrhs_adv_derivs_gen()
-    # bssnrhs_ko_derivs_gen()
+    # allocate_memory_for_offset_ints()
+    # bssnrhs_cudo_malloc_gen()
+    bssnrhs_derivs_gen()
+    # bssnrhs_cudo_malloc_adv_gen()
+    bssnrhs_adv_derivs_gen()
+    bssnrhs_ko_derivs_gen()
 
 main()
