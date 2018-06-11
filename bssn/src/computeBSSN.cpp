@@ -153,6 +153,11 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
     double current_usage, fixed_usage;
     int total_blks = num_blks*(blk_up-blk_lb+1);
     // Check number of blocks can handle at onece
+
+    int numberOfStreams = 2;
+    cudaStream_t stream;
+    cudaStream_t streams[numberOfStreams];
+
     int max_unzip_dof;
     for (int index=init_block; index< total_blks; index++){
         blk = blkList[index];
@@ -162,14 +167,24 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
         CHECK_ERROR(cudaMallocHost((void**)&host_var_out_array[index], max_unzip_dof*BSSN_NUM_VARS*sizeof(double)), "host_var_out_array[index]");
     }
     
-    int size = total_blks * max_unzip_dof * sizeof(double);
+    int size = numberOfStreams * max_unzip_dof * sizeof(double);
 
     #include "bssnrhs_cuda_variable_malloc.h"
     #include "bssnrhs_cuda_variable_malloc_adv.h"
     #include "bssnrhs_cuda_malloc.h"
     #include "bssnrhs_cuda_malloc_adv.h"
     
+    
+    for (int index=0; index<2; index++){
+        CHECK_ERROR(cudaStreamCreate(&streams[index]), "cudaStream creation");
+    }
+
     for(unsigned int index=0;index<total_blks;index++) {
+
+        cudaStream_t stream;
+        int streamIndex = index % numberOfStreams;
+        stream = streams[streamIndex];
+
         int block_no = index%num_blks;
         int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
 
@@ -199,9 +214,6 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
         ptmax[2]=1.0;
 
         std::cout << "GPU - Block no: " << std::setw(2) << index << "  Total Points: " << std::setw(7) << unzip_dof << "  level: " << level << std::endl;
-        
-        cudaStream_t stream;
-        CHECK_ERROR(cudaStreamCreate(&stream), "cudaStream creation");
 
         CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
