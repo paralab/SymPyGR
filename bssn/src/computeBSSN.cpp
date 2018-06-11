@@ -149,7 +149,6 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
     Block blk;
     int current_block = 0;
     int init_block = 0;
-    int total_points;
     double current_usage, fixed_usage;
     int total_blks = num_blks*(blk_up-blk_lb+1);
     // Check number of blocks can handle at onece
@@ -174,7 +173,7 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
     #include "bssnrhs_cuda_malloc_adv.h"
     
     
-    for (int index=0; index<2; index++){
+    for (int index=0; index<numberOfStreams; index++){
         CHECK_ERROR(cudaStreamCreate(&streams[index]), "cudaStream creation");
     }
 
@@ -226,7 +225,7 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
     #include "bssnrhs_cuda_mdealloc.h"
     #include "bssnrhs_cuda_mdealloc_adv.h"
 
-    for (int index=init_block; index<=current_block-1; index++){
+    for (int index=0; index< total_blks; index++){
         delete [] var_in_array[index];
         CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
         CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
