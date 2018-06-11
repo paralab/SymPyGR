@@ -6,6 +6,7 @@
 #include <time.h>
 #include "derivs.h"
 #include "profile_param.h"
+#define numberOfStreams 5
 
 #define deriv_x deriv42_x
 #define deriv_y deriv42_y

@@ -154,7 +154,6 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
     int total_blks = num_blks*(blk_up-blk_lb+1);
     // Check number of blocks can handle at onece
 
-    int numberOfStreams = 2;
     cudaStream_t stream;
     cudaStream_t streams[numberOfStreams];
 
