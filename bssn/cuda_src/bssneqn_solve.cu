@@ -7,10 +7,10 @@
 using namespace std;
 
 int threads_per_block_cpu=250;
-int blocks_cpu=16;
+int blocks_cpu=8;
 
 __constant__ int threads_per_block=250;
-__constant__ int blocks=16;
+__constant__ int blocks=8;
 
 __constant__ double ETA_CONST=0.1;
 __constant__ double ETA_R0=0.1;
