@@ -46,7 +46,7 @@ device_calc_ko_deriv_y(grad_1_K, dev_var_in, KInt, hy,  bflag, nx, ny, nz);
 device_calc_ko_deriv_y(grad_1_B0, dev_var_in, B0Int, hy,  bflag, nx, ny, nz);
 device_calc_ko_deriv_y(grad_1_B1, dev_var_in, B1Int, hy,  bflag, nx, ny, nz);
 device_calc_ko_deriv_y(grad_1_B2, dev_var_in, B2Int, hy,  bflag, nx, ny, nz);
-//device_calc_ko_deriv_z(grad_2_gt0, dev_var_in, gt0Int, hz,  bflag, nx, ny, nz);
+device_calc_ko_deriv_z(grad_2_gt0, dev_var_in, gt0Int, hz,  bflag, nx, ny, nz);
 device_calc_ko_deriv_z(grad_2_gt1, dev_var_in, gt1Int, hz,  bflag, nx, ny, nz);
 device_calc_ko_deriv_z(grad_2_gt2, dev_var_in, gt2Int, hz,  bflag, nx, ny, nz);
 device_calc_ko_deriv_z(grad_2_gt3, dev_var_in, gt3Int, hz,  bflag, nx, ny, nz);
