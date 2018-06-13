@@ -119,7 +119,7 @@ const unsigned int& bflag, cudaStream_t stream, cudaStream_t streamAlt,
         
     }
 
-    //#include "bssnrhs_cuda_ko_derivs.h"
+    #include "bssnrhs_cuda_ko_derivs.h"
 
     get_output(dev_var_out, sz, stream,
         #include "list_of_offset_args.h"
@@ -127,7 +127,6 @@ const unsigned int& bflag, cudaStream_t stream, cudaStream_t streamAlt,
         #include "list_of_args.h"
     );
 
-    // cudaEventDestroy(syncEvent);
 }
 
 __global__ void cacl_bssn_bcs_x(double * dev_var_out, double * dev_var_in, 
