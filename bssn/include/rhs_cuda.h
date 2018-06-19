@@ -11,6 +11,7 @@
 
 #include "derivs_cuda.h"
 #include "profile_param.h"
+#include "GPUConfig.h"
 
 #define deriv_x cuda_deriv42_x
 #define deriv_y cuda_deriv42_y
