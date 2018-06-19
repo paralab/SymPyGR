@@ -6,12 +6,6 @@
 
 using namespace std;
 
-int threads_per_block_cpu=250;
-int blocks_cpu=64;
-
-__constant__ int threads_per_block=250;
-__constant__ int blocks=64;
-
 __constant__ double ETA_CONST=0.1;
 __constant__ double ETA_R0=0.1;
 __constant__ double ETA_DAMPING_EXP=0.1;
@@ -27,26 +21,28 @@ __global__ void cuda_bssn_eqns_points(double * dev_var_in, double * dev_var_out,
     #include "list_of_para.h"
     )
 {
-    int id = blockIdx.x*threads_per_block + threadIdx.x;
+    int thread_id = blockIdx.x*threads_per_block_rhs + threadIdx.x;
 
-    int i = id%(host_sz_x-6) + 3;
-    int j = ((id/(host_sz_x-6))%(host_sz_y-6)) + 3;
-    int k = (id/(host_sz_z-6)/(host_sz_y-6)) + 3;
+    for (int id = thread_id*thread_load_rhs; id<(thread_id+1)*thread_load_rhs; id++){
+        int i = id%(host_sz_x-6) + 3;
+        int j = ((id/(host_sz_x-6))%(host_sz_y-6)) + 3;
+        int k = (id/(host_sz_z-6)/(host_sz_y-6)) + 3;
 
-    if (k>=host_sz_z-3) return;
+        if (k>=host_sz_z-3) return;
 
-    double z = pmin_z + hz*k;
-    double y = pmin_y + hy*j;
-    double x = pmin_x + hx*i;
+        double z = pmin_z + hz*k;
+        double y = pmin_y + hy*j;
+        double x = pmin_x + hx*i;
 
-    int pp = i + (host_sz_x)*(j + (host_sz_y)*k);
-    double r_coord = sqrt(x*x + y*y + z*z);
-    double eta = ETA_CONST;
-    if (r_coord >= ETA_R0) {
-        eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
+        int pp = i + (host_sz_x)*(j + (host_sz_y)*k);
+        double r_coord = sqrt(x*x + y*y + z*z);
+        double eta = ETA_CONST;
+        if (r_coord >= ETA_R0) {
+            eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
+        }
+
+        #include "cuda_bssneqs.h"
     }
-
-    #include "cuda_bssneqs.h"
 }
 
 void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const unsigned int * sz, const double * pmin, double hz, double hy, double hx, cudaStream_t stream,
@@ -63,11 +59,11 @@ void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const unsigned in
     const unsigned int host_sz_y = sz[1];
     const unsigned int host_sz_z = sz[2];
 
-    int total_points = (sz[2]-6)*(sz[1]-6)*(sz[0]-6);
+    int total_points = ceil(1.0*(sz[2]-6)*(sz[1]-6)*(sz[0]-6)/thread_load_rhs);
 
-    int number_of_blocks = ceil(1.0*total_points/threads_per_block_cpu);
+    int number_of_blocks = ceil(1.0*total_points/threads_per_block_rhs);
 
-    cuda_bssn_eqns_points<<< number_of_blocks, threads_per_block_cpu, 0, stream >>>(dev_var_in, dev_var_out, 
+    cuda_bssn_eqns_points<<< number_of_blocks, threads_per_block_rhs, 0, stream >>>(dev_var_in, dev_var_out, 
         host_sz_x, host_sz_y, host_sz_z, 
         pmin_x, pmin_y, pmin_z, 
         hz, hy, hx, 
@@ -75,20 +71,4 @@ void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const unsigned in
         ,
         #include "list_of_args.h"
     ); 
-
-    // int points_at_once = threads_per_block_cpu*blocks_cpu;
-    // int loops = ceil(1.0*total_points/points_at_once);
-
-    // for(int i=0; i<loops; i++){
-    //     int offset = i*points_at_once;
-
-        // cuda_bssn_eqns_points<<< blocks_cpu, threads_per_block_cpu, 0, stream >>>(dev_var_in, dev_var_out, 
-        //     offset, host_sz_x, host_sz_y, host_sz_z, 
-        //     pmin_x, pmin_y, pmin_z, 
-        //     hz, hy, hx, 
-        //     #include "list_of_offset_args.h"
-        //     ,
-        //     #include "list_of_args.h"
-        // );     
-    // }
 }
