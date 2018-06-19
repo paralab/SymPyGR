@@ -17,6 +17,9 @@
 
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 
+#define grid_points_per_thread 1
+#define threads_per_block 1024
+
 void cuda_calc_all(double * dev_var_in, double hx, double hy, double hz, int sz_x, 
 int sz_y, int sz_z, int bflag, cudaStream_t stream,
 #include "list_of_para.h"

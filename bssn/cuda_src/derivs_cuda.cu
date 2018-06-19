@@ -3,11 +3,13 @@
  
 __device__ void device_calc_deriv_x(double * output, double * dev_var_in,
     const int offset, double hx, int bflag,
-    int nx,int ny,int nz){
+    int nx,int ny,int nz, int sz_x, int sz_y, int sz_z){
     
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 1 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+    int id = blockIdx.x*threads_per_block + threadIdx.x;
+
+    int i = id%(sz_x-6) + 3;
+    int j = ((id/(sz_x-6))%(sz_y-2)) + 1;
+    int k = (id/(sz_z-2)/(sz_y-2)) + 1;
 
     if(i >= nx-3 || j >= ny-1 || k >= nz-1) return;
 
@@ -42,11 +44,13 @@ __device__ void device_calc_deriv_x(double * output, double * dev_var_in,
  
  __device__ void device_calc_deriv_y(double * output, double * dev_var_in,
     const int offset, double hx, int bflag,
-    int nx,int ny,int nz){
-    
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 1 + threadIdx.z + blockIdx.z * blockDim.z;
+    int nx,int ny,int nz, int sz_x, int sz_y, int sz_z){
+        
+    int id = blockIdx.x*threads_per_block + threadIdx.x;
+
+    int i = id%(sz_x-6) + 3;
+    int j = ((id/(sz_x-6))%(sz_y-6)) + 3;
+    int k = (id/(sz_z-2)/(sz_y-6)) + 1;
 
     if(i >= nx-3 || j >= ny-3 || k >= nz-1) return;
 
@@ -87,12 +91,14 @@ __device__ void device_calc_deriv_x(double * output, double * dev_var_in,
  
  __device__ void device_calc_deriv_z(double * output, double * dev_var_in,
     const int offset, double hx, int bflag,
-    int nx,int ny,int nz){
+    int nx,int ny,int nz, int sz_x, int sz_y, int sz_z){
+        
+    int id = blockIdx.x*threads_per_block + threadIdx.x;
 
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
-
+    int i = id%(sz_x-6) + 3;
+    int j = ((id/(sz_x-6))%(sz_y-6)) + 3;
+    int k = (id/(sz_z-6)/(sz_y-6)) + 3;
+    
     if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
 
     int pp = IDX(i, j, k);
@@ -130,10 +136,13 @@ __device__ void device_calc_deriv_x(double * output, double * dev_var_in,
 
 __device__ void device_calc_deriv_xx(double * output, double * dev_var_in,
     const int offset, double hx, int bflag,
-    int nx,int ny,int nz){
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int nx,int ny,int nz, int sz_x, int sz_y, int sz_z){
+        
+    int id = blockIdx.x*threads_per_block + threadIdx.x;
+
+    int i = id%(sz_x-6) + 3;
+    int j = ((id/(sz_x-6))%(sz_y-6)) + 3;
+    int k = (id/(sz_z-6)/(sz_y-6)) + 3;
 
     if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
 
@@ -191,11 +200,14 @@ __device__ void device_calc_deriv_xx(double * output, double * dev_var_in,
  
 __device__ void device_calc_deriv_yy(double * output, double * dev_var_in,
     const int offset, double hy, int bflag,
-    int nx,int ny,int nz){
-    int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-    int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-    int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int nx,int ny,int nz, int sz_x, int sz_y, int sz_z){
+        
+    int id = blockIdx.x*threads_per_block + threadIdx.x;
 
+    int i = id%(sz_x-6) + 3;
+    int j = ((id/(sz_x-6))%(sz_y-6)) + 3;
+    int k = (id/(sz_z-6)/(sz_y-6)) + 3;
+    
     if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
 
     int pp = IDX(i, j, k);
@@ -252,11 +264,14 @@ __device__ void device_calc_deriv_yy(double * output, double * dev_var_in,
 
 __device__ void device_calc_deriv_zz(double * output, double * dev_var_in,
     const int offset, double hz, int bflag,
-    int nx, int ny, int nz){
-        int i = 3 + threadIdx.x + blockIdx.x * blockDim.x;
-        int j = 3 + threadIdx.y + blockIdx.y * blockDim.y;
-        int k = 3 + threadIdx.z + blockIdx.z * blockDim.z;
+    int nx,int ny,int nz, int sz_x, int sz_y, int sz_z){
+        
+    int id = blockIdx.x*threads_per_block + threadIdx.x;
 
+    int i = id%(sz_x-6) + 3;
+    int j = ((id/(sz_x-6))%(sz_y-6)) + 3;
+    int k = (id/(sz_z-6)/(sz_y-6)) + 3;
+    
         if(i >= nx-3 || j >= ny-3 || k >= nz-3) return;
 
         int pp = IDX(i, j, k);
@@ -321,6 +336,7 @@ __global__ void calc_deriv42_first_part(double * dev_var_in, double hx, double h
      int nx = sz_x;
      int ny = sz_y;
      int nz = sz_z;
+
  
  #include "bssnrhs_cuda_derivs_first_part.h"
  
@@ -352,25 +368,17 @@ void cuda_calc_all(double * dev_var_in, double hx, double hy, double hz, int sz_
     const int je = sz_y - 1;//y direction
     const int ke = sz_z - 1;//z direction
  
-    int temp_max = (ie>je)? ie : je;
-    int maximumIterations = (temp_max>ke) ? temp_max: ke;
- 
-    int requiredBlocks = (9+maximumIterations) / 10;
- 
-    calc_deriv42_first_part <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-             dim3((ie + requiredBlocks -1)/requiredBlocks,
-                  (je + requiredBlocks -1)/requiredBlocks,
-                  (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (
+    int total_points = ie*je*ke;
+    int blocks = ceil(1.0*total_points/threads_per_block);
+
+    calc_deriv42_first_part <<< blocks, threads_per_block, 0, stream >>> (
                       dev_var_in, hx, hy, hz, sz_x, sz_y, sz_z, bflag,
                     #include "list_of_args.h"
                     ,
                     #include "list_of_offset_args.h"
              );
 
-    calc_deriv42_second_part <<< dim3(requiredBlocks, requiredBlocks, requiredBlocks),
-             dim3((ie + requiredBlocks -1)/requiredBlocks,
-                  (je + requiredBlocks -1)/requiredBlocks,
-                  (ke + requiredBlocks -1)/requiredBlocks), 0, stream >>> (
+    calc_deriv42_second_part <<< blocks, threads_per_block, 0, stream >>> (
                       dev_var_in, hx, hy, hz, sz_x, sz_y, sz_z, bflag,
                     #include "list_of_args.h"
                     ,
