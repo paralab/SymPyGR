@@ -151,84 +151,111 @@ double ** GPU_Async_Iteration_Wise(const unsigned int blk_lb, const unsigned int
     int init_block = 0;
     double current_usage, fixed_usage;
     int total_blks = num_blks*(blk_up-blk_lb+1);
-    // Check number of blocks can handle at onece
+    int total_points;
 
+    CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
+        
     cudaStream_t stream;
     cudaStream_t streams[numberOfStreams];
 
-    int max_unzip_dof;
-    for (int index=init_block; index< total_blks; index++){
-        blk = blkList[index];
-        max_unzip_dof = blk.node1D_x*blk.node1D_y*blk.node1D_z;
-        CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], max_unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
-        CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], max_unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
-        CHECK_ERROR(cudaMallocHost((void**)&host_var_out_array[index], max_unzip_dof*BSSN_NUM_VARS*sizeof(double)), "host_var_out_array[index]");
-    }
-    
-    int size = numberOfStreams * max_unzip_dof * sizeof(double);
-
-    #include "bssnrhs_cuda_variable_malloc.h"
-    #include "bssnrhs_cuda_variable_malloc_adv.h"
-    #include "bssnrhs_cuda_malloc.h"
-    #include "bssnrhs_cuda_malloc_adv.h"
-    
-    
     for (int index=0; index<numberOfStreams; index++){
         CHECK_ERROR(cudaStreamCreate(&streams[index]), "cudaStream creation");
     }
 
-    for(unsigned int index=0;index<total_blks;index++) {
+    // Check number of blocks can handle at once
+    while (current_block<num_blks*(blk_up-blk_lb+1)){
+        current_usage=0;
+        fixed_usage=0;
+        init_block=current_block;
 
-        cudaStream_t stream;
-        int streamIndex = index % numberOfStreams;
-        stream = streams[streamIndex];
+        while ((current_usage+fixed_usage<(GPUCapacity*0.66)) && (current_block<num_blks*(blk_up-blk_lb+1))){
+            blk = blkList[current_block];
+            total_points = blk.node1D_x*blk.node1D_y*blk.node1D_z;
 
-        int block_no = index%num_blks;
-        int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
+            fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024;
+            current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2)/1024/1024;
 
-        Block & blk=blkList[index];
+            // std::cout << "\tUsage: " << current_usage+fixed_usage << " BlockNumber: " << current_block << " Fixed Usage: " << fixed_usage << std::endl;
+            current_block++;
+        }
+        if (current_usage+fixed_usage>(GPUCapacity*0.66)){
+            current_block--;
+        }
+        
+        std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << current_usage+fixed_usage << std::endl;
 
-        unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
-        unsigned int offset=blk.offset;
+        int max_unzip_dof;
+        for (int index=init_block; index<=current_block-1; index++){
+            blk = blkList[index];
+            max_unzip_dof = blk.node1D_x*blk.node1D_y*blk.node1D_z;
+            CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], max_unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
+            CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], max_unzip_dof*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
+            CHECK_ERROR(cudaMallocHost((void**)&host_var_out_array[index], max_unzip_dof*BSSN_NUM_VARS*sizeof(double)), "host_var_out_array[index]");
+        }
+        
+        int size = numberOfStreams * max_unzip_dof * sizeof(double);
 
-        unsigned int sz[3];
-        sz[0]=blk.node1D_x; 
-        sz[1]=blk.node1D_y;
-        sz[2]=blk.node1D_z;
+        #include "bssnrhs_cuda_variable_malloc.h"
+        #include "bssnrhs_cuda_variable_malloc_adv.h"
+        #include "bssnrhs_cuda_malloc.h"
+        #include "bssnrhs_cuda_malloc_adv.h"
+        
+        unsigned int offset = 0;    
+        for(int index=init_block; index<=current_block-1; index++) {
 
-        unsigned int  bflag=0;
+            cudaStream_t stream;
+            int streamIndex = index % numberOfStreams;
+            stream = streams[streamIndex];
 
-        double dx=0.1;
-        double dy=0.1;
-        double dz=0.1;
+            int block_no = index%num_blks;
+            int level = ((index/(num_blks))%(blk_up-blk_lb+1))+blk_lb;
 
-        double ptmin[3], ptmax[3];
-        ptmin[0]=0.0;
-        ptmin[1]=0.0;
-        ptmin[2]=0.0;
+            Block & blk=blkList[index];
 
-        ptmax[0]=1.0;
-        ptmax[1]=1.0;
-        ptmax[2]=1.0;
+            unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
+            offset += unzip_dof;
 
-        std::cout << "GPU - Block no: " << std::setw(2) << index << "  Total Points: " << std::setw(7) << unzip_dof << "  level: " << level << std::endl;
+            unsigned int sz[3];
+            sz[0]=blk.node1D_x; 
+            sz[1]=blk.node1D_y;
+            sz[2]=blk.node1D_z;
 
-        CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+            unsigned int  bflag=0;
 
-        cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream, NULL,
-            #include "list_of_args_per_blk.h"
-        );
+            double dx=0.1;
+            double dy=0.1;
+            double dz=0.1;
 
-        CHECK_ERROR(cudaMemcpyAsync(host_var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
-    }
+            double ptmin[3], ptmax[3];
+            ptmin[0]=0.0;
+            ptmin[1]=0.0;
+            ptmin[2]=0.0;
 
-    #include "bssnrhs_cuda_mdealloc.h"
-    #include "bssnrhs_cuda_mdealloc_adv.h"
+            ptmax[0]=1.0;
+            ptmax[1]=1.0;
+            ptmax[2]=1.0;
 
-    for (int index=0; index< total_blks; index++){
-        delete [] var_in_array[index];
-        CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
-        CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
+            std::cout << "GPU - Block no: " << std::setw(2) << index << "  Total Points: " << std::setw(7) << unzip_dof << "  level: " << level << std::endl;
+
+            CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+
+            cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof , offset, ptmin, ptmax, sz, bflag, stream, NULL,
+                #include "list_of_args_per_blk.h"
+            );
+
+            CHECK_ERROR(cudaMemcpyAsync(host_var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+
+            
+        }
+
+        #include "bssnrhs_cuda_mdealloc.h"
+        #include "bssnrhs_cuda_mdealloc_adv.h"
+
+        for (int index=init_block; index<=current_block-1; index++){
+            delete [] var_in_array[index];
+            CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
+            CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
+        }
     }
 
     return host_var_out_array;
