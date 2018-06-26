@@ -126,7 +126,7 @@ def process_csvs():
 
 #constants
 cuda_path = "/usr/local/cuda-8.0/bin/nvprof"
-flop_rate_command = "%s --unified-memory-profiling off --print-gpu-trace --metrics flop_count_dp,flop_count_sp,flop_dp_efficiency,flop_sp_efficiency --csv --log-file flop_rate.csv ./computeBSSN"%(cuda_path)
+flop_rate_command = "%s --print-gpu-trace --metrics flop_count_dp,flop_count_sp,flop_dp_efficiency,flop_sp_efficiency --csv --log-file flop_rate.csv ./computeBSSN"%(cuda_path)
 timing_command = "%s --print-gpu-trace --csv --log-file timing.csv ./computeBSSN"%(cuda_path)
 
 #distribution parameter
