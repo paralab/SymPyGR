@@ -120,7 +120,7 @@ def process_csvs():
     flop_dp_avg_eff = flop_dp_eff/total_entries
     flop_sp_avg_eff = flop_sp_eff/total_entries
 
-    print("DP-Rate:%.2fGigaFlops/s | HtoD:%.2fGB/s | DtoH:%.2fGB/s | Overall:%.2fGB/s"%(flop_dp_rate, HtoD_bandwidth, DtoH_bandwidth, Overall_bandwidth))
+    print("DP-Rate:%.4fGigaFlops/s | HtoD:%.4fGB/s | DtoH:%.4fGB/s | Overall:%.4fGB/s"%(flop_dp_rate, HtoD_bandwidth, DtoH_bandwidth, Overall_bandwidth))
 
     return flop_dp_rate, HtoD_bandwidth, DtoH_bandwidth, Overall_bandwidth
 
@@ -156,7 +156,7 @@ def main():
         DtoH_bandwidths.append(DtoH_bandwidth)
         Overall_bandwidths.append(Overall_bandwidth)
     
-    print("DP-Rate:%.2fGigaFlops/s | HtoD:%.2fGB/s | DtoH:%.2fGB/s | Overall:%.2fGB/s"%(np.mean(flop_dp_rates), np.mean(HtoD_bandwidth), np.mean(DtoH_bandwidth), np.mean(Overall_bandwidth)))
+    print("DP-Rate:%.4fGigaFlops/s | HtoD:%.4fGB/s | DtoH:%.4fGB/s | Overall:%.4fGB/s"%(np.mean(flop_dp_rates), np.mean(HtoD_bandwidth), np.mean(DtoH_bandwidth), np.mean(Overall_bandwidth)))
 
 
 main()
