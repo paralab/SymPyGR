@@ -136,7 +136,7 @@ std = 0.5
 lower_bound = 0
 upper_bound = 4
 
-number_of_blocks = 1000
+number_of_blocks = 50
 
 def main():
     flop_dp_rates = []
