@@ -125,7 +125,7 @@ def process_csvs():
     return flop_dp_rate, HtoD_bandwidth, DtoH_bandwidth, Overall_bandwidth
 
 #constants
-cuda_path = "/usr/local/cuda-8.0/bin/nvprof"
+cuda_path = "nvprof"
 flop_rate_command = "%s --print-gpu-trace --metrics flop_count_dp,flop_count_sp,flop_dp_efficiency,flop_sp_efficiency --csv --log-file flop_rate.csv ./computeBSSN"%(cuda_path)
 timing_command = "%s --print-gpu-trace --csv --log-file timing.csv ./computeBSSN"%(cuda_path)
 
