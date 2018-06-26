@@ -9,4 +9,4 @@
 
 #define numberOfStreams 4
 
-#define GPUCapacity 6000
+#define GPUCapacity 12000
