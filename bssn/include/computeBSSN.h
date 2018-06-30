@@ -20,6 +20,10 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "utils.h"
+#include <sys/sysinfo.h> 
+#include <string>
+#include <random>
+#include <map>
 
 #include "profile_param.h"
 
