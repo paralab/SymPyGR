@@ -91,7 +91,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     #pragma omp parallel for num_threads(4)
     for (int index=0; index<numberOfLevels; index++){
         Block & blk=blkList[index];
-        const unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
+        const unsigned long unzip_dof=blk.blkSize;
 
         // Allocating pinned memory in RAM
         double * var_in_per_block;
@@ -351,7 +351,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
 
         while ((current_usage+fixed_usage<(GPUCapacity)) && (current_block<numberOfLevels)){
             blk = blkList[current_block];
-            total_points = blk.node1D_x*blk.node1D_y*blk.node1D_z;
+            total_points = blk.blkSize;
 
             if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024){
                 fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024;
@@ -372,7 +372,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
         int max_unzip_dof = 0;
         for (int index=init_block; index<=current_block-1; index++){
             blk = blkList[index];
-            dof = blk.node1D_x*blk.node1D_y*blk.node1D_z;
+            dof = blk.blkSize;
             if (max_unzip_dof<dof){
                 max_unzip_dof=dof;
             }
@@ -395,7 +395,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
 
             Block & blk=blkList[index];
 
-            unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
+            unsigned long unzip_dof=blk.blkSize;
 
             unsigned int sz[3];
             sz[0]=blk.node1D_x; 
