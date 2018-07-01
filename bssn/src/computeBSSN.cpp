@@ -319,6 +319,12 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
 
+    // Check for available GPU memory
+    size_t free_bytes, total_bytes;
+    CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
+    double GPUCapacity = 1.0*free_bytes/1024/1024;
+    std::cout << "Available GPU with buffer of 100MB: " << GPUCapacity-100 << " Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
+
     double ** dev_var_in_array = new double*[numberOfLevels];
     double ** dev_var_out_array = new double*[numberOfLevels];
 
@@ -340,7 +346,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
         fixed_usage=0;
         init_block=current_block;
 
-        while ((current_usage+fixed_usage<(GPUCapacity*0.66)) && (current_block<numberOfLevels)){
+        while ((current_usage+fixed_usage<(GPUCapacity)) && (current_block<numberOfLevels)){
             blk = blkList[current_block];
             total_points = blk.node1D_x*blk.node1D_y*blk.node1D_z;
 
@@ -353,7 +359,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
             // std::cout << "\tUsage: " << current_usage+fixed_usage << " BlockNumber: " << current_block << " Fixed Usage: " << fixed_usage << std::endl;
             current_block++;
         }
-        if (current_usage+fixed_usage>(GPUCapacity*0.66)){
+        if (current_usage+fixed_usage>(GPUCapacity)){
             current_block--;
         }
         
@@ -489,7 +495,6 @@ int main (int argc, char** argv){
     bool isRandom = atoi(argv[6]);
     bool isTest = atoi(argv[7]);
 
-    // data_generation_blockwise_and_bssn_var_wise_mixed(mean, std, numberOfLevels, lower_bound, upper_bound, isRandom);
     Block * blkList = new Block[numberOfLevels];
     double ** var_in_array = new double*[numberOfLevels];
     double ** var_out_array = new double*[numberOfLevels];

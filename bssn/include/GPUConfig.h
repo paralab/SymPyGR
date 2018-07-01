@@ -7,6 +7,4 @@
 #define thread_load_ko_deriv 5
 #define thread_load_output 1
 
-#define numberOfStreams 4
-
-#define GPUCapacity 12000
+#define numberOfStreams 2
