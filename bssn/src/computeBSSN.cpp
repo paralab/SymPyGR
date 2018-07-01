@@ -414,7 +414,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
             ptmax[1]=1.0;
             ptmax[2]=1.0;
 
-            std::cout << "GPU - Block no: " << index << std::endl;
+            std::cout << "GPU - Block no: " << std::setw(3) << index << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
@@ -466,7 +466,7 @@ void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        std::cout << "CPU - Block no: " << blk << std::endl;
+        std::cout << "CPU - Block no: " << std::setw(3) << blk << " - Bock level: " << std::setw(1) << blkList[blk].blkLevel << " - Block size: " << blkList[blk].blkSize << std::endl;
         
         bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
     }

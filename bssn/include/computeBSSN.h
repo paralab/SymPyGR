@@ -48,6 +48,7 @@ struct Block
     unsigned int node1D_x; // unzip size in x direction
     unsigned int node1D_y; // unzip size in y direction
     unsigned int node1D_z; // unzip size in z direction
+    unsigned int blkSize;  // offset
     unsigned int offset;  // offset
 
 
@@ -84,6 +85,7 @@ struct Block
         node1D_x=ELE_ORDER*ele1D+1+2*PAD_WIDTH;
         node1D_y=ELE_ORDER*ele1D+1+2*PAD_WIDTH;
         node1D_z=ELE_ORDER*ele1D+1+2*PAD_WIDTH;
+        blkSize=node1D_x*node1D_y*node1D_z;    
     }
 
 
