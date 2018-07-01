@@ -364,6 +364,10 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
         }
         if (current_usage+fixed_usage>(GPUCapacity)){
             current_block--;
+            if (current_block-1==-1) {
+                std::cout << "Required GPU memory = " << current_usage+fixed_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
+                exit(0);
+            }
         }
         
         std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << current_usage+fixed_usage << std::endl;
