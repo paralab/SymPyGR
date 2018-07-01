@@ -325,8 +325,8 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
-    double GPUCapacity = 1.0*free_bytes/1024/1024;
-    std::cout << "Available GPU with buffer of 100MB: " << GPUCapacity-100 << " Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
+    double GPUCapacity = 1.0*free_bytes/1024/1024 - 600;
+    std::cout << "Available GPU with buffer of 600MB: " << GPUCapacity << " Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
     double ** dev_var_in_array = new double*[numberOfLevels];
     double ** dev_var_out_array = new double*[numberOfLevels];
