@@ -14,13 +14,13 @@
 void data_generation_blockwise_mixed(double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom, 
     Block * blkList, double ** var_in_array, double ** var_out_array){
 
-        const unsigned int maxDepth=12;
+    const unsigned int maxDepth=12;
 
     // Calculate block sizes
     std::map<int, double> block_sizes;
     for(int i=lower_bound; i<=upper_bound; i++){
         Block blk = Block(0, 0, 0, 2*i, i, maxDepth);
-        block_sizes[i] = 1.0*(blk.node1D_x*blk.node1D_y*blk.node1D_z)*BSSN_NUM_VARS*sizeof(double)/1024/1024;
+        block_sizes[i] = 1.0*blk.blkSize*BSSN_NUM_VARS*sizeof(double)/1024/1024;
     }
 
     // Create distribution
@@ -30,6 +30,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     std::normal_distribution<double> distribution(mean, std);
 
     // Generating levels and block structure
+    int total_grid_points = 0;
     int p[upper_bound-lower_bound+1]={};
     int level;
     int block_no = 0;
@@ -38,6 +39,8 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
 
         Block & blk=blkList[block_no];
         blk=Block(0, 0, 0, 2*level, level, maxDepth);
+
+        total_grid_points += blk.blkSize;
            
         // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {
@@ -55,7 +58,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
         std::cout << i+lower_bound << ": ";
         std::cout << std::setw(3) << p[i]*100/numberOfLevels << "% " << std::string(p[i]*100/numberOfLevels, '*') << std::endl;
     }
-    std::cout << "Total blocks: " << block_no << std::endl;
+    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
     std::cout << "Total RAM requiremnet for input: " << ram_requirement << "MB" << std::endl;
     std::cout << "Total RAM requiremnet for both input/output: " << ram_requirement*2 << "MB" << std::endl;
 
