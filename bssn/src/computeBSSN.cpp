@@ -32,7 +32,11 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
 
     // Generating levels and block structure
     int total_grid_points = 0;
-    int p[upper_bound-lower_bound+1]={};
+    int p[upper_bound-lower_bound+1];
+
+    for(int i=0;i<upper_bound-lower_bound+1;i+=1){
+        p[i]=0;
+    }
     int level;
     int block_no = 0;
     while (block_no<numberOfLevels){
