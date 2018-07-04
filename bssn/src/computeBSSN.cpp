@@ -10,6 +10,7 @@
 #include "test_param.h"
 #include "rhs.h"
 #include "rhs_cuda.h"
+#include "merge_sort.h"
 
 void data_generation_blockwise_mixed(double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom, 
     Block * blkList, double ** var_in_array, double ** var_out_array){
@@ -37,13 +38,14 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     while (block_no<numberOfLevels){
         level = int(distribution(generator)); // generate a number
 
-        Block & blk=blkList[block_no];
-        blk=Block(0, 0, 0, 2*level, level, maxDepth);
-
-        total_grid_points += blk.blkSize;
-           
         // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {
+            Block & blk=blkList[block_no];
+            blk=Block(0, 0, 0, 2*level, level, maxDepth);
+            blk.block_no = block_no;
+
+            total_grid_points += blk.blkSize;
+
             block_no++;
             p[level-lower_bound]++;
         }
@@ -166,19 +168,19 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     while (block_no<numberOfLevels){
         level = int(distribution(generator)); // generate a number
 
-        Block & blk=blkList[block_no];
-        blk=Block(0, 0, 0, 2*level, level, maxDepth);
-
-        // RAM ---
-           blk.offset=unzipSz;
-           unzipSz+=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
-           
         // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {
+            Block & blk=blkList[block_no];
+            blk=Block(0, 0, 0, 2*level, level, maxDepth);
+            blk.block_no = block_no;
+            // RAM ---
+            blk.offset=unzipSz;
+            unzipSz+=blk.blkSize;
+
             block_no++;
             p[level-lower_bound]++;
         }
-       }
+    }
     // RAM ---
     const unsigned long unzip_dof_cpu=unzipSz;
 
@@ -349,6 +351,8 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
         CHECK_ERROR(cudaStreamCreate(&streams[index]), "cudaStream creation");
     }
 
+    mergeSort(blkList, 0, numberOfLevels-1); // O(nlog(n))
+
     // Check number of blocks can handle at once
     while (current_block<numberOfLevels){
         current_usage=0;
@@ -428,10 +432,10 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
             ptmax[1]=1.0;
             ptmax[2]=1.0;
 
-            std::cout << "GPU - Block no: " << std::setw(3) << index << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
+            std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
             if (index==init_block) cudaEventRecord(start[0], stream);
-            CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+            CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
             if (index==init_block) cudaEventRecord(end[0], stream);
 
             cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
@@ -439,7 +443,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
             );
 
             if (index==current_block-1) cudaEventRecord(start[1], stream);
-            CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+            CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
             if (index==current_block-1) cudaEventRecord(end[1], stream);
         }
 
@@ -493,7 +497,7 @@ void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        std::cout << "CPU - Block no: " << std::setw(3) << blk << " - Bock level: " << std::setw(1) << blkList[blk].blkLevel << " - Block size: " << blkList[blk].blkSize << std::endl;
+        std::cout << "CPU - Count: " << std::setw(3) << blk <<  " - Block no: " << std::setw(3) << blkList[blk].block_no << " - Bock level: " << std::setw(1) << blkList[blk].blkLevel << " - Block size: " << blkList[blk].blkSize << std::endl;
         
         bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
     }
@@ -550,13 +554,13 @@ int main (int argc, char** argv){
         bssn::timer::t_cpu_runtime.stop();
 
         // Verify outputs
-            for (int blk=0; blk<numberOfLevels; blk++){
+        for (int blk=0; blk<numberOfLevels; blk++){
             for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
 
-                int sizeofBlock = blkList[blk].node1D_x * blkList[blk].node1D_y * blkList[blk].node1D_z;
+                int sizeofBlock = blkList[blk].blkSize;
 
                 for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
-                    double diff = var_out_array[blk][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
+                    double diff = var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
                     if (fabs(diff)>threshold){
                         const char separator    = ' ';
                         const int nameWidth     = 6;

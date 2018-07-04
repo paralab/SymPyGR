@@ -48,8 +48,9 @@ struct Block
     unsigned int node1D_x; // unzip size in x direction
     unsigned int node1D_y; // unzip size in y direction
     unsigned int node1D_z; // unzip size in z direction
-    unsigned int blkSize;  // offset
+    unsigned int blkSize;  // size
     unsigned int offset;  // offset
+    unsigned int block_no;  // offset
 
 
     Block()
@@ -65,6 +66,7 @@ struct Block
         node1D_y=0;
         node1D_z=0;
         offset=0;
+        block_no=0;
 
     }
 
