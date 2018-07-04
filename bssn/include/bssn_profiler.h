@@ -37,6 +37,7 @@ namespace bssn
             void stop();
             void clear();
             void snapshotclear();
+            void setTime(float time);
 
         public:
             long double	seconds;  // openmp wall time

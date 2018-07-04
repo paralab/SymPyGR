@@ -322,6 +322,12 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN");
 
+    cudaEvent_t start[2], end[2];
+    for (int i=0; i<2; i++){
+        cudaEventCreate(&start[i]);
+        cudaEventCreate(&end[i]);
+    }
+
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
@@ -391,6 +397,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
         
+        bssn::timer::t_memcopy_kernel.start();
         for(int index=init_block; index<=current_block-1; index++) {
 
             cudaStream_t stream;
@@ -423,14 +430,27 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, doub
 
             std::cout << "GPU - Block no: " << std::setw(3) << index << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
+            if (index==init_block) cudaEventRecord(start[0], stream);
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+            if (index==init_block) cudaEventRecord(end[0], stream);
 
             cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
                 #include "list_of_args_per_blk.h"
             );
 
+            if (index==current_block-1) cudaEventRecord(start[1], stream);
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[index], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+            if (index==current_block-1) cudaEventRecord(end[1], stream);
         }
+
+        CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+
+        float HtoD_ms, DtoH_ms;
+        cudaEventElapsedTime(&HtoD_ms, start[0], end[0]);
+        cudaEventElapsedTime(&DtoH_ms, start[1], end[1]);
+        
+        bssn::timer::t_memcopy.setTime((HtoD_ms+DtoH_ms)/1000);
+        bssn::timer::t_memcopy_kernel.stop();
 
         // Release GPU memory
         #include "bssnrhs_cuda_mdealloc.h"

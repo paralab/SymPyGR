@@ -29,6 +29,8 @@ namespace bssn
         extern bssn_profiler_t t_rhs_gpu;
         extern bssn_profiler_t t_bdyc_gpu;
         extern bssn_profiler_t t_mem_handling_gpu;
+        extern bssn_profiler_t t_memcopy_kernel;
+        extern bssn_profiler_t t_memcopy;
 
 
 

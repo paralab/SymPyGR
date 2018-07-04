@@ -70,6 +70,10 @@ namespace bssn
 #endif
         }
 
+        void bssn_profiler_t::setTime(float time) {
+            seconds += time;
+        }
+
 
 
     }

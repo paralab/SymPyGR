@@ -25,6 +25,8 @@ namespace bssn
         bssn_profiler_t t_rhs_gpu;
         bssn_profiler_t t_bdyc_gpu;
         bssn_profiler_t t_mem_handling_gpu;
+        bssn_profiler_t t_memcopy_kernel;
+        bssn_profiler_t t_memcopy;
 
     }
 }
@@ -81,6 +83,17 @@ void bssn::timer::profileInfo()
     t_stat=t_gpu_runtime.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--gpu_runtime(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
+    t_stat=t_memcopy_kernel.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--kernel_memcopy(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
+
+    t_stat=t_memcopy.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--memcopy(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
+
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--kernel(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_memcopy_kernel.seconds-t_memcopy.seconds <<std::endl;
 
     #if isGPU && isCPU
     std::cout<<"Speedup"<<std::endl;
