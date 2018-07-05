@@ -32,11 +32,8 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
 
     // Generating levels and block structure
     int total_grid_points = 0;
-    int p[upper_bound-lower_bound+1];
+    int p[upper_bound-lower_bound+1] = {0};
 
-    for(int i=0;i<upper_bound-lower_bound+1;i+=1){
-        p[i]=0;
-    }
     int level;
     int block_no = 0;
     while (block_no<numberOfLevels){
@@ -163,7 +160,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     std::normal_distribution<double> distribution(mean, std);
 
     // Generating levels and block structure
-    int p[upper_bound-lower_bound+1]={};
+    int p[upper_bound-lower_bound+1]={0};
     int level;
     int block_no = 0;
 
