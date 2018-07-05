@@ -32,6 +32,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
 
     // Generating levels and block structure
     int total_grid_points = 0;
+    double total_Megaflops = 0;
     int p[upper_bound-lower_bound+1] = {0};
 
     int level;
@@ -46,11 +47,13 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
             blk.block_no = block_no;
 
             total_grid_points += blk.blkSize;
+            total_Megaflops += MegaflopCount[level];
 
             block_no++;
             p[level-lower_bound]++;
         }
     }
+    bssn::timer::flop_count.setTime((total_Megaflops)/1000);
 
     // distribution representation requirement
     std::cout << "---Level distribution---" << std::endl;
@@ -61,7 +64,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
         std::cout << i+lower_bound << ": ";
         std::cout << std::setw(3) << p[i]*100/numberOfLevels << "% " << std::string(p[i]*100/numberOfLevels, '*') << std::endl;
     }
-    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
+    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << " | FlopCount: " << total_Megaflops/1000 << "GigaFlops" << std::endl;
     std::cout << "Total RAM requiremnet for input: " << ram_requirement << "MB" << std::endl;
     std::cout << "Total RAM requiremnet for both input/output: " << ram_requirement*2 << "MB" << std::endl;
 
@@ -321,7 +324,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     }
 }
 
-void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){
+void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, double ** var_in_array, double ** var_out_array){
 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
 
@@ -347,7 +350,9 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsi
     std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
     // Sort the data block list
+    bssn::timer::t_sorting.start();
     mergeSort(blkList, 0, numberOfLevels-1); // O(nlog(n))
+    bssn::timer::t_sorting.stop();
 
     // Calculate how much data block can be executed at once in GPU
     Block blk;
@@ -369,7 +374,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsi
             prev_usage = current_usage+fixed_usage; // usage of previous iteration
             blk = blkList[current_block];
             total_points = blk.blkSize;
-            if (blk.blkLevel<4) {
+            if (blk.blkLevel<5) {
                 numberOfStreams = steamCountToLevel[blk.blkLevel];
             }else{
                 numberOfStreams = 2;
@@ -401,7 +406,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsi
         for (int index=init_block; index<=current_block-1; index++){
             blk = blkList[index];
 
-            if (blk.blkLevel<4) {
+            if (blk.blkLevel<5) {
                 numberOfStreams = steamCountToLevel[blk.blkLevel];
             }else{
                 numberOfStreams = 2;
@@ -410,17 +415,20 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsi
             if (largest_intermediate_array<blk.blkSize*numberOfStreams){
                 largest_intermediate_array = blk.blkSize*numberOfStreams;
             }
+            bssn::timer::t_malloc_free.start();
             CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[index], blk.blkSize*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[index]");
             CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[index], blk.blkSize*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[index]");
+            bssn::timer::t_malloc_free.stop();
         }
         
         // Allocation intermediate arrays
+        bssn::timer::t_malloc_free.start();
         int size = largest_intermediate_array * sizeof(double);
-
         #include "bssnrhs_cuda_variable_malloc.h"
         #include "bssnrhs_cuda_variable_malloc_adv.h"
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
+        bssn::timer::t_malloc_free.stop();
         
         // Start block processing
         bssn::timer::t_memcopy_kernel.start();
@@ -437,7 +445,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsi
             if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN level change");
 
             // Identify stream to schedule
-            if (blk.blkLevel<4) {
+            if (blk.blkLevel<5) {
                 numberOfStreams = steamCountToLevel[blk.blkLevel];
             }else{
                 numberOfStreams = 2;
@@ -491,6 +499,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsi
         bssn::timer::t_memcopy_kernel.stop();
 
         // Release GPU memory
+        bssn::timer::t_malloc_free.start();
         #include "bssnrhs_cuda_mdealloc.h"
         #include "bssnrhs_cuda_mdealloc_adv.h"
 
@@ -498,6 +507,7 @@ void GPU_Async_Iteration_Wise(unsigned int numberOfLevels, Block * blkList, unsi
             CHECK_ERROR(cudaFree(dev_var_in_array[index]), "dev_var_in_array[index] cudaFree");
             CHECK_ERROR(cudaFree(dev_var_out_array[index]), "dev_var_out_array[index] cudaFree");
         }
+        bssn::timer::t_malloc_free.stop();
     }
     for (int index=0; index<steamCountToLevel[0]; index++){
         CHECK_ERROR(cudaStreamDestroy(streams[index]), "cudaStream destruction");
@@ -579,7 +589,7 @@ int main (int argc, char** argv){
     
     #include "rhs_cuda.h"
     bssn::timer::t_gpu_runtime.start();
-    GPU_Async_Iteration_Wise(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+    GPU_Async_Iteration_Wise(numberOfLevels, blkList, var_in_array, var_out_array);
     bssn::timer::t_gpu_runtime.stop();
 
     std::cout << "" << std::endl;

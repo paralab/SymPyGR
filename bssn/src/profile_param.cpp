@@ -21,12 +21,13 @@ namespace bssn
         bssn_profiler_t t_bdyc;
 
         bssn_profiler_t t_gpu_runtime;
-        bssn_profiler_t t_deriv_gpu;
-        bssn_profiler_t t_rhs_gpu;
-        bssn_profiler_t t_bdyc_gpu;
+        bssn_profiler_t t_sorting;
+        bssn_profiler_t t_malloc_free;
         bssn_profiler_t t_mem_handling_gpu;
         bssn_profiler_t t_memcopy_kernel;
         bssn_profiler_t t_memcopy;
+
+        bssn_profiler_t flop_count;
 
     }
 }
@@ -84,6 +85,14 @@ void bssn::timer::profileInfo()
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--gpu_runtime(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
+    t_stat=t_sorting.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--block_sorting(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
+
+    t_stat=t_malloc_free.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--malloc_free(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
+
     t_stat=t_memcopy_kernel.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--kernel_memcopy(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
@@ -97,13 +106,10 @@ void bssn::timer::profileInfo()
 
     #if isGPU && isCPU
     std::cout<<"Speedup"<<std::endl;
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  deriv speedup";
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<< t_deriv.seconds/t_deriv_gpu.seconds <<std::endl;
-
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  rhs speedup";
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<< t_rhs.seconds/t_rhs_gpu.seconds <<std::endl;
-
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  Overall speedup";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<< t_cpu_runtime.seconds/t_gpu_runtime.seconds <<std::endl;
+
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  Approx. FlopRate (GFlop/s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<< flop_count.seconds/t_memcopy_kernel.seconds <<std::endl;
     #endif
 }
