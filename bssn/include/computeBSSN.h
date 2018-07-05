@@ -33,6 +33,7 @@ const unsigned int ELE_ORDER=4;
 const unsigned int BSSN_NUM_VARS=24;
 const unsigned int PAD_WIDTH=3;
 
+int steamCountToLevel[4] = {8, 8, 5, 2};
 
 struct Block 
 {
