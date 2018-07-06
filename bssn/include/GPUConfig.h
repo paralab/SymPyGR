@@ -9,3 +9,6 @@
 
 #define max_dp_flop_rate 147.8
 #define max_bandwidth 12.9
+
+#define parallelized 0
+#define parallel_async 1
