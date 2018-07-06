@@ -6,3 +6,6 @@
 #define thread_load_rhs 1
 #define thread_load_ko_deriv 1
 #define thread_load_output 1
+
+#define max_dp_flop_rate 147.8
+#define max_bandwidth 12.9

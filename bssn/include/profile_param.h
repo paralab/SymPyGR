@@ -12,6 +12,7 @@
 
 #include "bssn_profiler.h"
 #include "test_param.h"
+#include "GPUConfig.h"
 
 namespace bssn
 {
@@ -32,6 +33,7 @@ namespace bssn
         extern bssn_profiler_t t_memcopy;
 
         extern bssn_profiler_t flop_count;
+        extern bssn_profiler_t total_points;
 
         void profileInfo();
     }
