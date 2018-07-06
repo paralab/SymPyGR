@@ -11,5 +11,6 @@
 #define max_bandwidth 12.9
 
 #define parallelized 0
-#define parallel_async 0
-#define pure_async 1
+#define parallel_async_hybrid 0
+#define pure_async 0
+#define pure_async_htod_dtoH_overlap 1
