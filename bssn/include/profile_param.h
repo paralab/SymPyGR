@@ -12,7 +12,7 @@
 
 #include "bssn_profiler.h"
 #include "test_param.h"
-#include "GPUConfig.h"
+#include "comman_config.h"
 
 namespace bssn
 {

@@ -9,7 +9,7 @@
 
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
-#include "GPUConfig.h"
+#include "thread_load_config.h"
 
 #define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
 
