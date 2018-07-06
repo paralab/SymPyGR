@@ -528,7 +528,6 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
 }
 
 void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){ 
-
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
 
     // Creating cudaevents to measure the times 
@@ -577,10 +576,10 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
             prev_usage = current_usage+fixed_usage; // usage of previous iteration
             blk = blkList[current_block];
             total_points = blk.blkSize;
-            if (blk.blkLevel<5) {
+            if (blk.blkLevel<hybrid_divider) {
                 numberOfStreams = steamCountToLevel[blk.blkLevel];
             }else{
-                numberOfStreams = 2;
+                numberOfStreams = 1;
             }
             if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024){
                 fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024;
@@ -609,10 +608,10 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
         for (int index=init_block; index<=current_block-1; index++){
             blk = blkList[index];
 
-            if (blk.blkLevel<5) {
+            if (blk.blkLevel<hybrid_divider) {
                 numberOfStreams = steamCountToLevel[blk.blkLevel];
             }else{
-                numberOfStreams = 2;
+                numberOfStreams = 1;
             }
 
             if (largest_intermediate_array<blk.blkSize*numberOfStreams){
@@ -641,20 +640,9 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
         double ptmin[3], ptmax[3];
         unsigned int bflag;
         double dx, dy, dz;
+        bool isAsyncStarted = false;
         for(int index=init_block; index<=current_block-1; index++) {
             blk=blkList[index];
-
-            // Call cudasync in the case of block level change occured
-            if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN level change");
-
-            // Identify stream to schedule
-            if (blk.blkLevel<5) {
-                numberOfStreams = steamCountToLevel[blk.blkLevel];
-            }else{
-                numberOfStreams = 2;
-            }
-            streamIndex = index % numberOfStreams;
-            stream = streams[streamIndex];
 
             // Configure the block specific values
             unzip_dof=blk.blkSize;
@@ -676,39 +664,82 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
             ptmax[0]=1.0;
             ptmax[1]=1.0;
             ptmax[2]=1.0;
+
+            // Block parallel processing
+            if (blk.blkLevel<hybrid_divider){
+                // Call cudasync in the case of block level change occured
+                if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN level change");
+
+                // Identify stream to schedule
+                numberOfStreams = steamCountToLevel[blk.blkLevel];
+                streamIndex = index % numberOfStreams;
+                stream = streams[streamIndex];
+
+                std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
+
+                if (index==init_block) cudaEventRecord(start[0], stream);
+                if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(start[blk.blkLevel-lower_bound], stream);
+                CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+                if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(end[blk.blkLevel-lower_bound], stream);
+                if (index==init_block) cudaEventRecord(end[0], stream);
+
+                cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
+                    #include "list_of_args_per_blk.h"
+                );
+
+                if (index==init_block) cudaEventRecord(start[upper_bound-lower_bound+1], stream);
+                if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(start[upper_bound-lower_bound+1 + blk.blkLevel-lower_bound], stream);
+                CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+                if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(end[upper_bound-lower_bound+1 + blk.blkLevel-lower_bound], stream);
+                if (index==init_block) cudaEventRecord(end[upper_bound-lower_bound+1], stream);
+            }else{
+                // Starting async process
+
+                // Sync any remaining process
+                if (!isAsyncStarted) {
+                    streamIndex = 0;
+                    CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+                }
+
+                std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
+
+                CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, streams[(index)%2]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+
+                if (isAsyncStarted){
+                    cudaStreamSynchronize(streams[(index+1)%2]);
+                }
+
+                cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, streams[(index)%2],
+                    #include "list_of_args_per_blk.h"
+                );
+
+                if (isAsyncStarted){
+                    CHECK_ERROR(cudaMemcpyAsync(var_out_array[blkList[index-1].block_no], dev_var_out_array[index-1], BSSN_NUM_VARS*blkList[index-1].blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[(index+1)%2]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+                }
+
+                //handle last DtoH memcopy
+                if(index==current_block-1){
+                    CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, streams[(index)%2]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+                }
+
+                if (!isAsyncStarted) isAsyncStarted=true;
+            }
             
-            std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
-
-            if (index==init_block) cudaEventRecord(start[0], stream);
-            if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(start[blk.blkLevel-lower_bound], stream);
-            CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
-            if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(end[blk.blkLevel-lower_bound], stream);
-            if (index==init_block) cudaEventRecord(end[0], stream);
-
-            cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
-                #include "list_of_args_per_blk.h"
-            );
-
-            if (index==init_block) cudaEventRecord(start[upper_bound-lower_bound+1], stream);
-            if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(start[upper_bound-lower_bound+1 + blk.blkLevel-lower_bound], stream);
-            CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
-            if (index!=init_block && blkList[index-1].blkLevel!=blk.blkLevel) cudaEventRecord(end[upper_bound-lower_bound+1 + blk.blkLevel-lower_bound], stream);
-            if (index==init_block) cudaEventRecord(end[upper_bound-lower_bound+1], stream);
         }
 
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
 
         // Calculating memcopy times
-        float eff_memcopy_time;
-        float HtoD_ms[upper_bound-lower_bound+1], DtoH_ms[upper_bound-lower_bound+1];
-        for (int i = 0; i<upper_bound-lower_bound+1; i++){
-            cudaEventElapsedTime(&HtoD_ms[i], start[i], end[i]);
-            cudaEventElapsedTime(&DtoH_ms[i], start[upper_bound-lower_bound+1+i], end[upper_bound-lower_bound+1+i]);
+        // float eff_memcopy_time;
+        // float HtoD_ms[upper_bound-lower_bound+1], DtoH_ms[upper_bound-lower_bound+1];
+        // for (int i = 0; i<upper_bound-lower_bound+1; i++){
+            // cudaEventElapsedTime(&HtoD_ms[i], start[i], end[i]);
+            // cudaEventElapsedTime(&DtoH_ms[i], start[upper_bound-lower_bound+1+i], end[upper_bound-lower_bound+1+i]);
 
-            eff_memcopy_time += HtoD_ms[i]*steamCountToLevel[i+lower_bound];
-            eff_memcopy_time += DtoH_ms[i]*steamCountToLevel[i+lower_bound];
-        }
-        bssn::timer::t_memcopy.setTime(eff_memcopy_time/1000);
+            // eff_memcopy_time += HtoD_ms[i]*steamCountToLevel[i+lower_bound];
+            // eff_memcopy_time += DtoH_ms[i]*steamCountToLevel[i+lower_bound];
+        // }
+        // bssn::timer::t_memcopy.setTime(eff_memcopy_time/1000);
         
         bssn::timer::t_memcopy_kernel.stop();
 
