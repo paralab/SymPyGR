@@ -1252,7 +1252,7 @@ int main (int argc, char** argv){
                         const int numWidth      = NUM_DIGITS+10;
 
                         std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
-                        std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blk][bssn_var*sizeofBlock+pointInd];
+                        std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd];
 
                         std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
                         std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out[bssn_var][blkList[blk].offset+pointInd];
