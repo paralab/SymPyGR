@@ -11,8 +11,6 @@
 #define threshold 1e-10
 #define NUM_DIGITS 10
 
-#define test 1
-#define isGPU 1
-#define isCPU 1
+#define bandwidth 1
 
 #endif

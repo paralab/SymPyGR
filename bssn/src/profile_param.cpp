@@ -68,13 +68,9 @@ void bssn::timer::profileInfo()
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--kernel_memcopy(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
 
-    // t_stat=t_memcopy.seconds;
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--memcopy(s)";
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
-
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--kernel(s)";
-    // std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_memcopy_kernel.seconds-t_memcopy.seconds <<std::endl;
-
+    t_stat=t_memcopy.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"--memcopy(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) << t_stat <<std::endl;
 
     std::cout<<"Speedup"<<std::endl;
 
@@ -85,5 +81,5 @@ void bssn::timer::profileInfo()
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<< flop_count.seconds/t_memcopy_kernel.seconds << "Percentage " << (flop_count.seconds/t_memcopy_kernel.seconds)*100/max_dp_flop_rate << "%" << std::endl;
 
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  Appr. Bandwidth (GB/s)";
-    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<< total_points.seconds*8/1024/1024/1024/t_memcopy_kernel.seconds << "Percentage " << (total_points.seconds*8/1024/1024/1024/t_memcopy_kernel.seconds*100)/max_bandwidth << "%" << std::endl;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<< total_points.seconds*8/1024/1024/1024/t_memcopy.seconds << "Percentage " << (total_points.seconds*8/1024/1024/1024/t_memcopy.seconds*100)/max_bandwidth << "%" << std::endl;
 }
