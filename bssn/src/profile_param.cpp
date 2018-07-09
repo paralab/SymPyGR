@@ -43,6 +43,10 @@ void bssn::timer::profileInfo()
 
     double t_stat;
 
+    t_stat=total_runtime.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"runtime(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
     std::cout<<"\nCPU Timings"<<std::endl;
 
     t_stat=t_cpu_runtime.seconds;

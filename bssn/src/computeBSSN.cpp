@@ -1197,6 +1197,8 @@ int main (int argc, char** argv){
     bool isRandom = atoi(argv[6]);
     bool isTest = atoi(argv[7]);
 
+    bssn::timer::total_runtime.start();
+
     Block * blkList = new Block[numberOfLevels];
     double ** var_in_array = new double*[numberOfLevels];
     double ** var_out_array = new double*[numberOfLevels];
@@ -1291,6 +1293,7 @@ int main (int argc, char** argv){
         CHECK_ERROR(cudaFreeHost(var_out_array[blk]), "free host memory");
     }
 
+    bssn::timer::total_runtime.stop();
     bssn::timer::profileInfo();
     return 0;
 }
