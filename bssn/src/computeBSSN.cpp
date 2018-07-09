@@ -33,7 +33,8 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     // Generating levels and block structure
     int total_grid_points = 0;
     double total_Megaflops = 0;
-    int p[upper_bound-lower_bound+1] = {0};
+    int p[upper_bound-lower_bound+1];
+    for (int i=0; i<upper_bound-lower_bound+1; i++) p[i] = 0;
 
     int level;
     int block_no = 0;
@@ -95,7 +96,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     }
 
     // Data block generation
-    #pragma omp parallel for num_threads(4)
+    #pragma omp parallel for num_threads(20)
     for (int index=0; index<numberOfLevels; index++){
         Block & blk=blkList[index];
         const unsigned long unzip_dof=blk.blkSize;
@@ -164,7 +165,8 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     std::normal_distribution<double> distribution(mean, std);
 
     // Generating levels and block structure
-    int p[upper_bound-lower_bound+1]={0};
+    int p[upper_bound-lower_bound+1];
+    for (int i=0; i<upper_bound-lower_bound+1; i++) p[i] = 0;
     int level;
     int block_no = 0;
 
@@ -230,7 +232,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     }
 
     // Data block generation
-    #pragma omp parallel for num_threads(4)
+    #pragma omp parallel for num_threads(20)
     for (int index=0; index<numberOfLevels; index++){
         Block & blk=blkList[index];
         const unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
@@ -286,7 +288,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
         var_out[i] = new double[unzip_dof_cpu];
     }
         
-    #pragma omp parallel for num_threads(4)
+    #pragma omp parallel for num_threads(20)
     for(unsigned int blk=0; blk<numberOfLevels; blk++){
         
         double coord[3];
@@ -348,7 +350,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
-    double GPU_capacity_buffer = 600;
+    double GPU_capacity_buffer = 10;
     double GPUCapacity = 1.0*free_bytes/1024/1024 - GPU_capacity_buffer;
     std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
@@ -367,6 +369,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
     double fixed_usage = 0;
     double prev_usage = 0;
     double actual_usage = 0;
+    double malloc_overhead = 3;
 
     while (current_block<numberOfLevels){
         current_usage=0;
@@ -382,20 +385,20 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
             }else{
                 numberOfStreams = 2;
             }
-            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024){
-                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024;
+            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead){
+                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead; // 5*210 means allocation overhead
             }
             current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2)/1024/1024;
             current_block++;
         }
         actual_usage = current_usage+fixed_usage;
         if (current_usage+fixed_usage>(GPUCapacity)){
-            actual_usage = prev_usage;
             current_block--;
             if (init_block>current_block-1) {
                 std::cout << "Required GPU memory = " << actual_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
                 exit(0);
             }
+            actual_usage = prev_usage;
         }
 
         // Display the set of blocks selected to process with their GPU usage
@@ -432,7 +435,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
         bssn::timer::t_malloc_free.stop();
-        
+
         // Start block processing
         if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.start();
         int streamIndex;
@@ -544,7 +547,7 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
-    double GPU_capacity_buffer = 600;
+    double GPU_capacity_buffer = 10;
     double GPUCapacity = 1.0*free_bytes/1024/1024 - GPU_capacity_buffer;
     std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
@@ -563,6 +566,7 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
     double fixed_usage = 0;
     double prev_usage = 0;
     double actual_usage = 0;
+    double malloc_overhead = 3;
 
     while (current_block<numberOfLevels){
         current_usage=0;
@@ -578,20 +582,20 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
             }else{
                 numberOfStreams = 1;
             }
-            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024){
-                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024;
+            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead){
+                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead; // 5*210 means allocation overhead
             }
             current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2)/1024/1024;
             current_block++;
         }
         actual_usage = current_usage+fixed_usage;
         if (current_usage+fixed_usage>(GPUCapacity)){
-            actual_usage = prev_usage;
             current_block--;
             if (init_block>current_block-1) {
                 std::cout << "Required GPU memory = " << actual_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
                 exit(0);
             }
+            actual_usage = prev_usage;
         }
 
         // Display the set of blocks selected to process with their GPU usage
@@ -777,7 +781,7 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
-    double GPU_capacity_buffer = 600;
+    double GPU_capacity_buffer = 10;
     double GPUCapacity = 1.0*free_bytes/1024/1024 - GPU_capacity_buffer;
     std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
@@ -796,6 +800,7 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
     double fixed_usage = 0;
     double prev_usage = 0;
     double actual_usage = 0;
+    double malloc_overhead = 3;
 
     while (current_block<numberOfLevels){
         current_usage=0;
@@ -807,20 +812,20 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
             blk = blkList[current_block];
             total_points = blk.blkSize;
             numberOfStreams = 1;
-            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024){
-                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024;
+            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead){
+                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead; // 5*210 means allocation overhead
             }
             current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2)/1024/1024;
             current_block++;
         }
         actual_usage = current_usage+fixed_usage;
         if (current_usage+fixed_usage>(GPUCapacity)){
-            actual_usage = prev_usage;
             current_block--;
             if (init_block>current_block-1) {
                 std::cout << "Required GPU memory = " << actual_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
                 exit(0);
             }
+            actual_usage = prev_usage;
         }
 
         // Display the set of blocks selected to process with their GPU usage
@@ -968,7 +973,7 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
-    double GPU_capacity_buffer = 600;
+    double GPU_capacity_buffer = 10;
     double GPUCapacity = 1.0*free_bytes/1024/1024 - GPU_capacity_buffer;
     std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
@@ -987,6 +992,7 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
     double fixed_usage = 0;
     double prev_usage = 0;
     double actual_usage = 0;
+    double malloc_overhead = 3;
 
     while (current_block<numberOfLevels){
         current_usage=0;
@@ -998,20 +1004,20 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
             blk = blkList[current_block];
             total_points = blk.blkSize;
             numberOfStreams = 1;
-            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024){
-                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024;
+            if (fixed_usage<numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead){
+                fixed_usage = numberOfStreams*(138+72)*total_points*sizeof(double)/1024/1024 + 210*malloc_overhead + (current_block-init_block)*malloc_overhead; // 5*210 means allocation overhead
             }
             current_usage += (total_points*BSSN_NUM_VARS*sizeof(double)*2)/1024/1024;
             current_block++;
         }
         actual_usage = current_usage+fixed_usage;
         if (current_usage+fixed_usage>(GPUCapacity)){
-            actual_usage = prev_usage;
             current_block--;
             if (init_block>current_block-1) {
                 std::cout << "Required GPU memory = " << actual_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
                 exit(0);
             }
+            actual_usage = prev_usage;
         }
 
         // Display the set of blocks selected to process with their GPU usage
@@ -1195,6 +1201,8 @@ int main (int argc, char** argv){
     bool isRandom = atoi(argv[6]);
     bool isTest = atoi(argv[7]);
 
+    bssn::timer::total_runtime.start();
+
     Block * blkList = new Block[numberOfLevels];
     double ** var_in_array = new double*[numberOfLevels];
     double ** var_out_array = new double*[numberOfLevels];
@@ -1289,6 +1297,7 @@ int main (int argc, char** argv){
         CHECK_ERROR(cudaFreeHost(var_out_array[blk]), "free host memory");
     }
 
+    bssn::timer::total_runtime.stop();
     bssn::timer::profileInfo();
     return 0;
 }
