@@ -546,7 +546,7 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
-    double GPU_capacity_buffer = 1.0*total_bytes/1024/1024/3 - 500;
+    double GPU_capacity_buffer = 1.0*total_bytes/1024/1024/3 - 1000;
     double GPUCapacity = 1.0*free_bytes/1024/1024 - GPU_capacity_buffer;
     std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
