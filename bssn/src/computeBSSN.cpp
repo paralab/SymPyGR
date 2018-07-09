@@ -96,7 +96,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     }
 
     // Data block generation
-    #pragma omp parallel for num_threads(4)
+    #pragma omp parallel for num_threads(20)
     for (int index=0; index<numberOfLevels; index++){
         Block & blk=blkList[index];
         const unsigned long unzip_dof=blk.blkSize;
@@ -232,7 +232,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     }
 
     // Data block generation
-    #pragma omp parallel for num_threads(4)
+    #pragma omp parallel for num_threads(20)
     for (int index=0; index<numberOfLevels; index++){
         Block & blk=blkList[index];
         const unsigned long unzip_dof=(blk.node1D_x*blk.node1D_y*blk.node1D_z);
@@ -288,7 +288,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
         var_out[i] = new double[unzip_dof_cpu];
     }
         
-    #pragma omp parallel for num_threads(4)
+    #pragma omp parallel for num_threads(20)
     for(unsigned int blk=0; blk<numberOfLevels; blk++){
         
         double coord[3];
@@ -546,7 +546,7 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
     // Check for available GPU memory
     size_t free_bytes, total_bytes;
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
-    double GPU_capacity_buffer = 1.0*total_bytes/1024/1024/3;
+    double GPU_capacity_buffer = 1.0*total_bytes/1024/1024/3 - 500;
     double GPUCapacity = 1.0*free_bytes/1024/1024 - GPU_capacity_buffer;
     std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
