@@ -1172,7 +1172,7 @@ void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
-        std::cout << "CPU - Count: " << std::setw(3) << blk <<  " - Block no: " << std::setw(3) << blkList[blk].block_no << " - Bock level: " << std::setw(1) << blkList[blk].blkLevel << " - Block size: " << blkList[blk].blkSize << std::endl;
+        // std::cout << "CPU - Count: " << std::setw(3) << blk <<  " - Block no: " << std::setw(3) << blkList[blk].block_no << " - Bock level: " << std::setw(1) << blkList[blk].blkLevel << " - Block size: " << blkList[blk].blkSize << std::endl;
         
         bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
     }
