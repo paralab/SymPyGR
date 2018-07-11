@@ -480,7 +480,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
             ptmax[1]=1.0;
             ptmax[2]=1.0;
             
-            std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
+            // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
             if (is_bandwidth_calc && index==init_block) cudaEventRecord(start[0], stream);
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
@@ -894,7 +894,7 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
             // Starting async process
 
             // Sync any remaining process
-            std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
+            // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
             if (is_bandwidth_calc && index==init_block) cudaEventRecord(start[0], streams[(index)%2]);
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, streams[(index)%2]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
@@ -1021,7 +1021,7 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
         }
 
         // Display the set of blocks selected to process with their GPU usage
-        std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << actual_usage << std::endl;
+        // std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << actual_usage << std::endl;
 
         // Allocating device memory to hold input and output
         double ** dev_var_in_array = new double*[numberOfLevels];
