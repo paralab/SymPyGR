@@ -165,8 +165,11 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     std::normal_distribution<double> distribution(mean, std);
 
     // Generating levels and block structure
+    int total_grid_points = 0;
+    double total_Megaflops = 0;
     int p[upper_bound-lower_bound+1];
     for (int i=0; i<upper_bound-lower_bound+1; i++) p[i] = 0;
+
     int level;
     int block_no = 0;
 
@@ -184,10 +187,17 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
             blk.offset=unzipSz;
             unzipSz+=blk.blkSize;
 
+            total_grid_points += blk.blkSize;
+            total_Megaflops += MegaflopCount[level];
+
             block_no++;
             p[level-lower_bound]++;
         }
     }
+
+    bssn::timer::flop_count.setTime((total_Megaflops)/1000);
+    bssn::timer::total_points.setTime(total_grid_points*BSSN_NUM_VARS);
+
     // RAM ---
     const unsigned long unzip_dof_cpu=unzipSz;
 
@@ -200,7 +210,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
         std::cout << i+lower_bound << ": ";
         std::cout << std::setw(3) << p[i]*100/numberOfLevels << "% " << std::string(p[i]*100/numberOfLevels, '*') << std::endl;
     }
-    std::cout << "Total blocks: " << block_no << std::endl;
+    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << " | FlopCount: " << total_Megaflops/1000 << "GigaFlops" << std::endl;
     std::cout << "Total RAM requiremnet for input: " << ram_requirement << "MB" << std::endl;
     std::cout << "Total RAM requiremnet for both input/output: " << ram_requirement*2 << "MB" << std::endl;
     // RAM ---
@@ -327,18 +337,9 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     }
 }
 
-void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array, bool is_bandwidth_calc=0){ 
+void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){ 
 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
-
-    // Creating cudaevents to measure the bandwidth times 
-    cudaEvent_t start[2], end[2];
-    if (is_bandwidth_calc){
-        for (int i=0; i<2; i++){
-            cudaEventCreate(&start[i]);
-            cudaEventCreate(&end[i]);
-        }
-    }
 
     // Creating cuda streams for the process
     cudaStream_t stream;
@@ -437,7 +438,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
         bssn::timer::t_malloc_free.stop();
 
         // Start block processing
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.start();
+        bssn::timer::t_memcopy_kernel.start();
         int streamIndex;
         int unzip_dof;
         unsigned int sz[3];
@@ -481,30 +482,19 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
             ptmax[2]=1.0;
             
             // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
-
-            if (is_bandwidth_calc && index==init_block) cudaEventRecord(start[0], stream);
+            
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
-            if (!is_bandwidth_calc){
-                cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
-                #include "list_of_args_per_blk.h"
-                );
-            }
+            cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
+            #include "list_of_args_per_blk.h"
+            );
 
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
-            if (is_bandwidth_calc && index==(current_block-1)) cudaEventRecord(end[0], stream);
         }
 
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
 
-        // Calculating memcopy times
-        float eff_memcopy_time;
-        if (is_bandwidth_calc){
-            cudaEventElapsedTime(&eff_memcopy_time, start[0], end[0]);
-            bssn::timer::t_memcopy.setTime(eff_memcopy_time/1000);
-        }
-        
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.stop();
+        bssn::timer::t_memcopy_kernel.stop();
 
         // Release GPU memory
         bssn::timer::t_malloc_free.start();
@@ -526,15 +516,6 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
 void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array, bool is_bandwidth_calc=0){ 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
 
-    // Creating cudaevents to measure the times 
-    cudaEvent_t start[2], end[2];
-    if (is_bandwidth_calc){
-        for (int i=0; i<2; i++){
-            cudaEventCreate(&start[i]);
-            cudaEventCreate(&end[i]);
-        }
-    }
-
     // Creating cuda streams for the process
     int num_streams = 2;
     if (num_streams<steamCountToLevel[0]) num_streams=steamCountToLevel[0];
@@ -549,7 +530,7 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
     CHECK_ERROR(cudaMemGetInfo(&free_bytes, &total_bytes), "Available GPU memory checking failed");
     double GPU_capacity_buffer = 10;
     double GPUCapacity = 1.0*free_bytes/1024/1024 - GPU_capacity_buffer;
-    if (!is_bandwidth_calc) std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
+    std::cout << "Available GPU with buffer of " << GPU_capacity_buffer << ": " << GPUCapacity << " | Total GPU memory: " << total_bytes/1024/1024 << std::endl << std::endl;
 
     // Sort the data block list
     bssn::timer::t_sorting.start();
@@ -599,7 +580,7 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
         }
 
         // Display the set of blocks selected to process with their GPU usage
-        if (!is_bandwidth_calc) std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << actual_usage << std::endl;
+        std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << actual_usage << std::endl;
 
         // Allocating device memory to hold input and output
         double ** dev_var_in_array = new double*[numberOfLevels];
@@ -634,7 +615,7 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
         bssn::timer::t_malloc_free.stop();
         
         // Start block processing
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.start();
+        bssn::timer::t_memcopy_kernel.start();
         int streamIndex;
         int unzip_dof;
         unsigned int sz[3];
@@ -680,17 +661,14 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
 
                 // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
-                if (is_bandwidth_calc && index==init_block) cudaEventRecord(start[0], stream);
                 CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
-                if (!is_bandwidth_calc){
-                    cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
-                        #include "list_of_args_per_blk.h"
-                    );
-                }
+                cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
+                    #include "list_of_args_per_blk.h"
+                );
 
                 CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
-                if (is_bandwidth_calc && index==current_block-1) cudaEventRecord(end[0], stream);
+
             }else{
                 // Starting async process
 
@@ -702,18 +680,15 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
 
                 // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
-                if (is_bandwidth_calc && index==init_block) cudaEventRecord(start[0], streams[(index)%2]);
                 CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, streams[(index)%2]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
                 if (isAsyncStarted){
                     cudaStreamSynchronize(streams[(index+1)%2]);
                 }
 
-                if (!is_bandwidth_calc){
-                    cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, streams[(index)%2],
-                        #include "list_of_args_per_blk.h"
-                    );
-                }
+                cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, streams[(index)%2],
+                    #include "list_of_args_per_blk.h"
+                );
 
                 if (isAsyncStarted){
                     CHECK_ERROR(cudaMemcpyAsync(var_out_array[blkList[index-1].block_no], dev_var_out_array[index-1], BSSN_NUM_VARS*blkList[index-1].blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[(index+1)%2]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
@@ -723,7 +698,6 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
                 if(index==current_block-1){
                     CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, streams[(index)%2]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
                 }
-                if (is_bandwidth_calc && index==current_block-1) cudaEventRecord(end[0], streams[(index)%2]);
 
                 if (!isAsyncStarted) isAsyncStarted=true;
             }
@@ -731,15 +705,8 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
         }
 
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
-
-        // Calculating memcopy times
-        float eff_memcopy_time;
-        if (is_bandwidth_calc){
-            cudaEventElapsedTime(&eff_memcopy_time, start[0], end[0]);
-            bssn::timer::t_memcopy.setTime(eff_memcopy_time/1000);
-        }
         
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.stop();
+        bssn::timer::t_memcopy_kernel.stop();
 
         // Release GPU memory
         bssn::timer::t_malloc_free.start();
@@ -760,15 +727,6 @@ void GPU_parallelized_async_hybrid(unsigned int numberOfLevels, Block * blkList,
 
 void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array, bool is_bandwidth_calc=0){ 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
-
-    // Creating cudaevents to measure the times 
-    cudaEvent_t start[2], end[2];
-    if (is_bandwidth_calc){
-        for (int i=0; i<2; i++){
-            cudaEventCreate(&start[i]);
-            cudaEventCreate(&end[i]);
-        }
-    }
 
     // Creating cuda streams for the process
     int num_streams = 2;
@@ -859,7 +817,7 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
         bssn::timer::t_malloc_free.stop();
         
         // Start block processing
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.start();
+        bssn::timer::t_memcopy_kernel.start();
         int streamIndex = 0;
         int unzip_dof;
         unsigned int sz[3];
@@ -896,18 +854,15 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
             // Sync any remaining process
             // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
-            if (is_bandwidth_calc && index==init_block) cudaEventRecord(start[0], streams[(index)%2]);
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, streams[(index)%2]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
             if (isAsyncStarted){
                 cudaStreamSynchronize(streams[(index+1)%2]);
             }
 
-            if (!is_bandwidth_calc){
-                cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, streams[(index)%2],
-                    #include "list_of_args_per_blk.h"
-                );
-            }
+            cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, streams[(index)%2],
+                #include "list_of_args_per_blk.h"
+            );
      
             if (isAsyncStarted){
                 CHECK_ERROR(cudaMemcpyAsync(var_out_array[blkList[index-1].block_no], dev_var_out_array[index-1], BSSN_NUM_VARS*blkList[index-1].blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[(index+1)%2]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
@@ -917,21 +872,13 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
             if(index==current_block-1){
                 CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, streams[(index)%2]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
             }
-            if (is_bandwidth_calc && index==current_block-1) cudaEventRecord(end[0], streams[(index)%2]);
 
             if (!isAsyncStarted) isAsyncStarted=true;
         }
 
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
 
-        // Calculating memcopy times
-        float eff_memcopy_time;
-        if (is_bandwidth_calc){
-            cudaEventElapsedTime(&eff_memcopy_time, start[0], end[0]);
-            bssn::timer::t_memcopy.setTime(eff_memcopy_time/1000);
-        }
-        
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.stop();
+        bssn::timer::t_memcopy_kernel.stop();
 
         // Release GPU memory
         bssn::timer::t_malloc_free.start();
@@ -952,15 +899,6 @@ void GPU_pure_async(unsigned int numberOfLevels, Block * blkList, unsigned int l
 
 void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array, bool is_bandwidth_calc=0){ 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
-
-    // Creating cudaevents to measure the times 
-    cudaEvent_t start[2], end[2];
-    if (is_bandwidth_calc){
-        for (int i=0; i<2; i++){
-            cudaEventCreate(&start[i]);
-            cudaEventCreate(&end[i]);
-        }
-    }
 
     // Creating cuda streams for the process
     int num_streams = 3;
@@ -1021,7 +959,7 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
         }
 
         // Display the set of blocks selected to process with their GPU usage
-        // std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << actual_usage << std::endl;
+        std::cout << "start: " << init_block << " end: " << current_block-1 << "| usage: " << actual_usage << std::endl;
 
         // Allocating device memory to hold input and output
         double ** dev_var_in_array = new double*[numberOfLevels];
@@ -1051,7 +989,7 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
         bssn::timer::t_malloc_free.stop();
         
         // Start block processing
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.start();
+        bssn::timer::t_memcopy_kernel.start();
         int streamIndex = 0;
         int unzip_dof;
         unsigned int sz[3];
@@ -1086,20 +1024,17 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
             // Starting async process
 
             // Sync any remaining process
-            std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
+            // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
 
-            if (is_bandwidth_calc && index==init_block) cudaEventRecord(start[0], streams[(index)%3]);
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, streams[(index)%3]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
             if (isAsyncStarted){
                 cudaStreamSynchronize(streams[(index+2)%3]);
             }
 
-            if (!is_bandwidth_calc){
-                cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, streams[(index)%3],
-                    #include "list_of_args_per_blk.h"
-                );
-            }
+            cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, streams[(index)%3],
+                #include "list_of_args_per_blk.h"
+            );
 
             if (isAsyncStarted){
                 CHECK_ERROR(cudaMemcpyAsync(var_out_array[blkList[index-1].block_no], dev_var_out_array[index-1], BSSN_NUM_VARS*blkList[index-1].blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[(index+2)%3]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
@@ -1110,21 +1045,12 @@ void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkLi
                 CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, streams[(index)%3]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
             }
 
-            if (is_bandwidth_calc && index==current_block-1) cudaEventRecord(end[0], streams[(index)%3]);
-
             if (!isAsyncStarted) isAsyncStarted=true;
         }
 
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
 
-        // Calculating memcopy times
-        float eff_memcopy_time;
-        if (is_bandwidth_calc){
-            cudaEventElapsedTime(&eff_memcopy_time, start[0], end[0]);
-            bssn::timer::t_memcopy.setTime(eff_memcopy_time/1000);
-        }
-        
-        if (!is_bandwidth_calc) bssn::timer::t_memcopy_kernel.stop();
+        bssn::timer::t_memcopy_kernel.stop();
 
         // Release GPU memory
         bssn::timer::t_malloc_free.start();
@@ -1218,22 +1144,6 @@ int main (int argc, char** argv){
     }
     
     #include "rhs_cuda.h"
-
-    #if bandwidth
-        // Calc bandwidth
-        #if parallelized
-            GPU_parallelized(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array, 1);
-        #endif
-        #if parallel_async_hybrid
-            GPU_parallelized_async_hybrid(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array, 1);
-        #endif
-        #if pure_async
-            GPU_pure_async(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array, 1);
-        #endif
-        #if pure_async_htod_dtoH_overlap
-            GPU_pure_async_htod_dtoH_overlap(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array, 1);
-        #endif
-    #endif
 
     bssn::timer::t_gpu_runtime.start();
     #if parallelized
