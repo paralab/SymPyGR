@@ -12,7 +12,7 @@
 #include "rhs_cuda.h"
 #include "merge_sort.h"
 
-void data_generation_blockwise_mixed(double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom, 
+void data_generation_blockwise_mixed(bool isNormal, double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom, 
     Block * blkList, double ** var_in_array, double ** var_out_array){
 
     const unsigned int maxDepth=12;
@@ -28,7 +28,8 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     int seed = 100;
     if (isRandom) seed=time(0);
     std::default_random_engine generator(seed);
-    std::normal_distribution<double> distribution(mean, std);
+    std::normal_distribution<double> distributionN(mean, std);
+    std::uniform_int_distribution<int> distributionU(lower_bound, upper_bound);
 
     // Generating levels and block structure
     int total_grid_points = 0;
@@ -39,8 +40,12 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     int level;
     int block_no = 0;
     while (block_no<numberOfLevels){
-        level = int(distribution(generator)); // generate a number
-
+        if (isNormal){
+            level = int(distributionN(generator)); // generate a number
+        }else{
+            level = int(distributionU(generator)); // generate a number
+        }
+        
         // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {
             Block & blk=blkList[block_no];
@@ -146,7 +151,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     }
 }
 
-void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom,
+void data_generation_blockwise_and_bssn_var_wise_mixed(bool isNormal, double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom,
     Block * blkList, double ** var_in_array, double ** var_out_array, double ** var_in, double ** var_out){
 
     const unsigned int maxDepth=12;
@@ -162,7 +167,8 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     int seed = 100;
     if (isRandom) seed=time(0);
     std::default_random_engine generator(seed);
-    std::normal_distribution<double> distribution(mean, std);
+    std::normal_distribution<double> distributionN(mean, std);
+    std::uniform_int_distribution<int> distributionU(lower_bound, upper_bound);
 
     // Generating levels and block structure
     int total_grid_points = 0;
@@ -176,7 +182,11 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     // RAM ---
     unsigned long unzipSz=0;
     while (block_no<numberOfLevels){
-        level = int(distribution(generator)); // generate a number
+        if (isNormal){
+            level = int(distributionN(generator)); // generate a number
+        }else{
+            level = int(distributionU(generator)); // generate a number
+        }
 
         // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {
@@ -1108,55 +1118,79 @@ int main (int argc, char** argv){
     /**
      *
      * parameters:
-     * blk_lb: block element 1d lower bound (int)
-     * blk_up: block element 1d upper bound (int) (blk_up>=blk_lb)
-     * numblks : number of blocks needed for each block sizes. (total_blks= (blk_up-blk_lb+1)*numblks)
+     * lowerLevel: block element 1d lower bound (int)
+     * upperLevel: block element 1d upper bound (int) (blk_up>=blk_lb)
+     * numberOfBlocks : total blocks going to process 
+     * isTest(1/0; optional): default=0
+     * isRandom(1/0; optional): default=0
+     * isNormal(1/0; optional): default=0
+     * mean(double optional) 
+     * std(double optional) 
      *
      * */
 
-    if(argc<8){
-        std::cout<<"Usage: " << argv[0] << " mean(double) std(double) numberOfBlocks(int) lowerLevel(int) upperLevel(int) isRandom(1/0) isTest(1/0)" <<std::endl;
+    int lower_bound;
+    int upper_bound;
+    int numberOfBlocks;
+    bool isTest = 0;
+    bool isRandom = 0;
+    bool isNormal = 0;
+    double mean = 0;
+    double std = 0;
+
+    if(argc>=4){
+        lower_bound=atoi(argv[1]);
+        upper_bound=atoi(argv[2]);
+        numberOfBlocks=atoi(argv[3]);
+
+        if (argc>=5) isTest=atoi(argv[4]);
+        if (argc>=6) isRandom=atoi(argv[5]);
+        if (argc>=7) isNormal=atoi(argv[6]);
+
+        if (isNormal==1){
+            if (argc<9){
+                std::cerr << "Missing args for mean value and std value" << std::endl;
+                exit(0);
+            }else{
+                mean=atoi(argv[7]);
+                std=atoi(argv[8]);
+            }
+        }
+    }else{
+        std::cerr << "Correct usage: " << argv[0] << " lowerLevel(int) upperLevel(int) numberOfBlocks(int) isTest(1/0; optional) isRandom(1/0; optional) isNormal(1/0; optional) mean(double optional) std(double optional)" << std::endl;
         exit(0);
     }
 
-    double mean = atoi(argv[1]);
-    double std = atoi(argv[2]);
-    unsigned int numberOfLevels = atoi(argv[3]);
-    unsigned int lower_bound = atoi(argv[4]);
-    unsigned int upper_bound = atoi(argv[5]);
-    bool isRandom = atoi(argv[6]);
-    bool isTest = atoi(argv[7]);
-
     bssn::timer::total_runtime.start();
 
-    Block * blkList = new Block[numberOfLevels];
-    double ** var_in_array = new double*[numberOfLevels];
-    double ** var_out_array = new double*[numberOfLevels];
+    Block * blkList = new Block[numberOfBlocks];
+    double ** var_in_array = new double*[numberOfBlocks];
+    double ** var_out_array = new double*[numberOfBlocks];
 
     double ** var_in;
     double ** var_out;
     if (isTest){
         var_in = new double*[BSSN_NUM_VARS];
         var_out = new double*[BSSN_NUM_VARS];
-        data_generation_blockwise_and_bssn_var_wise_mixed(mean, std, numberOfLevels, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array, var_in, var_out);
+        data_generation_blockwise_and_bssn_var_wise_mixed(isNormal, mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array, var_in, var_out);
     }else{
-        data_generation_blockwise_mixed(mean, std, numberOfLevels, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array);
+        data_generation_blockwise_mixed(isNormal, mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array);
     }
     
     #include "rhs_cuda.h"
 
     bssn::timer::t_gpu_runtime.start();
     #if parallelized
-        GPU_parallelized(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+        GPU_parallelized(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
     #if parallel_async_hybrid
-        GPU_parallelized_async_hybrid(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+        GPU_parallelized_async_hybrid(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
     #if pure_async
-        GPU_pure_async(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+        GPU_pure_async(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
     #if pure_async_htod_dtoH_overlap
-        GPU_pure_async_htod_dtoH_overlap(numberOfLevels, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+        GPU_pure_async_htod_dtoH_overlap(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
     bssn::timer::t_gpu_runtime.stop();
 
@@ -1165,11 +1199,11 @@ int main (int argc, char** argv){
     if (isTest){
         #include "rhs.h"
         bssn::timer::t_cpu_runtime.start();
-        CPU_sequence(numberOfLevels, blkList, var_in, var_out);
+        CPU_sequence(numberOfBlocks, blkList, var_in, var_out);
         bssn::timer::t_cpu_runtime.stop();
 
         // Verify outputs
-        for (int blk=0; blk<numberOfLevels; blk++){
+        for (int blk=0; blk<numberOfBlocks; blk++){
             for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
 
                 int sizeofBlock = blkList[blk].blkSize;
@@ -1202,7 +1236,7 @@ int main (int argc, char** argv){
     }
 
     //Free host memory
-    for (int blk=0; blk<numberOfLevels; blk++){
+    for (int blk=0; blk<numberOfBlocks; blk++){
         CHECK_ERROR(cudaFreeHost(var_in_array[blk]), "free host memory");
         CHECK_ERROR(cudaFreeHost(var_out_array[blk]), "free host memory");
     }
