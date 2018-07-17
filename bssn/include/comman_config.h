@@ -1,5 +1,5 @@
-#define max_dp_flop_rate 147.8
-#define max_bandwidth 12.9
+#define max_dp_flop_rate 4761
+#define max_bandwidth 12.05
 
 // Please select only one of below
 #define parallelized 0
