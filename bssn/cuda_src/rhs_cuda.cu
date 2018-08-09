@@ -43,17 +43,8 @@ const unsigned int& bflag, cudaStream_t stream,
     double hz = (pmax[2] - pmin[2]) / (sz[2] - 1);
 
     // Deriv calls are follows
-    cuda_calc_all(dev_var_in, hx, hy, hz, sz[0], sz[1], sz[2], bflag, stream, 
-        #include "list_of_args.h"
-        ,
-        #include "list_of_offset_args.h"
-            );
-        
-    cuda_deriv_calc_all_adv(dev_var_in, hx, hy, hz, sz[0], sz[1], sz[2], bflag, stream,
-        #include "list_of_args.h"
-        ,
-        #include "list_of_offset_args.h"
-            );
+    #include "bssnrhs_cuda_derivs.h"
+    #include "bssnrhs_cuda_derivs_adv.h"
     
     calc_bssn_eqns(dev_var_in, dev_var_out, sz, pmin, hz, hy, hx, stream,
     #include "list_of_offset_args.h"
@@ -119,11 +110,7 @@ const unsigned int& bflag, cudaStream_t stream,
         
     }
 
-    calc_ko_deriv_all(dev_var_in, hx, hy, hz, sz[0], sz[1], sz[2], bflag, stream,
-        #include "list_of_args.h"
-        ,
-        #include "list_of_offset_args.h"
-        );
+    #include "bssnrhs_cuda_ko_derivs.h"
 
     get_output(dev_var_out, sz, stream,
         #include "list_of_offset_args.h"
@@ -380,7 +367,7 @@ __global__ void kernal_get_output (double * dev_var_out,
     #include "list_of_para.h"
 ) 
 {
-    int thread_id = blockIdx.x*threads_per_block + threadIdx.x;
+    int thread_id = blockIdx.x*threads_per_block_final + threadIdx.x;
 
     for (int id = thread_id*thread_load_output; id<(thread_id+1)*thread_load_output; id++){
                 
@@ -445,9 +432,9 @@ void get_output (double * dev_var_out, const unsigned int * host_sz, cudaStream_
         const unsigned int host_sz_z = host_sz[2];
 
         int total_points = ceil(1.0*ie*je*ke/thread_load_output);
-        int blocks = ceil(1.0*total_points/threads_per_block);
+        int blocks = ceil(1.0*total_points/threads_per_block_final);
 
-        kernal_get_output <<< blocks, threads_per_block, 0, stream >>> (dev_var_out, 
+        kernal_get_output <<< blocks, threads_per_block_final, 0, stream >>> (dev_var_out, 
                     host_sz_x, host_sz_y, host_sz_z,
                     #include "list_of_offset_args.h"
                     ,

@@ -21,7 +21,7 @@ __global__ void cuda_bssn_eqns_points(double * dev_var_in, double * dev_var_out,
     #include "list_of_para.h"
     )
 {
-    int thread_id = blockIdx.x*threads_per_block_rhs + threadIdx.x;
+    int thread_id = blockIdx.x*threads_per_block_rhs + threadIdx.x; 
 
     for (int id = thread_id*thread_load_rhs; id<(thread_id+1)*thread_load_rhs; id++){
         int i = id%(host_sz_x-6) + 3;

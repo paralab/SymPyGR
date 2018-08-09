@@ -23,6 +23,9 @@ if(CUDA_FOUND)
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_61,code=compute_61)
     list( APPEND CUDA_NVCC_FLAGS -use_fast_math )
 
+    # list( APPEND CUDA_NVCC_FLAGS --maxrregcount 16 )
+    # list( APPEND CUDA_NVCC_FLAGS --ptxas-options=-v )
+
 endif()
 
 
@@ -33,7 +36,7 @@ if(OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 
 include_directories(${PROJECT_BINARY_DIR}
         include
