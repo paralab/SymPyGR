@@ -560,11 +560,11 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
 
 
 def main():
-    cudaDerivAllocDeallocHeader("../../../BSSN_GR/cuda_gr/include/bssn_rhs_deriv_mem_cuda.h")
-    cudaDerivAllocDeallocSource("../../../BSSN_GR/cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp",["bssn_rhs_deriv_mem_cuda.h"])
+    cudaDerivAllocDeallocHeader("../bssn/cuda_gr/include/bssn_rhs_deriv_mem_cuda.h")
+    cudaDerivAllocDeallocSource("../bssn/cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp",["bssn_rhs_deriv_mem_cuda.h"])
 
-    cudaComputeDerivKernelHeader("../../../BSSN_GR/cuda_gr/include/rhs.cuh",["block_cu.h","params_cu.h","bssn_rhs_deriv_mem_cuda.h","cudaUtils.cuh","derivs.cuh"])
-    cudaComputeDerivKernelSource("../../../BSSN_GR/cuda_gr/src/rhs.cu",["rhs.cuh"])
+    cudaComputeDerivKernelHeader("../bssn/cuda_gr/include/rhs.cuh",["block_cu.h","params_cu.h","bssn_rhs_deriv_mem_cuda.h","cudaUtils.cuh","derivs.cuh"])
+    cudaComputeDerivKernelSource("../bssn/cuda_gr/src/rhs.cu",["rhs.cuh"])
 
 if __name__ == "__main__":
     main()
