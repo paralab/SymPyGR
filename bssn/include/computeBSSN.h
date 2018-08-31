@@ -33,9 +33,11 @@ const unsigned int ELE_ORDER=4;
 const unsigned int BSSN_NUM_VARS=24;
 const unsigned int PAD_WIDTH=3;
 
-int steamCountToLevel[5] = {8, 8, 5, 2, 2};
+int steamCountToLevel[5] = {1, 1, 1, 1, 1};
 double MegaflopCount[6] = {3.95, 7.72, 40.71, 282.61, 2095.15};
 int hybrid_divider = 3; // divider must be smaller than the length of steamCountToLevel
+
+// {30.564, 0.044148, 0.071316, 0.125652, 0.234324};
 
 struct Block 
 {

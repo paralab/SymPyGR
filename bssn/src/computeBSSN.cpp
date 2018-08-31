@@ -448,7 +448,6 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
         bssn::timer::t_malloc_free.stop();
 
         // Start block processing
-        bssn::timer::t_memcopy_kernel.start();
         int streamIndex;
         int unzip_dof;
         unsigned int sz[3];
@@ -493,18 +492,27 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
             
             // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
             
+            bssn::timer::t_memcopy.start();
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
-
+            CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+            bssn::timer::t_memcopy.stop();
+            
+            bssn::timer::t_memcopy_kernel.start();
             cuda_bssnrhs(dev_var_out_array[index], dev_var_in_array[index], unzip_dof, ptmin, ptmax, sz, bflag, stream,
             #include "list_of_args_per_blk.h"
             );
+            CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+            bssn::timer::t_memcopy_kernel.stop();
 
+            bssn::timer::t_memcopy.start();
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+            CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+            bssn::timer::t_memcopy.stop();
         }
 
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
 
-        bssn::timer::t_memcopy_kernel.stop();
+       
 
         // Release GPU memory
         bssn::timer::t_malloc_free.start();
