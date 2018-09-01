@@ -225,7 +225,7 @@ int main (int argc, char** argv)
 
     delete [] varUnzipIn;
     delete [] varUnzipOutCPU;
-    delete [] varUnzipOutCPU;
+    delete [] varUnzipOutGPU;
 
 
 
