@@ -5,10 +5,8 @@
 #include <iostream>
 #include <time.h>
 #include "derivs.h"
+#include "grUtils.h"
 #include "profile_param.h"
-
-
-
 
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 
@@ -34,11 +32,19 @@ void bssnrhs(double **uzipVarsRHS, const double **uZipVars,
              const unsigned int &bflag);
 
 
+void bssnrhs_sep(double **uzipVarsRHS, const double **uZipVars,
+             const unsigned int &offset,
+             const double *ptmin, const double *ptmax, const unsigned int *sz,
+             const unsigned int &bflag);
+
+
 void bssn_bcs(double *f_rhs, const double *f,
               const double *dxf, const double *dyf, const double *dzf,
               const double *pmin, const double *pmax,
               const double f_falloff, const double f_asymptotic,
               const unsigned int *sz, const unsigned int &bflag);
+
+void freeze_bcs(double *f_rhs, const unsigned int *sz, const unsigned int &bflag);
 
 void fake_initial_data(double x, double y, double z, double *u);
 

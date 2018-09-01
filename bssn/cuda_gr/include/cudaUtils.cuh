@@ -5,8 +5,8 @@
 * @author : Milinda Fernando
 * @brief : contains utility functions for bssn cuda computations. 
 */
-#ifndef SFCSORTBENCH_CUDAUTILS_H
-#define SFCSORTBENCH_CUDAUTILS_H
+#ifndef BSSN_CUDAUTILS_H
+#define BSSN_CUDAUTILS_H
 
 #include "cuda_runtime.h"
 #include <device_launch_parameters.h>

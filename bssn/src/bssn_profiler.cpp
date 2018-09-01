@@ -10,10 +10,6 @@
 
 #include "bssn_profiler.h"
 
-namespace bssn
-{
-    namespace timer
-    {
 
         bssn_profiler_t::bssn_profiler_t () {
             seconds  = 0.0;   // openmp wall time
@@ -70,8 +66,4 @@ namespace bssn
 #endif
         }
 
-
-
-    }
-}
 

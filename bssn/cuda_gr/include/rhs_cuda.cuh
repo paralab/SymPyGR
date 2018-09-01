@@ -16,6 +16,8 @@
 #include "cudaUtils.h"
 #include "params_cu.h"
 #include "rhs.cuh"
+#include "profile_gpu.h"
+
 
 
 

@@ -2,7 +2,7 @@
 #define _DERVS_H
 
 #include <cmath>
-#include "def.h"
+#include "dendro.h"
 
 
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )

@@ -11,26 +11,36 @@ namespace cuda
 
     void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks)
     {
-        //get GPU information.
-        // assumes the if there are multiple gpus per node all have the same specification.
-        cuda::__CUDA_DEVICE_PROPERTIES=getGPUDeviceInfo(0);
 
-        const double GPU_BLOCK_SHARED_MEM_UTIL=0.8;
-        const unsigned int BSSN_NUM_VARS=24;
-        const unsigned int BSSN_CONSTRAINT_NUM_VARS=6;
+        cuda::profile::t_overall.start();
 
-        //send blocks to the gpu
-        cuda::__DENDRO_BLOCK_LIST=cuda::copyArrayToDevice(blkList,numBlocks);
-        cuda::__DENDRO_NUM_BLOCKS=cuda::copyValueToDevice(&numBlocks);
 
-        cuda::__BSSN_NUM_VARS=cuda::copyValueToDevice(&BSSN_NUM_VARS);
-        cuda::__BSSN_CONSTRAINT_NUM_VARS=cuda::copyValueToDevice(&BSSN_CONSTRAINT_NUM_VARS);
+        cuda::profile::t_H2D_Comm.start();
 
-        cuda::__GPU_BLOCK_SHARED_MEM_UTIL=cuda::copyValueToDevice(&GPU_BLOCK_SHARED_MEM_UTIL);
+            //get GPU information.
+            // assumes the if there are multiple gpus per node all have the same specification.
+            cuda::__CUDA_DEVICE_PROPERTIES=getGPUDeviceInfo(0);
+
+            // device properties for the host
+            cudaDeviceProp deviceProp;
+            cudaGetDeviceProperties(&deviceProp,0);
+
+            const double GPU_BLOCK_SHARED_MEM_UTIL=0.8;
+            const unsigned int BSSN_NUM_VARS=24;
+            const unsigned int BSSN_CONSTRAINT_NUM_VARS=6;
+
+            //send blocks to the gpu
+            cuda::__DENDRO_BLOCK_LIST=cuda::copyArrayToDevice(blkList,numBlocks);
+            cuda::__DENDRO_NUM_BLOCKS=cuda::copyValueToDevice(&numBlocks);
+
+            cuda::__BSSN_NUM_VARS=cuda::copyValueToDevice(&BSSN_NUM_VARS);
+            cuda::__BSSN_CONSTRAINT_NUM_VARS=cuda::copyValueToDevice(&BSSN_CONSTRAINT_NUM_VARS);
+
+            cuda::__GPU_BLOCK_SHARED_MEM_UTIL=cuda::copyValueToDevice(&GPU_BLOCK_SHARED_MEM_UTIL);
+
+        cuda::profile::t_H2D_Comm.stop();
 
         unsigned int maxBlkSz_1d=0;
-
-
         for(unsigned int blk=0;blk<numBlocks;blk++)
         {
             const unsigned int* sz=blkList[blk].getSz();
@@ -39,17 +49,23 @@ namespace cuda
         }
 
         const unsigned int derivSz=(maxBlkSz_1d*maxBlkSz_1d*maxBlkSz_1d);
-
         cuda::__DENDRO_BLK_MAX_SZ=cuda::copyValueToDevice(&derivSz);
-        const size_t deriv_mem_sz= derivSz*(cuda::__CUDA_DEVICE_PROPERTIES->multiProcessorCount);
+        const size_t deriv_mem_sz= derivSz*(deviceProp.multiProcessorCount);
 
-        cuda::MemoryDerivs derivWorkSpace;
+        cuda::profile::t_cudaMalloc_derivs.start();
 
-        derivWorkSpace.allocateDerivMemory(derivSz);
+            cuda::MemoryDerivs derivWorkSpace;
+            derivWorkSpace.allocateDerivMemory(derivSz);
+
+        cuda::profile::t_cudaMalloc_derivs.stop();
+
 
 
         dim3 blockGrid(numBlocks,1);
         dim3 threadBlock(8,8,8);
+
+
+        cuda::profile::t_derivs.start();
 
 
         cuda::__computeDerivPass1 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
@@ -58,9 +74,16 @@ namespace cuda
         cuda::__computeDerivPass4 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
         cuda::__computeDerivPass5 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
 
+        cudaDeviceSynchronize();
 
-        derivWorkSpace.deallocateDerivMemory();
+        cuda::profile::t_derivs.stop();
 
+
+        cuda::profile::t_cudaMalloc_derivs.start();
+
+            derivWorkSpace.deallocateDerivMemory();
+
+        cuda::profile::t_cudaMalloc_derivs.stop();
 
         cudaFree(cuda::__CUDA_DEVICE_PROPERTIES);
         cudaFree(cuda::__DENDRO_BLOCK_LIST);
@@ -68,6 +91,11 @@ namespace cuda
         cudaFree(cuda::__BSSN_NUM_VARS);
         cudaFree(cuda::__BSSN_CONSTRAINT_NUM_VARS);
         cudaFree(cuda::__GPU_BLOCK_SHARED_MEM_UTIL);
+
+
+
+
+        cuda::profile::t_overall.stop();
 
 
     }

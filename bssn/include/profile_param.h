@@ -11,6 +11,8 @@
 #define BSSN_PROFILE_PARAM_H
 
 #include "bssn_profiler.h"
+#include <iostream>
+#include "block.h"
 
 namespace bssn
 {
@@ -22,6 +24,9 @@ namespace bssn
         extern bssn_profiler_t	t_rhs;
         extern bssn_profiler_t  t_bdyc;
 
+
+
+        void initialize();
 
         void profileInfo();
     }

@@ -20,11 +20,6 @@
 
 #include <omp.h>
 
-namespace bssn
-{
-
-    namespace timer
-    {
 
 
         class bssn_profiler_t
@@ -53,9 +48,6 @@ namespace bssn
 
 
 
-    } // end of namespace
-
-} //end of namespace
 
 
 

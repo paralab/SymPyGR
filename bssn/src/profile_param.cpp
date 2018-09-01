@@ -22,6 +22,15 @@ namespace bssn
 }
 
 
+void bssn::timer::initialize()
+{
+    total_runtime.start();
+    t_deriv.start();
+    t_rhs.start();
+    t_bdyc.start();
+}
+
+
 void bssn::timer::profileInfo()
 {
 
@@ -50,3 +59,5 @@ void bssn::timer::profileInfo()
 
 
 }
+
+
