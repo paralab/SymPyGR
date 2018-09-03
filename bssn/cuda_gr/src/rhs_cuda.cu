@@ -69,10 +69,15 @@ namespace cuda
 
 
         cuda::__computeDerivPass1 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        CUDA_CHECK_ERROR();
         cuda::__computeDerivPass2 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        CUDA_CHECK_ERROR();
         cuda::__computeDerivPass3 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        CUDA_CHECK_ERROR();
         cuda::__computeDerivPass4 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        CUDA_CHECK_ERROR();
         cuda::__computeDerivPass5 <<<blockGrid,threadBlock>>> (uZipVars,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        CUDA_CHECK_ERROR();
 
         cudaDeviceSynchronize();
 
