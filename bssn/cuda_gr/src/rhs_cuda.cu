@@ -40,15 +40,15 @@ namespace cuda
 
         cuda::profile::t_H2D_Comm.stop();
 
-        unsigned int maxBlkSz_1d=0;
+        unsigned int maxBlkSz=0;
         for(unsigned int blk=0;blk<numBlocks;blk++)
         {
             const unsigned int* sz=blkList[blk].getSz();
-            if(maxBlkSz_1d<(sz[0]*sz[1]*sz[2]))
-                maxBlkSz_1d=sz[0]*sz[1]*sz[2];
+            if(maxBlkSz<(sz[0]*sz[1]*sz[2]))
+                maxBlkSz=sz[0]*sz[1]*sz[2];
         }
 
-        const unsigned int derivSz=(maxBlkSz_1d*maxBlkSz_1d*maxBlkSz_1d);
+        const unsigned int derivSz=(maxBlkSz);
         cuda::__DENDRO_BLK_MAX_SZ=cuda::copyValueToDevice(&derivSz);
         const size_t deriv_mem_sz= derivSz*(deviceProp.multiProcessorCount);
 
