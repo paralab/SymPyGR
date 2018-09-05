@@ -21,21 +21,21 @@ namespace cuda
  *
  *----------------------------------------------------------------------*/
 
-        __device__ void deriv42_x(double * const  Dxu, const double * const  u, const double dx, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz,unsigned int pw, unsigned bflag) {
+        __device__ void deriv42_x(double * const  Dxu, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz,unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0]+pw;
-            const unsigned int i_e=ijk_lm[0][1]-pw;
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0];
+            const unsigned int j_e=ijk_lm[2*1+1];
+
+            const unsigned int k_b=ijk_lm[2*2+0];
+            const unsigned int k_e=ijk_lm[2*2+1];
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -127,20 +127,20 @@ namespace cuda
  *
  *----------------------------------------------------------------------*/
 
-        __device__ void deriv42_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
+        __device__ void deriv42_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0]+pw;
-            const unsigned int j_e=ijk_lm[1][1]-pw;
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0];
+            const unsigned int k_e=ijk_lm[2*2+1];
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -234,20 +234,20 @@ namespace cuda
  *----------------------------------------------------------------------*/
 
 
-        __device__ void deriv42_z(double * const  Dzu, const double * const  u, const double dz, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
+        __device__ void deriv42_z(double * const  Dzu, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0]+pw;
-            const unsigned int k_e=ijk_lm[2][1]-pw;
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -338,21 +338,21 @@ namespace cuda
  *
  *----------------------------------------------------------------------*/
 
-        __device__ void deriv42_xx(double * const  DxDxu, const double * const  u, const double dx, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw,unsigned bflag) {
+        __device__ void deriv42_xx(double * const  DxDxu, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw,unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0]+pw;
-            const unsigned int i_e=ijk_lm[0][1]-pw;
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -460,21 +460,21 @@ namespace cuda
 
 
 
-        __device__ void deriv42_yy(double * const  DyDyu, const double * const  u, const double dy, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
+        __device__ void deriv42_yy(double * const  DyDyu, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0]+pw;
-            const unsigned int j_e=ijk_lm[1][1]-pw;
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -574,20 +574,20 @@ namespace cuda
         *----------------------------------------------------------------------*/
 
 
-        __device__ void deriv42_zz(double * const  DzDzu, const double * const  u, const double dz, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz,unsigned int pw, unsigned bflag) {
+        __device__ void deriv42_zz(double * const  DzDzu, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz,unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0]+pw;
-            const unsigned int k_e=ijk_lm[2][1]-pw;
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -681,20 +681,20 @@ namespace cuda
  * compute first advective derivative in x direction
  *
  *----------------------------------------------------------------------*/
-        __device__    void deriv42adv_x(double * const  Dxu, const double * const  u, const double dx, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betax, unsigned int pw, unsigned bflag) {
+        __device__    void deriv42adv_x(double * const  Dxu, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betax, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0]+pw;
-            const unsigned int i_e=ijk_lm[0][1]-pw;
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -847,20 +847,20 @@ namespace cuda
  * compute first advective derivative in y direction
  *
  *----------------------------------------------------------------------*/
-        __device__  void deriv42adv_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betay, unsigned int pw, unsigned bflag) {
+        __device__  void deriv42adv_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betay, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0]+pw;
-            const unsigned int j_e=ijk_lm[1][1]-pw;
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -1018,21 +1018,21 @@ namespace cuda
  *----------------------------------------------------------------------*/
 
 
-        __device__  void deriv42adv_z(double * const  Dzu, const double * const  u, const double dz, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betaz, unsigned int pw, unsigned bflag) {
+        __device__  void deriv42adv_z(double * const  Dzu, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betaz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0]+pw;
-            const unsigned int k_e=ijk_lm[2][1]-pw;
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -1187,21 +1187,21 @@ namespace cuda
  *----------------------------------------------------------------------*/
 
 
-        __device__  void ko_deriv42_x(double * const  Du, const double * const  u, const double dx, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
+        __device__  void ko_deriv42_x(double * const  Du, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0]+pw;
-            const unsigned int i_e=ijk_lm[0][1]-pw;
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -1379,21 +1379,21 @@ namespace cuda
  *
  *----------------------------------------------------------------------*/
 
-        __device__  void ko_deriv42_y(double * const  Du, const double * const  u, const double dy, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
+        __device__  void ko_deriv42_y(double * const  Du, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0]+pw;
-            const unsigned int j_e=ijk_lm[1][1]-pw;
-            
-            const unsigned int k_b=ijk_lm[2][0];
-            const unsigned int k_e=ijk_lm[2][1];
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             
@@ -1570,21 +1570,21 @@ namespace cuda
  *
  *----------------------------------------------------------------------*/
 
-        __device__  void ko_deriv42_z(double * const  Du, const double * const  u, const double dz, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
+        __device__  void ko_deriv42_z(double * const  Du, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-            const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-            const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[0][0];
-            const unsigned int i_e=ijk_lm[0][1];
-            
-            const unsigned int j_b=ijk_lm[1][0];
-            const unsigned int j_e=ijk_lm[1][1];
-            
-            const unsigned int k_b=ijk_lm[2][0]+pw;
-            const unsigned int k_e=ijk_lm[2][1]-pw;
+            const unsigned int i_b=ijk_lm[2*0+0]+pw;
+            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+
+            const unsigned int j_b=ijk_lm[2*1+0]+pw;
+            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+
+            const unsigned int k_b=ijk_lm[2*2+0]+pw;
+            const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
             

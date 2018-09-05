@@ -165,25 +165,25 @@ kodxn = "kograd_0"
 kodyn = "kograd_1"
 kodzn = "kograd_2"
 
-func_dx="deriv42_x((double *) "+dxn+",(const double *) "+varInShared+",dx, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_dy="deriv42_y((double *) "+dyn+",(const double *) "+varInShared+",dy, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_dz="deriv42_z((double *) "+dzn+",(const double *) "+varInShared+",dz, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dx="deriv42_x((double *) "+dxn+",(const double *) "+varInShared+",dx, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dy="deriv42_y((double *) "+dyn+",(const double *) "+varInShared+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dz="deriv42_z((double *) "+dzn+",(const double *) "+varInShared+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
 
-func_dxx="deriv42_xx((double *) "+dxxn+",(const double *) "+varInShared+",dx, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_dxy="deriv42_y((double *) "+dxyn+",(const double *) "+dxn+",dy, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_dxz="deriv42_z((double *) "+dxzn+",(const double *) "+dxn+",dz, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dxx="deriv42_xx((double *) "+dxxn+",(const double *) "+varInShared+",dx, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dxy="deriv42_y((double *) "+dxyn+",(const double *) "+dxn+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dxz="deriv42_z((double *) "+dxzn+",(const double *) "+dxn+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
 
-func_dyy="deriv42_yy((double *) "+dyyn+",(const double *) "+varInShared+",dy, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_dyz="deriv42_z((double *) " +dyzn+",(const double *) "+dyn+",dz, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_dzz="deriv42_zz((double *) "+dzzn+",(const double *) "+varInShared+",dz, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dyy="deriv42_yy((double *) "+dyyn+",(const double *) "+varInShared+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dyz="deriv42_z((double *) " +dyzn+",(const double *) "+dyn+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_dzz="deriv42_zz((double *) "+dzzn+",(const double *) "+varInShared+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
 
-func_adx="deriv42adv_x((double *) "+adxn+",(const double *) "+varInShared+",dx, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
-func_ady="deriv42adv_y((double *) "+adyn+",(const double *) "+varInShared+",dy, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
-func_adz="deriv42adv_z((double *) "+adzn+",(const double *) "+varInShared+",dz, (const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
+func_adx="deriv42adv_x((double *) "+adxn+",(const double *) "+varInShared+",dx, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
+func_ady="deriv42adv_y((double *) "+adyn+",(const double *) "+varInShared+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
+func_adz="deriv42adv_z((double *) "+adzn+",(const double *) "+varInShared+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
 
-func_kodx="ko_deriv42_x((double *) "+kodxn+",(const double *) "+varInShared+",dx,(const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_kody="ko_deriv42_y((double *) "+kodyn+",(const double *) "+varInShared+",dy,(const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_kodz="ko_deriv42_z((double *) "+kodzn+",(const double *) "+varInShared+",dz,(const unsigned int **) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) " +tile_sz+", 2, bflag);"
+func_kodx="ko_deriv42_x((double *) "+kodxn+",(const double *) "+varInShared+",dx,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_kody="ko_deriv42_y((double *) "+kodyn+",(const double *) "+varInShared+",dy,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+func_kodz="ko_deriv42_z((double *) "+kodzn+",(const double *) "+varInShared+",dz,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) " +tile_sz+", 2, bflag);"
 
 ## number of passes for cuda derivatives. 
 Derivative = namedtuple("Derivative", "DerivType DerivName DerivTile1D DerivInput DerivOutput IB IE JB JE KB KE padWidth DerivFuncCall")
@@ -436,7 +436,7 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             ofile.write("const unsigned int BLK_INTERATIONS = ceil((double)sz[0]/"+tile_sz+"[0]);")
             ofile.write("\n")
 
-            ofile.write("unsigned int ijk_lm[3][2];")
+            ofile.write("unsigned int ijk_lm[3*2];")
             ofile.write("\n")
 
             # allocate memory for shared deriv variables. 
@@ -472,29 +472,29 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
 
             ofile.write("for(unsigned int iter=0;iter<BLK_INTERATIONS;iter++){\n\n")
             
-            ofile.write("\t\t "+tile_limits+"[0][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
+            ofile.write("\t\t "+tile_limits+"[2*0+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
             if(dendro_blk_req_pad==2):
-                ofile.write("\t\t "+tile_limits+"[0][1]=min("+tile_limits+"[0][0]+"+tile_sz+"[0],sz[0]-1);\n")
+                ofile.write("\t\t "+tile_limits+"[2*0+1]=min("+tile_limits+"[2*0+0]+"+tile_sz+"[0],sz[0]-1);\n")
             else:
-                ofile.write("\t\t "+tile_limits+"[0][1]=min("+tile_limits+"[0][0]+"+tile_sz+"[0],sz[0]);\n")
+                ofile.write("\t\t "+tile_limits+"[2*0+1]=min("+tile_limits+"[2*0+0]+"+tile_sz+"[0],sz[0]);\n")
             
             ofile.write("\n")
 
-            ofile.write("\t\t "+tile_limits+"[1][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
+            ofile.write("\t\t "+tile_limits+"[2*1+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
 
             if(dendro_blk_req_pad==2):
-                ofile.write("\t\t "+tile_limits+"[1][1]=min("+tile_limits+"[1][0]+"+tile_sz+"[1],sz[1]-1);\n")
+                ofile.write("\t\t "+tile_limits+"[2*1+1]=min("+tile_limits+"[2*1+0]+"+tile_sz+"[1],sz[1]-1);\n")
             else:
-                ofile.write("\t\t "+tile_limits+"[1][1]=min("+tile_limits+"[1][0]+"+tile_sz+"[1],sz[1]);\n")
+                ofile.write("\t\t "+tile_limits+"[2*1+1]=min("+tile_limits+"[2*1+0]+"+tile_sz+"[1],sz[1]);\n")
             
             ofile.write("\n")
 
-            ofile.write("\t\t "+tile_limits+"[2][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
+            ofile.write("\t\t "+tile_limits+"[2*2+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
 
             if(dendro_blk_req_pad==2):
-                ofile.write("\t\t "+tile_limits+"[2][1]=min("+tile_limits+"[2][0]+"+tile_sz+"[2],sz[2]-1);\n")
+                ofile.write("\t\t "+tile_limits+"[2*2+1]=min("+tile_limits+"[2*2+0]+"+tile_sz+"[2],sz[2]-1);\n")
             else:
-                ofile.write("\t\t "+tile_limits+"[2][1]=min("+tile_limits+"[2][0]+"+tile_sz+"[2],sz[2]);\n")
+                ofile.write("\t\t "+tile_limits+"[2*2+1]=min("+tile_limits+"[2*2+0]+"+tile_sz+"[2],sz[2]);\n")
             
             ofile.write("\n")
 
@@ -502,11 +502,11 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
                 enumStr=varEnum[d.index(e)]
                 ofile.write("\n")
                 ofile.write("\t\t//load input data from global to shared memory\n")
-                ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+enumStr+"][offset],(double *) "+varInShared+",(const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+enumStr+"][offset],(double *) "+varInShared+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
                 #if we are computing advective derivative we need to load the shift vectors. 
                 if(e in ad and deriv.DerivType=="ad"):
-                    ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+varEnum[1+(deriv_pass-2)]+"][offset], (double *) beta0, (const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                    ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+varEnum[1+(deriv_pass-2)]+"][offset], (double *) beta0, (const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
                     #ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+varEnum[2]+"][offset], (double *) beta1, (const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
                     #ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+varEnum[3]+"][offset], (double *) beta2, (const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
@@ -537,16 +537,16 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
                 ofile.write("\t\t//store derivs from shared to global memory\n")
                 for deriv in cuda_deriv_passes[deriv_pass]:
                     if(deriv.DerivType=="d"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
                     if(e in dd and deriv.DerivType=="dd"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
                     if(e in ad and deriv.DerivType=="ad"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
                     if(e in ad and deriv.DerivType=="ko"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int **) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
             
             ofile.write("\t\t} // end of block tile loop\n\n")
 

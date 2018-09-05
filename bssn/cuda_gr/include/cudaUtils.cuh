@@ -28,12 +28,12 @@ namespace cuda
     * @brief load data from global memory to shared memory
     * @param[in] __globalIn : source global address to copy data from
     * @param[out] sharedOut : shared memory location
-    * @param[in] ijk_lm : min max of index i,j,k of the dendro block included in the tile
+    * @param[in] ijk_lm : min max of index i,j,k of the dendro block included in the tile 3x2
     * @param[in] sz: dendro block size
     * @param[in] tile_sz: tile sz
     */
     template<typename T>
-    __device__ void __loadGlobalToShared(const T* __globalIn,  T* sharedOut, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+    __device__ void __loadGlobalToShared(const T* __globalIn,  T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
     
 
     /**
@@ -45,7 +45,7 @@ namespace cuda
     * @param[in] tile_sz: tile sz
     */
     template <typename T>
-    __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+    __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
 }
 
 #endif //SFCSORTBENCH_CUDAUTILS_H
@@ -58,21 +58,21 @@ namespace cuda
 
 
     template<typename T>
-    __device__ void __loadGlobalToShared(const T* __globalIn, T* sharedOut, const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    __device__ void __loadGlobalToShared(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-        const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-        const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+        const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+        const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+        const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-        const unsigned int i_b=ijk_lm[0][0];
-        const unsigned int i_e=ijk_lm[0][1];
+        const unsigned int i_b=ijk_lm[2*0+0];
+        const unsigned int i_e=ijk_lm[2*0+1];
 
-        const unsigned int j_b=ijk_lm[1][0];
-        const unsigned int j_e=ijk_lm[1][1];
+        const unsigned int j_b=ijk_lm[2*1+0];
+        const unsigned int j_e=ijk_lm[2*1+1];
 
-        const unsigned int k_b=ijk_lm[2][0];
-        const unsigned int k_e=ijk_lm[2][1];
+        const unsigned int k_b=ijk_lm[2*2+0];
+        const unsigned int k_e=ijk_lm[2*2+1];
 
         if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
 
@@ -98,21 +98,21 @@ namespace cuda
 
 
     template<typename T>
-    __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int** ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int l_x=ijk_lm[0][1]-ijk_lm[0][0];
-        const unsigned int l_y=ijk_lm[1][1]-ijk_lm[1][0];
-        const unsigned int l_z=ijk_lm[2][1]-ijk_lm[2][0];
+        const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+        const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+        const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-        const unsigned int i_b=ijk_lm[0][0];
-        const unsigned int i_e=ijk_lm[0][1];
+        const unsigned int i_b=ijk_lm[2*0+0];
+        const unsigned int i_e=ijk_lm[2*0+1];
 
-        const unsigned int j_b=ijk_lm[1][0];
-        const unsigned int j_e=ijk_lm[1][1];
+        const unsigned int j_b=ijk_lm[2*1+0];
+        const unsigned int j_e=ijk_lm[2*1+1];
 
-        const unsigned int k_b=ijk_lm[2][0];
-        const unsigned int k_e=ijk_lm[2][1];
+        const unsigned int k_b=ijk_lm[2*2+0];
+        const unsigned int k_e=ijk_lm[2*2+1];
 
         if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
 
