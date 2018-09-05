@@ -72,6 +72,12 @@ namespace cuda
         /**memory for deriv computations. */
         extern MemoryDerivs __BSSN_DERIV_WORKSPACE;
 
+        /**unzip input */
+        extern double ** __UNZIP_INPUT;
+
+        /**unzip output*/
+        extern double ** __UNZIP_OUTPUT;
+
 
 
 

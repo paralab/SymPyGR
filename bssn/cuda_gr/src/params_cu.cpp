@@ -33,6 +33,13 @@ namespace cuda
     MemoryDerivs __BSSN_DERIV_WORKSPACE;
 
 
+    /**unzip input */
+    double ** __UNZIP_INPUT=NULL;
+
+    /**unzip output*/
+    double ** __UNZIP_OUTPUT=NULL;
+
+
 }// end of namespace cuda
 
 

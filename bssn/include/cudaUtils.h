@@ -55,7 +55,31 @@ namespace cuda
       template<typename T>
       inline T * copyValueToDevice(const T* in);
 
+      /**
+       * @brief allocates a 2D cuda array on the device.
+       * @param[in] sz1: dim 1 size
+       * @param[in] sz2: dim 2 size
+       * @returns the double pointer to the 2D array.
+       * */
+      template <typename T>
+      T** alloc2DCudaArray(unsigned int sz1,  unsigned int sz2);
 
+      /**
+       * @brief allocates a 2D cuda array on the device and copy data.
+       * @param[in] sz1: dim 1 size
+       * @param[in] sz2: dim 2 size
+       * @returns the double pointer to the 2D array.
+       * */
+      template <typename T>
+      T** alloc2DCudaArray(const T** in,unsigned int sz1,  unsigned int sz2);
+
+
+      /**
+       * @brief deallocates the 2D cuda array.
+       * @param[in] sz1: dim 1 size
+       * */
+      template <typename T>
+      void dealloc2DCudaArray(T ** & __array2D,  unsigned int sz1);
 }
 
 
@@ -96,6 +120,71 @@ namespace cuda
         return __devicePtr;
 
     }
+
+    template <typename T>
+    T** alloc2DCudaArray(unsigned int sz1, unsigned int sz2)
+    {
+
+        T** __tmp2d;
+        cudaMalloc(&__tmp2d,sizeof(T*)*sz1);
+        CUDA_CHECK_ERROR();
+
+        T** tmp2D=new T*[sz1];
+
+        for(unsigned int i=0;i<sz1;i++)
+        {
+            cudaMalloc(&tmp2D[i],sizeof(T)*sz2);
+            CUDA_CHECK_ERROR();
+        }
+
+        cudaMemcpy(__tmp2d,tmp2D,sizeof(T*)*sz1,cudaMemcpyHostToDevice);
+        CUDA_CHECK_ERROR();
+        delete [] tmp2D;
+
+        return __tmp2d;
+
+    }
+
+    template <typename T>
+    T** alloc2DCudaArray(const T** in,unsigned int sz1,  unsigned int sz2)
+    {
+        T** __tmp2d;
+        cudaMalloc(&__tmp2d,sizeof(T*)*sz1);
+        CUDA_CHECK_ERROR();
+
+        T** tmp2D=new T*[sz1];
+
+        for(unsigned int i=0;i<sz1;i++)
+        {
+            cudaMalloc(&tmp2D[i],sizeof(T)*sz2);
+            CUDA_CHECK_ERROR();
+            cudaMemcpy(tmp2D[i],in[i], sizeof(T)*sz2 ,cudaMemcpyHostToDevice);
+            CUDA_CHECK_ERROR();
+        }
+
+        cudaMemcpy(__tmp2d,tmp2D,sizeof(T*)*sz1,cudaMemcpyHostToDevice);
+        CUDA_CHECK_ERROR();
+        delete [] tmp2D;
+
+        return __tmp2d;
+    }
+
+
+    template <typename T>
+    void dealloc2DCudaArray(T ** & __array2D, unsigned int sz1)
+    {
+        for(unsigned int i=0;i<sz1;i++)
+        {
+            cudaFree(__array2D[i]);
+            CUDA_CHECK_ERROR();
+        }
+
+
+        cudaFree(__array2D);
+        CUDA_CHECK_ERROR();
+    }
+
+
 
 
 }

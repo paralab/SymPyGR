@@ -433,7 +433,7 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             ofile.write("\n")
             ofile.write("\n")
 
-            ofile.write("const unsigned int BLK_INTERATIONS = std::ceil((double)sz[0]/TILE_SZ);")
+            ofile.write("const unsigned int BLK_INTERATIONS = ceil((double)sz[0]/"+tile_sz+"[0]);")
             ofile.write("\n")
 
             ofile.write("unsigned int ijk_lm[3][2];")
@@ -472,7 +472,7 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
 
             ofile.write("for(unsigned int iter=0;iter<BLK_INTERATIONS;iter++){\n\n")
             
-            ofile.write("\t\t "+tile_limits+"[0][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+","+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -"+str(2*dendro_blk_req_pad)+");\n")
+            ofile.write("\t\t "+tile_limits+"[0][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
             if(dendro_blk_req_pad==2):
                 ofile.write("\t\t "+tile_limits+"[0][1]=min("+tile_limits+"[0][0]+"+tile_sz+"[0],sz[0]-1);\n")
             else:
@@ -480,7 +480,7 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             
             ofile.write("\n")
 
-            ofile.write("\t\t "+tile_limits+"[1][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+","+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -"+str(2*dendro_blk_req_pad)+");\n")
+            ofile.write("\t\t "+tile_limits+"[1][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
 
             if(dendro_blk_req_pad==2):
                 ofile.write("\t\t "+tile_limits+"[1][1]=min("+tile_limits+"[1][0]+"+tile_sz+"[1],sz[1]-1);\n")
@@ -489,7 +489,7 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             
             ofile.write("\n")
 
-            ofile.write("\t\t "+tile_limits+"[2][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+","+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -"+str(2*dendro_blk_req_pad)+");\n")
+            ofile.write("\t\t "+tile_limits+"[2][0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
 
             if(dendro_blk_req_pad==2):
                 ofile.write("\t\t "+tile_limits+"[2][1]=min("+tile_limits+"[2][0]+"+tile_sz+"[2],sz[2]-1);\n")
