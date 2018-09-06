@@ -482,9 +482,9 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
 
             ofile.write("for(unsigned int iter=0;iter<BLK_INTERATIONS;iter++){\n\n")
 
-            ofile.write("\t\t //printf(\" iter : %d threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
-            
-            ofile.write("\t\t "+tile_limits+"[2*0+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
+
+
+            ofile.write("\t\t "+tile_limits+"[2*0+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -2*iter*"+str(dendro_blk_req_pad)+"));\n")
             if(dendro_blk_req_pad==2):
                 ofile.write("\t\t "+tile_limits+"[2*0+1]=min("+tile_limits+"[2*0+0]+"+tile_sz+"[0],sz[0]-1);\n")
             else:
@@ -492,7 +492,7 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             
             ofile.write("\n")
 
-            ofile.write("\t\t "+tile_limits+"[2*1+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
+            ofile.write("\t\t "+tile_limits+"[2*1+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -2*iter"+str(dendro_blk_req_pad)+"));\n")
 
             if(dendro_blk_req_pad==2):
                 ofile.write("\t\t "+tile_limits+"[2*1+1]=min("+tile_limits+"[2*1+0]+"+tile_sz+"[1],sz[1]-1);\n")
@@ -501,13 +501,14 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             
             ofile.write("\n")
 
-            ofile.write("\t\t "+tile_limits+"[2*2+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
+            ofile.write("\t\t "+tile_limits+"[2*2+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -2*iter"+str(dendro_blk_req_pad)+"));\n")
 
             if(dendro_blk_req_pad==2):
                 ofile.write("\t\t "+tile_limits+"[2*2+1]=min("+tile_limits+"[2*2+0]+"+tile_sz+"[2],sz[2]-1);\n")
             else:
                 ofile.write("\t\t "+tile_limits+"[2*2+1]=min("+tile_limits+"[2*2+0]+"+tile_sz+"[2],sz[2]);\n")
-            
+
+            ofile.write("\t\t //printf(\" iter : %d threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
             ofile.write("\n")
 
             for e in d:
