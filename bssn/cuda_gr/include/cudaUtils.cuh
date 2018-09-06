@@ -61,9 +61,9 @@ namespace cuda
     __device__ void __loadGlobalToShared(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-        const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-        const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
+        unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+        unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+        unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
         const unsigned int i_b=ijk_lm[2*0+0];
         const unsigned int i_e=ijk_lm[2*0+1];
@@ -76,6 +76,10 @@ namespace cuda
 
         if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
 
+        if(l_x<blockDim.x) l_x=blockDim.x;
+        if(l_y<blockDim.y) l_y=blockDim.y;
+        if(l_z<blockDim.z) l_z=blockDim.z;
+
         const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
         const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
@@ -84,6 +88,8 @@ namespace cuda
 
         const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
         const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+
+        //printf("threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
         for(unsigned int k=kz_b;k<kz_e;k++)
             for(unsigned int j=jy_b;j<jy_e;j++)
@@ -101,9 +107,9 @@ namespace cuda
     __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-        const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-        const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
+        unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
+        unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
+        unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
         const unsigned int i_b=ijk_lm[2*0+0];
         const unsigned int i_e=ijk_lm[2*0+1];
@@ -116,6 +122,10 @@ namespace cuda
 
         if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
 
+        if(l_x<blockDim.x) l_x=blockDim.x;
+        if(l_y<blockDim.y) l_y=blockDim.y;
+        if(l_z<blockDim.z) l_z=blockDim.z;
+
         const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
         const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
@@ -124,6 +134,8 @@ namespace cuda
 
         const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
         const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+
+        //printf("threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
         for(unsigned int k=kz_b;k<kz_e;k++)
             for(unsigned int j=jy_b;j<jy_e;j++)
