@@ -173,12 +173,18 @@ namespace cuda
     template <typename T>
     void dealloc2DCudaArray(T ** & __array2D, unsigned int sz1)
     {
+        T** tmp2D=new T*[sz1];
+
+        cudaMemcpy(tmp2D,__array2D,sizeof(T*)*sz1,cudaMemcpyDeviceToHost);
+        CUDA_CHECK_ERROR();
+
         for(unsigned int i=0;i<sz1;i++)
         {
-            cudaFree(__array2D[i]);
+            cudaFree(tmp2D[i]);
             CUDA_CHECK_ERROR();
         }
 
+        delete [] tmp2D;
 
         cudaFree(__array2D);
         CUDA_CHECK_ERROR();

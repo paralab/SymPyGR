@@ -133,7 +133,7 @@ int main (int argc, char** argv)
     bssn::timer::total_runtime.start();
 
 
-    for(unsigned int blk=0;blk<blkList.size();blk++) {
+    /*for(unsigned int blk=0;blk<blkList.size();blk++) {
         offset = blkList[blk].getOffset();
         sz[0] = blkList[blk].getAllocationSzX();
         sz[1] = blkList[blk].getAllocationSzY();
@@ -151,7 +151,7 @@ int main (int argc, char** argv)
 
         bssnrhs_sep(varUnzipOutCPU, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
 
-    }
+    }*/
 
     bssn::timer::total_runtime.stop();
 

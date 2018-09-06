@@ -23,21 +23,24 @@ namespace cuda
 
         __device__ void deriv42_x(double * const  Dxu, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz,unsigned int pw, unsigned bflag) {
 
-
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
             const unsigned int i_b=ijk_lm[2*0+0]+pw;
             const unsigned int i_e=ijk_lm[2*0+1]-pw;
 
-            const unsigned int j_b=ijk_lm[2*1+0];
-            const unsigned int j_e=ijk_lm[2*1+1];
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)1);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-1);
 
-            const unsigned int k_b=ijk_lm[2*2+0];
-            const unsigned int k_e=ijk_lm[2*2+1];
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(1));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-1);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -52,9 +55,9 @@ namespace cuda
             const double idx_by_2 = 0.5 * idx;
             const double idx_by_12 = idx / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
 
             const int ib = 3;
             const int jb = 1;
@@ -129,20 +132,24 @@ namespace cuda
 
         __device__ void deriv42_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
             const unsigned int j_b=ijk_lm[2*1+0]+pw;
             const unsigned int j_e=ijk_lm[2*1+1]-pw;
 
-            const unsigned int k_b=ijk_lm[2*2+0];
-            const unsigned int k_e=ijk_lm[2*2+1];
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(1));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-1);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -157,9 +164,9 @@ namespace cuda
             const double idy_by_2 = 0.5 * idy;
             const double idy_by_12 = idy / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
 
             const int ib = 3;
             const int jb = 3;
@@ -167,6 +174,8 @@ namespace cuda
             const int ie = sz[0] - 3;
             const int je = sz[1] - 3;
             const int ke = sz[2] - 1;
+
+            //printf("threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
             for(unsigned int k=kz_b;k<kz_e;k++)
                 for(unsigned int j=jy_b;j<jy_e;j++)
@@ -179,7 +188,7 @@ namespace cuda
             
 
 
-            if ((bflag & (1u << OCT_DIR_DOWN)) && jy_b == ib) {
+            if ((bflag & (1u << OCT_DIR_DOWN)) && jy_b == jb) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -236,20 +245,24 @@ namespace cuda
 
         __device__ void deriv42_z(double * const  Dzu, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
-
-            const unsigned int j_b=ijk_lm[2*1+0]+pw;
-            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)3);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-3);
 
             const unsigned int k_b=ijk_lm[2*2+0]+pw;
             const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
+
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -264,9 +277,9 @@ namespace cuda
             const double idz_by_2 = 0.5 * idz;
             const double idz_by_12 = idz / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
 
             const int ib = 3;
             const int jb = 3;
@@ -341,20 +354,24 @@ namespace cuda
         __device__ void deriv42_xx(double * const  DxDxu, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw,unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
             const unsigned int i_b=ijk_lm[2*0+0]+pw;
             const unsigned int i_e=ijk_lm[2*0+1]-pw;
 
-            const unsigned int j_b=ijk_lm[2*1+0]+pw;
-            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)3);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-3);
 
-            const unsigned int k_b=ijk_lm[2*2+0]+pw;
-            const unsigned int k_e=ijk_lm[2*2+1]-pw;
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(3));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-3);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -368,9 +385,10 @@ namespace cuda
             const double idx_sqrd = 1.0 / (dx * dx);
             const double idx_sqrd_by_12 = idx_sqrd / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -463,20 +481,24 @@ namespace cuda
         __device__ void deriv42_yy(double * const  DyDyu, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
             const unsigned int j_b=ijk_lm[2*1+0]+pw;
             const unsigned int j_e=ijk_lm[2*1+1]-pw;
 
-            const unsigned int k_b=ijk_lm[2*2+0]+pw;
-            const unsigned int k_e=ijk_lm[2*2+1]-pw;
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(3));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-3);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -490,9 +512,11 @@ namespace cuda
             const double idy_sqrd = 1.0 / (dy * dy);
             const double idy_sqrd_by_12 = idy_sqrd / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -576,20 +600,24 @@ namespace cuda
 
         __device__ void deriv42_zz(double * const  DzDzu, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz,unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
-
-            const unsigned int j_b=ijk_lm[2*1+0]+pw;
-            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)3);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-3);
 
             const unsigned int k_b=ijk_lm[2*2+0]+pw;
             const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
+
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -603,9 +631,11 @@ namespace cuda
             const double idz_sqrd = 1.0 / (dz * dz);
             const double idz_sqrd_by_12 = idz_sqrd / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -683,20 +713,24 @@ namespace cuda
  *----------------------------------------------------------------------*/
         __device__    void deriv42adv_x(double * const  Dxu, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betax, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
             const unsigned int i_b=ijk_lm[2*0+0]+pw;
             const unsigned int i_e=ijk_lm[2*0+1]-pw;
 
-            const unsigned int j_b=ijk_lm[2*1+0]+pw;
-            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)3);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-3);
 
-            const unsigned int k_b=ijk_lm[2*2+0]+pw;
-            const unsigned int k_e=ijk_lm[2*2+1]-pw;
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(3));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-3);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -711,9 +745,10 @@ namespace cuda
             const double idx_by_2 = 0.50 * idx;
             const double idx_by_12 = idx / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -849,20 +884,24 @@ namespace cuda
  *----------------------------------------------------------------------*/
         __device__  void deriv42adv_y(double * const  Dyu, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betay, unsigned int pw, unsigned bflag) {
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
             const unsigned int j_b=ijk_lm[2*1+0]+pw;
             const unsigned int j_e=ijk_lm[2*1+1]-pw;
 
-            const unsigned int k_b=ijk_lm[2*2+0]+pw;
-            const unsigned int k_e=ijk_lm[2*2+1]-pw;
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(3));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-3);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -877,9 +916,10 @@ namespace cuda
             const double idy_by_2 = 0.50 * idy;
             const double idy_by_12 = idy / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -1021,20 +1061,24 @@ namespace cuda
         __device__  void deriv42adv_z(double * const  Dzu, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, const double * const betaz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
-
-            const unsigned int j_b=ijk_lm[2*1+0]+pw;
-            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)3);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-3);
 
             const unsigned int k_b=ijk_lm[2*2+0]+pw;
             const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
+
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -1049,9 +1093,10 @@ namespace cuda
             const double idz_by_2 = 0.50 * idz;
             const double idz_by_12 = idz / 12.0;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -1190,21 +1235,26 @@ namespace cuda
         __device__  void ko_deriv42_x(double * const  Du, const double * const  u, const double dx, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
             const unsigned int i_b=ijk_lm[2*0+0]+pw;
             const unsigned int i_e=ijk_lm[2*0+1]-pw;
 
-            const unsigned int j_b=ijk_lm[2*1+0]+pw;
-            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)3);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-3);
 
-            const unsigned int k_b=ijk_lm[2*2+0]+pw;
-            const unsigned int k_e=ijk_lm[2*2+1]-pw;
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(3));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-3);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
-            
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
+
+
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
@@ -1223,9 +1273,10 @@ namespace cuda
             double spr2 = smr2;
             double spr1 = smr1;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -1382,20 +1433,25 @@ namespace cuda
         __device__  void ko_deriv42_y(double * const  Du, const double * const  u, const double dy, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
             const unsigned int j_b=ijk_lm[2*1+0]+pw;
             const unsigned int j_e=ijk_lm[2*1+1]-pw;
 
-            const unsigned int k_b=ijk_lm[2*2+0]+pw;
-            const unsigned int k_e=ijk_lm[2*2+1]-pw;
+            const unsigned int k_b=max((int)ijk_lm[2*2+0],int(3));
+            const unsigned int k_e=min((int)ijk_lm[2*2+1],sz[2]-3);
+
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
 
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -1415,9 +1471,10 @@ namespace cuda
             double spr2 = smr2;
             double spr1 = smr1;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;
@@ -1573,20 +1630,25 @@ namespace cuda
         __device__  void ko_deriv42_z(double * const  Du, const double * const  u, const double dz, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz, unsigned int pw, unsigned bflag) {
 
 
-            const unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-            const unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-            const unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
 
-            const unsigned int i_b=ijk_lm[2*0+0]+pw;
-            const unsigned int i_e=ijk_lm[2*0+1]-pw;
+            const unsigned int i_b=max((int)ijk_lm[2*0+0],(int)3);
+            const unsigned int i_e=min((int)ijk_lm[2*0+1],sz[0]-3);
 
-            const unsigned int j_b=ijk_lm[2*1+0]+pw;
-            const unsigned int j_e=ijk_lm[2*1+1]-pw;
+            const unsigned int j_b=max((int)ijk_lm[2*1+0],(int)3);
+            const unsigned int j_e=min((int)ijk_lm[2*1+1],sz[1]-3);
 
             const unsigned int k_b=ijk_lm[2*2+0]+pw;
             const unsigned int k_e=ijk_lm[2*2+1]-pw;
 
+            unsigned int l_x=i_e-i_b;
+            unsigned int l_y=j_e-j_b;
+            unsigned int l_z=k_e-k_b;
+
             if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+
+            if(l_x<blockDim.x) l_x=blockDim.x;
+            if(l_y<blockDim.y) l_y=blockDim.y;
+            if(l_z<blockDim.z) l_z=blockDim.z;
             
             const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
             const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
@@ -1606,9 +1668,10 @@ namespace cuda
             double spr2 = smr2;
             double spr1 = smr1;
 
-            const int nx = sz[0];
-            const int ny = sz[1];
-            const int nz = sz[2];
+            const int nx = tile_sz[0];
+            const int ny = tile_sz[1];
+            const int nz = tile_sz[2];
+
             const int ib = 3;
             const int jb = 3;
             const int kb = 3;

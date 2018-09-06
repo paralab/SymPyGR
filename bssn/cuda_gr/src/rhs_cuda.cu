@@ -40,8 +40,6 @@ namespace cuda
 
             cuda::__GPU_BLOCK_SHARED_MEM_UTIL=cuda::copyValueToDevice(&GPU_BLOCK_SHARED_MEM_UTIL);
 
-
-
             //allocate memory for unzip vectors
             cuda::__UNZIP_INPUT=cuda::alloc2DCudaArray<double>(uZipVars,BSSN_NUM_VARS,UNZIP_DOF_SZ);
             cuda::__UNZIP_OUTPUT=cuda::alloc2DCudaArray<double>(BSSN_NUM_VARS,UNZIP_DOF_SZ);
@@ -66,6 +64,8 @@ namespace cuda
             cuda::MemoryDerivs derivWorkSpace;
             derivWorkSpace.allocateDerivMemory(derivSz);
 
+            cuda::__BSSN_DERIV_WORKSPACE=cuda::copyValueToDevice(&derivWorkSpace);
+
         cuda::profile::t_cudaMalloc_derivs.stop();
 
 
@@ -77,16 +77,16 @@ namespace cuda
         cuda::profile::t_derivs.start();
 
 
-        cuda::__computeDerivPass1 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__computeDerivPass1 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
-        /*cuda::__computeDerivPass2 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__computeDerivPass2 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
-        cuda::__computeDerivPass3 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__computeDerivPass3 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
-        cuda::__computeDerivPass4 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__computeDerivPass4 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
-        cuda::__computeDerivPass5 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,derivWorkSpace,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();*/
+        cuda::__computeDerivPass5 <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        CUDA_CHECK_ERROR();
 
         cudaDeviceSynchronize();
         CUDA_CHECK_ERROR();
@@ -107,9 +107,8 @@ namespace cuda
         cudaFree(cuda::__BSSN_CONSTRAINT_NUM_VARS);
         cudaFree(cuda::__GPU_BLOCK_SHARED_MEM_UTIL);
 
-        cuda::dealloc2DCudaArray<double>(cuda::__UNZIP_INPUT,BSSN_NUM_VARS);
-        cuda::dealloc2DCudaArray<double>(cuda::__UNZIP_OUTPUT,BSSN_NUM_VARS);
-
+        cuda::dealloc2DCudaArray(cuda::__UNZIP_INPUT);
+        cuda::dealloc2DCudaArray(cuda::__UNZIP_OUTPUT);
 
 
 

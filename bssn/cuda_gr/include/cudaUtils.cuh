@@ -61,10 +61,6 @@ namespace cuda
     __device__ void __loadGlobalToShared(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-        unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-        unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
         const unsigned int i_b=ijk_lm[2*0+0];
         const unsigned int i_e=ijk_lm[2*0+1];
 
@@ -73,6 +69,10 @@ namespace cuda
 
         const unsigned int k_b=ijk_lm[2*2+0];
         const unsigned int k_e=ijk_lm[2*2+1];
+
+        unsigned int l_x=i_e-i_b;
+        unsigned int l_y=j_e-j_b;
+        unsigned int l_z=k_e-k_b;
 
         if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
 
@@ -107,10 +107,6 @@ namespace cuda
     __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        unsigned int l_x=ijk_lm[2*0+1]-ijk_lm[2*0+0];
-        unsigned int l_y=ijk_lm[2*1+1]-ijk_lm[2*1+0];
-        unsigned int l_z=ijk_lm[2*2+1]-ijk_lm[2*2+0];
-
         const unsigned int i_b=ijk_lm[2*0+0];
         const unsigned int i_e=ijk_lm[2*0+1];
 
@@ -119,6 +115,10 @@ namespace cuda
 
         const unsigned int k_b=ijk_lm[2*2+0];
         const unsigned int k_e=ijk_lm[2*2+1];
+
+        unsigned int l_x=i_e-i_b;
+        unsigned int l_y=j_e-j_b;
+        unsigned int l_z=k_e-k_b;
 
         if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
 

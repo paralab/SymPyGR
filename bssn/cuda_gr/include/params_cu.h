@@ -70,7 +70,7 @@ namespace cuda
         extern unsigned int * __DENDRO_BLK_MAX_SZ;
 
         /**memory for deriv computations. */
-        extern MemoryDerivs __BSSN_DERIV_WORKSPACE;
+        extern MemoryDerivs * __BSSN_DERIV_WORKSPACE;
 
         /**unzip input */
         extern double ** __UNZIP_INPUT;

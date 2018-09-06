@@ -30,7 +30,7 @@ namespace cuda
     /**max block size*/
     unsigned int * __DENDRO_BLK_MAX_SZ=NULL;
 
-    MemoryDerivs __BSSN_DERIV_WORKSPACE;
+    MemoryDerivs* __BSSN_DERIV_WORKSPACE=NULL;
 
 
     /**unzip input */
