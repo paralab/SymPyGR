@@ -63,8 +63,10 @@ namespace cuda
 
             cuda::MemoryDerivs derivWorkSpace;
             derivWorkSpace.allocateDerivMemory(derivSz);
+            CUDA_CHECK_ERROR();
 
             cuda::__BSSN_DERIV_WORKSPACE=cuda::copyValueToDevice(&derivWorkSpace);
+            CUDA_CHECK_ERROR();
 
         cuda::profile::t_cudaMalloc_derivs.stop();
 
@@ -95,9 +97,8 @@ namespace cuda
 
 
         cuda::profile::t_cudaMalloc_derivs.start();
-
             derivWorkSpace.deallocateDerivMemory();
-
+            CUDA_CHECK_ERROR();
         cuda::profile::t_cudaMalloc_derivs.stop();
 
         cudaFree(cuda::__CUDA_DEVICE_PROPERTIES);

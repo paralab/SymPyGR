@@ -17,12 +17,15 @@
 from collections import namedtuple
 from datetime import datetime
 from time import strftime
-
+'''
 d = ["alpha", "beta0", "beta1", "beta2",
       "B0", "B1", "B2",
       "chi", "Gt0", "Gt1", "Gt2", "K",
       "gt0", "gt1", "gt2", "gt3", "gt4", "gt5",
       "At0", "At1", "At2", "At3", "At4", "At5" ]
+'''
+
+d = ["alpha"]
 
 # variable names, to access the 2D array. 
 varEnum=["cuda::VAR::U_ALPHA","cuda::VAR::U_BETA0","cuda::VAR::U_BETA1","cuda::VAR::U_BETA2","cuda::VAR::U_B0","cuda::VAR::U_B1","cuda::VAR::U_B2","cuda::VAR::U_CHI","cuda::VAR::U_GT0","cuda::VAR::U_GT1","cuda::VAR::U_GT2","cuda::VAR::U_K","cuda::VAR::U_SYMGT0","cuda::VAR::U_SYMGT1","cuda::VAR::U_SYMGT2","cuda::VAR::U_SYMGT3","cuda::VAR::U_SYMGT4","cuda::VAR::U_SYMGT5","cuda::VAR::U_SYMAT0","cuda::VAR::U_SYMAT1","cuda::VAR::U_SYMAT2","cuda::VAR::U_SYMAT3","cuda::VAR::U_SYMAT4","cuda::VAR::U_SYMAT5"]
@@ -97,15 +100,6 @@ varInShared="unzipVarInShared"
 # shared output variable name for derivative kernels
 varOutShared="unzipVarOutShared"
 
-# cuda device properties
-cuda_device="__CUDA_DEVICE_PROPERTIES"
-# dendro block list parameters 
-dendro_blkList="__DENDRO_BLOCK_LIST"
-numBlocks="__DENDRO_NUM_BLOCKS"
-#x% of block shared memory utilised for the bssn computations
-sharedMemUtil="__GPU_BLOCK_SHARED_MEM_UTIL"
-derivWorkSpace="__BSSN_DERIV_WORKSPACE"
-max_dendro_blk_sz="__BSSN_DERIV_WORKSPACE.__maxBlkSz"
 
 # block ids
 blockId_x="blockIdx.x"
@@ -230,13 +224,6 @@ cuda_deriv_passes=[
 cuda_deriv_kernel_names=["__computeDerivPass1","__computeDerivPass2","__computeDerivPass3","__computeDerivPass4","__computeDerivPass5"]
 
 
-
-
-
-            
-
-
-
 def cudaDerivAllocDeallocHeader(fname,headers=[]):
     with open(fname, 'w') as ofile:
         
@@ -315,15 +302,19 @@ def cudaDerivAllocDeallocSource(fname,headers=[]):
 
         for deriv in func_i:
             ofile.write("\t\t cudaMalloc((void **)&__"+deriv+",bytes);\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR();\n")
 
         for deriv in func_ij:
             ofile.write("\t\t cudaMalloc((void **)&__"+deriv+",bytes);\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR();\n")
 
         for deriv in afunc_i:
             ofile.write("\t\t cudaMalloc((void **)&__"+deriv+",bytes);\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR();\n")
 
         for deriv in kofunc_i:
             ofile.write("\t\t cudaMalloc((void **)&__"+deriv+",bytes);\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR()\n")
 
         ofile.write("\n")
         ofile.write("\n")
@@ -337,16 +328,20 @@ def cudaDerivAllocDeallocSource(fname,headers=[]):
         ofile.write("\tvoid cuda::"+DerivStruct+"::deallocateDerivMemory(){ \n")
 
         for deriv in func_i:
-            ofile.write("\t\t cudaFree((void **)&__"+deriv+");\n")
+            ofile.write("\t\t cudaFree((void *)__"+deriv+");\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR()\n")
 
         for deriv in func_ij:
-            ofile.write("\t\t cudaFree((void **)&__"+deriv+");\n")
+            ofile.write("\t\t cudaFree((void *)__"+deriv+");\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR()\n")
 
         for deriv in afunc_i:
-            ofile.write("\t\t cudaFree((void **)&__"+deriv+");\n")
+            ofile.write("\t\t cudaFree((void *)__"+deriv+");\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR()\n")
 
         for deriv in kofunc_i:
-            ofile.write("\t\t cudaFree((void **)&__"+deriv+");\n")
+            ofile.write("\t\t cudaFree((void *)__"+deriv+");\n")
+            #ofile.write("\t\tCUDA_CHECK_ERROR()\n")
         
         ofile.write("\n")
         ofile.write("\n")
@@ -377,7 +372,7 @@ def cudaComputeDerivKernelHeader(fname,headers=[]):
         ofile.write("\n")
         for deriv_kernel in cuda_deriv_kernel_names:
             ofile.write("/**compute derivative kernel "+deriv_kernel+"*/\n")
-            ofile.write("__global__ void "+deriv_kernel+"(const double**"+unzipIn+","+DerivStruct+"& __BSSN_DERIV_WORKSPACE, const "+ Block_CU+ "* __DENDRO_BLOCK_LIST, const cudaDeviceProp*__CUDA_DEVICE_PROPERTIES);\n")
+            ofile.write("__global__ void "+deriv_kernel+"(const double**"+unzipIn+","+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList, const cudaDeviceProp* __deviceProperties);\n")
             ofile.write("\n")
         
         ofile.write("}// end of namespace cuda\n")
@@ -390,7 +385,18 @@ def cudaComputeDerivKernelHeader(fname,headers=[]):
 
 
 def cudaComputeDerivKernelSource(fname,headers=[]):
-    
+
+    # cuda device properties
+    cuda_device="__deviceProperties"
+    # dendro block list parameters
+    dendro_blkList="__dendroBlkList"
+    numBlocks="cuda::__DENDRO_NUM_BLOCKS"
+    #x% of block shared memory utilised for the bssn computations
+    sharedMemUtil="cuda::__GPU_BLOCK_SHARED_MEM_UTIL"
+    derivWorkSpace="__derivWorkspace"
+    max_dendro_blk_sz=derivWorkSpace+"->__maxBlkSz"
+
+
     with open(fname, 'w') as ofile:
         ofile.write("// generated by bssnUtils.py code for derivative computation\n")
         ofile.write("//date: "+str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+"\n")
@@ -403,7 +409,7 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
 
         for deriv_pass in range(0,len(cuda_deriv_kernel_names)):
             ofile.write("/**compute derivative kernel "+cuda_deriv_kernel_names[deriv_pass]+" */\n")
-            ofile.write("__global__ void "+cuda_deriv_kernel_names[deriv_pass]+"(const double**"+unzipIn+","+DerivStruct+"& __BSSN_DERIV_WORKSPACE, const "+ Block_CU+ "* __DENDRO_BLOCK_LIST, const cudaDeviceProp*__CUDA_DEVICE_PROPERTIES){\n")
+            ofile.write("__global__ void "+cuda_deriv_kernel_names[deriv_pass]+"(const double**"+unzipIn+","+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList, const cudaDeviceProp*__deviceProperties){\n")
             ofile.write("\n")
 
             ofile.write("const _Block dblock="+dendro_blkList+"["+blockId_x+"];\n")
@@ -433,7 +439,20 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             ofile.write("\n")
             ofile.write("\n")
 
-            ofile.write("const unsigned int BLK_INTERATIONS = ceil((double)sz[0]/"+tile_sz+"[0]);")
+            dendro_blk_req_pad=0
+            for deriv in cuda_deriv_passes[deriv_pass]:
+                ofile.write("__shared__ double "+deriv.DerivOutput+"["+str(dendro_tile_sz)+"];\n")
+                if(dendro_blk_req_pad<deriv.padWidth):
+                    dendro_blk_req_pad=deriv.padWidth
+
+            if(dendro_blk_req_pad>dendro_blk_pad):
+                print("code generation error : maxPadwith for derivatives is larger than the dendro block pad width\n")
+
+            ofile.write("const unsigned int Lb = "+str(dendro_blk_pad-dendro_blk_req_pad)+";// load begin bound\n")
+            ofile.write("const unsigned int Le = sz[0]-"+str(dendro_blk_pad-dendro_blk_req_pad)+";// load end bound\n")
+
+            #ofile.write("const unsigned int BLK_INTERATIONS = max(1,(int)ceil((double)(Le-Lb-"+tile_sz+"[0])/("+tile_sz+"[0]-2*" +str(dendro_blk_req_pad)+")));\n")
+            ofile.write("const unsigned int BLK_INTERATIONS = ((int)ceil((double)(Le-Lb-"+tile_sz+"[0])/("+tile_sz+"[0]-2*" +str(dendro_blk_req_pad)+")))+1;\n")
             ofile.write("\n")
 
             ofile.write("unsigned int ijk_lm[3*2];")
@@ -442,15 +461,6 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
             # allocate memory for shared deriv variables. 
             ofile.write("//allocate memory for shared deriv variables. \n")
 
-            dendro_blk_req_pad=0
-            for deriv in cuda_deriv_passes[deriv_pass]:
-                ofile.write("__shared__ double "+deriv.DerivOutput+"["+str(dendro_tile_sz)+"];\n")
-                if(dendro_blk_req_pad<deriv.padWidth):
-                    dendro_blk_req_pad=deriv.padWidth
-            
-            if(dendro_blk_req_pad>dendro_blk_pad):
-                print("code generation error : maxPadwith for derivatives is larger than the dendro block pad width\n")
-            
             ofile.write("\n")
             ofile.write("\n")
             
@@ -471,6 +481,8 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
 
 
             ofile.write("for(unsigned int iter=0;iter<BLK_INTERATIONS;iter++){\n\n")
+
+            ofile.write("\t\t //printf(\" iter : %d threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
             
             ofile.write("\t\t "+tile_limits+"[2*0+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -"+str(2*dendro_blk_req_pad)+"));\n")
             if(dendro_blk_req_pad==2):
@@ -537,16 +549,16 @@ def cudaComputeDerivKernelSource(fname,headers=[]):
                 ofile.write("\t\t//store derivs from shared to global memory\n")
                 for deriv in cuda_deriv_passes[deriv_pass]:
                     if(deriv.DerivType=="d"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
                     if(e in dd and deriv.DerivType=="dd"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
                     if(e in ad and deriv.DerivType=="ad"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
 
                     if(e in ad and deriv.DerivType=="ko"):
-                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+".__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID * ("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
             
             ofile.write("\t\t} // end of block tile loop\n\n")
 
