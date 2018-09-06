@@ -1,5 +1,5 @@
 // generated code for derivative allocations and deallocations 
-//date: 2018-09-06 10:19:01
+//date: 2018-09-06 14:54:50
 #include "bssn_rhs_deriv_mem_cuda.h"
 
 namespace cuda {

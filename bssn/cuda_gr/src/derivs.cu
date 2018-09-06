@@ -41,15 +41,16 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
+
 
             const double idx = 1.0 / dx;
             const double idx_by_2 = 0.5 * idx;
@@ -66,6 +67,8 @@ namespace cuda
             const int je = sz[1] - 1;
             const int ke = sz[2] - 1;
 
+            //printf("dx threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
+
             for(unsigned int k=kz_b;k<kz_e;k++)
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -77,7 +80,7 @@ namespace cuda
             
 
             
-            if ((bflag & (1u << OCT_DIR_LEFT)) && ix_b == ib) {
+            if ((bflag & (1u << OCT_DIR_LEFT))) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -96,7 +99,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_RIGHT)) && (ix_e-1) == (ie - 1)) {
+            if ((bflag & (1u << OCT_DIR_RIGHT))) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -150,15 +153,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idy = 1.0 / dy;
             const double idy_by_2 = 0.5 * idy;
@@ -175,7 +178,7 @@ namespace cuda
             const int je = sz[1] - 3;
             const int ke = sz[2] - 1;
 
-            //printf("threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
+            //printf("dy threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
             for(unsigned int k=kz_b;k<kz_e;k++)
                 for(unsigned int j=jy_b;j<jy_e;j++)
@@ -188,7 +191,7 @@ namespace cuda
             
 
 
-            if ((bflag & (1u << OCT_DIR_DOWN)) && jy_b == jb) {
+            if ((bflag & (1u << OCT_DIR_DOWN))) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -208,7 +211,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_UP)) && (jy_e-1) == (je - 1)) {
+            if ((bflag & (1u << OCT_DIR_UP))) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -263,15 +266,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idz = 1.0 / dz;
             const double idz_by_2 = 0.5 * idz;
@@ -290,6 +293,8 @@ namespace cuda
 
             const int n = nx * ny;
 
+            //printf("dz threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
+
             for(unsigned int k=kz_b;k<kz_e;k++)
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -299,7 +304,7 @@ namespace cuda
                     }
 
                     
-            if ((bflag & (1u << OCT_DIR_BACK)) && kz_b == kb) {
+            if ((bflag & (1u << OCT_DIR_BACK))) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -317,7 +322,7 @@ namespace cuda
 
             }
 
-            if ((bflag & (1u << OCT_DIR_FRONT)) && (kz_e-1) == (ke - 1)) {
+            if ((bflag & (1u << OCT_DIR_FRONT))) {
 
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
@@ -372,15 +377,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idx_sqrd = 1.0 / (dx * dx);
             const double idx_sqrd_by_12 = idx_sqrd / 12.0;
@@ -415,7 +420,7 @@ namespace cuda
             
             
 
-            if ((bflag & (1u << OCT_DIR_LEFT)) && ix_b == ib) {
+            if ((bflag & (1u << OCT_DIR_LEFT))) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -440,7 +445,7 @@ namespace cuda
 
             }
 
-            if ((bflag & (1u << OCT_DIR_RIGHT)) && ix_e == (ie - 1)) {
+            if ((bflag & (1u << OCT_DIR_RIGHT))) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -499,15 +504,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idy_sqrd = 1.0 / (dy * dy);
             const double idy_sqrd_by_12 = idy_sqrd / 12.0;
@@ -539,7 +544,7 @@ namespace cuda
             
 
 
-            if ((bflag & (1u << OCT_DIR_DOWN)) && jy_b == jb) {
+            if ((bflag & (1u << OCT_DIR_DOWN)) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -560,7 +565,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_UP)) && (jy_e-1) == (je - 1)) {
+            if ((bflag & (1u << OCT_DIR_UP)) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -618,15 +623,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idz_sqrd = 1.0 / (dz * dz);
             const double idz_sqrd_by_12 = idz_sqrd / 12.0;
@@ -655,7 +660,7 @@ namespace cuda
             
             
 
-            if ((bflag & (1u << OCT_DIR_BACK)) && kz_b == kb) {
+            if ((bflag & (1u << OCT_DIR_BACK)) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -676,7 +681,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_FRONT)) && (kz_e-1) == (ke - 1)) {
+            if ((bflag & (1u << OCT_DIR_FRONT)) ) {
 
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
@@ -731,15 +736,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idx = 1.0 / dx;
             const double idx_by_2 = 0.50 * idx;
@@ -783,7 +788,7 @@ namespace cuda
 
             
 
-            if (bflag & (1u << OCT_DIR_LEFT) && ix_b == ib) {
+            if (bflag & (1u << OCT_DIR_LEFT) ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -826,7 +831,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_RIGHT) && (ix_e-1) == (ie - 1)) {
+            if (bflag & (1u << OCT_DIR_RIGHT) ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -902,15 +907,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idy = 1.0 / dy;
             const double idy_by_2 = 0.50 * idy;
@@ -958,7 +963,7 @@ namespace cuda
             
 
 
-            if (bflag & (1u << OCT_DIR_DOWN) && jy_b == jb) {
+            if (bflag & (1u << OCT_DIR_DOWN) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -999,7 +1004,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_UP) && (jy_e-1) == (je - 1)) {
+            if (bflag & (1u << OCT_DIR_UP) ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -1079,15 +1084,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             const double idz = 1.0 / dz;
             const double idz_by_2 = 0.50 * idz;
@@ -1136,7 +1141,7 @@ namespace cuda
             
 
 
-            if (bflag & (1u << OCT_DIR_BACK) && kz_b == kb) {
+            if (bflag & (1u << OCT_DIR_BACK) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1178,7 +1183,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_FRONT) && (kz_e-1) == (ke - 1)) {
+            if (bflag & (1u << OCT_DIR_FRONT) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1255,14 +1260,14 @@ namespace cuda
             if(l_z<blockDim.z) l_z=blockDim.z;
 
 
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             double pre_factor_6_dx = -1.0 / 64.0 / dx;
 
@@ -1347,7 +1352,7 @@ namespace cuda
 
 
 
-            if (bflag & (1u << OCT_DIR_LEFT) && ix_b == ib) {
+            if (bflag & (1u << OCT_DIR_LEFT) ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -1381,7 +1386,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_RIGHT) && (ix_e-1) == (ie - 1)) {
+            if (bflag & (1u << OCT_DIR_RIGHT) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -1452,15 +1457,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             double pre_factor_6_dy = -1.0 / 64.0 / dy;
 
@@ -1544,7 +1549,7 @@ namespace cuda
 
 
 
-            if (bflag & (1u << OCT_DIR_DOWN) && jy_b == jb) {
+            if (bflag & (1u << OCT_DIR_DOWN) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1577,7 +1582,7 @@ namespace cuda
                 
             }
 
-            if (bflag & (1u << OCT_DIR_UP) && (jy_e-1) == (je - 1)) {
+            if (bflag & (1u << OCT_DIR_UP) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1649,15 +1654,15 @@ namespace cuda
             if(l_x<blockDim.x) l_x=blockDim.x;
             if(l_y<blockDim.y) l_y=blockDim.y;
             if(l_z<blockDim.z) l_z=blockDim.z;
-            
-            const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-            const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
 
-            const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-            const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
+            const unsigned int ix_b= (i_b + (threadIdx.x * l_x)/blockDim.x)-ijk_lm[0];
+            const unsigned int ix_e= (i_b + ((threadIdx.x+1) * l_x)/blockDim.x)-ijk_lm[0];
 
-            const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-            const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
+            const unsigned int jy_b= (j_b + (threadIdx.y * l_y)/blockDim.y)-ijk_lm[2];
+            const unsigned int jy_e= (j_b + ((threadIdx.y+1) * l_y)/blockDim.y)-ijk_lm[2];
+
+            const unsigned int kz_b= (k_b + (threadIdx.z * (l_z))/blockDim.z)-ijk_lm[4];
+            const unsigned int kz_e= (k_b + ((threadIdx.z+1) * (l_z))/blockDim.z)-ijk_lm[4];
 
             double pre_factor_6_dz = -1.0 / 64.0 / dz;
 
@@ -1741,7 +1746,7 @@ namespace cuda
 
 
 
-            if (bflag & (1u << OCT_DIR_BACK) && kz_b == kb) {
+            if (bflag & (1u << OCT_DIR_BACK) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1774,7 +1779,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_FRONT) && (kz_e-1) == (ke - 1)) {
+            if (bflag & (1u << OCT_DIR_FRONT) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
