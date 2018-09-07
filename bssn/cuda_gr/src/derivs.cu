@@ -1292,27 +1292,7 @@ namespace cuda
 
             for(unsigned int k=kz_b;k<kz_e;k++)
                 for(unsigned int j=jy_b;j<jy_e;j++)
-                {
-
-                    Du[IDX(ix_b, j, k)] = pre_factor_6_dx *
-                                          (
-                                                  -u[IDX(ib + 4, j, k)]
-                                                  + 6.0 * u[IDX(ib + 3, j, k)]
-                                                  - 15.0 * u[IDX(ib + 2, j, k)]
-                                                  + 20.0 * u[IDX(ib + 1, j, k)]
-                                                  - 15.0 * u[IDX(ib, j, k)]
-                                                  + 6.0 * u[IDX(ib - 1, j, k)]
-                                                  - u[IDX(ib - 2, j, k)]
-                                          );
-
-                }
-
-
-
-
-            for(unsigned int k=kz_b;k<kz_e;k++)
-                for(unsigned int j=jy_b;j<jy_e;j++)
-                    for(unsigned int i=ix_b+1;i<ix_e-1;i++)
+                    for(unsigned int i=ix_b;i<ix_e;i++)
                     {
                         const int pp = IDX(i, j, k);
 
@@ -1330,26 +1310,46 @@ namespace cuda
 
 
 
-            for(unsigned int k=kz_b;k<kz_e;k++)
-                for(unsigned int j=jy_b;j<jy_e;j++)
-                {
+            if(i_b==ib)
+            {
+                for(unsigned int k=kz_b;k<kz_e;k++)
+                    for(unsigned int j=jy_b;j<jy_e;j++)
+                    {
 
-                    Du[IDX(ix_e - 1, j, k)] = pre_factor_6_dx *
+                        Du[IDX(ix_b, j, k)] = pre_factor_6_dx *
                                               (
-                                                      -u[IDX(ie + 1, j, k)]
-                                                      + 6.0 * u[IDX(ie, j, k)]
-                                                      - 15.0 * u[IDX(ie - 1, j, k)]
-                                                      + 20.0 * u[IDX(ie - 2, j, k)]
-                                                      - 15.0 * u[IDX(ie - 3, j, k)]
-                                                      + 6.0 * u[IDX(ie - 4, j, k)]
-                                                      - u[IDX(ie - 5, j, k)]
+                                                      -u[IDX(ix_b + 4, j, k)]
+                                                      + 6.0 * u[IDX(ix_b + 3, j, k)]
+                                                      - 15.0 * u[IDX(ix_b + 2, j, k)]
+                                                      + 20.0 * u[IDX(ix_b + 1, j, k)]
+                                                      - 15.0 * u[IDX(ix_b, j, k)]
+                                                      + 6.0 * u[IDX(ix_b - 1, j, k)]
+                                                      - u[IDX(ix_b - 2, j, k)]
                                               );
-                }
-           
+
+                    }
+
+            }
 
 
+            if(i_e==ie)
+            {
+                for(unsigned int k=kz_b;k<kz_e;k++)
+                    for(unsigned int j=jy_b;j<jy_e;j++)
+                    {
 
-
+                        Du[IDX(ix_e - 1, j, k)] = pre_factor_6_dx *
+                                                  (
+                                                          -u[IDX(ix_e + 1, j, k)]
+                                                          + 6.0 * u[IDX(ix_e, j, k)]
+                                                          - 15.0 * u[IDX(ix_e - 1, j, k)]
+                                                          + 20.0 * u[IDX(ix_e - 2, j, k)]
+                                                          - 15.0 * u[IDX(ix_e - 3, j, k)]
+                                                          + 6.0 * u[IDX(ix_e - 4, j, k)]
+                                                          - u[IDX(ix_e - 5, j, k)]
+                                                  );
+                    }
+            }
 
 
             if (bflag & (1u << OCT_DIR_LEFT) ) {
@@ -1488,27 +1488,9 @@ namespace cuda
             const int ke = sz[2] - 3;
 
 
-            for(unsigned int k=kz_b;k<kz_e;k++)
-                for(unsigned int i=ix_b;i<ix_e;i++)
-                {
-                    Du[IDX(i, jb, k)] = pre_factor_6_dy *
-                                        (
-                                                -u[IDX(i, jb + 4, k)]
-                                                + 6.0 * u[IDX(i, jb + 3, k)]
-                                                - 15.0 * u[IDX(i, jb + 2, k)]
-                                                + 20.0 * u[IDX(i, jb + 1, k)]
-                                                - 15.0 * u[IDX(i, jb, k)]
-                                                + 6.0 * u[IDX(i, jb - 1, k)]
-                                                - u[IDX(i, jb - 2, k)]
-                                        );
-
-                }
-
-
-
 
             for(unsigned int k=kz_b;k<kz_e;k++)
-                for(unsigned int j=jy_b+1;j<jy_e-1;j++)
+                for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
                     {
                         const int pp = IDX(i, j, k);
@@ -1527,26 +1509,47 @@ namespace cuda
                     }
 
 
+            if(j_b==jb)
+            {
 
-           for(unsigned int k=kz_b;k<kz_e;k++)
-               for(unsigned int i=ix_b;i<ix_e;i++)
-                {
+                for(unsigned int k=kz_b;k<kz_e;k++)
+                    for(unsigned int i=ix_b;i<ix_e;i++)
+                    {
+                        Du[IDX(i, jy_b, k)] = pre_factor_6_dy *
+                                              (
+                                                      -u[IDX(i, jy_b + 4, k)]
+                                                      + 6.0 * u[IDX(i, jy_b + 3, k)]
+                                                      - 15.0 * u[IDX(i, jy_b + 2, k)]
+                                                      + 20.0 * u[IDX(i, jy_b + 1, k)]
+                                                      - 15.0 * u[IDX(i, jy_b, k)]
+                                                      + 6.0 * u[IDX(i, jy_b - 1, k)]
+                                                      - u[IDX(i, jy_b - 2, k)]
+                                              );
 
-                    Du[IDX(i, je - 1, k)] = pre_factor_6_dy *
-                                            (
-                                                    -u[IDX(i, je + 1, k)]
-                                                    + 6.0 * u[IDX(i, je, k)]
-                                                    - 15.0 * u[IDX(i, je - 1, k)]
-                                                    + 20.0 * u[IDX(i, je - 2, k)]
-                                                    - 15.0 * u[IDX(i, je - 3, k)]
-                                                    + 6.0 * u[IDX(i, je - 4, k)]
-                                                    - u[IDX(i, je - 5, k)]
-                                            );
-                }
+                    }
+
+            }
 
 
+            if(j_e==je)
+            {
+                for(unsigned int k=kz_b;k<kz_e;k++)
+                    for(unsigned int i=ix_b;i<ix_e;i++)
+                    {
 
+                        Du[IDX(i, jy_e - 1, k)] = pre_factor_6_dy *
+                                                  (
+                                                          -u[IDX(i, jy_e + 1, k)]
+                                                          + 6.0 * u[IDX(i, jy_e, k)]
+                                                          - 15.0 * u[IDX(i, jy_e - 1, k)]
+                                                          + 20.0 * u[IDX(i, jy_e - 2, k)]
+                                                          - 15.0 * u[IDX(i, jy_e - 3, k)]
+                                                          + 6.0 * u[IDX(i, jy_e - 4, k)]
+                                                          - u[IDX(i, jy_e - 5, k)]
+                                                  );
+                    }
 
+            }
 
 
             if (bflag & (1u << OCT_DIR_DOWN) ) {
@@ -1687,27 +1690,7 @@ namespace cuda
             const int n = nx * ny;
 
 
-            for(unsigned int j=jy_b;j<jy_e;j++)
-                for(unsigned int i=ix_b;i<ix_e;i++)
-                {
-
-                    Du[IDX(i, j, kb)] = pre_factor_6_dz *
-                                        (
-                                                -u[IDX(i, j, kb + 4)]
-                                                + 6.0 * u[IDX(i, j, kb + 3)]
-                                                - 15.0 * u[IDX(i, j, kb + 2)]
-                                                + 20.0 * u[IDX(i, j, kb + 1)]
-                                                - 15.0 * u[IDX(i, j, kb)]
-                                                + 6.0 * u[IDX(i, j, kb - 1)]
-                                                - u[IDX(i, j, kb - 2)]
-                                        );
-
-                }
-
-
-
-
-            for(unsigned int k=kz_b+1;k<kz_e-1;k++)
+            for(unsigned int k=kz_b;k<kz_e;k++)
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
                     {
@@ -1725,25 +1708,49 @@ namespace cuda
                                 );
                     }
 
+            if(k_b==kb)
+            {
 
-            for(unsigned int j=jy_b;j<jy_e;j++)
-                for(unsigned int i=ix_b;i<ix_e;i++)
-                {
+                for(unsigned int j=jy_b;j<jy_e;j++)
+                    for(unsigned int i=ix_b;i<ix_e;i++)
+                    {
 
-                    Du[IDX(i, j, ke - 1)] = pre_factor_6_dz *
-                                            (
-                                                    -u[IDX(i, j, ke + 1)]
-                                                    + 6.0 * u[IDX(i, j, ke)]
-                                                    - 15.0 * u[IDX(i, j, ke - 1)]
-                                                    + 20.0 * u[IDX(i, j, ke - 2)]
-                                                    - 15.0 * u[IDX(i, j, ke - 3)]
-                                                    + 6.0 * u[IDX(i, j, ke - 4)]
-                                                    - u[IDX(i, j, ke - 5)]
-                                            );
+                        Du[IDX(i, j, kz_b)] = pre_factor_6_dz *
+                                              (
+                                                      -u[IDX(i, j, kz_b + 4)]
+                                                      + 6.0 * u[IDX(i, j, kz_b + 3)]
+                                                      - 15.0 * u[IDX(i, j, kz_b + 2)]
+                                                      + 20.0 * u[IDX(i, j, kz_b + 1)]
+                                                      - 15.0 * u[IDX(i, j, kz_b)]
+                                                      + 6.0 * u[IDX(i, j, kz_b - 1)]
+                                                      - u[IDX(i, j, kz_b - 2)]
+                                              );
 
-                }
+                    }
+
+            }
 
 
+            if(k_e==ke)
+            {
+                for(unsigned int j=jy_b;j<jy_e;j++)
+                    for(unsigned int i=ix_b;i<ix_e;i++)
+                    {
+
+                        Du[IDX(i, j, kz_e - 1)] = pre_factor_6_dz *
+                                                  (
+                                                          -u[IDX(i, j, kz_e + 1)]
+                                                          + 6.0 * u[IDX(i, j, kz_e)]
+                                                          - 15.0 * u[IDX(i, j, kz_e - 1)]
+                                                          + 20.0 * u[IDX(i, j, kz_e - 2)]
+                                                          - 15.0 * u[IDX(i, j, kz_e - 3)]
+                                                          + 6.0 * u[IDX(i, j, kz_e - 4)]
+                                                          - u[IDX(i, j, kz_e - 5)]
+                                                  );
+
+                    }
+
+            }
 
 
             if (bflag & (1u << OCT_DIR_BACK) ) {

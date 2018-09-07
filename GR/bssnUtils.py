@@ -175,9 +175,9 @@ func_adx="deriv42adv_x((double *) "+adxn+",(const double *) "+varInShared+",dx, 
 func_ady="deriv42adv_y((double *) "+adyn+",(const double *) "+varInShared+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
 func_adz="deriv42adv_z((double *) "+adzn+",(const double *) "+varInShared+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const double*) "+ beta0+" , 3, bflag);"
 
-func_kodx="ko_deriv42_x((double *) "+kodxn+",(const double *) "+varInShared+",dx,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_kody="ko_deriv42_y((double *) "+kodyn+",(const double *) "+varInShared+",dy,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-func_kodz="ko_deriv42_z((double *) "+kodzn+",(const double *) "+varInShared+",dz,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) " +tile_sz+", 2, bflag);"
+func_kodx="ko_deriv42_x((double *) "+kodxn+",(const double *) "+varInShared+",dx,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 3, bflag);"
+func_kody="ko_deriv42_y((double *) "+kodyn+",(const double *) "+varInShared+",dy,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 3, bflag);"
+func_kodz="ko_deriv42_z((double *) "+kodzn+",(const double *) "+varInShared+",dz,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) " +tile_sz+", 3, bflag);"
 
 ## number of passes for cuda derivatives. 
 Derivative = namedtuple("Derivative", "DerivType DerivName DerivTile1D DerivInput DerivOutput IB IE JB JE KB KE padWidth DerivFuncCall")
@@ -204,19 +204,20 @@ cuda_deriv_passes=[
     Derivative(DerivType="dd",DerivName="deriv_xx",DerivTile1D=9,DerivInput=varInShared,DerivOutput="grad2_0_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=2,DerivFuncCall=func_dxx),
     Derivative(DerivType="dd",DerivName="deriv_yy",DerivTile1D=9,DerivInput=varInShared,DerivOutput="grad2_1_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=2,DerivFuncCall=func_dyy),
     Derivative(DerivType="dd",DerivName="deriv_zz",DerivTile1D=9,DerivInput=varInShared,DerivOutput="grad2_2_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=2,DerivFuncCall=func_dzz),
-    Derivative(DerivType="ko",DerivName="ko_deriv_x",DerivTile1D=9,DerivInput=varInShared,DerivOutput="kograd_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=2,DerivFuncCall=func_kodx),
-    Derivative(DerivType="ko",DerivName="ko_deriv_y",DerivTile1D=9,DerivInput=varInShared,DerivOutput="kograd_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=2,DerivFuncCall=func_kody),
-    Derivative(DerivType="ko",DerivName="ko_deriv_z",DerivTile1D=9,DerivInput=varInShared,DerivOutput="kograd_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=2,DerivFuncCall=func_kodz)],
+    ],
 
     #deriv pass 3
 
-    [Derivative(DerivType="ad",DerivName="adv_deriv_x",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_adx)],
+    [Derivative(DerivType="ad",DerivName="adv_deriv_x",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_adx),
+     Derivative(DerivType="ko",DerivName="ko_deriv_x",DerivTile1D=9,DerivInput=varInShared,DerivOutput="kograd_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_kodx)],
 
     #deriv pass 4
-    [Derivative(DerivType="ad",DerivName="adv_deriv_y",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_ady)],
+    [Derivative(DerivType="ad",DerivName="adv_deriv_y",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_ady),
+     Derivative(DerivType="ko",DerivName="ko_deriv_y",DerivTile1D=9,DerivInput=varInShared,DerivOutput="kograd_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_kody),],
 
     #deriv pass 5
-    [Derivative(DerivType="ad",DerivName="adv_deriv_z",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_adz)]
+    [Derivative(DerivType="ad",DerivName="adv_deriv_z",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_adz),
+     Derivative(DerivType="ko",DerivName="ko_deriv_z",DerivTile1D=9,DerivInput=varInShared,DerivOutput="kograd_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall=func_kodz)]
 
     
     ]
