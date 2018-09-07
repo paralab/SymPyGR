@@ -77,10 +77,10 @@ namespace cuda
                         Dxu[pp] = (u[pp - 2] - 8.0 * u[pp - 1] + 8.0 * u[pp + 1] - u[pp + 2]) * idx_by_12;
 
                     }
-            
 
-            
-            if ((bflag & (1u << OCT_DIR_LEFT))) {
+
+
+        if ((bflag & (1u << OCT_DIR_LEFT)) && (i_b==ib && ix_b==ib)  ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -99,7 +99,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_RIGHT))) {
+        if ((bflag & (1u << OCT_DIR_RIGHT)) && (i_e==ie && ix_e==ie) ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -187,11 +187,11 @@ namespace cuda
                         const int pp = IDX(i, j, k);
                         Dyu[pp] = (u[pp - 2 * nx] - 8.0 * u[pp - nx] + 8.0 * u[pp + nx] - u[pp + 2 * nx]) * idy_by_12;
                     }
-                            
-            
 
 
-            if ((bflag & (1u << OCT_DIR_DOWN))) {
+
+
+        if ((bflag & (1u << OCT_DIR_DOWN)) && (j_b==jb && jy_b==jb) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -211,7 +211,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_UP))) {
+        if ((bflag & (1u << OCT_DIR_UP)) && (j_e==je && jy_e==je)) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -303,8 +303,8 @@ namespace cuda
                         Dzu[pp] = (u[pp - 2 * n] - 8.0 * u[pp - n] + 8.0 * u[pp + n] - u[pp + 2 * n]) * idz_by_12;
                     }
 
-                    
-            if ((bflag & (1u << OCT_DIR_BACK))) {
+
+        if ((bflag & (1u << OCT_DIR_BACK)) && (k_b==kb && kz_b==kb) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -322,7 +322,7 @@ namespace cuda
 
             }
 
-            if ((bflag & (1u << OCT_DIR_FRONT))) {
+        if ((bflag & (1u << OCT_DIR_FRONT)) && (k_e==ke && kz_e==ke) ) {
 
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
@@ -417,10 +417,10 @@ namespace cuda
 
                     }
 
-            
-            
 
-            if ((bflag & (1u << OCT_DIR_LEFT))) {
+
+
+        if ((bflag & (1u << OCT_DIR_LEFT)) && (i_b==ib && ix_b==ib)  ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -445,7 +445,7 @@ namespace cuda
 
             }
 
-            if ((bflag & (1u << OCT_DIR_RIGHT))) {
+        if ((bflag & (1u << OCT_DIR_RIGHT)) && (i_e==ie && ix_e==ie) ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -540,11 +540,11 @@ namespace cuda
 
                     }
 
-            
-            
 
 
-            if ((bflag & (1u << OCT_DIR_DOWN)) ) {
+
+
+        if ((bflag & (1u << OCT_DIR_DOWN)) && (j_b==jb && jy_b==jb) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -565,7 +565,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_UP)) ) {
+        if ((bflag & (1u << OCT_DIR_UP)) && (j_e==je && jy_e==je)) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -657,10 +657,10 @@ namespace cuda
                         DzDzu[pp] = (-u[pp - 2 * n] + 16.0 * u[pp - n] - 30.0 * u[pp]
                              + 16.0 * u[pp + n] - u[pp + 2 * n]) * idz_sqrd_by_12;
                     }
-            
-            
 
-            if ((bflag & (1u << OCT_DIR_BACK)) ) {
+
+
+        if ((bflag & (1u << OCT_DIR_BACK)) && (k_b==kb && kz_b==kb) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -681,7 +681,7 @@ namespace cuda
                 
             }
 
-            if ((bflag & (1u << OCT_DIR_FRONT)) ) {
+        if ((bflag & (1u << OCT_DIR_FRONT)) && (k_e==ke && kz_e==ke) ) {
 
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
@@ -786,9 +786,9 @@ namespace cuda
 
                     }
 
-            
 
-            if (bflag & (1u << OCT_DIR_LEFT) ) {
+
+        if ((bflag & (1u << OCT_DIR_LEFT)) && (i_b==ib && ix_b==ib)  ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -831,7 +831,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_RIGHT) ) {
+        if ((bflag & (1u << OCT_DIR_RIGHT)) && (i_e==ie && ix_e==ie) ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -957,13 +957,13 @@ namespace cuda
 
                     }
 
-          
-            
-
-            
 
 
-            if (bflag & (1u << OCT_DIR_DOWN) ) {
+
+
+
+
+        if ((bflag & (1u << OCT_DIR_DOWN)) && (j_b==jb && jy_b==jb) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1004,7 +1004,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_UP) ) {
+        if ((bflag & (1u << OCT_DIR_UP)) && (j_e==je && jy_e==je)) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -1138,10 +1138,10 @@ namespace cuda
                     }
 
 
-            
 
 
-            if (bflag & (1u << OCT_DIR_BACK) ) {
+
+        if ((bflag & (1u << OCT_DIR_BACK)) && (k_b==kb && kz_b==kb) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1183,7 +1183,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_FRONT) ) {
+        if ((bflag & (1u << OCT_DIR_FRONT)) && (k_e==ke && kz_e==ke) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1310,7 +1310,7 @@ namespace cuda
 
 
 
-            if(i_b==ib)
+            if(i_b==ib && ix_b==ib)
             {
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -1332,7 +1332,7 @@ namespace cuda
             }
 
 
-            if(i_e==ie)
+            if(i_e==ie && ix_e==ie)
             {
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -1352,7 +1352,7 @@ namespace cuda
             }
 
 
-            if (bflag & (1u << OCT_DIR_LEFT) ) {
+            if ((bflag & (1u << OCT_DIR_LEFT)) && (i_b==ib && ix_b==ib)) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -1386,7 +1386,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_RIGHT) ) {
+            if ((bflag & (1u << OCT_DIR_RIGHT)) && (i_e==ie && ix_e==ie)) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int j=jy_b;j<jy_e;j++)
@@ -1509,7 +1509,7 @@ namespace cuda
                     }
 
 
-            if(j_b==jb)
+            if(j_b==jb && jy_b==jb)
             {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -1531,7 +1531,7 @@ namespace cuda
             }
 
 
-            if(j_e==je)
+            if(j_e==je && jy_e==je)
             {
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1552,7 +1552,7 @@ namespace cuda
             }
 
 
-            if (bflag & (1u << OCT_DIR_DOWN) ) {
+            if ((bflag & (1u << OCT_DIR_DOWN)) && (j_b==jb && jy_b==jb) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1585,7 +1585,7 @@ namespace cuda
                 
             }
 
-            if (bflag & (1u << OCT_DIR_UP) ) {
+            if ((bflag & (1u << OCT_DIR_UP)) && (j_e==je && jy_e==je)) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1708,7 +1708,7 @@ namespace cuda
                                 );
                     }
 
-            if(k_b==kb)
+            if(k_b==kb && kz_b==kb)
             {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
@@ -1731,7 +1731,7 @@ namespace cuda
             }
 
 
-            if(k_e==ke)
+            if(k_e==ke && kz_e==ke)
             {
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1753,7 +1753,7 @@ namespace cuda
             }
 
 
-            if (bflag & (1u << OCT_DIR_BACK) ) {
+            if ((bflag & (1u << OCT_DIR_BACK)) && (k_b==kb && kz_b==kb) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1786,7 +1786,7 @@ namespace cuda
 
             }
 
-            if (bflag & (1u << OCT_DIR_FRONT) ) {
+            if ((bflag & (1u << OCT_DIR_FRONT)) && (k_e==ke && kz_e==ke) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
