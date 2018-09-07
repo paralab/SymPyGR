@@ -1,14 +1,14 @@
 // generated code for derivative allocations and deallocations 
-//date: 2018-09-06 21:31:14
+//date: 2018-09-06 22:08:05
 #include "bssn_rhs_deriv_mem_cuda.h"
 
 namespace cuda {
 
 
 	/**@brief memory allocation for deriv variables */
-	void cuda::MemoryDerivs::allocateDerivMemory(unsigned int maxBlkSz){ 
+	void cuda::MemoryDerivs::allocateDerivMemory(unsigned int maxBlkSz,unsigned int numSM){ 
 		 __maxBlkSz=maxBlkSz;
-		 const size_t bytes=sizeof(double)*__maxBlkSz;
+		 const size_t bytes=sizeof(double)*__maxBlkSz*numSM;
 		 cudaMalloc((void **)&__grad_0_alpha,bytes);
 		 cudaMalloc((void **)&__grad_1_alpha,bytes);
 		 cudaMalloc((void **)&__grad_2_alpha,bytes);

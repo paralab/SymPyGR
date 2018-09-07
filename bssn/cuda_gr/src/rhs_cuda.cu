@@ -57,12 +57,13 @@ namespace cuda
 
         const unsigned int derivSz=(maxBlkSz);
         cuda::__DENDRO_BLK_MAX_SZ=cuda::copyValueToDevice(&derivSz);
-        const size_t deriv_mem_sz= derivSz*(deviceProp.multiProcessorCount);
+        //const size_t deriv_mem_sz= derivSz*(deviceProp.multiProcessorCount);
+        const unsigned int numSM=deviceProp.multiProcessorCount;
 
         cuda::profile::t_cudaMalloc_derivs.start();
 
             cuda::MemoryDerivs derivWorkSpace;
-            derivWorkSpace.allocateDerivMemory(derivSz);
+            derivWorkSpace.allocateDerivMemory(derivSz,numSM);
             CUDA_CHECK_ERROR();
 
             cuda::__BSSN_DERIV_WORKSPACE=cuda::copyValueToDevice(&derivWorkSpace);

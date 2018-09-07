@@ -261,7 +261,7 @@ def cudaDerivAllocDeallocHeader(fname,headers=[]):
         ofile.write("\n")
 
         ofile.write("\t/**@brief memory allocation for deriv variables */\n")
-        ofile.write("\tvoid allocateDerivMemory(unsigned int maxBlkSz); \n")
+        ofile.write("\tvoid allocateDerivMemory(unsigned int maxBlkSz,unsigned int numSM); \n")
 
         ofile.write("\n")
         ofile.write("\n")
@@ -295,10 +295,10 @@ def cudaDerivAllocDeallocSource(fname,headers=[]):
         ofile.write("\n")
 
         ofile.write("\t/**@brief memory allocation for deriv variables */\n")
-        ofile.write("\tvoid cuda::"+DerivStruct+"::allocateDerivMemory(unsigned int maxBlkSz){ \n")
+        ofile.write("\tvoid cuda::"+DerivStruct+"::allocateDerivMemory(unsigned int maxBlkSz,unsigned int numSM){ \n")
 
         ofile.write("\t\t __maxBlkSz=maxBlkSz;\n")
-        ofile.write("\t\t const size_t bytes=sizeof(double)*__maxBlkSz;\n")
+        ofile.write("\t\t const size_t bytes=sizeof(double)*__maxBlkSz*numSM;\n")
 
         for deriv in func_i:
             ofile.write("\t\t cudaMalloc((void **)&__"+deriv+",bytes);\n")
