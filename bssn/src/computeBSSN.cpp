@@ -494,7 +494,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
             // std::cout << "GPU - Count: " << std::setw(3) << index << " - Block no: " << std::setw(3) << blk.block_no << " - Bock level: " << std::setw(1) << blk.blkLevel << " - Block size: " << blk.blkSize << std::endl;
             
             // bssn::timer::t_memcopy.start();
-            // CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
+            CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[index], var_in_array[blk.block_no], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyHostToDevice, stream), "dev_var_in_array[index] cudaMemcpyHostToDevice");
             // CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
             // bssn::timer::t_memcopy.stop();
             
@@ -506,7 +506,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
             
 
             // bssn::timer::t_memcopy.start();
-            // CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
+            CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[index], BSSN_NUM_VARS*unzip_dof*sizeof(double), cudaMemcpyDeviceToHost, stream), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
             // CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
             // bssn::timer::t_memcopy.stop();
         }

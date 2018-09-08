@@ -52,11 +52,11 @@ const unsigned int& bflag, cudaStream_t stream,
         #include "list_of_args.h"
     );
 
-    // calc_bssn_eqns(dev_var_in, dev_var_out, sz, pmin, hz, hy, hx, stream,
-    // #include "list_of_offset_args.h"
-    // ,
-    // #include "list_of_args.h"
-    // );
+    calc_bssn_eqns(dev_var_in, dev_var_out, sz, pmin, hz, hy, hx, stream,
+    #include "list_of_offset_args.h"
+    ,
+    #include "list_of_args.h"
+    );
 
     // if (bflag != 0) {
 
@@ -122,11 +122,11 @@ const unsigned int& bflag, cudaStream_t stream,
         #include "list_of_args.h"
     );
 
-    // get_output(dev_var_out, sz, stream,
-    //     #include "list_of_offset_args.h"
-    //     ,
-    //     #include "list_of_args.h"
-    // );
+    get_output(dev_var_out, sz, stream,
+        #include "list_of_offset_args.h"
+        ,
+        #include "list_of_args.h"
+    );
 
 }
 

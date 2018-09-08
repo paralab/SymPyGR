@@ -22,6 +22,7 @@ if(CUDA_FOUND)
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_60,code=compute_60)
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_61,code=compute_61)
     list( APPEND CUDA_NVCC_FLAGS -use_fast_math )
+    list( APPEND CUDA_NVCC_FLAGS -lineinfo )
 
     # list( APPEND CUDA_NVCC_FLAGS --maxrregcount 16 )
     # list( APPEND CUDA_NVCC_FLAGS --ptxas-options=-v )
