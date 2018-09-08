@@ -43,9 +43,15 @@ const unsigned int& bflag, cudaStream_t stream,
     double hz = (pmax[2] - pmin[2]) / (sz[2] - 1);
 
     // Deriv calls are follows
-    #include "bssnrhs_cuda_derivs.h"
-    #include "bssnrhs_cuda_derivs_adv.h"
+    // #include "bssnrhs_cuda_derivs.h"
+    // #include "bssnrhs_cuda_derivs_adv.h"
     
+    calc_deriv_wrapper(dev_var_out, dev_var_in, hx, hy, hz, sz, bflag, stream,
+        #include "list_of_offset_args.h"
+        ,
+        #include "list_of_args.h"
+    );
+
     // calc_bssn_eqns(dev_var_in, dev_var_out, sz, pmin, hz, hy, hx, stream,
     // #include "list_of_offset_args.h"
     // ,
@@ -110,7 +116,7 @@ const unsigned int& bflag, cudaStream_t stream,
         
     // }
 
-    #include "bssnrhs_cuda_ko_derivs.h"
+    // #include "bssnrhs_cuda_ko_derivs.h"
 
     // get_output(dev_var_out, sz, stream,
     //     #include "list_of_offset_args.h"

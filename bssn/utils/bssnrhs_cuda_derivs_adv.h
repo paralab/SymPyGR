@@ -1,16 +1,42 @@
 adv_deriv_x(agrad_0_gt0, dev_var_in, gt0Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_gt0, dev_var_in, gt0Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_gt1, dev_var_in, gt1Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_gt1, dev_var_in, gt1Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_gt2, dev_var_in, gt2Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_gt2, dev_var_in, gt2Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_gt3, dev_var_in, gt3Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_gt3, dev_var_in, gt3Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_gt4, dev_var_in, gt4Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_gt4, dev_var_in, gt4Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_gt5, dev_var_in, gt5Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_gt5, dev_var_in, gt5Int, hy, beta1Int, bflag, sz, stream);
+
+
 adv_deriv_x(agrad_0_At0, dev_var_in, At0Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_At0, dev_var_in, At0Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_At1, dev_var_in, At1Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_At1, dev_var_in, At1Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_At2, dev_var_in, At2Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_At2, dev_var_in, At2Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_At3, dev_var_in, At3Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_At3, dev_var_in, At3Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_At4, dev_var_in, At4Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_At4, dev_var_in, At4Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_At5, dev_var_in, At5Int, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_At5, dev_var_in, At5Int, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_x(agrad_0_alpha, dev_var_in, alphaInt, hx, beta0Int, bflag, sz, stream);
+adv_deriv_y(agrad_1_alpha, dev_var_in, alphaInt, hy, beta1Int, bflag, sz, stream);
 adv_deriv_x(agrad_0_beta0, dev_var_in, beta0Int, hx, beta0Int, bflag, sz, stream);
 adv_deriv_x(agrad_0_beta1, dev_var_in, beta1Int, hx, beta0Int, bflag, sz, stream);
 adv_deriv_x(agrad_0_beta2, dev_var_in, beta2Int, hx, beta0Int, bflag, sz, stream);
@@ -22,19 +48,7 @@ adv_deriv_x(agrad_0_K, dev_var_in, KInt, hx, beta0Int, bflag, sz, stream);
 adv_deriv_x(agrad_0_B0, dev_var_in, B0Int, hx, beta0Int, bflag, sz, stream);
 adv_deriv_x(agrad_0_B1, dev_var_in, B1Int, hx, beta0Int, bflag, sz, stream);
 adv_deriv_x(agrad_0_B2, dev_var_in, B2Int, hx, beta0Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_gt0, dev_var_in, gt0Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_gt1, dev_var_in, gt1Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_gt2, dev_var_in, gt2Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_gt3, dev_var_in, gt3Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_gt4, dev_var_in, gt4Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_gt5, dev_var_in, gt5Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_At0, dev_var_in, At0Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_At1, dev_var_in, At1Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_At2, dev_var_in, At2Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_At3, dev_var_in, At3Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_At4, dev_var_in, At4Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_At5, dev_var_in, At5Int, hy, beta1Int, bflag, sz, stream);
-adv_deriv_y(agrad_1_alpha, dev_var_in, alphaInt, hy, beta1Int, bflag, sz, stream);
+
 adv_deriv_y(agrad_1_beta0, dev_var_in, beta0Int, hy, beta1Int, bflag, sz, stream);
 adv_deriv_y(agrad_1_beta1, dev_var_in, beta1Int, hy, beta1Int, bflag, sz, stream);
 adv_deriv_y(agrad_1_beta2, dev_var_in, beta2Int, hy, beta1Int, bflag, sz, stream);
