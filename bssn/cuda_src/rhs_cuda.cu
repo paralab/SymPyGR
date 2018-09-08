@@ -116,7 +116,11 @@ const unsigned int& bflag, cudaStream_t stream,
         
     // }
 
-    // #include "bssnrhs_cuda_ko_derivs.h"
+    calc_ko_deriv_wrapper(dev_var_out, dev_var_in, hx, hy, hz, sz, bflag, stream,
+        #include "list_of_offset_args.h"
+        ,
+        #include "list_of_args.h"
+    );
 
     // get_output(dev_var_out, sz, stream,
     //     #include "list_of_offset_args.h"

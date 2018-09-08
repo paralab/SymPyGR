@@ -48,4 +48,10 @@ void calc_deriv_wrapper(double * dev_var_out, double * dev_var_in, double hx, do
     #include "list_of_para.h"
 );
 
+void calc_ko_deriv_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
+    #include "list_of_offset_para.h"
+    ,
+    #include "list_of_para.h"
+);
+
 #endif
