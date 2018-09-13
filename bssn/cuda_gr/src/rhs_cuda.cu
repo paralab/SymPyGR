@@ -98,6 +98,7 @@ namespace cuda
 
         cuda::profile::t_derivs.stop();
 
+        threadBlock=dim3(6,6,6);
         cuda::profile::t_rhs.start();
 
         cuda::__compute_a_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
