@@ -38,6 +38,9 @@ namespace cuda
         /**deriv computation time*/
         extern bssn_profiler_t t_derivs;
 
+        /**rhs time*/
+        extern bssn_profiler_t t_rhs;
+
 
 
         /**initialize the profile counters*/

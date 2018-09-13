@@ -48,7 +48,7 @@ namespace cuda
     __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
 }
 
-#endif //SFCSORTBENCH_CUDAUTILS_H
+
 
 
 
@@ -150,6 +150,8 @@ namespace cuda
 
 }
 
+
+#endif //BSSN_CUDAUTILS_H
 
 
 

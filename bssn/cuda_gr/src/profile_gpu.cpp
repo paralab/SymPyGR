@@ -23,6 +23,9 @@ namespace cuda
         /**deriv computation time*/
         bssn_profiler_t t_derivs;
 
+        /**rhs time*/
+        bssn_profiler_t t_rhs;
+
 
 
 
@@ -37,6 +40,7 @@ void cuda::profile::initialize()
     t_D2H_Comm.start();
     t_cudaMalloc_derivs.start();
     t_derivs.start();
+    t_rhs.start();
 
 }
 
@@ -78,6 +82,10 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
 
     t_stat=t_derivs.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
+    t_stat=t_rhs.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -rhs(compute)(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(flops)";

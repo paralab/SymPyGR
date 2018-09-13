@@ -1,3 +1,8 @@
+####################################################################
+# May.8.2018
+# Adding gamma driver into shift equation to optimize BBH behavior
+# with large mass ratio
+#####################################################################
 import dendro
 from sympy import *
 from sympy.physics.vector.vector import Vector
@@ -8,6 +13,11 @@ from sympy.printing.dot import dotprint
 
 l1, l2, l3, l4, eta = symbols('lambda[0] lambda[1] lambda[2] lambda[3] eta')
 lf0, lf1 = symbols('lambda_f[0] lambda_f[1]')
+
+# Additional parameters for damping term
+R0 = symbols('R0')
+ep1, ep2 = symbols('eta_power[0] eta_power[1]')
+
 
 # declare variables
 a   = dendro.scalar("alpha", "[pp]")
@@ -83,7 +93,7 @@ a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 #         l2 * dendro.vec_j_del_j(b, b[i])
 b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
         l2 * dendro.vec_j_ad_j(b, b[i])
-         for i in dendro.e_i ] + dendro.kodiss(b)
+         for i in dendro.e_i ] + 0*dendro.kodiss(b)
 
 gt_rhs = dendro.lie(b, gt, weight) - 2*a*At + 0*dendro.kodiss(gt)
 
@@ -132,7 +142,9 @@ Gt_rhs = Matrix(_Gt_rhs_s1) - \
 
 Gt_rhs = [item for sublist in Gt_rhs.tolist() for item in sublist]
 
-B_rhs = [_Gt_rhs[i] - eta * B[i] +
+eta_func = R0*sqrt(sum([igt[i,j]*d(i,chi)*d(j,chi) for i,j in dendro.e_ij]))/((1-chi**ep1)**ep2)
+
+B_rhs = [_Gt_rhs[i] - eta_func * B[i] +
          l3 * dendro.vec_j_ad_j(b, B[i]) -
          l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
          for i in dendro.e_i]
@@ -161,13 +173,19 @@ B_rhs = [_Gt_rhs[i] - eta * B[i] +
 # generate code
 ###################################################################
 
+#outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, CalGt, Gt_rhs_s1, Gt_rhs_s2, Gt_rhs_s3, Gt_rhs_s4, Gt_rhs_s5, Gt_rhs_s6, Gt_rhs_s7, Gt_rhs, B_rhs]
+#vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'CalGt', 'Gt_rhs_s1_', 'Gt_rhs_s2_', 'Gt_rhs_s3_', 'Gt_rhs_s4_', 'Gt_rhs_s5_', 'Gt_rhs_s6_', 'Gt_rhs_s7_', 'Gt_rhs', 'B_rhs']
+
 outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, CalGt, Gt_rhs_s1, Gt_rhs_s2, Gt_rhs_s3, Gt_rhs_s4, Gt_rhs_s5, Gt_rhs_s6, Gt_rhs_s7, Gt_rhs, B_rhs]
 vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'CalGt', 'Gt_rhs_s1_', 'Gt_rhs_s2_', 'Gt_rhs_s3_', 'Gt_rhs_s4_', 'Gt_rhs_s5_', 'Gt_rhs_s6_', 'Gt_rhs_s7_', 'Gt_rhs', 'B_rhs']
+
 #dendro.generate_debug(outs, vnames)
 #dendro.generate(outs, vnames, '[pp]')
-numVars=len(outs)
-for i in range(0,numVars):
-    dendro.generate_separate([outs[i]],[vnames[i]],'[pp]')
+#numVars=len(outs)
+#for i in range(0,numVars):
+    #dendro.generate_separate([outs[i]],[vnames[i]],'[pp]')
+
+#dendro.generate_separate([outs[4]],[vnames[4]],'[pp]')
 
 #dendro.generate_separate([Gt_rhs],['Gt_rhs'],'[pp]')
 #dendro.generate([CalGt, Gt_rhs_s1, Gt_rhs_s2, Gt_rhs_s3, Gt_rhs_s4, Gt_rhs_s5, Gt_rhs_s6, Gt_rhs_s7, Gt_rhs,B_rhs],['CalGt', 'Gt_rhs_s1', 'Gt_rhs_s2', 'Gt_rhs_s3', 'Gt_rhs_s4', 'Gt_rhs_s5', 'Gt_rhs_s6', 'Gt_rhs_s7', 'Gt_rhs', 'B_rhs'],'[pp]')

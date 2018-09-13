@@ -39,6 +39,9 @@ namespace cuda
     /**unzip output*/
     double ** __UNZIP_OUTPUT=NULL;
 
+    /**bssn compute parameters needed bssn equations*/
+    BSSNComputeParams * __BSSN_COMPUTE_PARMS=NULL;
+
 
 }// end of namespace cuda
 

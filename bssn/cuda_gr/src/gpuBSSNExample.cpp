@@ -169,6 +169,23 @@ int main (int argc, char** argv)
     std::cout<<YLW<<"     GPU begin             "<<NRM<<std::endl;
     std::cout<<YLW<<" ================================"<<NRM<<std::endl;
 
+    cuda::BSSNComputeParams bssnParams;
+    bssnParams.BSSN_LAMBDA[0]=bssn::BSSN_LAMBDA[0];
+    bssnParams.BSSN_LAMBDA[1]=bssn::BSSN_LAMBDA[1];
+    bssnParams.BSSN_LAMBDA[2]=bssn::BSSN_LAMBDA[2];
+    bssnParams.BSSN_LAMBDA[3]=bssn::BSSN_LAMBDA[3];
+
+    bssnParams.BSSN_LAMBDA_F[0]=bssn::BSSN_LAMBDA_F[0];
+    bssnParams.BSSN_LAMBDA_F[1]=bssn::BSSN_LAMBDA_F[1];
+
+    bssnParams.BSSN_ETA_POWER[0]=bssn::BSSN_ETA_POWER[0];
+    bssnParams.BSSN_ETA_POWER[1]=bssn::BSSN_ETA_POWER[1];
+
+    bssnParams.BSSN_ETA_R0=bssn::ETA_R0;
+    bssnParams.ETA_CONST=bssn::ETA_CONST;
+    bssnParams.ETA_DAMPING=bssn::ETA_DAMPING;
+    bssnParams.ETA_DAMPING_EXP=bssn::ETA_DAMPING_EXP;
+    bssnParams.KO_DISS_SIGMA=bssn::KO_DISS_SIGMA;
     std::vector<cuda::_Block> blkCudaList;
     blkCudaList.resize(blkList.size());
     double hx[3];
@@ -200,7 +217,7 @@ int main (int argc, char** argv)
 
     cuda::profile::initialize();
 
-    cuda::computeRHS(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size());
+    cuda::computeRHS(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams);
 
     cuda::profile::printOutput(blkList);
 

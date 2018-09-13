@@ -46,6 +46,25 @@
 namespace cuda
 {
 
+    /**@brief compute parameters need for bssn equation evaluation*/
+    struct BSSNComputeParams
+    {
+        double BSSN_LAMBDA[4];
+        double BSSN_LAMBDA_F[2];
+
+        double BSSN_ETA_R0;
+        double BSSN_ETA_POWER[2];
+
+        double ETA_CONST;
+        double ETA_R0;
+
+        double ETA_DAMPING;
+        double ETA_DAMPING_EXP;
+
+        double KO_DISS_SIGMA;
+
+    };
+
 
         /**stores the device properties*/
         extern  cudaDeviceProp* __CUDA_DEVICE_PROPERTIES;
@@ -77,6 +96,10 @@ namespace cuda
 
         /**unzip output*/
         extern double ** __UNZIP_OUTPUT;
+
+        /**bssn compute parameters needed bssn equations*/
+        extern BSSNComputeParams * __BSSN_COMPUTE_PARMS;
+
 
 
 

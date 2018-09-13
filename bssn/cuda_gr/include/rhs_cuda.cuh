@@ -15,8 +15,10 @@
 #include "bssn_rhs_deriv_mem_cuda.h"
 #include "cudaUtils.h"
 #include "params_cu.h"
-#include "rhs.cuh"
+#include "rhs_bssn.cuh"
+#include "rhs_bssn.cuh"
 #include "profile_gpu.h"
+#include "cudaUtils.cuh"
 
 
 
@@ -30,7 +32,7 @@ namespace cuda
      * @brief performs kernel pre-launch tasks and launch the bssnrhs kernel
      *
      **/
-     void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks);
+     void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars);
 
 
 

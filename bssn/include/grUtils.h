@@ -52,6 +52,7 @@ namespace bssn {
     static const double ETA_R0=20.0;
     static const double ETA_DAMPING_EXP=1.0;
     static const double KO_DISS_SIGMA=0.1;
+    static const double ETA_DAMPING=1.0;
 
     void fake_initial_data(double x, double y, double z, double *u);
 

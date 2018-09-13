@@ -87,14 +87,18 @@ endif()
 set(CUDA_GR_INC
         cuda_gr/include/cudaUtils.cuh
         cuda_gr/include/derivs.cuh
-        cuda_gr/include/rhs.cuh
+        #cuda_gr/include/rhs.cuh
+        cuda_gr/include/derivs_bssn.cuh
+        cuda_gr/include/rhs_bssn.cuh
         cuda_gr/include/rhs_cuda.cuh
         )
 
 set(CUDA_GR_SRC
         cuda_gr/src/cudaUtils.cu
         cuda_gr/src/derivs.cu
-        cuda_gr/src/rhs.cu
+        #cuda_gr/src/rhs.cu
+        cuda_gr/src/derivs_bssn.cu
+        cuda_gr/src/rhs_bssn.cu
         cuda_gr/src/rhs_cuda.cu
         )
 

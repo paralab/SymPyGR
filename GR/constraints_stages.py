@@ -25,6 +25,22 @@ Gt  = dendro.vec3("Gt","[pp]")
 gt  = dendro.sym_3x3("gt","[pp]")
 At  = dendro.sym_3x3("At","[pp]")
 
+# Define some symbolic variables that will be used to stage the 
+# calculation of the constraints.  
+_ham_s1 = dendro.scalar("ham_s1_", "[pp]") 
+_ham_s2 = dendro.scalar("ham_s2_", "[pp]") 
+_mom_s1 = dendro.vec3  ("mom_s1_", "[pp]") 
+_mom_s2 = dendro.vec3  ("mom_s2_", "[pp]") 
+_mom_s3 = dendro.vec3  ("mom_s3_", "[pp]") 
+
+# Now for the same variables that will be used to generate the code
+ham_s1 = dendro.scalar("ham_s1_", "[pp]") 
+ham_s2 = dendro.scalar("ham_s2_", "[pp]") 
+mom_s1 = dendro.scalar("mom_s1_", "[pp]") 
+mom_s2 = dendro.scalar("mom_s2_", "[pp]") 
+mom_s3 = dendro.scalar("mom_s3_", "[pp]") 
+
+
 # Specify the operators needed for computing first and second derivatives
 d = dendro.set_first_derivative('grad')    # first argument is direction
 d2 = dendro.set_second_derivative('grad2')  # first 2 arguments are directions
