@@ -9,8 +9,11 @@
 #include "computeBSSN.h"
 #include "test_param.h"
 #include "rhs.h"
-#include "rhs_cuda.h"
+#include "rhs_cuda.cuh"
 #include "merge_sort.h"
+
+
+
 
 void data_generation_blockwise_mixed(bool isNormal, double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom, 
     Block * blkList, double ** var_in_array, double ** var_out_array){
@@ -1187,7 +1190,7 @@ int main (int argc, char** argv){
         data_generation_blockwise_mixed(isNormal, mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array);
     }
     
-    #include "rhs_cuda.h"
+    #include "rhs_cuda.cuh"
 
     bssn::timer::t_gpu_runtime.start();
     #if parallelized

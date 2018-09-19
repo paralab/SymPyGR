@@ -1,4 +1,4 @@
-#include "bssneqn_solve.h"
+#include "bssneqn_solve.cuh"
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include <stdio.h>
@@ -40,7 +40,7 @@ __global__ void cuda_bssn_eqns_points(double * dev_var_in, double * dev_var_out,
         eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
     }
 
-    #include "cuda_bssneqs.h"
+    #include "cuda_bssneqs.cuh"
 }
 
 void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const unsigned int * sz, const double * pmin, double hz, double hy, double hx, cudaStream_t stream,

@@ -1,5 +1,5 @@
-#include "rhs_cuda.h"
-#include "bssneqn_solve.h"
+#include "rhs_cuda.cuh"
+#include "bssneqn_solve.cuh"
 
 #include <iostream>
 #include <stdio.h>

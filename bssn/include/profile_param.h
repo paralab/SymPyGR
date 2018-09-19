@@ -12,7 +12,6 @@
 
 #include "bssn_profiler.h"
 #include "test_param.h"
-#include "comman_config.h"
 
 namespace bssn
 {

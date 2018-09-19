@@ -49,13 +49,14 @@ set(INC_FILES
         include/derivs.h
         include/rhs.h
         include/def.h
-        include/derivs_cuda.h
-        include/rhs_cuda.h
         include/bssn_profiler.h
         include/profile_param.h
-	    include/bssneqn_solve.h
-        include/cuda_bssneqs.h
         include/utils.h
+
+        include/rhs_cuda.cuh
+        include/derivs_cuda.cuh
+        include/bssneqn_solve.cuh
+        include/cuda_bssneqs.cuh
         )
 
 set(SRC_FILES

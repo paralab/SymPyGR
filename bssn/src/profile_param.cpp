@@ -9,6 +9,9 @@
 
 #include "profile_param.h"
 
+#define max_dp_flop_rate 147.8
+#define max_bandwidth 12.05
+
 namespace bssn
 {
     namespace timer

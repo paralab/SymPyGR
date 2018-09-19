@@ -9,9 +9,14 @@
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
-#include "derivs_cuda.h"
+#include "derivs_cuda.cuh"
 #include "profile_param.h"
-#include "comman_config.h"
+
+// Please select only one of below
+#define parallelized 1
+#define parallel_async_hybrid 0
+#define pure_async 0
+#define pure_async_htod_dtoH_overlap 0
 
 #define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
 

@@ -9,6 +9,4 @@
 #define threshold 1e-10
 #define NUM_DIGITS 10
 
-#define bandwidth 0
-
 #endif
