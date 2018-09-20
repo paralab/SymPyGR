@@ -2,6 +2,45 @@
 
 #include "cudaBSSN.h"
 
+
+
+#include "rhs.h"
+void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in, double ** var_out){
+
+    double ptmin[3], ptmax[3];
+    unsigned int sz[3];
+    unsigned int bflag;
+    unsigned int offset;
+    double dx, dy, dz;
+
+    for(unsigned int blk=0; blk<numberOfLevels; blk++){
+
+        offset=blkList[blk].offset;
+        sz[0]=blkList[blk].node1D_x; 
+        sz[1]=blkList[blk].node1D_y;
+        sz[2]=blkList[blk].node1D_z;
+
+        bflag=0; // indicates if the block is bdy block.
+
+        dx=0.1;
+        dy=0.1;
+        dz=0.1;
+
+        ptmin[0]=0.0;
+        ptmin[1]=0.0;
+        ptmin[2]=0.0;
+
+        ptmax[0]=1.0;
+        ptmax[1]=1.0;
+        ptmax[2]=1.0;
+
+        // std::cout << "CPU - Count: " << std::setw(3) << blk <<  " - Block no: " << std::setw(3) << blkList[blk].block_no << " - Bock level: " << std::setw(1) << blkList[blk].blkLevel << " - Block size: " << blkList[blk].blkSize << std::endl;
+        
+        bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+}
+}
+
+
 int main (int argc, char** argv){
     /**
      *
@@ -76,49 +115,48 @@ int main (int argc, char** argv){
     #endif
 
 
-    // if (isTest){
-    //     #include "rhs.h"
-    //     bssn::timer::t_cpu_runtime.start();
-    //     CPU_sequence(numberOfBlocks, blkList, var_in, var_out);
-    //     bssn::timer::t_cpu_runtime.stop();
+    if (isTest){
+        
 
-    //     // Verify outputs
-    //     for (int blk=0; blk<numberOfBlocks; blk++){
-    //         for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
+        CPU_sequence(numberOfBlocks, blkList, var_in, var_out);
 
-    //             int sizeofBlock = blkList[blk].blkSize;
+        // Verify outputs
+        for (int blk=0; blk<numberOfBlocks; blk++){
+            for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
 
-    //             for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
-    //                 double diff = var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
-    //                 if (fabs(diff)>threshold){
-    //                     const char separator    = ' ';
-    //                     const int nameWidth     = 6;
-    //                     const int numWidth      = NUM_DIGITS+10;
+                int sizeofBlock = blkList[blk].blkSize;
 
-    //                     std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
-    //                     std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd];
+                for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
+                    double diff = var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
+                    if (fabs(diff)>1e-10){
+                        const char separator    = ' ';
+                        const int nameWidth     = 6;
+                        const int numWidth      = NUM_DIGITS+10;
 
-    //                     std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
-    //                     std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out[bssn_var][blkList[blk].offset+pointInd];
+                        // std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
+                        // std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd];
 
-    //                     std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
-    //                     std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << diff << std::endl;
-    //                     exit(0);
-    //                 }
-    //             }
-    //         }
-    //     }
+                        // std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "CPU: ";
+                        // std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out[bssn_var][blkList[blk].offset+pointInd];
 
-    //     for (int var=0; var<BSSN_NUM_VARS; var++){
-    //         delete [] var_in[var];
-    //         delete [] var_out[var];
-    //     }
-    // }
+                        // std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "DIFF: ";
+                        std::cout << diff << std::endl;
+                        exit(0);
+                    }
+                }
+            }
+        }
 
-    // //Free host memory
-    // for (int blk=0; blk<numberOfBlocks; blk++){
-    //     CHECK_ERROR(cudaFreeHost(var_in_array[blk]), "free host memory");
-    //     CHECK_ERROR(cudaFreeHost(var_out_array[blk]), "free host memory");
-    // }
-    // return 0;
+        for (int var=0; var<BSSN_NUM_VARS; var++){
+            delete [] var_in[var];
+            delete [] var_out[var];
+        }
+    }
+
+    //Free host memory
+    for (int blk=0; blk<numberOfBlocks; blk++){
+        CHECK_ERROR(cudaFreeHost(var_in_array[blk]), "free host memory");
+        CHECK_ERROR(cudaFreeHost(var_out_array[blk]), "free host memory");
+    }
+    return 0;
 }

@@ -11,8 +11,8 @@ if(CUDA_FOUND)
     SET(ALL_CUDA_LIBS ${CUDA_LIBRARIES} ${CUDA_cusparse_LIBRARY} ${CUDA_cublas_LIBRARY})
     SET(LIBS ${LIBS} ${ALL_CUDA_LIBS})
     message(STATUS "CUDA_LIBRARIES: ${CUDA_INCLUDE_DIRS} ${ALL_CUDA_LIBS}")
-    set(CUDA_PROPAGATE_HOST_FLAGS ON)
-    set(CUDA_SEPARABLE_COMPILATION OFF)
+    set(CUDA_PROPAGATE_HOST_FLAGS OFF)
+    set(CUDA_SEPARABLE_COMPILATION ON)
 
     list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_30,code=sm_30)
     list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_50,code=sm_50)
@@ -23,6 +23,7 @@ if(CUDA_FOUND)
     list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_61,code=compute_61)
     list( APPEND CUDA_NVCC_FLAGS -use_fast_math )
     list( APPEND CUDA_NVCC_FLAGS -lineinfo )
+    list( APPEND CUDA_NVCC_FLAGS -std=c++11)
 
     # list( APPEND CUDA_NVCC_FLAGS --maxrregcount 16 )
     # list( APPEND CUDA_NVCC_FLAGS --ptxas-options=-v )
@@ -43,6 +44,7 @@ include_directories(${PROJECT_BINARY_DIR}
         include
         utils
         cuda_gr/utils
+        cuda_gr/cuda_include
         )
 
 set(INC_FILES
@@ -78,7 +80,7 @@ set(SRC_FILES
         cuda_src/bssneqn_solve.cu
         cuda_src/device_derivs.cu
         cuda_src/rhs_cuda.cu
-
+        
         cuda_gr/src/dataGeneration.cpp
         cuda_gr/src/cudaBSSN.cpp
         cuda_gr/src/rhsMethods.cpp
@@ -88,6 +90,32 @@ set(SRC_FILES
         )
 
 
-add_executable(computeBSSN ${INC_FILES} ${SRC_FILES})
-target_link_libraries(computeBSSN ${LIBS} )
+set(CUDA_GR_INC
+        cuda_gr/cuda_include/cudaRHS.cuh
+        cuda_gr/cuda_include/cudaDerivs.cuh
+        cuda_gr/cuda_include/deviceDerivs.cuh
+        cuda_gr/cuda_include/bssnEqns.cuh
+        cuda_gr/cuda_include/getOutput.cuh
+        cuda_gr/cuda_include/cudaBCS.cuh
+        
+        )
+
+set(CUDA_GR_SRC
+        cuda_gr/cuda_src/cudaRHS.cu
+        cuda_gr/cuda_src/cudaDerivs.cu
+        cuda_gr/cuda_src/deviceDerivs.cu
+        cuda_gr/cuda_src/bssnEqns.cu
+        cuda_gr/cuda_src/getOutput.cu
+        cuda_gr/cuda_src/cudaBCS.cu
+        )
+
+cuda_add_library(bssn_cuda ${CUDA_GR_INC} ${CUDA_GR_SRC})
+target_include_directories(bssn_cuda PRIVATE cuda_gr/cuda_include)
+target_include_directories(bssn_cuda PRIVATE cuda_gr/include)
+target_include_directories(bssn_cuda PRIVATE include)
+
+
+add_executable(computeBSSN ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP} ${INC_FILES} ${SRC_FILES})
+target_link_libraries(computeBSSN bssn_cuda ${LIBS} )
+target_include_directories(bssn_cuda PRIVATE cuda_gr/cuda_include)
 target_include_directories(computeBSSN PRIVATE cuda_gr/include)
