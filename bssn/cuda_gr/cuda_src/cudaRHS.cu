@@ -8,6 +8,8 @@ const unsigned int& bflag, cudaStream_t stream,
 #include "list_of_para.h"
 )
 { 
+    CHECK_ERROR(cudaMemsetAsync(dev_var_out, 0, 24*unzip_dof*sizeof(double), stream), "output array cleaning call"); // Clean output array
+
     int alphaInt = (VAR_CU::U_ALPHA) * unzip_dof;
     int chiInt = (VAR_CU::U_CHI) * unzip_dof;
     int KInt = (VAR_CU::U_K) * unzip_dof;

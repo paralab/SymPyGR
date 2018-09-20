@@ -60,10 +60,10 @@ int main (int argc, char** argv){
         GPU_parallelized(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
     #if async
-        GPU_pure_async_htod_dtoH_overlap(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+        GPU_async(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
     #if hybrid
-        GPU_parallelized_async_hybrid(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+        GPU_hybrid(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
 
 
@@ -76,7 +76,7 @@ int main (int argc, char** argv){
                 int sizeofBlock = blkList[blk].blkSize;
                 for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
                     double diff = var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
-                    if (fabs(diff)>1e-6){
+                    if (fabs(diff)>1e-5){
                         char separator    = ' ';
                         const int nameWidth     = 6;
                         const int numWidth      = 20;
