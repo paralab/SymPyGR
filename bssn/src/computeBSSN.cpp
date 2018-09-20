@@ -16,48 +16,37 @@ int main (int argc, char** argv){
      * lowerLevel: block element 1d lower bound (int)
      * upperLevel: block element 1d upper bound (int) (blk_up>=blk_lb)
      * numberOfBlocks : total blocks going to process 
-     * isTest(1/0; optional): default=0
-     * isRandom(1/0; optional): default=0
-     * isNormal(1/0; optional): default=0
      * mean(double optional) 
      * std(double optional) 
+     * isRandom(1/0; optional): default=0
      *
      * */
 
     int lower_bound;
     int upper_bound;
     int numberOfBlocks;
-    bool isTest = 0;
+    double mean;
+    double std = 1;
     bool isRandom = 0;
-    bool isNormal = 0;
-    double mean = 0;
-    double std = 0;
 
     if(argc>=4){
         lower_bound=atoi(argv[1]);
         upper_bound=atoi(argv[2]);
         numberOfBlocks=atoi(argv[3]);
 
-        if (argc>=5) isTest=atoi(argv[4]);
-        if (argc>=6) isRandom=atoi(argv[5]);
-        if (argc>=7) isNormal=atoi(argv[6]);
+        mean = lower_bound + (upper_bound-lower_bound)/2;
 
-        if (isNormal==1){
-            if (argc<9){
-                std::cerr << "Missing args for mean value and std value" << std::endl;
-                exit(0);
-            }else{
-                mean=atoi(argv[7]);
-                std=atoi(argv[8]);
-            }
-        }
+        if (argc>=5) mean=atoi(argv[4]);
+        if (argc>=6) std=atoi(argv[5]);
+        if (argc>=7) isRandom=atoi(argv[6]);
     }else{
-        std::cerr << "Correct usage: " << argv[0] << " lowerLevel(int) upperLevel(int) numberOfBlocks(int) isTest(1/0; optional) isRandom(1/0; optional) isNormal(1/0; optional) mean(double optional) std(double optional)" << std::endl;
+        std::cerr << "Correct usage: " << argv[0] << " lowerLevel(int) upperLevel(int) numberOfBlocks(int) mean(double optional) std(double optional) isRandom(1/0; optional)" << std::endl;
         exit(0);
     }
 
-    Block * blkList = new Block[numberOfBlocks];
+    bssn::timer::total_runtime.start();
 
+    Block * blkList = new Block[numberOfBlocks];
     double ** var_in = new double*[BSSN_NUM_VARS];;
     double ** var_out = new double*[BSSN_NUM_VARS];;
 
@@ -68,36 +57,41 @@ int main (int argc, char** argv){
     if (isRandom) seed=time(0);
     std::default_random_engine generator(seed);
     std::normal_distribution<double> distributionN(mean, std);
-    std::uniform_int_distribution<int> distributionU(lower_bound, upper_bound);
+
+    int p[upper_bound-lower_bound+1]; // distribution repr purpose
+    for (int i=0; i<upper_bound-lower_bound+1; i++) p[i] = 0;
 
     int level;
     int block_no = 0;
-
-    // RAM ---
     unsigned long unzipSz=0;
     while (block_no<numberOfBlocks){
         level = int(distributionN(generator)); // generate a number
 
-        // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {
             Block & blk=blkList[block_no];
             blk=Block(0, 0, 0, 2*level, level, maxDepth);
             blk.block_no = block_no;
-            // RAM ---
             blk.offset=unzipSz;
             unzipSz+=blk.blkSize;
-
             block_no++;
+            p[level-lower_bound]++; // distribution repr purpose
         }
     }
 
-    const unsigned long unzip_dof_cpu=unzipSz;
+    // distribution representation requirement
+    std::cout << "---Level distribution---" << std::endl;
 
-    // RAM ---
+    for (int i=0; i<=upper_bound-lower_bound; i++) {
+        std::cout << i+lower_bound << ": ";
+        std::cout << std::setw(3) << p[i]*100/numberOfBlocks << "% " << std::string(p[i]*100/numberOfBlocks, '*') << std::endl;
+    }
+
+    const unsigned long unzip_dof=unzipSz;
+
     // Data generation for CPU version
     for(int i=0;i<BSSN_NUM_VARS;i++){
-        var_in[i] = new double[unzip_dof_cpu];
-        var_out[i] = new double[unzip_dof_cpu];
+        var_in[i] = new double[unzip_dof];
+        var_out[i] = new double[unzip_dof];
     }
         
     #pragma omp parallel for num_threads(20)
@@ -139,38 +133,42 @@ int main (int argc, char** argv){
     }
 
     double ptmin[3], ptmax[3];
-        unsigned int sz[3];
-        unsigned int bflag;
-        unsigned int offset;
-        double dx, dy, dz;
+    unsigned int sz[3];
+    unsigned int bflag;
+    unsigned int offset;
+    double dx, dy, dz;
 
-        for(unsigned int blk=0; blk<numberOfBlocks; blk++){
+    for(unsigned int blk=0; blk<numberOfBlocks; blk++){
 
-            offset=blkList[blk].offset;
-            sz[0]=blkList[blk].node1D_x; 
-            sz[1]=blkList[blk].node1D_y;
-            sz[2]=blkList[blk].node1D_z;
+        offset=blkList[blk].offset;
+        sz[0]=blkList[blk].node1D_x; 
+        sz[1]=blkList[blk].node1D_y;
+        sz[2]=blkList[blk].node1D_z;
 
-            bflag=0; // indicates if the block is bdy block.
+        bflag=0; // indicates if the block is bdy block.
 
-            dx=0.1;
-            dy=0.1;
-            dz=0.1;
+        dx=0.1;
+        dy=0.1;
+        dz=0.1;
 
-            ptmin[0]=0.0;
-            ptmin[1]=0.0;
-            ptmin[2]=0.0;
+        ptmin[0]=0.0;
+        ptmin[1]=0.0;
+        ptmin[2]=0.0;
 
-            ptmax[0]=1.0;
-            ptmax[1]=1.0;
-            ptmax[2]=1.0;
+        ptmax[0]=1.0;
+        ptmax[1]=1.0;
+        ptmax[2]=1.0;
 
-            bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
-        }
-        for (int var=0; var<BSSN_NUM_VARS; var++){
-            delete [] var_in[var];
-            delete [] var_out[var];
-        }
+        bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
+    }
+
+    for (int var=0; var<BSSN_NUM_VARS; var++){
+        delete [] var_in[var];
+        delete [] var_out[var];
+    }
+
+    bssn::timer::total_runtime.stop();
+
     bssn::timer::profileInfo();
     return 0;
 }
