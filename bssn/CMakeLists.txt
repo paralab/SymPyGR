@@ -42,6 +42,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
 include_directories(${PROJECT_BINARY_DIR}
         include
         utils
+        cuda_gr/utils
         )
 
 set(INC_FILES
@@ -57,23 +58,35 @@ set(INC_FILES
         include/derivs_cuda.cuh
         include/bssneqn_solve.cuh
         include/cuda_bssneqs.cuh
+
+        cuda_gr/include/dataGeneration.h
+        cuda_gr/include/block.h
+        cuda_gr/include/cudaBSSN.h
+        cuda_gr/include/rhsMethods.h
+        cuda_gr/include/cuda_rhs.cuh
+        cuda_gr/include/mergeSort.h
+        # cuda_gr/include/intermediateVariables.h
         )
 
 set(SRC_FILES
         src/derivs.cpp
-	    src/computeBSSN.cpp
         src/bssn_profiler.cpp
-	    src/rhs.cpp
+        src/rhs.cpp
         src/profile_param.cpp
         src/utils.cpp
+
+        cuda_src/bssneqn_solve.cu
+        cuda_src/device_derivs.cu
+        cuda_src/rhs_cuda.cu
+
+        cuda_gr/src/dataGeneration.cpp
+        cuda_gr/src/cudaBSSN.cpp
+        cuda_gr/src/rhsMethods.cpp
+        cuda_gr/src/cuda_rhs.cu
+        # cuda_gr/src/intermediateVariables.cpp
         )
 
-if(CUDA_FOUND)
-    #compile cuda files and add the compiled object files to your normal source files
-    FILE(GLOB_RECURSE CUDA_SRC  *.cu)
-    cuda_compile(cuda_objs ${CUDA_SRC})
-    SET(SRC ${SRC} ${cuda_objs})
-endif()
 
-add_executable(computeBSSN ${INC_FILES} ${SRC_FILES} ${SRC} src/computeBSSN.cpp)
+add_executable(computeBSSN ${INC_FILES} ${SRC_FILES})
 target_link_libraries(computeBSSN ${LIBS} )
+target_include_directories(computeBSSN PRIVATE cuda_gr/include)
