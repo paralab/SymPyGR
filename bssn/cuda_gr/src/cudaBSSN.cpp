@@ -20,7 +20,7 @@ void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in
         sz[1]=blkList[blk].node1D_y;
         sz[2]=blkList[blk].node1D_z;
 
-        bflag=1; // indicates if the block is bdy block.
+        bflag=1;
 
         dx=0.1;
         dy=0.1;
@@ -33,11 +33,9 @@ void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in
         ptmax[0]=1.0;
         ptmax[1]=1.0;
         ptmax[2]=1.0;
-
-        // std::cout << "CPU - Count: " << std::setw(3) << blk <<  " - Block no: " << std::setw(3) << blkList[blk].block_no << " - Bock level: " << std::setw(1) << blkList[blk].blkLevel << " - Block size: " << blkList[blk].blkSize << std::endl;
-        
+  
         bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
-}
+    }
 }
 
 
@@ -131,7 +129,8 @@ int main (int argc, char** argv){
                     if (fabs(diff)>1e-5){
                         const char separator    = ' ';
                         const int nameWidth     = 6;
-                        const int numWidth      = NUM_DIGITS+10;
+                        const int numWidth      = 10+10;
+                        const int NUM_DIGITS = 10;
 
                         // std::cout << std::left << std::setw(nameWidth) << setfill(separator) << "GPU: ";
                         // std::cout <<std::setprecision(NUM_DIGITS)<< std::left << std::setw(numWidth) << setfill(separator)  << var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd];

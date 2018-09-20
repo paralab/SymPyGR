@@ -17,13 +17,10 @@
 #include <iostream>
 #include <stdio.h>
 #include <time.h>
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
 #include "utils.h"
 #include <sys/sysinfo.h> 
 #include <string>
 #include <random>
-#include <map>
 
 #include "profile_param.h"
 
@@ -32,12 +29,6 @@ using namespace std;
 const unsigned int ELE_ORDER=4;
 const unsigned int BSSN_NUM_VARS=24;
 const unsigned int PAD_WIDTH=3;
-
-int steamCountToLevel[5] = {3, 3, 3, 2, 2};
-double MegaflopCount[6] = {0.4245, 2.475684, 16.684548, 122.042052, 932.6265, 7290.155844};
-int hybrid_divider = 3; // divider must be smaller than the length of steamCountToLevel
-
-// {30.564, 0.044148, 0.071316, 0.125652, 0.234324};
 
 struct Block 
 {

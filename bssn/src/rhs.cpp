@@ -135,7 +135,6 @@ bssn::timer::t_deriv.stop();
   double eta;
 
   bssn::timer::t_rhs.start();
-  //cout << "begin loop" << endl;
   for (unsigned int k = 3; k < nz-3; k++) {
       z = pmin[2] + k*hz;
 
@@ -144,11 +143,6 @@ bssn::timer::t_deriv.stop();
 
       for (unsigned int i = 3; i < nx-3; i++) {
          x = pmin[0] + i*hx;
-
-    //          if (i==5 && j==5 && k==6){
-    //     printf("%f | %f | %f\n", z, y ,x);
-    // }
-
          pp = i + nx*(j + ny*k);
          r_coord = sqrt(x*x + y*y + z*z);
          eta=ETA_CONST;
@@ -241,11 +235,6 @@ bssn::timer::t_deriv.start();
 #include "bssnrhs_ko_derivs.h"
 bssn::timer::t_deriv.stop();
 
-#if test && 0
-// Take the pointer of specified array
-#include "test_CPU_derivs.h"
-#include "test_CPU_adv_derivs.h"
-#endif
 
 bssn::timer::t_rhs.start();
 
