@@ -56,13 +56,11 @@ set(INC_FILES
         include/profile_param.h
         include/utils.h
 
-        # cuda_gr/include/dataGeneration.h
-        # cuda_gr/include/block.h
-        # cuda_gr/include/cudaBSSN.h
-        # cuda_gr/include/rhsMethods.h
-        # cuda_gr/include/cuda_rhs.cuh
-        # cuda_gr/include/mergeSort.h
-        # cuda_gr/include/intermediateVariables.h
+        cuda_gr/include/dataGeneration.h
+        cuda_gr/include/block.h
+        cuda_gr/include/cudaBSSN.h
+        cuda_gr/include/rhsMethods.h
+        cuda_gr/include/mergeSort.h
         )
 
 set(SRC_FILES
@@ -71,48 +69,46 @@ set(SRC_FILES
         src/rhs.cpp
         src/profile_param.cpp
         src/utils.cpp
-        src/computeBSSN.cpp
+        # src/computeBSSN.cpp
 
-        # cuda_src/bssneqn_solve.cu
-        # cuda_src/device_derivs.cu
-        # cuda_src/rhs_cuda.cu
+        cuda_src/bssneqn_solve.cu
+        cuda_src/device_derivs.cu
+        cuda_src/rhs_cuda.cu
         
-        # cuda_gr/src/dataGeneration.cpp
-        # cuda_gr/src/cudaBSSN.cpp
-        # cuda_gr/src/rhsMethods.cpp
-        # cuda_gr/src/cuda_rhs.cu
-        # cuda_gr/src/mergeSort.cpp
-        # cuda_gr/src/intermediateVariables.cpp
+        cuda_gr/src/dataGeneration.cpp
+        cuda_gr/src/cudaBSSN.cpp
+        cuda_gr/src/rhsMethods.cpp
+        cuda_gr/src/mergeSort.cpp
         )
 
 
-# set(CUDA_GR_INC
-        # cuda_gr/cuda_include/cudaRHS.cuh
-        # cuda_gr/cuda_include/cudaDerivs.cuh
-        # cuda_gr/cuda_include/deviceDerivs.cuh
-        # cuda_gr/cuda_include/bssnEqns.cuh
-        # cuda_gr/cuda_include/getOutput.cuh
-        # cuda_gr/cuda_include/cudaBCS.cuh
+set(CUDA_GR_INC
+        cuda_gr/cuda_include/cudaRHS.cuh
+        cuda_gr/cuda_include/cudaDerivs.cuh
+        cuda_gr/cuda_include/deviceDerivs.cuh
+        cuda_gr/cuda_include/bssnEqns.cuh
+        cuda_gr/cuda_include/getOutput.cuh
+        cuda_gr/cuda_include/cudaBCS.cuh
         
-        # )
+        )
 
-# set(CUDA_GR_SRC
-        # cuda_gr/cuda_src/cudaRHS.cu
-        # cuda_gr/cuda_src/cudaDerivs.cu
-        # cuda_gr/cuda_src/deviceDerivs.cu
-        # cuda_gr/cuda_src/bssnEqns.cu
-        # cuda_gr/cuda_src/getOutput.cu
-        # cuda_gr/cuda_src/cudaBCS.cu
-        # )
+set(CUDA_GR_SRC
+        cuda_gr/cuda_src/cudaRHS.cu
+        cuda_gr/cuda_src/cudaDerivs.cu
+        cuda_gr/cuda_src/deviceDerivs.cu
+        cuda_gr/cuda_src/bssnEqns.cu
+        cuda_gr/cuda_src/getOutput.cu
+        cuda_gr/cuda_src/cudaBCS.cu
+        )
 
-# cuda_add_library(bssn_cuda ${CUDA_GR_INC} ${CUDA_GR_SRC})
-# target_include_directories(bssn_cuda PRIVATE cuda_gr/cuda_include)
-# target_include_directories(bssn_cuda PRIVATE cuda_gr/include)
-# target_include_directories(bssn_cuda PRIVATE include)
+cuda_add_library(bssn_cuda ${CUDA_GR_INC} ${CUDA_GR_SRC})
+target_include_directories(bssn_cuda PRIVATE cuda_gr/cuda_include)
+target_include_directories(bssn_cuda PRIVATE cuda_gr/include)
+target_include_directories(bssn_cuda PRIVATE include)
 
 
-# add_executable(computeBSSN ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP} ${INC_FILES} ${SRC_FILES})
-add_executable(computeBSSN ${INC_FILES} ${SRC_FILES})
-# target_link_libraries(computeBSSN bssn_cuda ${LIBS} )
-# target_include_directories(bssn_cuda PRIVATE cuda_gr/cuda_include)
+add_executable(computeBSSN ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP} ${INC_FILES} ${SRC_FILES})
+# add_executable(computeBSSN ${INC_FILES} ${SRC_FILES})
+target_link_libraries(computeBSSN bssn_cuda ${LIBS} )
+target_include_directories(bssn_cuda PRIVATE cuda_gr/cuda_include)
 target_include_directories(computeBSSN PRIVATE cuda_gr/include)

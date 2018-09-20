@@ -26,4 +26,5 @@ double ** var_in_array, double ** var_out_array);
 void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, 
 double ** var_in_array, double ** var_out_array);
 
+void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in, double ** var_out);
 #endif

@@ -1,6 +1,6 @@
 #include "dataGeneration.h"
 
-void data_generation_blockwise_mixed(bool isNormal, double mean, double std, unsigned int numberOfLevels, 
+void data_generation_blockwise_mixed(double mean, double std, unsigned int numberOfLevels, 
 unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkList, double ** var_in_array, double ** var_out_array){
 
     const unsigned int maxDepth=12;
@@ -28,12 +28,8 @@ unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkLi
     int level;
     int block_no = 0;
     while (block_no<numberOfLevels){
-        if (isNormal){
-            level = int(distributionN(generator)); // generate a number
-        }else{
-            level = int(distributionU(generator)); // generate a number
-        }
-        
+        level = int(distributionN(generator)); // generate a number
+
         // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {
             Block & blk=blkList[block_no];
@@ -137,7 +133,7 @@ unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkLi
 }
 
 
-void data_generation_blockwise_and_bssn_var_wise_mixed(bool isNormal, double mean, double std, unsigned int numberOfLevels, 
+void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, unsigned int numberOfLevels, 
 unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkList, double ** var_in_array, double ** var_out_array, 
 double ** var_in, double ** var_out){
 
@@ -169,11 +165,7 @@ double ** var_in, double ** var_out){
     // RAM ---
     unsigned long unzipSz=0;
     while (block_no<numberOfLevels){
-        if (isNormal){
-            level = int(distributionN(generator)); // generate a number
-        }else{
-            level = int(distributionU(generator)); // generate a number
-        }
+        level = int(distributionN(generator)); // generate a number
 
         // distribution representation requirement
         if ((level>=lower_bound)&&(level<=upper_bound)) {

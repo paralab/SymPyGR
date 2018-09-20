@@ -3,10 +3,11 @@
 
 #include "dataGeneration.h"
 #include "rhsMethods.h"
+#include <iomanip>
 
 // Select RHS Method
-#define parallelized 1
+#define parallelized 0
 #define async 0
-#define hybrid 0
+#define hybrid 1
 
 #endif
