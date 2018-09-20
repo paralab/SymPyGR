@@ -63,7 +63,7 @@ set(INC_FILES
         cuda_gr/include/block.h
         cuda_gr/include/cudaBSSN.h
         cuda_gr/include/rhsMethods.h
-        cuda_gr/include/cuda_rhs.cuh
+        # cuda_gr/include/cuda_rhs.cuh
         cuda_gr/include/mergeSort.h
         # cuda_gr/include/intermediateVariables.h
         )
@@ -82,7 +82,8 @@ set(SRC_FILES
         cuda_gr/src/dataGeneration.cpp
         cuda_gr/src/cudaBSSN.cpp
         cuda_gr/src/rhsMethods.cpp
-        cuda_gr/src/cuda_rhs.cu
+        # cuda_gr/src/cuda_rhs.cu
+        cuda_gr/src/mergeSort.cpp
         # cuda_gr/src/intermediateVariables.cpp
         )
 

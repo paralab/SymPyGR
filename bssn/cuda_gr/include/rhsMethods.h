@@ -1,4 +1,7 @@
 
+#ifndef RHS_METHODS_H
+#define RHS_METHODS_H
+
 #include <iostream>
 #include <stdio.h>
 
@@ -13,9 +16,6 @@
 
 #define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
 
-int steamCountToLevel[5] = {3, 3, 3, 2, 2};
-int hybrid_divider = 3;
-
 void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, 
 double ** var_in_array, double ** var_out_array);
 
@@ -24,3 +24,5 @@ double ** var_in_array, double ** var_out_array);
 
 void GPU_pure_async_htod_dtoH_overlap(unsigned int numberOfLevels, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, 
 double ** var_in_array, double ** var_out_array);
+
+#endif

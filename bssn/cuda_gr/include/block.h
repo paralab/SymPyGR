@@ -1,3 +1,6 @@
+#ifndef BLOCK_H
+#define BLOCK_H
+
 const unsigned int ELE_ORDER=4;
 const unsigned int BSSN_NUM_VARS=24;
 const unsigned int PAD_WIDTH=3;
@@ -58,3 +61,5 @@ struct Block
         blkSize=node1D_x*node1D_y*node1D_z;    
     }
 };
+
+#endif

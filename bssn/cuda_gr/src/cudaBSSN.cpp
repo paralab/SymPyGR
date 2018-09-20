@@ -50,30 +50,30 @@ int main (int argc, char** argv){
     }
 
 
-    // Block * blkList = new Block[numberOfBlocks];
-    // double ** var_in_array = new double*[numberOfBlocks];
-    // double ** var_out_array = new double*[numberOfBlocks];
+    Block * blkList = new Block[numberOfBlocks];
+    double ** var_in_array = new double*[numberOfBlocks];
+    double ** var_out_array = new double*[numberOfBlocks];
 
-    // double ** var_in;
-    // double ** var_out;
-    // if (isTest){
-    //     var_in = new double*[BSSN_NUM_VARS];
-    //     var_out = new double*[BSSN_NUM_VARS];
-    //     data_generation_blockwise_and_bssn_var_wise_mixed(isNormal, mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array, var_in, var_out);
-    // }else{
-    //     data_generation_blockwise_mixed(isNormal, mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array);
-    // }
+    double ** var_in;
+    double ** var_out;
+    if (isTest){
+        var_in = new double*[BSSN_NUM_VARS];
+        var_out = new double*[BSSN_NUM_VARS];
+        data_generation_blockwise_and_bssn_var_wise_mixed(isNormal, mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array, var_in, var_out);
+    }else{
+        data_generation_blockwise_mixed(isNormal, mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array);
+    }
 
 
-    // #if parallelized
-    //     GPU_parallelized(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
-    // #endif
-    // #if async
-    //     GPU_pure_async_htod_dtoH_overlap(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
-    // #endif
-    // #if hybrid
-    //     GPU_parallelized_async_hybrid(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
-    // #endif
+    #if parallelized
+        GPU_parallelized(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+    #endif
+    #if async
+        GPU_pure_async_htod_dtoH_overlap(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+    #endif
+    #if hybrid
+        GPU_parallelized_async_hybrid(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
+    #endif
 
 
     // if (isTest){
