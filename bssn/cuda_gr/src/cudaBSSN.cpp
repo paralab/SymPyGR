@@ -20,7 +20,7 @@ void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in
         sz[1]=blkList[blk].node1D_y;
         sz[2]=blkList[blk].node1D_z;
 
-        bflag=0; // indicates if the block is bdy block.
+        bflag=1; // indicates if the block is bdy block.
 
         dx=0.1;
         dy=0.1;
@@ -128,7 +128,7 @@ int main (int argc, char** argv){
 
                 for (int pointInd=0; pointInd<sizeofBlock; pointInd++){
                     double diff = var_out_array[blkList[blk].block_no][bssn_var*sizeofBlock+pointInd] - var_out[bssn_var][blkList[blk].offset+pointInd];
-                    if (fabs(diff)>1e-10){
+                    if (fabs(diff)>1e-5){
                         const char separator    = ' ';
                         const int nameWidth     = 6;
                         const int numWidth      = NUM_DIGITS+10;

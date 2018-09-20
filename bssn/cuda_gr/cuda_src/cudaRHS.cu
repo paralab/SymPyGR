@@ -49,7 +49,7 @@ const unsigned int& bflag, cudaStream_t stream,
     #include "list_of_args.h"
     );
 
-    if (bflag != 0) {
+    if (bflag!=0) {
         bssn_bcs(dev_var_out, dev_var_in, alphaInt, grad_0_alpha, grad_1_alpha, grad_2_alpha,
             pmin, pmax, 1.0, 1.0, sz, bflag, stream);
         bssn_bcs(dev_var_out, dev_var_in, chiInt, grad_0_chi, grad_1_chi, grad_2_chi,

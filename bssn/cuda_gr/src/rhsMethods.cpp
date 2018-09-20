@@ -126,7 +126,7 @@ void GPU_parallelized(unsigned int numberOfLevels, Block * blkList, unsigned int
             sz[1]=blk.node1D_y;
             sz[2]=blk.node1D_z;
 
-            bflag=0;
+            bflag=1;
 
             dx=0.1;
             dy=0.1;
