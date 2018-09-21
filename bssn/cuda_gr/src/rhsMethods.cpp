@@ -5,8 +5,8 @@
 
 #include "rhsMethods.h"
 
-void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){ 
-
+void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array)
+{ 
     int steamCountToLevel[5] = {3, 3, 3, 2, 2}; // minimum number of streams is 2
 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
@@ -118,7 +118,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
 
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[i%num_streams], var_in_array[blk.block_no], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyHostToDevice, streams[i%num_streams]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
-            cuda_bssnrhs(dev_var_out_array[i%num_streams], dev_var_in_array[i%num_streams], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%num_streams],
+            calc_bssnrhs(dev_var_out_array[i%num_streams], dev_var_in_array[i%num_streams], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%num_streams],
             #include "list_of_args_per_blk.h"
             );
 
@@ -144,8 +144,8 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
     return;
 }
 
-void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){ 
-    
+void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array)
+{ 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
 
     // creating cuda streams for the process
@@ -232,7 +232,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
             cudaStreamSynchronize(streams[(index+2)%3]);
         }
 
-        cuda_bssnrhs(dev_var_out_array[index%2], dev_var_in_array[index%2], blk.blkSize, ptmin, ptmax, sz, bflag, streams[index%3],
+        calc_bssnrhs(dev_var_out_array[index%2], dev_var_in_array[index%2], blk.blkSize, ptmin, ptmax, sz, bflag, streams[index%3],
             #include "list_of_args_per_blk.h"
         );
      
@@ -267,8 +267,8 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     return;
 }
 
-void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){ 
-
+void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array)
+{ 
     int steamCountToLevel[5] = {3, 3, 3, 2, 2};
     int hybrid_divider = 3;
 
@@ -394,7 +394,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
                     cudaStreamSynchronize(streams[(i+2)%3]);
                 }
 
-                cuda_bssnrhs(dev_var_out_array[i%2], dev_var_in_array[i%2], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%3],
+                calc_bssnrhs(dev_var_out_array[i%2], dev_var_in_array[i%2], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%3],
                     #include "list_of_args_per_blk.h"
                 );
             
@@ -413,7 +413,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
 
                 CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[i%num_streams], var_in_array[blk.block_no], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyHostToDevice, streams[i%num_streams]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
-                cuda_bssnrhs(dev_var_out_array[i%num_streams], dev_var_in_array[i%num_streams], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%num_streams],
+                calc_bssnrhs(dev_var_out_array[i%num_streams], dev_var_in_array[i%num_streams], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%num_streams],
                 #include "list_of_args_per_blk.h"
                 );
 
@@ -441,8 +441,8 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
 }
 
 #include "rhs.h"
-void CPU_sequential(unsigned int numberOfLevels, Block * blkList, double ** var_in, double ** var_out){
-
+void CPU_sequential(unsigned int numberOfLevels, Block * blkList, double ** var_in, double ** var_out)
+{
     double ptmin[3], ptmax[3];
     unsigned int sz[3];
     unsigned int bflag;

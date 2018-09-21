@@ -13,10 +13,7 @@
 #include "getOutput.cuh"
 #include "cudaBCS.cuh"
 
-void cuda_bssnrhs(double * dev_var_out, double * dev_var_in, 
-const unsigned int unzip_dof, 
-const double * pmin, const double * pmax, const unsigned int *sz, 
-const unsigned int& bflag, cudaStream_t stream,
+void calc_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, const double * pmin, const double * pmax, const unsigned int *sz, const unsigned int& bflag, cudaStream_t stream,
 #include "list_of_para.h"
 );
 

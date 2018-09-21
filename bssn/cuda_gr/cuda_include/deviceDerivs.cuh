@@ -28,7 +28,6 @@ __device__ void calc_ko_deriv42_y_bflag(int id, double * output, double * dev_va
 __device__ void calc_ko_deriv42_z_bflag(int id, double * output, double * dev_var_in, int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag);
 
 
-
 __device__ void calc_deriv42_x(int id, double * output, double * dev_var_in, const int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag);
 __device__ void calc_deriv42_y(int id, double * output, double * dev_var_in, const int u_offset, double dy, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag);
 __device__ void calc_deriv42_z(int id, double * output, double * dev_var_in, const int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag);

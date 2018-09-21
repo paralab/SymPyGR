@@ -5,9 +5,8 @@
 
 #include "deviceDerivs.cuh"
 
-__device__ void calc_deriv42_x(int id, double * output, double * dev_var_in, const int u_offset, double dx, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
-
+__device__ void calc_deriv42_x(int id, double * output, double * dev_var_in, const int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -20,14 +19,11 @@ __device__ void calc_deriv42_x(int id, double * output, double * dev_var_in, con
     if (k>=host_sz_z-1) return;
     int pp = IDX(i, j, k);
 
-    output[pp] = (dev_var_in[(u_offset) + pp - 2] - 8.0*dev_var_in[(u_offset)
-                    + pp - 1] + 8.0*dev_var_in[(u_offset) + pp + 1] 
-                    - dev_var_in[(u_offset) + pp + 2] )*idx_by_12;
+    output[pp] = (dev_var_in[u_offset+pp-2] - 8.0*dev_var_in[u_offset+pp-1] + 8.0*dev_var_in[u_offset+pp+1] - dev_var_in[u_offset+pp+2])*idx_by_12;
 }
 
-__device__ void calc_deriv42_y(int id, double* output, double * dev_var_in, const int u_offset, double dy, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
-
+__device__ void calc_deriv42_y(int id, double* output, double * dev_var_in, const int u_offset, double dy, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -40,15 +36,11 @@ __device__ void calc_deriv42_y(int id, double* output, double * dev_var_in, cons
     if (k>=host_sz_z-1) return;
     int pp = IDX(i, j, k);
     
-    output[pp] = (dev_var_in[u_offset + pp - 2*nx] 
-                - 8.0*dev_var_in[u_offset + pp - nx] 
-                + 8.0*dev_var_in[u_offset + pp + nx] 
-                - dev_var_in[u_offset + pp + 2*nx] )*idy_by_12;
-    
+    output[pp] = (dev_var_in[u_offset+pp-2*nx] - 8.0*dev_var_in[u_offset+pp-nx] + 8.0*dev_var_in[u_offset+pp+nx] - dev_var_in[u_offset+pp+2*nx])*idy_by_12;
 }
 
-__device__ void calc_deriv42_z(int id, double* output, double * dev_var_in, const int u_offset, double dz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_z(int id, double* output, double * dev_var_in, const int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
     int n = nx * ny;
@@ -61,13 +53,11 @@ __device__ void calc_deriv42_z(int id, double* output, double * dev_var_in, cons
     int k = (id/(host_sz_z-6)/(host_sz_x-6)) + 3;
     if (k>=host_sz_z-3) return;
     int pp = IDX(i, j, k);
-    output[pp] = (dev_var_in[(u_offset) + pp - 2*n] - 8.0*dev_var_in[(u_offset) + pp - n] 
-                    + 8.0*dev_var_in[(u_offset) + pp + n] - dev_var_in[(u_offset) + pp + 2*n]) 
-                    * idz_by_12;
+    output[pp] = (dev_var_in[u_offset+pp-2*n] - 8.0*dev_var_in[u_offset+pp-n] + 8.0*dev_var_in[u_offset+pp+n] - dev_var_in[u_offset+pp+2*n])*idz_by_12;
 }
 
-__device__ void calc_deriv42_xx(int id, double* output, double * dev_var_in, const int u_offset, double dx, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_xx(int id, double* output, double * dev_var_in, const int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -79,17 +69,11 @@ __device__ void calc_deriv42_xx(int id, double* output, double * dev_var_in, con
     int k = (id/(host_sz_z-6)/(host_sz_x-6)) + 3;
     if (k>=host_sz_z-3) return;
     int pp = IDX(i, j, k);
-    output[pp] = ((-1)*dev_var_in[(u_offset) + pp - 2] 
-                + 16.0*dev_var_in[(u_offset) + pp - 1] 
-                - 30.0*dev_var_in[(u_offset) + pp] 
-                + 16.0*dev_var_in[(u_offset) + pp + 1] 
-                - dev_var_in[(u_offset) + pp + 2] 
-            )*idx_sqrd_by_12;
-
+    output[pp] = ((-1)*dev_var_in[u_offset+pp-2] + 16.0*dev_var_in[u_offset+pp-1] - 30.0*dev_var_in[u_offset+pp] + 16.0*dev_var_in[u_offset+pp+1] - dev_var_in[u_offset+pp+2])*idx_sqrd_by_12;
 }
 
-__device__ void calc_deriv42_yy(int id, double* output, double * dev_var_in, const int u_offset, double dy, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_yy(int id, double* output, double * dev_var_in, const int u_offset, double dy, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -101,17 +85,11 @@ __device__ void calc_deriv42_yy(int id, double* output, double * dev_var_in, con
     int k = (id/(host_sz_z-6)/(host_sz_x-6)) + 3;
     if (k>=host_sz_z-3) return;
     int pp = IDX(i, j, k);
-    output[pp] = ((-1)*dev_var_in[(u_offset) + pp - 2*nx] 
-                + 16.0*dev_var_in[(u_offset) + pp - nx] 
-                - 30.0*dev_var_in[(u_offset) + pp] 
-                + 16.0*dev_var_in[(u_offset) + pp + nx] 
-                - dev_var_in[(u_offset) + pp + 2*nx] 
-            )*idy_sqrd_by_12;
-            
+    output[pp] = ((-1)*dev_var_in[u_offset+pp-2*nx] + 16.0*dev_var_in[u_offset+pp-nx] - 30.0*dev_var_in[u_offset+pp] + 16.0*dev_var_in[u_offset+pp+nx] - dev_var_in[u_offset+pp+2*nx])*idy_sqrd_by_12;         
 }
 
-__device__ void calc_deriv42_zz(int id, double* output, double * dev_var_in, const int u_offset, double dz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_zz(int id, double* output, double * dev_var_in, const int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
     int n = nx * ny;
@@ -124,21 +102,15 @@ __device__ void calc_deriv42_zz(int id, double* output, double * dev_var_in, con
     int k = (id/(host_sz_z-6)/(host_sz_x-6)) + 3;
     if (k>=host_sz_z-3) return;
     int pp = IDX(i, j, k);
-    output[pp] = ((-1)*dev_var_in[(u_offset) + pp - 2*n] 
-                + 16.0*dev_var_in[(u_offset) + pp - n] 
-                - 30.0*dev_var_in[(u_offset) + pp] 
-                + 16.0*dev_var_in[(u_offset) + pp + n] 
-                - dev_var_in[(u_offset) + pp + 2*n] 
-            )*idz_sqrd_by_12;
+    output[pp] = ((-1)*dev_var_in[u_offset+pp-2*n] + 16.0*dev_var_in[u_offset+pp-n] - 30.0*dev_var_in[u_offset+pp] + 16.0*dev_var_in[u_offset+pp+n] - dev_var_in[u_offset+pp+2*n])*idz_sqrd_by_12;
 }
 
-__device__ void calc_deriv42_adv_x(int id, double * output, double * dev_var_in, int u_offset, double dx, int betax,
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) {
+__device__ void calc_deriv42_adv_x(int id, double * output, double * dev_var_in, int u_offset, double dx, int betax, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) 
+{
     int nx = host_sz_x;
     int ny = host_sz_y;
 
     const double idx = 1.0/dx;
-    // const double idx_by_2 = 0.50 * idx;
     const double idx_by_12 = idx / 12.0;
 
     int i = id%(host_sz_x-6) + 3;
@@ -165,14 +137,12 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_deriv42_adv_y(int id, double * output, double * dev_var_in, int u_offset, double dy, int betay,
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) {
-    
+__device__ void calc_deriv42_adv_y(int id, double * output, double * dev_var_in, int u_offset, double dy, int betay, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) 
+{
     int nx = host_sz_x;
     int ny = host_sz_y;
 
     const double idy = 1.0/dy;
-    // const double idy_by_2 = 0.50 * idy;
     const double idy_by_12 = idy / 12.0;
 
     int i = id%(host_sz_x-6) + 3;
@@ -200,15 +170,13 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_deriv42_adv_z(int id, double * output, double * dev_var_in, int u_offset, double dz, int betaz, 
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) {
-
+__device__ void calc_deriv42_adv_z(int id, double * output, double * dev_var_in, int u_offset, double dz, int betaz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) 
+{
     int nx = host_sz_x;
     int ny = host_sz_y;
     int n = nx * ny;
     
     const double idz = 1.0/dz;
-    // const double idz_by_2 = 0.50 * idz;
     const double idz_by_12 = idz / 12.0;
 
     int i = id%(host_sz_x-6) + 3;
@@ -236,8 +204,7 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_ko_deriv42_x(int id, double * output, double * dev_var_in, int u_offset, double dx, 
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+__device__ void calc_ko_deriv42_x(int id, double * output, double * dev_var_in, int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag0)
 {
     int nx = host_sz_x;
     int ny = host_sz_y;
@@ -289,10 +256,8 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_ko_deriv42_y(int id, double * output, double * dev_var_in, int u_offset, double dy,
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+__device__ void calc_ko_deriv42_y(int id, double * output, double * dev_var_in, int u_offset, double dy, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
 {
-    
     int nx = host_sz_x;
     int ny = host_sz_y;
 
@@ -341,8 +306,7 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_ko_deriv42_z(int id, double * output, double * dev_var_in, int u_offset, double dz, 
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+__device__ void calc_ko_deriv42_z(int id, double * output, double * dev_var_in, int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
 {  
     int nx = host_sz_x;
     int ny = host_sz_y;
@@ -396,9 +360,8 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
 
 // device methods with bflag
 
-__device__ void calc_deriv42_x_bflag(int id, double * output, double * dev_var_in, const int u_offset, double dx, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
-
+__device__ void calc_deriv42_x_bflag(int id, double * output, double * dev_var_in, const int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -433,9 +396,8 @@ __device__ void calc_deriv42_x_bflag(int id, double * output, double * dev_var_i
     }
 }
 
-__device__ void calc_deriv42_y_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dy, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
-
+__device__ void calc_deriv42_y_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dy, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -472,8 +434,8 @@ __device__ void calc_deriv42_y_bflag(int id, double* output, double * dev_var_in
     
 }
 
-__device__ void calc_deriv42_z_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_z_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
     int n = nx * ny;
@@ -508,8 +470,8 @@ __device__ void calc_deriv42_z_bflag(int id, double* output, double * dev_var_in
     }
 }
 
-__device__ void calc_deriv42_xx_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dx, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_xx_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -571,8 +533,8 @@ __device__ void calc_deriv42_xx_bflag(int id, double* output, double * dev_var_i
 
 }
 
-__device__ void calc_deriv42_yy_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dy, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_yy_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dy, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
 
@@ -635,8 +597,8 @@ __device__ void calc_deriv42_yy_bflag(int id, double* output, double * dev_var_i
             
 }
 
-__device__ void calc_deriv42_zz_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag){
+__device__ void calc_deriv42_zz_bflag(int id, double* output, double * dev_var_in, const int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
     int nx = host_sz_x; 
     int ny = host_sz_y; 
     int n = nx * ny;
@@ -698,8 +660,8 @@ __device__ void calc_deriv42_zz_bflag(int id, double* output, double * dev_var_i
     }
 }
 
-__device__ void calc_deriv42_adv_x_bflag(int id, double * output, double * dev_var_in, int u_offset, double dx, int betax,
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) {
+__device__ void calc_deriv42_adv_x_bflag(int id, double * output, double * dev_var_in, int u_offset, double dx, int betax, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) 
+{
     int nx = host_sz_x;
     int ny = host_sz_y;
 
@@ -796,9 +758,8 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_deriv42_adv_y_bflag(int id, double * output, double * dev_var_in, int u_offset, double dy, int betay,
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) {
-    
+__device__ void calc_deriv42_adv_y_bflag(int id, double * output, double * dev_var_in, int u_offset, double dy, int betay, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) 
+{
     int nx = host_sz_x;
     int ny = host_sz_y;
 
@@ -905,9 +866,8 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_deriv42_adv_z_bflag(int id, double * output, double * dev_var_in, int u_offset, double dz, int betaz, 
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) {
-
+__device__ void calc_deriv42_adv_z_bflag(int id, double * output, double * dev_var_in, int u_offset, double dz, int betaz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag) 
+{
     int nx = host_sz_x;
     int ny = host_sz_y;
     int n = nx * ny;
@@ -1016,8 +976,7 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
 }
 
 
-__device__ void calc_ko_deriv42_x_bflag(int id, double * output, double * dev_var_in, int u_offset, double dx, 
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+__device__ void calc_ko_deriv42_x_bflag(int id, double * output, double * dev_var_in, int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
 {
     int nx = host_sz_x;
     int ny = host_sz_y;
@@ -1117,10 +1076,8 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_ko_deriv42_y_bflag(int id, double * output, double * dev_var_in, int u_offset, double dy,
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+__device__ void calc_ko_deriv42_y_bflag(int id, double * output, double * dev_var_in, int u_offset, double dy, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
 {
-    
     int nx = host_sz_x;
     int ny = host_sz_y;
 
@@ -1217,8 +1174,7 @@ const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int h
     }
 }
 
-__device__ void calc_ko_deriv42_z_bflag(int id, double * output, double * dev_var_in, int u_offset, double dz, 
-const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+__device__ void calc_ko_deriv42_z_bflag(int id, double * output, double * dev_var_in, int u_offset, double dz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
 {  
     int nx = host_sz_x;
     int ny = host_sz_y;

@@ -5,10 +5,7 @@
  
 #include "cudaDerivs.cuh"
 
-__global__ void calc_derivs1(
-    double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, 
-    int bflag,
+__global__ void calc_derivs1(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"
@@ -145,10 +142,7 @@ __global__ void calc_derivs1(
     calc_deriv42_z(tid, grad_2_At5, dev_var_in, At5Int, hz, host_sz_x, host_sz_y, host_sz_z, bflag);
 }
 
-__global__ void calc_derivs2(
-    double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, 
-    int bflag,
+__global__ void calc_derivs2(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"
@@ -276,10 +270,7 @@ __global__ void calc_derivs2(
     calc_deriv42_adv_z(tid, agrad_2_B2, dev_var_in, B2Int, hz, beta2Int, host_sz_x, host_sz_y, host_sz_z, bflag);
 }
 
-__global__ void calc_derivs1_bflag(
-    double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, 
-    int bflag,
+__global__ void calc_derivs1_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"
@@ -416,10 +407,7 @@ __global__ void calc_derivs1_bflag(
     calc_deriv42_z_bflag(tid, grad_2_At5, dev_var_in, At5Int, hz, host_sz_x, host_sz_y, host_sz_z, bflag);
 }
 
-__global__ void calc_derivs2_bflag(
-    double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, 
-    int bflag,
+__global__ void calc_derivs2_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"
@@ -547,7 +535,7 @@ __global__ void calc_derivs2_bflag(
     calc_deriv42_adv_z_bflag(tid, agrad_2_B2, dev_var_in, B2Int, hz, beta2Int, host_sz_x, host_sz_y, host_sz_z, bflag);
 }
 
-void calc_deriv_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
+void calc_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"
@@ -603,10 +591,7 @@ void calc_deriv_wrapper(double * dev_var_out, double * dev_var_in, double hx, do
 
 
 
-__global__ void calc_ko_derivs(
-    double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, 
-    int bflag,
+__global__ void calc_ko_derivs(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"
@@ -713,10 +698,7 @@ __global__ void calc_ko_derivs(
 }
 
 
-__global__ void calc_ko_derivs_bflag(
-    double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, 
-    const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, 
-    int bflag,
+__global__ void calc_ko_derivs_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"
@@ -822,7 +804,7 @@ __global__ void calc_ko_derivs_bflag(
 
 }
 
-void calc_ko_deriv_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
+void calc_ko_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
     #include "list_of_offset_para.h"
     ,
     #include "list_of_para.h"

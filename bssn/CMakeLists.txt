@@ -30,7 +30,13 @@ if(CUDA_FOUND)
 
 endif()
 
-add_definitions(-DENABLE_CUDA_TEST)
+option(ENABLE_CUDA_TEST "enable test execution" OFF)
+
+if(ENABLE_CUDA_TEST)
+        add_definitions(-DENABLE_CUDA_TEST)
+endif()
+
+
 
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
@@ -72,10 +78,6 @@ set(SRC_FILES
         src/utils.cpp
         # src/computeBSSN.cpp
 
-        cuda_src/bssneqn_solve.cu
-        cuda_src/device_derivs.cu
-        cuda_src/rhs_cuda.cu
-        
         cuda_gr/src/dataGeneration.cpp
         cuda_gr/src/cudaBSSN.cpp
         cuda_gr/src/rhsMethods.cpp
