@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+ 
 #include "cudaRHS.cuh"
 
 enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};

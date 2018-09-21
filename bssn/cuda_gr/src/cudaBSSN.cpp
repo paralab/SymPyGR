@@ -1,4 +1,7 @@
-/* SET HEADER */
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
 
 #include "cudaBSSN.h" 
 

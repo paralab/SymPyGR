@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+
 #ifndef BSSN_EQ_CUH
 #define BSSN_EQ_CUH
 

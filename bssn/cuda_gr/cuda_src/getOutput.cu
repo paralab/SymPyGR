@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+ 
 #include "getOutput.cuh"
 
 __global__ void kernal_get_output (double * dev_var_out, 

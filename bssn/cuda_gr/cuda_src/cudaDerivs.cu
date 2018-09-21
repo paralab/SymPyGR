@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+ 
 #include "cudaDerivs.cuh"
 
 __global__ void calc_derivs1(

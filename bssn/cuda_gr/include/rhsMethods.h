@@ -1,3 +1,7 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
 
 #ifndef RHS_METHODS_H
 #define RHS_METHODS_H

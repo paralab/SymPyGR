@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+ 
 #include "cudaBCS.cuh"
 
 __global__ void cacl_bssn_bcs_x(double * dev_var_out, double * dev_var_in, 

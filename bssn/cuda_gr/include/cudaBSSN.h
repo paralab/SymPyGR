@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+
 #ifndef CUDA_BSSN_H
 #define CUDA_BSSN_H
 

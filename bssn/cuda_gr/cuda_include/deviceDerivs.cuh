@@ -1,7 +1,8 @@
 /**
  * Created on: March 15, 2018
- * 		Author: Akila
+ * 		Author: Akila, Eranga, Eminda, Ruwan
  **/
+
 #ifndef DEVICE_DERIV_CUH
 #define DEVICE_DERIV_CUH
 

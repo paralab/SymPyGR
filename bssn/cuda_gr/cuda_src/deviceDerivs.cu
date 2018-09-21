@@ -1,6 +1,6 @@
 /**
  * Created on: March 15, 2018
- * 		Author: Akila
+ * 		Author: Akila, Eranga, Eminda, Ruwan
  **/
 
 #include "deviceDerivs.cuh"

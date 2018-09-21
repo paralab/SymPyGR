@@ -1,8 +1,12 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+
 #include "dataGeneration.h"
 
-void data_generation_blockwise_mixed(double mean, double std, unsigned int numberOfLevels, 
-unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkList, double ** var_in_array, double ** var_out_array){
-
+void data_generation_blockwise_mixed(double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkList, double ** var_in_array, double ** var_out_array)
+{
     const unsigned int maxDepth=12;
 
     // Calculate block sizes
@@ -21,7 +25,6 @@ unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkLi
 
     // Generating levels and block structure
     int total_grid_points = 0;
-    double total_Megaflops = 0;
     int p[upper_bound-lower_bound+1];
     for (int i=0; i<upper_bound-lower_bound+1; i++) p[i] = 0;
 
@@ -52,7 +55,7 @@ unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkLi
         std::cout << i+lower_bound << ": ";
         std::cout << std::setw(3) << p[i]*100/numberOfLevels << "% " << std::string(p[i]*100/numberOfLevels, '*') << std::endl;
     }
-    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << " | FlopCount: " << total_Megaflops/1000 << "GigaFlops" << std::endl;
+    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
     std::cout << "Total RAM requiremnet for input: " << ram_requirement << "MB" << std::endl;
     std::cout << "Total RAM requiremnet for both input/output: " << ram_requirement*2 << "MB" << std::endl;
 
@@ -133,10 +136,8 @@ unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkLi
 }
 
 
-void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, unsigned int numberOfLevels, 
-unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkList, double ** var_in_array, double ** var_out_array, 
-double ** var_in, double ** var_out){
-
+void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, unsigned int numberOfLevels, unsigned int lower_bound, unsigned int upper_bound, bool isRandom, Block * blkList, double ** var_in_array, double ** var_out_array, double ** var_in, double ** var_out)
+{
     const unsigned int maxDepth=12;
 
     // Calculate block sizes
@@ -155,7 +156,6 @@ double ** var_in, double ** var_out){
 
     // Generating levels and block structure
     int total_grid_points = 0;
-    double total_Megaflops = 0;
     int p[upper_bound-lower_bound+1];
     for (int i=0; i<upper_bound-lower_bound+1; i++) p[i] = 0;
 
@@ -195,11 +195,11 @@ double ** var_in, double ** var_out){
         std::cout << i+lower_bound << ": ";
         std::cout << std::setw(3) << p[i]*100/numberOfLevels << "% " << std::string(p[i]*100/numberOfLevels, '*') << std::endl;
     }
-    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << " | FlopCount: " << total_Megaflops/1000 << "GigaFlops" << std::endl;
+    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
     std::cout << "Total RAM requiremnet for input: " << ram_requirement << "MB" << std::endl;
     std::cout << "Total RAM requiremnet for both input/output: " << ram_requirement*2 << "MB" << std::endl;
     // RAM ---
-    std::cout << "Total RAM requiremnet for both GPU and CPU version: " << ram_requirement*2*2 + block_sizes[upper_bound]*210/BSSN_NUM_VARS << "MB" << std::endl;
+    std::cout << "Total RAM requiremnet for both GPU and CPU version: " << ram_requirement*2*2 + block_sizes[upper_bound]*210/BSSN_NUM_VARS << "MB" << std::endl; // block_sizes[upper_bound]*210/BSSN_NUM_VARS this is for allocating intermediate arrays in CPU
 
     // Checking for available ram
     struct sysinfo myinfo; 

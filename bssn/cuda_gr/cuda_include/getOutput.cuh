@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+
 #ifndef GET_OUTPUT_CUH
 #define GET_OUTPUT_CUH
 

@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Adapted by: Akila, Eranga, Eminda, Ruwan
+ **/
+
 #include "mergeSort.h"
 
 void merge(Block * arr, int l, int m, int r)

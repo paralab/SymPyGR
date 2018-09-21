@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Adapted by: Akila, Eranga, Eminda, Ruwan
+ **/
+
 #ifndef MERGE_SORT_H
 #define MERGE_SORT_H
 

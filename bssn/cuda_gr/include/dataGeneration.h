@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+
 #ifndef DATA_GENERATION_H
 #define DATA_GENERATION_H
 

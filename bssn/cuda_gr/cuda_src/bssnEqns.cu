@@ -1,3 +1,8 @@
+/**
+ * Created on: Sep 21, 2018
+ * 		Author: Akila, Eranga, Eminda, Ruwan
+ **/
+ 
 #include "bssnEqns.cuh"
 
 __constant__ double CU_ETA_CONST=0.1;
