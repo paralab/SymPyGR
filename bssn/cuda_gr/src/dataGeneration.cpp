@@ -47,7 +47,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
     }
 
     // distribution representation requirement
-    std::cout << "---Level distribution---" << std::endl;
+    std::cout << "---Level distribution---" << "\033[0;33m" << std::endl;
     double ram_requirement = 0.0;
     for (int i=0; i<=upper_bound-lower_bound; i++) {
         ram_requirement += block_sizes[i+lower_bound]*p[i]; // this is calculated in MBs
@@ -55,7 +55,7 @@ void data_generation_blockwise_mixed(double mean, double std, unsigned int numbe
         std::cout << i+lower_bound << ": ";
         std::cout << std::setw(3) << p[i]*100/numberOfLevels << "% " << std::string(p[i]*100/numberOfLevels, '*') << std::endl;
     }
-    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
+    std::cout << "\033[0m" << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
     std::cout << "Total RAM requiremnet for input: " << ram_requirement << "MB" << std::endl;
     std::cout << "Total RAM requiremnet for both input/output: " << ram_requirement*2 << "MB" << std::endl;
 
@@ -187,7 +187,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
     const unsigned long unzip_dof_cpu=unzipSz;
 
     // distribution representation requirement
-    std::cout << "---Level distribution---" << std::endl;
+    std::cout << "---Level distribution---" << "\033[0;33m" << std::endl;
     double ram_requirement = 0.0;
     for (int i=0; i<=upper_bound-lower_bound; i++) {
         ram_requirement += block_sizes[i+lower_bound]*p[i]; // this is calculated in MBs
@@ -195,7 +195,7 @@ void data_generation_blockwise_and_bssn_var_wise_mixed(double mean, double std, 
         std::cout << i+lower_bound << ": ";
         std::cout << std::setw(3) << p[i]*100/numberOfLevels << "% " << std::string(p[i]*100/numberOfLevels, '*') << std::endl;
     }
-    std::cout << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
+    std::cout << "\033[0m" << "Total blocks: " << block_no << " | Total grid points: " << 1.0*total_grid_points/1000000 << "x10^6" << std::endl;
     std::cout << "Total RAM requiremnet for input: " << ram_requirement << "MB" << std::endl;
     std::cout << "Total RAM requiremnet for both input/output: " << ram_requirement*2 << "MB" << std::endl;
     // RAM ---

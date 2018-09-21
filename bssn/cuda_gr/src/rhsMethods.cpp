@@ -7,13 +7,13 @@
 
 void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){ 
 
-    int steamCountToLevel[5] = {3, 3, 3, 2, 2};
+    int steamCountToLevel[5] = {3, 3, 3, 2, 2}; // minimum number of streams is 2
 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
 
     // Creating cuda streams for the process
     cudaStream_t stream;
-    cudaStream_t streams[steamCountToLevel[0]]; // usually steamCountToLevel[0] should be the max number of streams verify it before execute.
+    cudaStream_t streams[steamCountToLevel[0]]; // steamCountToLevel[0] is the max required based on steamCountToLevel
     for (int index=0; index<steamCountToLevel[0]; index++){
         CHECK_ERROR(cudaStreamCreate(&streams[index]), "cudaStream creation");
     }
@@ -59,10 +59,12 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         data_usage = num_streams*(blk.blkSize*BSSN_NUM_VARS*sizeof(double)*2)/1024/1024;
 
         if (data_usage+fixed_usage>(GPUCapacity)){
-            std::cout << "Required GPU memory = " << data_usage+fixed_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
+            std::cout << "\033[1;31m" << "Required GPU memory = " << data_usage+fixed_usage << " Failed to allocate enough memory. Program terminated..." << "\033[0m" << std::endl;
             exit(0);
         }
-        std::cout << "Required GPU memory = " << data_usage+fixed_usage << std::endl;
+        std::cout << "Required GPU memory = " << data_usage+fixed_usage << "MB\t";
+        std::cout << level << "\t";
+        std::cout << "block no:" << current_index << " \t " << "block no:" << offsets[level+1-lower_bound] << std::endl;
 
         // Allocating device memory to hold input and output
         double ** dev_var_in_array = new double*[num_streams];
@@ -81,14 +83,10 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         #include "bssnrhs_cuda_variable_malloc_adv.h"
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
-
-        
-        std::cout << current_index << " \t " << offsets[level+1-lower_bound] << std::endl;
         
         // Start block processing
         int streamIndex = 0;
         int unzip_dof=blk.blkSize;
-        bool isAsyncStarted = false;
 
         unsigned int sz[3];
         double ptmin[3], ptmax[3];
@@ -108,6 +106,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         ptmax[0]=1.0;
         ptmax[1]=1.0;
         ptmax[2]=1.0;
+
         for (int i=current_index; i<offsets[level+1-lower_bound]; i++ ){
             blk=blkList[i];
 
@@ -125,7 +124,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
 
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[i%num_streams], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[i%num_streams]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
         }
-        CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+        CHECK_ERROR(cudaDeviceSynchronize(), "device sync");
 
         current_index = offsets[level+1-lower_bound];
 
@@ -146,9 +145,6 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
 }
 
 void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array){ 
-    
-    int steamCountToLevel[5] = {3, 3, 3, 2, 2};
-    int hybrid_divider = 3;
     
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
 
@@ -174,10 +170,10 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     data_usage = blk.blkSize*BSSN_NUM_VARS*sizeof(double)*2/1024/1024;
 
     if (data_usage+fixed_usage>(GPUCapacity)){
-        std::cout << "Required GPU memory = " << data_usage+fixed_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
+        std::cout << "\033[1;31m" << "Required GPU memory = " << data_usage+fixed_usage << " Failed to allocate enough memory. Program terminated..." << "\033[0m" << std::endl;
         exit(0);
     }
-    std::cout << "Required GPU memory = " << data_usage+fixed_usage << std::endl;
+    std::cout << "Required GPU memory = " << data_usage+fixed_usage << "MB" << std::endl;
 
     // Allocating device memory to hold input and output
     double ** dev_var_in_array = new double*[2];
@@ -252,7 +248,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
         if (!isAsyncStarted) isAsyncStarted=true;
     }
 
-    CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+    CHECK_ERROR(cudaDeviceSynchronize(), "device sync");
 
     // Release GPU memory
     #include "bssnrhs_cuda_mdealloc.h"
@@ -280,7 +276,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
 
     // Creating cuda streams for the process
     cudaStream_t stream;
-    cudaStream_t streams[steamCountToLevel[0]]; // usually steamCountToLevel[0] should be the max number of streams verify it before execute.
+    cudaStream_t streams[steamCountToLevel[0]]; // steamCountToLevel[0] is the max required based on steamCountToLevel
     for (int index=0; index<steamCountToLevel[0]; index++){
         CHECK_ERROR(cudaStreamCreate(&streams[index]), "cudaStream creation");
     }
@@ -330,10 +326,12 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         }
 
         if (data_usage+fixed_usage>(GPUCapacity)){
-            std::cout << "Required GPU memory = " << data_usage+fixed_usage << " Failed to allocate enough memory. Program terminated..." << std::endl;
+            std::cout << "\033[1;31m" << "Required GPU memory = " << data_usage+fixed_usage << " Failed to allocate enough memory. Program terminated..." << "\033[0m" << std::endl;
             exit(0);
         }
-        std::cout << "Required GPU memory = " << data_usage+fixed_usage << std::endl;
+        std::cout << "Required GPU memory = " << data_usage+fixed_usage << "MB\t";
+        std::cout << level << "\t";
+        std::cout << "block no." << current_index << " \t " << "block no." << offsets[level+1-lower_bound] << std::endl;
 
         // Allocating device memory to hold input and output
         double ** dev_var_in_array = new double*[num_streams];
@@ -356,7 +354,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
 
-        std::cout << current_index << " \t " << offsets[level+1-lower_bound] << std::endl;
+        
         
         // Start block processing
         int streamIndex = 0;
@@ -443,7 +441,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
 }
 
 #include "rhs.h"
-void CPU_sequence(unsigned int numberOfLevels, Block * blkList, double ** var_in, double ** var_out){
+void CPU_sequential(unsigned int numberOfLevels, Block * blkList, double ** var_in, double ** var_out){
 
     double ptmin[3], ptmax[3];
     unsigned int sz[3];

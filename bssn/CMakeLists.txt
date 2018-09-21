@@ -30,6 +30,7 @@ if(CUDA_FOUND)
 
 endif()
 
+add_definitions(-DENABLE_CUDA_TEST)
 
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
