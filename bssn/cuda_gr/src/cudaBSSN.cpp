@@ -58,6 +58,7 @@ int main (int argc, char** argv){
         data_generation_blockwise_and_bssn_var_wise_mixed(mean, std, numberOfBlocks, lower_bound, upper_bound, isRandom, blkList, var_in_array, var_out_array, var_in, var_out);
     #endif
 
+    cuda::profile::t_overall.start();
     #if parallelized
         GPU_parallelized(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
@@ -67,11 +68,13 @@ int main (int argc, char** argv){
     #if hybrid
         GPU_hybrid(numberOfBlocks, blkList, lower_bound, upper_bound, var_in_array, var_out_array);
     #endif
-
+    cuda::profile::t_overall.stop();
 
     #ifdef ENABLE_CUDA_TEST
     std::cout << std::endl;
+    cuda::profile::t_cpu.start();
     CPU_sequential(numberOfBlocks, blkList, var_in, var_out);
+    cuda::profile::t_cpu.stop();
 
     // Verify outputs
     double accuracy = 1e-5;
@@ -108,6 +111,9 @@ int main (int argc, char** argv){
     }
     #endif
 
+    std::cout << std::endl;
+    cuda::profile::printOutput();
+    
     //Free host memory
     for (int blk=0; blk<numberOfBlocks; blk++){
         CHECK_ERROR(cudaFreeHost(var_in_array[blk]), "free host memory");

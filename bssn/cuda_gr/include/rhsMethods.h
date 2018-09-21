@@ -18,6 +18,7 @@
 #include "block.h"
 #include "mergeSort.h"
 #include "cudaRHS.cuh"
+#include "profileGPU.h"
 
 #define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
 

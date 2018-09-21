@@ -7,6 +7,8 @@
 
 void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array)
 { 
+    std::cout << "\033[1;36m ------------------------ PARALLELIZED METHOD ------------------------ \033[0m" << std::endl;
+
     int steamCountToLevel[5] = {3, 3, 3, 2, 2}; // minimum number of streams is 2
 
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
@@ -70,6 +72,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         double ** dev_var_in_array = new double*[num_streams];
         double ** dev_var_out_array = new double*[num_streams];
 
+        cuda::profile::t_malloc.start();
         for (int i=0; i<num_streams; i++){
             CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[i], blk.blkSize*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[i]");
             CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[i], blk.blkSize*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[i]");
@@ -83,6 +86,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         #include "bssnrhs_cuda_variable_malloc_adv.h"
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
+        cuda::profile::t_malloc.stop();
         
         // Start block processing
         int streamIndex = 0;
@@ -107,6 +111,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         ptmax[1]=1.0;
         ptmax[2]=1.0;
 
+        cuda::profile::t_kernel_memcopy.start();
         for (int i=current_index; i<offsets[level+1-lower_bound]; i++ ){
             blk=blkList[i];
 
@@ -125,16 +130,19 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[i%num_streams], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[i%num_streams]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
         }
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync");
+        cuda::profile::t_kernel_memcopy.stop();
 
         current_index = offsets[level+1-lower_bound];
 
         // Release GPU memory
+        cuda::profile::t_free.start();
         #include "bssnrhs_cuda_mdealloc.h"
         #include "bssnrhs_cuda_mdealloc_adv.h"
         for (int i=0; i<num_streams; i++){
             CHECK_ERROR(cudaFree(dev_var_in_array[i]), "dev_var_in_array[0] cudaFree");
             CHECK_ERROR(cudaFree(dev_var_out_array[i]), "dev_var_out_array[0] cudaFree");
         }
+        cuda::profile::t_free.stop();
     }
 
     // destroying cuda streams
@@ -146,6 +154,8 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
 
 void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array)
 { 
+    std::cout << "\033[1;36m ------------------------ ASYNCHRONOUS METHOD ------------------------ \033[0m" << std::endl;
+
     CHECK_ERROR(cudaSetDevice(0), "cudaSetDevice in computeBSSN"); // Set the GPU that we are going to deal with
 
     // creating cuda streams for the process
@@ -176,6 +186,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     std::cout << "Required GPU memory = " << data_usage+fixed_usage << "MB" << std::endl;
 
     // Allocating device memory to hold input and output
+    cuda::profile::t_malloc.start();
     double ** dev_var_in_array = new double*[2];
     double ** dev_var_out_array = new double*[2];
 
@@ -193,6 +204,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     #include "bssnrhs_cuda_variable_malloc_adv.h"
     #include "bssnrhs_cuda_malloc.h"
     #include "bssnrhs_cuda_malloc_adv.h"
+    cuda::profile::t_malloc.stop();
         
     // Start block processing
     int streamIndex = 0;
@@ -218,6 +230,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     ptmax[1]=1.0;
     ptmax[2]=1.0;
 
+    cuda::profile::t_kernel_memcopy.start();
     for(int index=0; index<=numberOfBlocks-1; index++) {
         blk=blkList[index];
 
@@ -249,8 +262,10 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     }
 
     CHECK_ERROR(cudaDeviceSynchronize(), "device sync");
+    cuda::profile::t_kernel_memcopy.stop();
 
     // Release GPU memory
+    cuda::profile::t_free.start();
     #include "bssnrhs_cuda_mdealloc.h"
     #include "bssnrhs_cuda_mdealloc_adv.h"
     CHECK_ERROR(cudaFree(dev_var_in_array[0]), "dev_var_in_array[0] cudaFree");
@@ -258,6 +273,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
 
     CHECK_ERROR(cudaFree(dev_var_out_array[0]), "dev_var_out_array[0] cudaFree");
     CHECK_ERROR(cudaFree(dev_var_out_array[1]), "dev_var_out_array[1] cudaFree");
+    cuda::profile::t_free.stop();
 
     // destroying cuda streams
     CHECK_ERROR(cudaStreamDestroy(streams[0]), "cudaStream 1 destruction");
@@ -269,6 +285,8 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
 
 void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_bound, unsigned int upper_bound, double ** var_in_array, double ** var_out_array)
 { 
+    std::cout << "\033[1;36m ------------------------ HYBRID METHOD ------------------------ \033[0m" << std::endl;
+
     int steamCountToLevel[5] = {3, 3, 3, 2, 2};
     int hybrid_divider = 3;
 
@@ -337,6 +355,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         double ** dev_var_in_array = new double*[num_streams];
         double ** dev_var_out_array = new double*[num_streams];
 
+        cuda::profile::t_malloc.start();
         for (int i=0; i<num_streams; i++){
             CHECK_ERROR(cudaMalloc((void**)&dev_var_in_array[i], blk.blkSize*BSSN_NUM_VARS*sizeof(double)), "dev_var_in_array[i]");
             CHECK_ERROR(cudaMalloc((void**)&dev_var_out_array[i], blk.blkSize*BSSN_NUM_VARS*sizeof(double)), "dev_var_out_array[i]");
@@ -353,7 +372,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         #include "bssnrhs_cuda_variable_malloc_adv.h"
         #include "bssnrhs_cuda_malloc.h"
         #include "bssnrhs_cuda_malloc_adv.h"
-
+        cuda::profile::t_malloc.stop();
         
         
         // Start block processing
@@ -379,6 +398,8 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         ptmax[0]=1.0;
         ptmax[1]=1.0;
         ptmax[2]=1.0;
+
+        cuda::profile::t_kernel_memcopy.start();
         for (int i=current_index; i<offsets[level+1-lower_bound]; i++ ){
             blk=blkList[i];
 
@@ -421,16 +442,19 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
             }
         }
         CHECK_ERROR(cudaDeviceSynchronize(), "device sync in computeBSSN");
+        cuda::profile::t_kernel_memcopy.stop();
 
         current_index = offsets[level+1-lower_bound];
 
         // Release GPU memory
+        cuda::profile::t_free.start();
         #include "bssnrhs_cuda_mdealloc.h"
         #include "bssnrhs_cuda_mdealloc_adv.h"
         for (int i=0; i<num_streams; i++){
             CHECK_ERROR(cudaFree(dev_var_in_array[i]), "dev_var_in_array[0] cudaFree");
             CHECK_ERROR(cudaFree(dev_var_out_array[i]), "dev_var_out_array[0] cudaFree");
         }
+        cuda::profile::t_free.stop();
     }
 
     // destroying cuda streams

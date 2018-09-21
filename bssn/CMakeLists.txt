@@ -30,13 +30,7 @@ if(CUDA_FOUND)
 
 endif()
 
-option(ENABLE_CUDA_TEST "enable test execution" OFF)
-
-if(ENABLE_CUDA_TEST)
-        add_definitions(-DENABLE_CUDA_TEST)
-endif()
-
-
+# add_definitions(-DENABLE_CUDA_TEST)
 
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
@@ -68,6 +62,8 @@ set(INC_FILES
         cuda_gr/include/cudaBSSN.h
         cuda_gr/include/rhsMethods.h
         cuda_gr/include/mergeSort.h
+        cuda_gr/include/profileGPU.h
+        cuda_gr/include/profilerClass.h
         )
 
 set(SRC_FILES
@@ -82,6 +78,8 @@ set(SRC_FILES
         cuda_gr/src/cudaBSSN.cpp
         cuda_gr/src/rhsMethods.cpp
         cuda_gr/src/mergeSort.cpp
+        cuda_gr/src/profileGPU.cpp
+        cuda_gr/src/profilerClass.cpp
         )
 
 
