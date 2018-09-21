@@ -97,7 +97,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         unsigned int bflag = 0;
         double dx, dy, dz;
 
-        bflag=1;
+        bflag=0;
 
         dx=0.1;
         dy=0.1;
@@ -216,7 +216,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     unsigned int bflag = 0;
     double dx, dy, dz;
 
-    bflag=1;
+    bflag=0;
 
     dx=0.1;
     dy=0.1;
@@ -385,7 +385,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         unsigned int bflag = 0;
         double dx, dy, dz;
 
-        bflag=1;
+        bflag=0;
 
         dx=0.1;
         dy=0.1;
@@ -481,7 +481,7 @@ void CPU_sequential(unsigned int numberOfLevels, Block * blkList, double ** var_
         sz[1]=blkList[blk].node1D_y;
         sz[2]=blkList[blk].node1D_z;
 
-        bflag=1;
+        bflag=0;
 
         dx=0.1;
         dy=0.1;

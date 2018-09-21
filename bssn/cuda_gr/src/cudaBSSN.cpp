@@ -77,7 +77,7 @@ int main (int argc, char** argv){
     cuda::profile::t_cpu.stop();
 
     // Verify outputs
-    double accuracy = 1e-5;
+    double accuracy = 1e-10;
     for (int blk=0; blk<numberOfBlocks; blk++){
         for(int bssn_var=0; bssn_var<BSSN_NUM_VARS; bssn_var++){
             int sizeofBlock = blkList[blk].blkSize;
