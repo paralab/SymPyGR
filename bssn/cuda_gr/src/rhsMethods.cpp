@@ -464,6 +464,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
     return;
 }
 
+#ifdef ENABLE_CUDA_TEST
 #include "rhs.h"
 void CPU_sequential(unsigned int numberOfLevels, Block * blkList, double ** var_in, double ** var_out)
 {
@@ -497,3 +498,4 @@ void CPU_sequential(unsigned int numberOfLevels, Block * blkList, double ** var_
         bssnrhs(var_out, (const double **)var_in, offset, ptmin, ptmax, sz, bflag);
     }
 }
+#endif
