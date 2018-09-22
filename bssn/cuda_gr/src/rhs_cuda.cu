@@ -9,7 +9,8 @@ namespace cuda
 
 
 
-    void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars)
+    void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,
+            unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars, cudaStream_t stream)
     {
         cuda::profile::t_overall.start();
 
@@ -17,7 +18,7 @@ namespace cuda
 
             //get GPU information.
             // assumes the if there are multiple gpus per node all have the same specification.
-            cuda::__CUDA_DEVICE_PROPERTIES=getGPUDeviceInfo(0);
+            cuda::__CUDA_DEVICE_PROPERTIES=getGPUDeviceInfo(0, stream);
             // device properties for the host
             cudaDeviceProp deviceProp;
             cudaGetDeviceProperties(&deviceProp,0);
@@ -30,19 +31,19 @@ namespace cuda
 
 
             //send blocks to the gpu
-            cuda::__DENDRO_BLOCK_LIST=cuda::copyArrayToDevice(blkList,numBlocks);
-            cuda::__DENDRO_NUM_BLOCKS=cuda::copyValueToDevice(&numBlocks);
+            cuda::__DENDRO_BLOCK_LIST=cuda::copyArrayToDevice(blkList,numBlocks, stream);
+            cuda::__DENDRO_NUM_BLOCKS=cuda::copyValueToDevice(&numBlocks, stream);
 
-            cuda::__BSSN_NUM_VARS=cuda::copyValueToDevice(&BSSN_NUM_VARS);
-            cuda::__BSSN_CONSTRAINT_NUM_VARS=cuda::copyValueToDevice(&BSSN_CONSTRAINT_NUM_VARS);
+            cuda::__BSSN_NUM_VARS=cuda::copyValueToDevice(&BSSN_NUM_VARS, stream);
+            cuda::__BSSN_CONSTRAINT_NUM_VARS=cuda::copyValueToDevice(&BSSN_CONSTRAINT_NUM_VARS, stream);
 
-            cuda::__GPU_BLOCK_SHARED_MEM_UTIL=cuda::copyValueToDevice(&GPU_BLOCK_SHARED_MEM_UTIL);
+            cuda::__GPU_BLOCK_SHARED_MEM_UTIL=cuda::copyValueToDevice(&GPU_BLOCK_SHARED_MEM_UTIL, stream);
 
             //allocate memory for unzip vectors
-            cuda::__UNZIP_INPUT=cuda::alloc2DCudaArray<double>(uZipVars,BSSN_NUM_VARS,UNZIP_DOF_SZ);
-            cuda::__UNZIP_OUTPUT=cuda::alloc2DCudaArray<double>(BSSN_NUM_VARS,UNZIP_DOF_SZ);
+            cuda::__UNZIP_INPUT=cuda::alloc2DCudaArray<double>(uZipVars,BSSN_NUM_VARS,UNZIP_DOF_SZ, stream);
+            cuda::__UNZIP_OUTPUT=cuda::alloc2DCudaArray<double>(BSSN_NUM_VARS,UNZIP_DOF_SZ, stream);
 
-            cuda::__BSSN_COMPUTE_PARMS=cuda::copyValueToDevice(&(*bssnPars));
+            cuda::__BSSN_COMPUTE_PARMS=cuda::copyValueToDevice(&(*bssnPars), stream);
 
 
         cuda::profile::t_H2D_Comm.stop();
@@ -56,7 +57,7 @@ namespace cuda
         }
 
         const unsigned int derivSz=(maxBlkSz);
-        cuda::__DENDRO_BLK_MAX_SZ=cuda::copyValueToDevice(&derivSz);
+        cuda::__DENDRO_BLK_MAX_SZ=cuda::copyValueToDevice(&derivSz, stream);
         //const size_t deriv_mem_sz= derivSz*(deviceProp.multiProcessorCount);
         const unsigned int numSM=deviceProp.multiProcessorCount;
 
@@ -68,7 +69,7 @@ namespace cuda
             derivWorkSpace.allocateDerivMemory(maxBlkSz,numSM);
             CUDA_CHECK_ERROR();
 
-            cuda::__BSSN_DERIV_WORKSPACE=cuda::copyValueToDevice(&derivWorkSpace);
+            cuda::__BSSN_DERIV_WORKSPACE=cuda::copyValueToDevice(&derivWorkSpace, stream);
             CUDA_CHECK_ERROR();
 
         cuda::profile::t_cudaMalloc_derivs.stop();
@@ -96,25 +97,25 @@ namespace cuda
         /*cuda::__compute_a_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cuda::__compute_b_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_b_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cuda::__compute_gt_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_gt_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cuda::__compute_chi_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_chi_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cuda::__compute_At_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_At_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cuda::__compute_K_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_K_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cuda::__compute_Gt_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_Gt_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cuda::__compute_B_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_B_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
         cudaDeviceSynchronize();
@@ -134,14 +135,10 @@ namespace cuda
         cudaFree(cuda::__BSSN_CONSTRAINT_NUM_VARS);
         cudaFree(cuda::__GPU_BLOCK_SHARED_MEM_UTIL);
 
-        cuda::dealloc2DCudaArray(cuda::__UNZIP_INPUT,BSSN_NUM_VARS);
-        cuda::dealloc2DCudaArray(cuda::__UNZIP_OUTPUT,BSSN_NUM_VARS);
-
-
+        cuda::dealloc2DCudaArray(cuda::__UNZIP_INPUT,BSSN_NUM_VARS, stream);
+        cuda::dealloc2DCudaArray(cuda::__UNZIP_OUTPUT,BSSN_NUM_VARS, stream);
 
         cuda::profile::t_overall.stop();
-
-
     }
 
 }

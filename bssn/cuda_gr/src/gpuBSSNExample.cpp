@@ -36,8 +36,6 @@ int main (int argc, char** argv)
             blkLevs[count]=(int)number;
             count++;
         }
-
-
     }
 
     std::vector<ot::Block> blkList;
@@ -57,7 +55,7 @@ int main (int argc, char** argv)
 
     const unsigned int UNZIP_DOF=unzipSz;
 
-
+    // printf("unzip size = %d\n", unzipSz);
     // variable input
     double ** varUnzipIn = new double*[bssn::BSSN_NUM_VARS];
     double ** varUnzipOutGPU = new double*[bssn::BSSN_NUM_VARS];
@@ -118,6 +116,7 @@ int main (int argc, char** argv)
         }
 
     }
+    
 
     std::cout<<YLW<<" ================================"<<NRM<<std::endl;
     std::cout<<YLW<<"     data init end             "<<NRM<<std::endl;
@@ -188,38 +187,93 @@ int main (int argc, char** argv)
     bssnParams.ETA_DAMPING=bssn::ETA_DAMPING;
     bssnParams.ETA_DAMPING_EXP=bssn::ETA_DAMPING_EXP;
     bssnParams.KO_DISS_SIGMA=bssn::KO_DISS_SIGMA;
-    std::vector<cuda::_Block> blkCudaList;
-    blkCudaList.resize(blkList.size());
-    double hx[3];
-
-    for(unsigned int blk=0;blk<blkList.size();blk++)
-    {
-        offset=blkList[blk].getOffset();
-        sz[0]=blkList[blk].getAllocationSzX();
-        sz[1]=blkList[blk].getAllocationSzY();
-        sz[2]=blkList[blk].getAllocationSzZ();
-
-        bflag=blkList[blk].getBlkNodeFlag();
-
-        dx = blkList[blk].computeGridDx();
-        dy = blkList[blk].computeGridDy();
-        dz = blkList[blk].computeGridDz();
-
-        hx[0]=dx;
-        hx[1]=dy;
-        hx[2]=dz;
-
-        ptmax[0] = ptmin[0] + dx * (sz[0]);
-        ptmax[1] = ptmin[1] + dx * (sz[1]);
-        ptmax[2] = ptmin[2] + dx * (sz[2]);
-
-        blkCudaList[blk]=cuda::_Block((const double *)ptmin,(const double *)ptmax,offset,bflag,(const unsigned int*)sz, (const double *)hx);
-
+    int numberOfConcurrentBlocks = 1;
+    int streamCount = 2;
+    cudaStream_t stream;
+    cudaStream_t streams[streamCount]; // steamCountToLevel[0] is the max required based on steamCountToLevel
+    for (int index=0; index<streamCount; index++){
+        cudaStreamCreate(&streams[index]);
     }
 
-    cuda::profile::initialize();
+    for(unsigned int blk=0; blk<blkList.size(); blk+=numberOfConcurrentBlocks) {
+        
+        unsigned int sz[3];
+        int temp_unzip_dof = 0;
+        std::vector<ot::Block> tempBlkList;
+        tempBlkList.resize((blk+numberOfConcurrentBlocks>blkList.size()?
+                blkList.size()-blk:numberOfConcurrentBlocks));
 
-    cuda::computeRHS(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams);
+        double ** temp_var_in = new double*[bssn::BSSN_NUM_VARS];
+        double ** temp_gpu_out = new double*[bssn::BSSN_NUM_VARS];
+        
+        for(unsigned int i=0; i<numberOfConcurrentBlocks; i++) {
+            if(blk + i < blkList.size()) {
+                tempBlkList[i]=blkList[blk+i];
+                tempBlkList[i].setOffset(temp_unzip_dof);
+                temp_unzip_dof+=blkList[blk+i].getAllocationSzX()
+                                *blkList[blk+i].getAllocationSzY()
+                                *blkList[blk+i].getAllocationSzZ();
+            } else break;
+        }
+
+        for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
+        {
+            temp_var_in[var]=new double[temp_unzip_dof];
+            temp_gpu_out[var]=new double[temp_unzip_dof];
+        }
+        // printf(" temp_unzip_dof %d\n",temp_unzip_dof);
+
+        for(unsigned int m=0; m<tempBlkList.size(); m++) {
+            sz[0]=tempBlkList[m].getAllocationSzX();
+            sz[1]=tempBlkList[m].getAllocationSzY();
+            sz[2]=tempBlkList[m].getAllocationSzZ();
+            
+            for(unsigned int var=0; var < bssn::BSSN_NUM_VARS; var++) {
+                for (unsigned int k = 0; k < sz[2]; k++) {
+                    for (unsigned int j = 0; j < sz[1]; j++) {
+                        for (unsigned int i = 0; i < sz[0]; i++) {
+                            temp_var_in[var][tempBlkList[m].getOffset()+k*(sz[1]*sz[0])+j*(sz[0])+i]
+                            = varUnzipIn[var][blkList[blk+m].getOffset()+k*(sz[1]*sz[0])+j*(sz[0])+i];
+                        }
+                    }
+                }
+            }
+        }
+    
+        std::vector<cuda::_Block> blkCudaList;
+        blkCudaList.resize(tempBlkList.size());
+        double hx[3];
+
+        for(unsigned int blk=0;blk<tempBlkList.size();blk++)
+        {
+            int offset=tempBlkList[blk].getOffset();
+            sz[0]=tempBlkList[blk].getAllocationSzX();
+            sz[1]=tempBlkList[blk].getAllocationSzY();
+            sz[2]=tempBlkList[blk].getAllocationSzZ();
+
+            bflag=tempBlkList[blk].getBlkNodeFlag();
+
+            dx = tempBlkList[blk].computeGridDx();
+            dy = tempBlkList[blk].computeGridDy();
+            dz = tempBlkList[blk].computeGridDz();
+
+            hx[0]=dx;
+            hx[1]=dy;
+            hx[2]=dz;
+
+            ptmax[0] = ptmin[0] + dx * (sz[0]);
+            ptmax[1] = ptmin[1] + dx * (sz[1]);
+            ptmax[2] = ptmin[2] + dx * (sz[2]);
+
+            blkCudaList[blk]=cuda::_Block((const double *)ptmin,(const double *)ptmax,offset,bflag,(const unsigned int*)sz, (const double *)hx);
+
+        }
+
+        cuda::profile::initialize();
+
+        cuda::computeRHS(temp_gpu_out,(const double **)temp_var_in,&(*(blkCudaList.begin())),
+                blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams, streams[blk%streamCount]);
+    }
 
     cuda::profile::printOutput(blkList);
 
