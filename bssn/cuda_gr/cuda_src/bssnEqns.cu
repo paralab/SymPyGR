@@ -15,7 +15,7 @@ __global__ void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const 
     #include "para_derivs_offsets.h"
     )
 {
-    int thread_id = blockIdx.x*256 + threadIdx.x; 
+    int thread_id = blockIdx.x*64 + threadIdx.x; 
 
     int i = thread_id%(host_sz_x-6) + 3;
     int j = ((thread_id/(host_sz_x-6))%(host_sz_y-6)) + 3;
@@ -51,9 +51,9 @@ void calc_bssn_eqns_kernel_wrapper(double * dev_var_in, double * dev_var_out, co
 
     int total_points = ceil(1.0*(sz[2]-6)*(sz[1]-6)*(sz[0]-6));
 
-    int number_of_blocks = ceil(1.0*total_points/256);
+    int number_of_blocks = ceil(1.0*total_points/64);
 
-    calc_bssn_eqns<<< number_of_blocks, 256, 0, stream >>>(dev_var_in, dev_var_out, 
+    calc_bssn_eqns<<< number_of_blocks, 64, 0, stream >>>(dev_var_in, dev_var_out, 
         host_sz_x, host_sz_y, host_sz_z, 
         pmin_x, pmin_y, pmin_z, 
         hz, hy, hx, 
