@@ -12,9 +12,7 @@ __constant__ unsigned int lambda[4]={1,2,3,4};
 __constant__ double lambda_f[2]={0.8,0.9};
 
 __global__ void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, double pmin_x, double pmin_y, double pmin_z, double hz, double hy, double hx, 
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
     )
 {
     int thread_id = blockIdx.x*256 + threadIdx.x; 
@@ -40,9 +38,7 @@ __global__ void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const 
 }
 
 void calc_bssn_eqns_kernel_wrapper(double * dev_var_in, double * dev_var_out, const unsigned int * sz, const double * pmin, double hz, double hy, double hx, cudaStream_t stream,
-#include "list_of_offset_para.h"
-, 
-#include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 )
 {
     double pmin_x = pmin[0];
@@ -61,8 +57,6 @@ void calc_bssn_eqns_kernel_wrapper(double * dev_var_in, double * dev_var_out, co
         host_sz_x, host_sz_y, host_sz_z, 
         pmin_x, pmin_y, pmin_z, 
         hz, hy, hx, 
-        #include "list_of_offset_args.h"
-        ,
-        #include "list_of_args.h"
+        #include "args_derivs_offsets.h"
     ); 
 }

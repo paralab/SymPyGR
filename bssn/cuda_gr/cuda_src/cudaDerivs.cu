@@ -6,9 +6,7 @@
 #include "cudaDerivs.cuh"
 
 __global__ void calc_derivs1(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
@@ -16,9 +14,7 @@ __global__ void calc_derivs1(double * dev_var_out, double * dev_var_in, double h
 }
 
 __global__ void calc_derivs2(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
@@ -26,9 +22,7 @@ __global__ void calc_derivs2(double * dev_var_out, double * dev_var_in, double h
 }
 
 __global__ void calc_derivs1_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
@@ -36,9 +30,7 @@ __global__ void calc_derivs1_bflag(double * dev_var_out, double * dev_var_in, do
 }
 
 __global__ void calc_derivs2_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
@@ -46,9 +38,7 @@ __global__ void calc_derivs2_bflag(double * dev_var_out, double * dev_var_in, do
 }
 
 void calc_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ){
     const int ib = 1;
     const int jb = 1;
@@ -67,33 +57,25 @@ void calc_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double
         number_of_threads_required=ceil((ie-ib)*(je-jb)*(ke-kb));
         number_of_blocks=ceil(1.0*number_of_threads_required/64);
         calc_derivs1_bflag <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
-            #include "list_of_offset_args.h"
-            ,
-            #include "list_of_args.h"
+            #include "args_derivs_offsets.h"
         );
     
         number_of_threads_required=ceil((ie-ib)*(je-jb)*(ke-kb));
         number_of_blocks=ceil(1.0*number_of_threads_required/64);
         calc_derivs2_bflag <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
-            #include "list_of_offset_args.h"
-            ,
-            #include "list_of_args.h"
+            #include "args_derivs_offsets.h"
         );
     }else{
         number_of_threads_required=ceil((ie-ib)*(je-jb)*(ke-kb));
         number_of_blocks=ceil(1.0*number_of_threads_required/64);
         calc_derivs1 <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
-            #include "list_of_offset_args.h"
-            ,
-            #include "list_of_args.h"
+            #include "args_derivs_offsets.h"
         );
     
         number_of_threads_required=ceil((ie-ib)*(je-jb)*(ke-kb));
         number_of_blocks=ceil(1.0*number_of_threads_required/64);
         calc_derivs2 <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
-            #include "list_of_offset_args.h"
-            ,
-            #include "list_of_args.h"
+            #include "args_derivs_offsets.h"
         );
     }
     CHECK_ERROR(cudaGetLastError(), "deriv Kernel launch failed");
@@ -102,9 +84,7 @@ void calc_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double
 
 
 __global__ void calc_ko_derivs(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
@@ -113,9 +93,7 @@ __global__ void calc_ko_derivs(double * dev_var_out, double * dev_var_in, double
 
 
 __global__ void calc_ko_derivs_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
@@ -123,9 +101,7 @@ __global__ void calc_ko_derivs_bflag(double * dev_var_out, double * dev_var_in, 
 }
 
 void calc_ko_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
     )
 {
     const int ib = 1;
@@ -146,15 +122,11 @@ void calc_ko_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, dou
 
     if (bflag!=0){
         calc_ko_derivs_bflag <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
-            #include "list_of_offset_args.h"
-            ,
-            #include "list_of_args.h"
+            #include "args_derivs_offsets.h"
         );
     }else{
         calc_ko_derivs <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
-            #include "list_of_offset_args.h"
-            ,
-            #include "list_of_args.h"
+            #include "args_derivs_offsets.h"
         );
     }
     

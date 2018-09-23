@@ -122,7 +122,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
             CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[i%num_streams], var_in_array[blk.block_no], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyHostToDevice, streams[i%num_streams]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
             calc_bssnrhs(dev_var_out_array[i%num_streams], dev_var_in_array[i%num_streams], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%num_streams],
-            #include "list_of_args_per_blk.h"
+                #include "args_offset_derivs.h"
             );
 
             CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[i%num_streams], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[i%num_streams]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");
@@ -241,7 +241,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
         }
 
         calc_bssnrhs(dev_var_out_array[index%2], dev_var_in_array[index%2], blk.blkSize, ptmin, ptmax, sz, bflag, streams[index%3],
-            #include "list_of_args_per_blk.h"
+            #include "args_offset_derivs.h"
         );
      
         if (isAsyncStarted){
@@ -408,7 +408,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
                 }
 
                 calc_bssnrhs(dev_var_out_array[i%2], dev_var_in_array[i%2], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%3],
-                    #include "list_of_args_per_blk.h"
+                    #include "args_offset_derivs.h"
                 );
             
                 if (isAsyncStarted){
@@ -427,7 +427,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
                 CHECK_ERROR(cudaMemcpyAsync(dev_var_in_array[i%num_streams], var_in_array[blk.block_no], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyHostToDevice, streams[i%num_streams]), "dev_var_in_array[index] cudaMemcpyHostToDevice");
 
                 calc_bssnrhs(dev_var_out_array[i%num_streams], dev_var_in_array[i%num_streams], blk.blkSize, ptmin, ptmax, sz, bflag, streams[i%num_streams],
-                #include "list_of_args_per_blk.h"
+                    #include "args_offset_derivs.h"
                 );
 
                 CHECK_ERROR(cudaMemcpyAsync(var_out_array[blk.block_no], dev_var_out_array[i%num_streams], BSSN_NUM_VARS*blk.blkSize*sizeof(double), cudaMemcpyDeviceToHost, streams[i%num_streams]), "dev_var_out_array[index] cudaMemcpyDeviceToHost");

@@ -6,9 +6,7 @@
 #include "getOutput.cuh"
 
 __global__ void calc_get_output (double * dev_var_out, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ) 
 {
     int thread_id = blockIdx.x*1024 + threadIdx.x;
@@ -58,9 +56,7 @@ __global__ void calc_get_output (double * dev_var_out, const unsigned int host_s
 }
 
 void get_output_kernel_wrapper(double * dev_var_out, const unsigned int * host_sz, cudaStream_t stream,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 ) 
 {
     const int ie = host_sz[0] - 3;//x direction
@@ -76,9 +72,7 @@ void get_output_kernel_wrapper(double * dev_var_out, const unsigned int * host_s
 
     calc_get_output <<< blocks, 1024, 0, stream >>> (dev_var_out, 
                 host_sz_x, host_sz_y, host_sz_z,
-                #include "list_of_offset_args.h"
-                ,
-                #include "list_of_args.h"
+                #include "args_derivs_offsets.h"
                 );
     
     CHECK_ERROR(cudaGetLastError(), "kernal_get_output Kernel launch failed");

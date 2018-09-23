@@ -14,7 +14,7 @@
 #include "cudaBCS.cuh"
 
 void calc_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, const double * pmin, const double * pmax, const unsigned int *sz, const unsigned int& bflag, cudaStream_t stream,
-#include "list_of_para.h"
+#include "para_derivs.h"
 );
 
 #endif

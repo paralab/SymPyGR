@@ -13,9 +13,7 @@
 #define CHECK_ERROR( err, msg ) if( err != cudaSuccess ) { std::cerr << "ERROR:" << cudaGetErrorName ( err ) << "  |  " << "ERROR DES: " << cudaGetErrorString( err ) << "  |  " << "User msg: " << msg << std::endl; exit( 0 ); }
 
 void get_output_kernel_wrapper(double * dev_var_out, const unsigned int * host_sz, cudaStream_t stream,
-    #include "list_of_offset_para.h"
-    ,
-    #include "list_of_para.h"
+    #include "para_derivs_offsets.h"
 );
 
 #endif

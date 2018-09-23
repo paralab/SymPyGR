@@ -8,7 +8,7 @@
 enum VAR_CU {U_ALPHA=0,U_CHI,U_K,U_GT0,U_GT1,U_GT2,U_BETA0,U_BETA1,U_BETA2,U_B0,U_B1,U_B2,U_SYMGT0,U_SYMGT1,U_SYMGT2,U_SYMGT3,U_SYMGT4,U_SYMGT5,U_SYMAT0,U_SYMAT1,U_SYMAT2,U_SYMAT3,U_SYMAT4,U_SYMAT5};
 
 void calc_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int unzip_dof, const double * pmin, const double * pmax, const unsigned int * sz, const unsigned int& bflag, cudaStream_t stream,
-#include "list_of_para.h"
+#include "para_derivs.h"
 )
 { 
     CHECK_ERROR(cudaMemsetAsync(dev_var_out, 0, 24*unzip_dof*sizeof(double), stream), "output array cleaning call"); // Clean output array
@@ -43,15 +43,11 @@ void calc_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int 
     double hz = (pmax[2] - pmin[2]) / (sz[2] - 1);
 
     calc_deriv_kernel_wrapper(dev_var_out, dev_var_in, hx, hy, hz, sz, bflag, stream,
-        #include "list_of_offset_args.h"
-        ,
-        #include "list_of_args.h"
+        #include "args_derivs_offsets.h"
     );
 
     calc_bssn_eqns_kernel_wrapper(dev_var_in, dev_var_out, sz, pmin, hz, hy, hx, stream,
-    #include "list_of_offset_args.h"
-    ,
-    #include "list_of_args.h"
+        #include "args_derivs_offsets.h"    
     );
 
     if (bflag!=0) {
@@ -87,15 +83,11 @@ void calc_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int 
     }
 
     calc_ko_deriv_kernel_wrapper(dev_var_out, dev_var_in, hx, hy, hz, sz, bflag, stream,
-        #include "list_of_offset_args.h"
-        ,
-        #include "list_of_args.h"
+        #include "args_derivs_offsets.h"
     );
 
     get_output_kernel_wrapper(dev_var_out, sz, stream,
-        #include "list_of_offset_args.h"
-        ,
-        #include "list_of_args.h"
+        #include "args_derivs_offsets.h"
     );
     return;
 }

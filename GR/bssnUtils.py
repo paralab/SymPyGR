@@ -150,6 +150,30 @@ with open("generated/args_derivs_offsets.h", "w") as args_deriv_file:
     for var in afuncs[:-1]: args_deriv_file.write(template.format(var))
     args_deriv_file.write("{}\n".format(afuncs[-1]))
 
+# Para of derive, adv_deriv arrays, bssn variables
+with open("generated/para_derivs_offsets.h", "w") as para_deriv_file:
+    addHeader(para_deriv_file, "bssn/cuda_gr/utils")
+    
+    # int alphaInt,
+    # double *grad_1_At0,
+    template_offset = "int {},\n"
+    template_deriv = "double * {},\n"
+    for offset in d: para_deriv_file.write(template_offset.format(varEnumToInputSymbol[offset]))
+    for var in funcs: para_deriv_file.write(template_deriv.format(var))
+    for var in afuncs[:-1]: para_deriv_file.write(template_deriv.format(var))
+    para_deriv_file.write("double * {}\n".format(afuncs[-1]))
+
+# Para of derive, adv_deriv arrays
+with open("generated/para_derivs.h", "w") as para_deriv_file:
+    addHeader(para_deriv_file, "bssn/cuda_gr/utils")
+    
+    # int alphaInt,
+    # double *grad_1_At0,
+    template_deriv = "double * {},\n"
+    for var in funcs: para_deriv_file.write(template_deriv.format(var))
+    for var in afuncs[:-1]: para_deriv_file.write(template_deriv.format(var))
+    para_deriv_file.write("double * {}\n".format(afuncs[-1]))
+
 
 ###########################################################################
 #
