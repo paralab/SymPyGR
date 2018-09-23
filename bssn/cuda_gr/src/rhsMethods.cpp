@@ -82,8 +82,7 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
             
         // Allocation intermediate arrays
         int size = largest_intermediate_array * sizeof(double);
-        #include "bssnrhs_cuda_variable_malloc.h"
-        #include "bssnrhs_cuda_variable_malloc_adv.h"
+        #include "declare_ref_derivs.h"
         #include "bssnrhs_cuda_malloc.h"
         cuda::profile::t_malloc.stop();
         
@@ -198,8 +197,7 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
         
     // Allocation intermediate arrays
     int size = largest_intermediate_array * sizeof(double);
-    #include "bssnrhs_cuda_variable_malloc.h"
-    #include "bssnrhs_cuda_variable_malloc_adv.h"
+    #include "declare_ref_derivs.h"
     #include "bssnrhs_cuda_malloc.h"
     cuda::profile::t_malloc.stop();
         
@@ -364,8 +362,7 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
             
         // Allocation intermediate arrays
         int size = largest_intermediate_array * sizeof(double);
-        #include "bssnrhs_cuda_variable_malloc.h"
-        #include "bssnrhs_cuda_variable_malloc_adv.h"
+        #include "declare_ref_derivs.h"
         #include "bssnrhs_cuda_malloc.h"
         cuda::profile::t_malloc.stop();
         

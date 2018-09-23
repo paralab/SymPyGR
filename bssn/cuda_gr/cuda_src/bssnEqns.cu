@@ -36,7 +36,7 @@ __global__ void calc_bssn_eqns(double * dev_var_in, double * dev_var_out, const 
         eta *= pow( (CU_ETA_R0/r_coord), CU_ETA_DAMPING_EXP);
     }
 
-    #include "cuda_bssneqs.cuh"
+    #include "calc_bssneqs.cuh"
 }
 
 void calc_bssn_eqns_kernel_wrapper(double * dev_var_in, double * dev_var_out, const unsigned int * sz, const double * pmin, double hz, double hy, double hx, cudaStream_t stream,

@@ -115,6 +115,41 @@ for f in d:
     for p in pkod:
         kofuncs.append(p+f)
 
+###########################################################################
+#
+#  Declare references for derivatives, advective derivatives & BSSN variables
+#
+###########################################################################
+# Declare references for derive and adv_deriv
+with open("generated/declare_ref_derivs.h", "w") as declare_deriv_file:
+    addHeader(declare_deriv_file, "bssn/cuda_gr/utils")
+    
+    # double * agrad_0_gt1;
+    template = "double * {};\n"
+    for var in funcs: declare_deriv_file.write(template.format(var))
+    for var in afuncs: declare_deriv_file.write(template.format(var))
+
+# Set offset for the derive and adv_deriv arrays
+with open("generated/args_offset_derivs.h", "w") as args_deriv_file:
+    addHeader(args_deriv_file, "bssn/cuda_gr/utils")
+    
+    # &grad_0_alpha[unzip_dof * streamIndex],
+    template = "&{}[unzip_dof * streamIndex],\n"
+    for var in funcs: args_deriv_file.write(template.format(var))
+    for var in afuncs[:-1]: args_deriv_file.write(template.format(var))
+    args_deriv_file.write("&{}[unzip_dof * streamIndex]\n".format(afuncs[-1]))
+
+# Args of derive, adv_deriv arrays, bssn variables
+with open("generated/args_derivs_offsets.h", "w") as args_deriv_file:
+    addHeader(args_deriv_file, "bssn/cuda_gr/utils")
+    
+    # grad_0_alpha,
+    template = "{},\n"
+    for offset in d: args_deriv_file.write(template.format(varEnumToInputSymbol[offset]))
+    for var in funcs: args_deriv_file.write(template.format(var))
+    for var in afuncs[:-1]: args_deriv_file.write(template.format(var))
+    args_deriv_file.write("{}\n".format(afuncs[-1]))
+
 
 ###########################################################################
 #
@@ -163,7 +198,7 @@ with open("generated/bssnrhs_cuda_mdealloc.h", "w") as funcs_dealloc_file:
 #  Calls for derivatives - 1
 #
 ###########################################################################
-with open("generated/deriv_calls_1.cuh", "w") as funcs_call_file:
+with open("generated/calc_deriv_calls_1.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
     # calc_deriv42_x(tid, grad_0_alpha, dev_var_in, alphaInt, hx, host_sz_x, host_sz_y, host_sz_z, bflag);
@@ -200,7 +235,7 @@ with open("generated/deriv_calls_1.cuh", "w") as funcs_call_file:
         funcs_call_file.write("\n")
 
 ####  Calls for derivatives - 1 when bflag set ####
-with open("generated/deriv_calls_1_bflag.cuh", "w") as funcs_call_file:
+with open("generated/calc_deriv_calls_1_bflag.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
     # calc_deriv42_x_bflag(tid, grad_0_alpha, dev_var_in, alphaInt, hx, host_sz_x, host_sz_y, host_sz_z, bflag);
@@ -241,7 +276,7 @@ with open("generated/deriv_calls_1_bflag.cuh", "w") as funcs_call_file:
 #  Calls for mixed 2nd derivatives & advective derivatives
 #
 ###########################################################################
-with open("generated/deriv_calls_2.cuh", "w") as funcs_call_file:
+with open("generated/calc_deriv_calls_2.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
     # calc_deriv42_y(tid, grad2_0_1_gt0, grad_0_gt0, 0, hy, host_sz_x, host_sz_y, host_sz_z, bflag);
@@ -281,7 +316,7 @@ with open("generated/deriv_calls_2.cuh", "w") as funcs_call_file:
         funcs_call_file.write("\n")
 
 ####  Calls for mixed 2nd derivatives & advective derivatives when bflag set ####
-with open("generated/deriv_calls_2_bflag.cuh", "w") as funcs_call_file:
+with open("generated/calc_deriv_calls_2_bflag.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
     # calc_deriv42_y_bflag(tid, grad2_0_1_gt0, grad_0_gt0, 0, hy, host_sz_x, host_sz_y, host_sz_z, bflag);
@@ -326,7 +361,7 @@ with open("generated/deriv_calls_2_bflag.cuh", "w") as funcs_call_file:
 #  Use the same storage as for the standard first derivatives.
 #
 ###########################################################################
-with open("generated/ko_deriv_calls.cuh", "w") as funcs_call_file:
+with open("generated/calc_ko_deriv_calls.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
     # calc_ko_deriv42_x(tid, grad_0_gt0, dev_var_in, gt0Int, hx, host_sz_x, host_sz_y, host_sz_z, bflag);
@@ -348,7 +383,7 @@ with open("generated/ko_deriv_calls.cuh", "w") as funcs_call_file:
         funcs_call_file.write("\n")
 
 ####  Calls for Kreiss-Oliger derivatives when bflag set ####
-with open("generated/ko_deriv_calls_bflag.cuh", "w") as funcs_call_file:
+with open("generated/calc_ko_deriv_calls_bflag.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
     # calc_ko_deriv42_x_bflag(tid, grad_0_gt0, dev_var_in, gt0Int, hx, host_sz_x, host_sz_y, host_sz_z, bflag);

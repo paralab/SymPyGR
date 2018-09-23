@@ -12,7 +12,7 @@ __global__ void calc_derivs1(double * dev_var_out, double * dev_var_in, double h
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
-    #include "deriv_calls_1.cuh"
+    #include "calc_deriv_calls_1.cuh"
 }
 
 __global__ void calc_derivs2(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
@@ -22,7 +22,7 @@ __global__ void calc_derivs2(double * dev_var_out, double * dev_var_in, double h
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
-    #include "deriv_calls_2.cuh"
+    #include "calc_deriv_calls_2.cuh"
 }
 
 __global__ void calc_derivs1_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
@@ -32,7 +32,7 @@ __global__ void calc_derivs1_bflag(double * dev_var_out, double * dev_var_in, do
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
-    #include "deriv_calls_1_bflag.cuh"
+    #include "calc_deriv_calls_1_bflag.cuh"
 }
 
 __global__ void calc_derivs2_bflag(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
@@ -42,7 +42,7 @@ __global__ void calc_derivs2_bflag(double * dev_var_out, double * dev_var_in, do
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
-    #include "deriv_calls_2_bflag.cuh"
+    #include "calc_deriv_calls_2_bflag.cuh"
 }
 
 void calc_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
@@ -108,7 +108,7 @@ __global__ void calc_ko_derivs(double * dev_var_out, double * dev_var_in, double
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
-    #include "ko_deriv_calls.cuh"
+    #include "calc_ko_deriv_calls.cuh"
 }
 
 
@@ -119,7 +119,7 @@ __global__ void calc_ko_derivs_bflag(double * dev_var_out, double * dev_var_in, 
 ){
     int tid = blockIdx.x*64 + threadIdx.x;
 
-    #include "ko_deriv_calls_bflag.cuh"
+    #include "calc_ko_deriv_calls_bflag.cuh"
 }
 
 void calc_ko_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int * host_sz, int bflag, cudaStream_t stream,
