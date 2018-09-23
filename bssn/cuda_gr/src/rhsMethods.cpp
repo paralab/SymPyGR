@@ -85,7 +85,6 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         #include "bssnrhs_cuda_variable_malloc.h"
         #include "bssnrhs_cuda_variable_malloc_adv.h"
         #include "bssnrhs_cuda_malloc.h"
-        #include "bssnrhs_cuda_malloc_adv.h"
         cuda::profile::t_malloc.stop();
         
         // Start block processing
@@ -137,7 +136,6 @@ void GPU_parallelized(unsigned int numberOfBlocks, Block * blkList, unsigned int
         // Release GPU memory
         cuda::profile::t_free.start();
         #include "bssnrhs_cuda_mdealloc.h"
-        #include "bssnrhs_cuda_mdealloc_adv.h"
         for (int i=0; i<num_streams; i++){
             CHECK_ERROR(cudaFree(dev_var_in_array[i]), "dev_var_in_array[0] cudaFree");
             CHECK_ERROR(cudaFree(dev_var_out_array[i]), "dev_var_out_array[0] cudaFree");
@@ -203,7 +201,6 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     #include "bssnrhs_cuda_variable_malloc.h"
     #include "bssnrhs_cuda_variable_malloc_adv.h"
     #include "bssnrhs_cuda_malloc.h"
-    #include "bssnrhs_cuda_malloc_adv.h"
     cuda::profile::t_malloc.stop();
         
     // Start block processing
@@ -267,7 +264,6 @@ void GPU_async(unsigned int numberOfBlocks, Block * blkList, unsigned int lower_
     // Release GPU memory
     cuda::profile::t_free.start();
     #include "bssnrhs_cuda_mdealloc.h"
-    #include "bssnrhs_cuda_mdealloc_adv.h"
     CHECK_ERROR(cudaFree(dev_var_in_array[0]), "dev_var_in_array[0] cudaFree");
     CHECK_ERROR(cudaFree(dev_var_in_array[1]), "dev_var_in_array[1] cudaFree");
 
@@ -371,7 +367,6 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         #include "bssnrhs_cuda_variable_malloc.h"
         #include "bssnrhs_cuda_variable_malloc_adv.h"
         #include "bssnrhs_cuda_malloc.h"
-        #include "bssnrhs_cuda_malloc_adv.h"
         cuda::profile::t_malloc.stop();
         
         
@@ -449,7 +444,6 @@ void GPU_hybrid(unsigned int numberOfBlocks, Block * blkList, unsigned int lower
         // Release GPU memory
         cuda::profile::t_free.start();
         #include "bssnrhs_cuda_mdealloc.h"
-        #include "bssnrhs_cuda_mdealloc_adv.h"
         for (int i=0; i<num_streams; i++){
             CHECK_ERROR(cudaFree(dev_var_in_array[i]), "dev_var_in_array[0] cudaFree");
             CHECK_ERROR(cudaFree(dev_var_out_array[i]), "dev_var_out_array[0] cudaFree");
