@@ -32,8 +32,10 @@ namespace cuda
             //send blocks to the gpu
             cuda::__DENDRO_BLOCK_LIST=cuda::copyArrayToDevice(blockListReference,blkList,numBlocks, stream);
             cuda::__UNZIP_INPUT = referenceToInput;
-            cuda::copy2DCudaArray<double>(uZipVars, tmp2D,
-                    BSSN_NUM_VARS,UNZIP_DOF_SZ, cuda::__UNZIP_INPUT, stream);
+
+            // copying the 2D data and get reference to cuda::__UNZIP_INPUT
+            cuda::copy2DCudaArray<double>(uZipVars, tmp2D,BSSN_NUM_VARS,UNZIP_DOF_SZ,
+                             cuda::__UNZIP_INPUT, stream);
             cuda::__UNZIP_OUTPUT=outputReference;
 
             cuda::__BSSN_COMPUTE_PARMS=bSSNComputeParams;

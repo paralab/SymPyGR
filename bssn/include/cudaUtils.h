@@ -249,7 +249,7 @@ namespace cuda
         //     CUDA_CHECK_ERROR();
         // }
 
-        delete [] tmp2D;
+        // delete [] tmp2D;
 
         // cudaFree(__array2D);
         // CUDA_CHECK_ERROR();
