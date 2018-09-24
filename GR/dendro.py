@@ -1255,7 +1255,6 @@ def generate_cuda_code(ex,vname, arrIdx, idx):
     """
     Generate the Cuda code by simplifying the expressions.
     """
-    # print(ex)
 
     mi = [0, 1, 2, 4, 5, 8]
     midx = ['0', '1','2', '3', '4', '5']
@@ -1281,8 +1280,7 @@ def generate_cuda_code(ex,vname, arrIdx, idx):
             lexp.append(e)
             lname.append(vname+idx[:1]+arrIdx[i]+idx[1:])
 
-    # print(num_e)
-    # print(len(lname))
+
     with open("bssneq.cu", 'w') as output_file:
         
         print_n_write('// Dendro: {{{ ', output_file)
@@ -1297,7 +1295,6 @@ def generate_cuda_code(ex,vname, arrIdx, idx):
         rops=0
         print_n_write('// Dendro: printing temp variables', output_file)
         for (v1, v2) in _v[0]:
-            # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
             print_n_write('double ', output_file, isNewLineEnd=False)
             print_n_write(v2, output_file, assign_to=v1, user_functions=custom_functions, isCExp=True)
             rops = rops + count_ops(v2)
@@ -1305,7 +1302,6 @@ def generate_cuda_code(ex,vname, arrIdx, idx):
         print_n_write('\n// Dendro: printing variables', output_file)
         for i, e in enumerate(_v[1]):
             print_n_write("//--", output_file)
-            # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
             print_n_write(e, output_file, assign_to=lname[i], user_functions=custom_functions, isCExp=True)
             rops = rops + count_ops(e)
 
@@ -1314,7 +1310,7 @@ def generate_cuda_code(ex,vname, arrIdx, idx):
 
         
 
-
+# method to change deriv function calls to precomputed deriv arrays
 def change_deriv_names_cuda(str):
     c_str=str
     derivs=['agrad','grad','kograd']
