@@ -1,3 +1,4 @@
+#file to generate cuda rhs code
 import  dendro as dendro
 from sympy import *
 
@@ -10,18 +11,18 @@ l1, l2, l3, l4, eta = symbols('lambda[0] lambda[1] lambda[2] lambda[3] eta')
 lf0, lf1 = symbols('lambda_f[0] lambda_f[1]')
 
 # declare variables
-a   = dendro.scalar("dev_var_in","[*dev_alphaInt+pp]")
-chi = dendro.scalar("dev_var_in","[*dev_chiInt+pp]")
-K   = dendro.scalar("dev_var_in","[*dev_KInt+pp]")
+a   = dendro.scalar("dev_var_in","[alphaInt+pp]")
+chi = dendro.scalar("dev_var_in","[chiInt+pp]")
+K   = dendro.scalar("dev_var_in","[KInt+pp]")
 
-Gt  = dendro.vec3_cuda("dev_var_in","*dev_Gt", "[Int+pp]")
-b   = dendro.vec3_cuda("dev_var_in","*dev_beta", "[Int+pp]")
-B   = dendro.vec3_cuda("dev_var_in","*dev_B", "[Int+pp]")
+Gt  = dendro.vec3_cuda("dev_var_in","Gt", "[Int+pp]")
+b   = dendro.vec3_cuda("dev_var_in","beta", "[Int+pp]")
+B   = dendro.vec3_cuda("dev_var_in","B", "[Int+pp]")
 
-gt  = dendro.sym_3x3_cuda("dev_var_in","*dev_gt", "[Int+pp]")
-At  = dendro.sym_3x3_cuda("dev_var_in","*dev_At", "[Int+pp]")
+gt  = dendro.sym_3x3_cuda("dev_var_in","gt", "[Int+pp]")
+At  = dendro.sym_3x3_cuda("dev_var_in","At", "[Int+pp]")
 
-Gt_rhs  = dendro.vec3_cuda("dev_var_out","*dev_gt", "[Int+pp]")
+Gt_rhs  = dendro.vec3_cuda("dev_var_out","gt", "[Int+pp]")
 
 # Lie derivative weight
 weight = -Rational(2,3)
@@ -52,9 +53,7 @@ R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 
 a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 
-#[ewh] In the had code, this is treated as an advective derivative.
-#      I think this should be:
-#         l2 * dendro.vec_j_del_j(b, b[i])
+
 b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
         l2 * dendro.vec_j_ad_j(b, b[i])
          for i in dendro.e_i ] + dendro.kodiss(b)
@@ -90,31 +89,12 @@ B_rhs = [Gt_rhs[i] - eta * B[i] +
          for i in dendro.e_i]
 
 
-#_I = gt*igt
-#print(simplify(_I))
-
-#_I = gt*dendro.inv_metric
-#print(simplify(_I))
-
-
-###
-# Substitute ...
-# for expr in [a_rhs, b_rhs[0], b_rhs[1], b_rhs[2], B_rhs[0], B_rhs[1], B_rhs[2], K_rhs, chi_rhs, Gt_rhs[0], Gt_rhs[1], Gt_rhs[2], gt_rhs[0], gt_rhs[0,0], gt_rhs[1,1], gt_rhs[2,2], gt_rhs[0,1], gt_rhs[0,2], gt_rhs[1,2], At_rhs[0,0], At_rhs[0,1], At_rhs[0,2], At_rhs[1,1], At_rhs[1,2], At_rhs[2,2]]:
-#     for var in [a, b[0], b[1], b[2], B[0], B[1], B[2], chi, K, gt[0,0], gt[0,1], gt[0,2], gt[1,1], gt[1,2], gt[2,2], Gt[0], Gt[1], Gt[2], At[0,0], At[0,1], At[0,2], At[1,1], At[1,2], At[2,2]]:
-#         expr.subs(d2(1,0,var), d2(0,1,var))
-#         expr.subs(d2(2,1,var), d2(1,2,var))
-#         expr.subs(d2(2,0,var), d2(0,2,var))
-#
-# print (a_rhs)
-# print (G_rhs)
-
 
 ###################################################################
 # generate code
 ###################################################################
 outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
 arrayName ='dev_var_out'
-arrIdxs = ['*dev_alpha', '*dev_beta', '*dev_gt', '*dev_chi', '*dev_At', '*dev_K', '*dev_Gt', '*dev_B']
-#dendro.generate_debug(outs, vnames)
-dendro.generate_cuda(outs,arrayName, arrIdxs, '[Int+pp]')
+arrIdxs = ['alpha', 'beta', 'gt', 'chi', 'At', 'K', 'Gt', 'B']
+dendro.generate_cuda_code(outs,arrayName, arrIdxs, '[Int+pp]')
 
