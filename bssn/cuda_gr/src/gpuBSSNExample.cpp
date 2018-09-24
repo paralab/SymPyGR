@@ -59,14 +59,13 @@ int main (int argc, char** argv)
     // variable input
     double ** varUnzipIn = new double*[bssn::BSSN_NUM_VARS];
     double ** varUnzipOutGPU = new double*[bssn::BSSN_NUM_VARS];
-    double ** varUnzipOutCPU = new double*[bssn::BSSN_NUM_VARS];
 
 
     for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
     {
         varUnzipIn[var]=new double[UNZIP_DOF];
         varUnzipOutGPU[var]=new double[UNZIP_DOF];
-        varUnzipOutCPU[var]=new double[UNZIP_DOF];
+
     }
 
 
@@ -195,6 +194,40 @@ int main (int argc, char** argv)
         cudaStreamCreate(&streams[index]);
     }
 
+    unsigned int maxBlkSz=0;
+    for(unsigned int i=0;i<blkList.size();i++)
+    {
+        if(maxBlkSz<(blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ()))
+            maxBlkSz=blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ();
+    }
+
+    cuda::_Block** streamWiseBlkLists = new cuda::_Block* [streamCount];
+    for (int index=0; index<streamCount; index++){
+        streamWiseBlkLists[index]=cuda::allocateDeviceMemory(streamWiseBlkLists[index],
+                                    numberOfConcurrentBlocks);
+    }
+
+    cuda::MemoryDerivs* derivWorkSpaces = new cuda::MemoryDerivs[streamCount];
+    double *** UNZIP_INPUT_REFERENCESS = new double**[streamCount];
+    double *** UNZIP_OUTPUT_REFERENCESS = new double**[streamCount];
+    double *** streamWiseVarIn = new double**[streamCount];
+    double *** temp2Darrays = new double**[streamCount];
+    cuda::MemoryDerivs** derivPointers = new cuda::MemoryDerivs*[streamCount];
+    cudaDeviceProp* cudaDeviceProperties = cuda::getGPUDeviceInfo(0);
+    // double ** streamWiseVarOut = new double*[bssn::BSSN_NUM_VARS];
+    for (int index=0; index<streamCount; index++) {
+        streamWiseVarIn[index] = new double*[bssn::BSSN_NUM_VARS]; 
+        UNZIP_INPUT_REFERENCESS[index] = cuda::getReferenceTo2DArray<double>(bssn::BSSN_NUM_VARS);
+        UNZIP_OUTPUT_REFERENCESS[index] = cuda::alloc2DCudaArray<double>(bssn::BSSN_NUM_VARS,maxBlkSz*numberOfConcurrentBlocks);
+        temp2Darrays[index] = cuda::alloc2DCudaArray<double>(streamWiseVarIn[index],bssn::BSSN_NUM_VARS,maxBlkSz*numberOfConcurrentBlocks);
+        derivWorkSpaces[index].allocateDerivMemory(maxBlkSz*numberOfConcurrentBlocks);
+        derivPointers[index] = cuda::allocateDerivativeMemory(&derivWorkSpaces[index]);
+        CUDA_CHECK_ERROR();
+    }
+
+    cuda::BSSNComputeParams*  bssnComputeParams = cuda::copyValueToDevice(&bssnParams);
+    
+    
     for(unsigned int blk=0; blk<blkList.size(); blk+=numberOfConcurrentBlocks) {
         
         unsigned int sz[3];
@@ -203,7 +236,7 @@ int main (int argc, char** argv)
         tempBlkList.resize((blk+numberOfConcurrentBlocks>blkList.size()?
                 blkList.size()-blk:numberOfConcurrentBlocks));
 
-        double ** temp_var_in = new double*[bssn::BSSN_NUM_VARS];
+        // double ** temp_var_in = streamWiseVarIn[blk%streamCount];
         double ** temp_gpu_out = new double*[bssn::BSSN_NUM_VARS];
         
         for(unsigned int i=0; i<numberOfConcurrentBlocks; i++) {
@@ -218,7 +251,7 @@ int main (int argc, char** argv)
 
         for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
         {
-            temp_var_in[var]=new double[temp_unzip_dof];
+            streamWiseVarIn[blk%streamCount][var]=new double[temp_unzip_dof];
             temp_gpu_out[var]=new double[temp_unzip_dof];
         }
         // printf(" temp_unzip_dof %d\n",temp_unzip_dof);
@@ -232,7 +265,7 @@ int main (int argc, char** argv)
                 for (unsigned int k = 0; k < sz[2]; k++) {
                     for (unsigned int j = 0; j < sz[1]; j++) {
                         for (unsigned int i = 0; i < sz[0]; i++) {
-                            temp_var_in[var][tempBlkList[m].getOffset()+k*(sz[1]*sz[0])+j*(sz[0])+i]
+                            streamWiseVarIn[blk%streamCount][var][tempBlkList[m].getOffset()+k*(sz[1]*sz[0])+j*(sz[0])+i]
                             = varUnzipIn[var][blkList[blk+m].getOffset()+k*(sz[1]*sz[0])+j*(sz[0])+i];
                         }
                     }
@@ -271,8 +304,10 @@ int main (int argc, char** argv)
 
         cuda::profile::initialize();
 
-        cuda::computeRHS(temp_gpu_out,(const double **)temp_var_in,&(*(blkCudaList.begin())),
-                blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams, streams[blk%streamCount]);
+        cuda::computeRHS(temp_gpu_out,(const double **)streamWiseVarIn[blk%streamCount],&(*(blkCudaList.begin())),
+                blkCudaList.size(),streams[blk%streamCount], streamWiseBlkLists[blk%streamCount],
+                temp2Darrays[blk%streamCount], UNZIP_INPUT_REFERENCESS[blk%streamCount],derivWorkSpaces[blk%streamCount], derivPointers[blk%streamCount],
+                cudaDeviceProperties, bssnComputeParams, UNZIP_OUTPUT_REFERENCESS[blk%streamCount]);
     }
 
     cuda::profile::printOutput(blkList);
@@ -291,13 +326,11 @@ int main (int argc, char** argv)
     for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
     {
         delete [] varUnzipIn[var];
-        delete [] varUnzipOutCPU[var];
         delete [] varUnzipOutGPU[var];
     }
 
 
     delete [] varUnzipIn;
-    delete [] varUnzipOutCPU;
     delete [] varUnzipOutGPU;
 
 

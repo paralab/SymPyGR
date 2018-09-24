@@ -12,7 +12,7 @@ namespace cuda
 {
 
 
-    cudaDeviceProp* getGPUDeviceInfo(unsigned int device, cudaStream_t stream)
+    cudaDeviceProp* getGPUDeviceInfo(unsigned int device)
     {
 
         cudaDeviceProp deviceProp;
@@ -22,7 +22,7 @@ namespace cuda
         cudaMalloc(&__deviceProp,sizeof(cudaDeviceProp));
         CUDA_CHECK_ERROR();
 
-        cudaMemcpyAsync(__deviceProp,&deviceProp,sizeof(cudaDeviceProp),cudaMemcpyHostToDevice, stream);
+        cudaMemcpy(__deviceProp,&deviceProp,sizeof(cudaDeviceProp),cudaMemcpyHostToDevice);
         CUDA_CHECK_ERROR();
 
         return __deviceProp;

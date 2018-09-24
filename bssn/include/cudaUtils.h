@@ -36,7 +36,15 @@ namespace cuda
      * @param[in] device : gpu device ID
      * @return cudaDeviceProp allocated on the device
      * */
-     cudaDeviceProp* getGPUDeviceInfo(unsigned int device, cudaStream_t stream);
+     cudaDeviceProp* getGPUDeviceInfo(unsigned int device);
+
+    /**
+     * @breif send mesh blocks to the gpu
+     * @param[in] in : input array
+     * @param[in] out: device pointer where the data is copied to.
+     * */
+    template<typename T>
+       T * allocateDeviceMemory(const T* in, unsigned int numElems);
 
      /**
       * @breif send mesh blocks to the gpu
@@ -44,7 +52,7 @@ namespace cuda
       * @param[in] out: device pointer where the data is copied to.
       * */
       template<typename T>
-       T * copyArrayToDevice(const T* in, unsigned int numElems, cudaStream_t stream);
+       T * copyArrayToDevice(T* __devicePtr, const T* in, unsigned int numElems, cudaStream_t stream);
 
 
     /**
@@ -53,7 +61,7 @@ namespace cuda
      * @param[in] out: device pointer where the data is copied to.
      * */
       template<typename T>
-      inline T * copyValueToDevice(const T* in, cudaStream_t stream);
+      inline T * copyValueToDevice(const T* in);
 
       /**
        * @brief allocates a 2D cuda array on the device.
@@ -61,8 +69,8 @@ namespace cuda
        * @param[in] sz2: dim 2 size
        * @returns the double pointer to the 2D array.
        * */
-      template <typename T>
-      T** alloc2DCudaArray(unsigned int sz1,  unsigned int sz2, cudaStream_t stream);
+    template <typename T>
+    T** alloc2DCudaArray(unsigned int sz1,  unsigned int sz2);
 
       /**
        * @brief allocates a 2D cuda array on the device and copy data.
@@ -70,9 +78,16 @@ namespace cuda
        * @param[in] sz2: dim 2 size
        * @returns the double pointer to the 2D array.
        * */
-      template <typename T>
-      T** alloc2DCudaArray(const T** in,unsigned int sz1,  unsigned int sz2, cudaStream_t stream);
+    template <typename T>
+    T** alloc2DCudaArray(const T** in,unsigned int sz1,  unsigned int sz2);
 
+
+    template <typename T>
+    T** copy2DCudaArray(const T** in,  T** tmp2D, unsigned int sz1, unsigned int sz2,
+             T** temp2d, cudaStream_t stream);
+
+    template <typename T>
+    T** getReferenceTo2DArray(unsigned int sz1);
 
       /**
        * @brief deallocates the 2D cuda array.
@@ -80,6 +95,15 @@ namespace cuda
        * */
       template <typename T>
       void dealloc2DCudaArray(T ** & __array2D,  unsigned int sz1, cudaStream_t stream);
+
+      template<typename T>
+        inline T * copyValueToDeviceAllocateDerivMemory(T* __devicePtr, const T* in, cudaStream_t stream);
+
+    template<typename T>
+    inline T * allocateDerivativeMemory(const T* in);
+
+    template <typename T>
+    void copyBackMemory(T ** & __array2D, unsigned int sz1, cudaStream_t stream);
 }
 
 
@@ -89,14 +113,18 @@ namespace cuda
 
 namespace cuda
 {
-
     template<typename T>
-    T * copyArrayToDevice(const T* in, unsigned int numElems, cudaStream_t stream)
+       T * allocateDeviceMemory(const T* in, unsigned int numElems)
     {
-
-        T* __devicePtr;
+         T* __devicePtr;
         cudaMalloc(&__devicePtr,sizeof(T)*numElems);
         CUDA_CHECK_ERROR();
+        return __devicePtr;
+    }
+
+    template<typename T>
+    T * copyArrayToDevice( T* __devicePtr, const T* in, unsigned int numElems, cudaStream_t stream)
+    {
 
         cudaMemcpyAsync(__devicePtr,in,sizeof(T)*numElems,cudaMemcpyHostToDevice, stream);
         CUDA_CHECK_ERROR();
@@ -105,14 +133,21 @@ namespace cuda
 
     }
 
-
     template<typename T>
-    inline T * copyValueToDevice(const T* in, cudaStream_t stream)
+    inline T * allocateDerivativeMemory(const T* in)
     {
 
         T* __devicePtr;
         cudaMalloc(&__devicePtr,sizeof(T));
         CUDA_CHECK_ERROR();
+
+        return __devicePtr;
+
+    }
+
+    template<typename T>
+    inline T * copyValueToDeviceAllocateDerivMemory(T* __devicePtr, const T* in, cudaStream_t stream)
+    {
 
         cudaMemcpyAsync(__devicePtr,in,sizeof(T),cudaMemcpyHostToDevice, stream);
         CUDA_CHECK_ERROR();
@@ -121,8 +156,23 @@ namespace cuda
 
     }
 
+    template<typename T>
+    inline T * copyValueToDevice(const T* in)
+    {
+
+        T* __devicePtr;
+        cudaMalloc(&__devicePtr,sizeof(T));
+        CUDA_CHECK_ERROR();
+
+        cudaMemcpy(__devicePtr,in,sizeof(T),cudaMemcpyHostToDevice);
+        CUDA_CHECK_ERROR();
+
+        return __devicePtr;
+
+    }
+
     template <typename T>
-    T** alloc2DCudaArray(unsigned int sz1, unsigned int sz2, cudaStream_t stream)
+    T** alloc2DCudaArray(unsigned int sz1, unsigned int sz2)
     {
 
         T** __tmp2d;
@@ -137,7 +187,7 @@ namespace cuda
             CUDA_CHECK_ERROR();
         }
 
-        cudaMemcpyAsync(__tmp2d,tmp2D,sizeof(T*)*sz1,cudaMemcpyHostToDevice, stream);
+        cudaMemcpy(__tmp2d,tmp2D,sizeof(T*)*sz1,cudaMemcpyHostToDevice);
         CUDA_CHECK_ERROR();
         delete [] tmp2D;
 
@@ -146,29 +196,64 @@ namespace cuda
     }
 
     template <typename T>
-    T** alloc2DCudaArray(const T** in,unsigned int sz1,  unsigned int sz2, cudaStream_t stream)
+    T** alloc2DCudaArray(T** in,unsigned int sz1,  unsigned int sz2)
     {
-        T** __tmp2d;
-        cudaMalloc(&__tmp2d,sizeof(T*)*sz1);
-        CUDA_CHECK_ERROR();
-
+        // sz1 == 24
         T** tmp2D=new T*[sz1];
 
         for(unsigned int i=0;i<sz1;i++)
         {
             cudaMalloc(&tmp2D[i],sizeof(T)*sz2);
             CUDA_CHECK_ERROR();
-            cudaMemcpyAsync(tmp2D[i],in[i], sizeof(T)*sz2 ,cudaMemcpyHostToDevice, stream);
-            CUDA_CHECK_ERROR();
+
         }
 
-        cudaMemcpyAsync(__tmp2d,tmp2D,sizeof(T*)*sz1,cudaMemcpyHostToDevice, stream);
+        return tmp2D;
+    }
+
+    template <typename T>
+    T** getReferenceTo2DArray(unsigned int sz1) {
+         T** __tmp2d;
+        cudaMalloc(&__tmp2d,sizeof(T*)*sz1);
         CUDA_CHECK_ERROR();
-        delete [] tmp2D;
 
         return __tmp2d;
     }
 
+    template <typename T>
+    T** copy2DCudaArray(const T** in,  T** tmp2D, unsigned int sz1,
+         unsigned int sz2, T** temp2d, cudaStream_t stream)
+    {
+
+        for(unsigned int i=0;i<sz1;i++)
+        {
+            cudaMemcpyAsync(tmp2D[i], in[i], sizeof(T)*sz2,cudaMemcpyHostToDevice, stream);
+            CUDA_CHECK_ERROR();
+        }
+        cudaMemcpyAsync(temp2d,tmp2D,sizeof(T*)*sz1,cudaMemcpyHostToDevice, stream);
+        CUDA_CHECK_ERROR();
+        return temp2d;
+    }
+
+    template <typename T>
+    void copyBackMemory(T ** & __array2D, unsigned int sz1, cudaStream_t stream)
+    {
+        T** tmp2D=new T*[sz1];
+
+        cudaMemcpyAsync(tmp2D,__array2D,sizeof(T*)*sz1,cudaMemcpyDeviceToHost, stream);
+        CUDA_CHECK_ERROR();
+
+        // for(unsigned int i=0;i<sz1;i++)
+        // {
+        //     cudaFree(tmp2D[i]);
+        //     CUDA_CHECK_ERROR();
+        // }
+
+        delete [] tmp2D;
+
+        // cudaFree(__array2D);
+        // CUDA_CHECK_ERROR();
+    }
 
     template <typename T>
     void dealloc2DCudaArray(T ** & __array2D, unsigned int sz1, cudaStream_t stream)
@@ -189,10 +274,6 @@ namespace cuda
         cudaFree(__array2D);
         CUDA_CHECK_ERROR();
     }
-
-
-
-
 }
 
 
