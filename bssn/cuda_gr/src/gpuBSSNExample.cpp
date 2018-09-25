@@ -25,6 +25,8 @@ int main (int argc, char** argv)
     std::default_random_engine generator;
     std::normal_distribution<double> distribution(mean,sd);
 
+    const unsigned int ALIGNMENT_FACTOR=16;
+
     unsigned int* blkLevs=new unsigned int[numBlocks];
     unsigned int count=0;
     while(count<numBlocks){
@@ -48,7 +50,7 @@ int main (int argc, char** argv)
         blkList[i]=ot::Block(2,2,2,blkLevs[i],eleOrder);
         blkList[i].setBlkNodeFlag(0);
         blkList[i].setOffset(unzipSz);
-        unzipSz+=(blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ());
+        unzipSz+=(std::ceil((blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ())/(double)ALIGNMENT_FACTOR)*ALIGNMENT_FACTOR);
     }
 
     delete [] blkLevs;

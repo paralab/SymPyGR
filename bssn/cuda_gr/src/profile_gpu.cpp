@@ -51,14 +51,23 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
 
 
     const unsigned int NUM_DERIV_OPS=3396;
-    unsigned int unzipInternal=0;
+    unsigned long int unzipInternal=0;
+    unsigned long int unzipTotal=0;
 
     const char separator    = ' ';
     const int nameWidth     = 30;
     const int numWidth      = 10;
 
     for(unsigned int blk=0;blk<localBlkList.size();blk++)
+    {
         unzipInternal+=(localBlkList[blk].get1DArraySize()-2*localBlkList[blk].get1DPadWidth())*(localBlkList[blk].get1DArraySize()-2*localBlkList[blk].get1DPadWidth())*(localBlkList[blk].get1DArraySize()-2*localBlkList[blk].get1DPadWidth());
+        unzipTotal+=(localBlkList[blk].get1DArraySize()*localBlkList[blk].get1DArraySize()*localBlkList[blk].get1DArraySize());
+    }
+
+
+    std::cout<<"unzip dof: "<<unzipTotal<<std::endl;
+    std::cout<<"unzip internal: "<<unzipInternal<<std::endl;
+
 
     double t_stat;
     t_stat=t_overall.seconds;
@@ -84,12 +93,14 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(flops)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<((unzipInternal*NUM_DERIV_OPS)/t_stat)<<std::endl;
+
+
     t_stat=t_rhs.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -rhs(compute)(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
-    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(flops)";
-    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<((unzipInternal*NUM_DERIV_OPS)/t_stat)<<std::endl;
 
 
     return;

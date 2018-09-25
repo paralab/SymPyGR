@@ -24,8 +24,9 @@ namespace cuda
     enum VAR_CONSTRAINT {C_HAM=0, C_MOM0, C_MOM1, C_MOM2, C_PSI4_REAL, C_PSI4_IMG};
 
 
+
     /**
-    * @brief load data from global memory to shared memory
+    * @brief load (1D) data from global memory to shared memory
     * @param[in] __globalIn : source global address to copy data from
     * @param[out] sharedOut : shared memory location
     * @param[in] ijk_lm : min max of index i,j,k of the dendro block included in the tile 3x2
@@ -33,11 +34,36 @@ namespace cuda
     * @param[in] tile_sz: tile sz
     */
     template<typename T>
-    __device__ void __loadGlobalToShared(const T* __globalIn,  T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
-    
+    __device__ void __loadGlobalToShared1D(const T* __globalIn,  T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+
 
     /**
-    * @brief store data from shared memory to global memory
+    * @brief load (3D) data from global memory to shared memory
+    * @param[in] __globalIn : source global address to copy data from
+    * @param[out] sharedOut : shared memory location
+    * @param[in] ijk_lm : min max of index i,j,k of the dendro block included in the tile 3x2
+    * @param[in] sz: dendro block size
+    * @param[in] tile_sz: tile sz
+    */
+    template<typename T>
+    __device__ void __loadGlobalToShared3D(const T* __globalIn,  T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+
+
+    /**
+   * @brief extract the sign of the shift vectors
+   * @param[in] __globalIn : source global address to copy data from
+   * @param[out] sharedOut : shared memory location (bool value for of the sign)
+   * @param[in] ijk_lm : min max of index i,j,k of the dendro block included in the tile 3x2
+   * @param[in] sz: dendro block size
+   * @param[in] tile_sz: tile sz
+   */
+    template<typename T>
+    __device__ void __extractSign3D(const T* sharedIn,  bool * sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+
+
+
+    /**
+    * @brief store (1D) data from shared memory to global memory
     * @param[in] __globalout : dest. global address to copy data to
     * @param[out] sharedIn : shared memory location
     * @param[in] ijk_lm : min max of index i,j,k of the dendro block included in the tile
@@ -45,7 +71,24 @@ namespace cuda
     * @param[in] tile_sz: tile sz
     */
     template <typename T>
-    __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+    __device__ void __storeSharedToGlobal1D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+
+
+    /**
+    * @brief store (3D) data from shared memory to global memory
+    * @param[in] __globalout : dest. global address to copy data to
+    * @param[out] sharedIn : shared memory location
+    * @param[in] ijk_lm : min max of index i,j,k of the dendro block included in the tile
+    * @param[in] sz: dendro block size
+    * @param[in] tile_sz: tile sz
+    */
+    template <typename T>
+    __device__ void __storeSharedToGlobal3D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+
+
+
+
+
 }
 
 
@@ -58,43 +101,14 @@ namespace cuda
 
 
     template<typename T>
-    __device__ void __loadGlobalToShared(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    __device__ void __loadGlobalToShared1D(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
         const unsigned int i_b=ijk_lm[2*0+0];
         const unsigned int i_e=ijk_lm[2*0+1];
 
-        const unsigned int j_b=ijk_lm[2*1+0];
-        const unsigned int j_e=ijk_lm[2*1+1];
-
-        const unsigned int k_b=ijk_lm[2*2+0];
-        const unsigned int k_e=ijk_lm[2*2+1];
-
-        unsigned int l_x=i_e-i_b;
-        unsigned int l_y=j_e-j_b;
-        unsigned int l_z=k_e-k_b;
-
-        if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
-
-        if(l_x<blockDim.x) l_x=blockDim.x;
-        if(l_y<blockDim.y) l_y=blockDim.y;
-        if(l_z<blockDim.z) l_z=blockDim.z;
-
-        const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-        const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
-
-        const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-        const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
-
-        const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-        const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
-
-        //printf("threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
-
-        for(unsigned int k=kz_b;k<kz_e;k++)
-            for(unsigned int j=jy_b;j<jy_e;j++)
-                for(unsigned int i=ix_b;i<ix_e;i++)
-                    sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )] = __globalIn[k*(sz[1]*sz[0])+j*(sz[0])+i];
+        for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
+            sharedOut[(i-i_b )] = __globalIn[i];
 
         return ;
 
@@ -102,9 +116,8 @@ namespace cuda
 
 
 
-
     template<typename T>
-    __device__ void __storeSharedToGlobal(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    __device__ void __loadGlobalToShared3D(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
         const unsigned int i_b=ijk_lm[2*0+0];
@@ -116,35 +129,83 @@ namespace cuda
         const unsigned int k_b=ijk_lm[2*2+0];
         const unsigned int k_e=ijk_lm[2*2+1];
 
-        unsigned int l_x=i_e-i_b;
-        unsigned int l_y=j_e-j_b;
-        unsigned int l_z=k_e-k_b;
 
-        if(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;
+        for(unsigned int k=k_b+threadIdx.z;k<k_e;k+=blockDim.z)
+            for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
+                for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
+                    sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )] = __globalIn[k*(sz[1]*sz[0])+j*(sz[0])+i];
 
-        if(l_x<blockDim.x) l_x=blockDim.x;
-        if(l_y<blockDim.y) l_y=blockDim.y;
-        if(l_z<blockDim.z) l_z=blockDim.z;
-
-        const unsigned int ix_b=i_b + (threadIdx.x * l_x)/blockDim.x;
-        const unsigned int ix_e=i_b + ((threadIdx.x+1) * l_x)/blockDim.x;
-
-        const unsigned int jy_b=j_b + (threadIdx.y * l_y)/blockDim.y;
-        const unsigned int jy_e=j_b + ((threadIdx.y+1) * l_y)/blockDim.y;
-
-        const unsigned int kz_b=k_b + (threadIdx.z * (l_z))/blockDim.z;
-        const unsigned int kz_e=k_b + ((threadIdx.z+1) * (l_z))/blockDim.z;
-
-        //printf("threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
-
-        for(unsigned int k=kz_b;k<kz_e;k++)
-            for(unsigned int j=jy_b;j<jy_e;j++)
-                for(unsigned int i=ix_b;i<ix_e;i++)
-                    __globalOut[k*(sz[1]*sz[0])+j*(sz[0])+i]=sharedIn[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )];
 
 
         return ;
 
+    }
+
+
+    template<typename T>
+    __device__ void __storeSharedToGlobal1D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    {
+
+        const unsigned int i_b=ijk_lm[2*0+0];
+        const unsigned int i_e=ijk_lm[2*0+1];
+
+        for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
+           __globalOut[i]=sharedIn[(i-i_b )];
+
+        return ;
+
+
+    }
+
+
+
+
+    template<typename T>
+    __device__ void __storeSharedToGlobal3D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    {
+
+        const unsigned int i_b=ijk_lm[2*0+0];
+        const unsigned int i_e=ijk_lm[2*0+1];
+
+        const unsigned int j_b=ijk_lm[2*1+0];
+        const unsigned int j_e=ijk_lm[2*1+1];
+
+        const unsigned int k_b=ijk_lm[2*2+0];
+        const unsigned int k_e=ijk_lm[2*2+1];
+
+
+        for(unsigned int k=k_b+threadIdx.z;k<k_e;k+=blockDim.z)
+            for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
+                for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
+                    __globalOut[k*(sz[1]*sz[0])+j*(sz[0])+i]=sharedIn[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )];
+
+
+
+        return ;
+
+
+    }
+
+    template<typename T>
+    __device__ void __extractSign3D(const T* sharedIn,  bool * sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    {
+
+        const unsigned int i_b=ijk_lm[2*0+0];
+        const unsigned int i_e=ijk_lm[2*0+1];
+
+        const unsigned int j_b=ijk_lm[2*1+0];
+        const unsigned int j_e=ijk_lm[2*1+1];
+
+        const unsigned int k_b=ijk_lm[2*2+0];
+        const unsigned int k_e=ijk_lm[2*2+1];
+
+
+        for(unsigned int k=k_b+threadIdx.z;k<k_e;k+=blockDim.z)
+            for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
+                for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
+                {
+                    (sharedIn[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]>0) ?  sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]=true : sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]=false;
+                }
 
     }
 

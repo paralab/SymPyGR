@@ -47,7 +47,7 @@ ot::Block::Block(unsigned int px,unsigned int py, unsigned int pz, unsigned int 
     m_uiPaddingWidth=GHOST_WIDTH;
 
     m_uiEleOrder=eleOrder;
-    m_uiSize1D=m_uiEleOrder*(1u<<(m_uiRegGridLev))+1+2*m_uiPaddingWidth;
+    m_uiSize1D=m_uiEleOrder*((1u<<(m_uiRegGridLev))-1)+(m_uiEleOrder+1)+2*m_uiPaddingWidth;
 
     m_uiSzX=m_uiSize1D;
     m_uiSzY=m_uiSize1D;
