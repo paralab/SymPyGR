@@ -31,8 +31,7 @@ const unsigned int Le = sz[0]-0;// load end bound
 	const unsigned int BLK_INTERATIONS = ((Le-Lb)<tile_sz[0])? 1: ((int)ceil((double)(Le-Lb-tile_sz[0])/(tile_sz[0]-2*3)))+1;
 
 unsigned int ijk_lm[3*2];
-//allocate memory for shared deriv variables. 
-
+//allocate memory for shared deriv variables.
 
 //allocate memory for shared unzip input. 
 __shared__ double unzipVarInShared[729];
