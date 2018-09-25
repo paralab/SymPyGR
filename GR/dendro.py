@@ -25,7 +25,7 @@ import re as regex
 import string
 import random
 
-
+import time
 
 # internal variables
 undef = symbols('undefined')
@@ -518,9 +518,11 @@ def print_n_write(value, fileToWrite=None, isCExp=False, isNewLineEnd=True, **se
     # fileToWrite should be a file object that is opened to write or append
     if isCExp:
         # C/C++ output write and print
-        c_output = ccode(value, **settings)
+        output = ccode(value, **settings)
+        c_output = change_deriv_names_cuda(output)
         print(c_output, end="")
         if(fileToWrite!=None): fileToWrite.write(c_output)
+        
     else:
         # normal print and write
         print(str(value), end="")
@@ -803,201 +805,6 @@ def generate_separate(ex, vnames, idx):
     c_file.close()
     print('generating code for '+vnames[0]+' completed')
 
-
-def generate_separate_for_temp_cuda(ex, vnames, idx):
-    """
-    Generate the C++ code by simplifying the expressions.
-    """
-    # print(ex)
-    if len(ex)!=1 :
-        print ('pass each variable separately ',end='\n')
-        return
-
-    mi = [0, 1, 2, 4, 5, 8]
-    midx = ['00', '01', '02', '11', '12', '22']
-
-    # total number of expressions
-    # print("--------------------------------------------------------")
-    num_e = 0
-    lexp = []
-    lname = []
-    for i, e in enumerate(ex):
-        if type(e) == list:
-            num_e = num_e + len(e)
-            for j, ev in enumerate(e):
-                lexp.append(ev)
-                lname.append(vnames[i]+repr(j)+idx)
-        elif type(e) == Matrix:
-            num_e = num_e + len(e)
-            for j, k in enumerate(mi):
-                lexp.append(e[k])
-                lname.append(vnames[i]+midx[j]+idx)
-        else:
-            num_e = num_e + 1
-            lexp.append(e)
-            lname.append(vnames[i]+idx)
-
-    # print(num_e)
-    # print(len(lname))
-
-     #file names to write genrated code
-    filenames ={ '*alpha':'a_rhs','*At':'At_rhs','*B':'B_rhs','*beta':'b_rhs','*chi':'chi_rhs','*Gt':'Gt_rhs','*gt':'gt_rhs','*K':'K_rhs','CalGt':'CalGt','Gt_rhs_s1_':'Gt_rhs_s1_','Gt_rhs_s2_':'Gt_rhs_s2_','Gt_rhs_s3_':'Gt_rhs_s3_','Gt_rhs_s4_':'Gt_rhs_s4_','Gt_rhs_s5_':'Gt_rhs_s5_','Gt_rhs_s6_':'Gt_rhs_s6_','Gt_rhs_s7_':'Gt_rhs_s7_'}
-
-    c_file=open(filenames[vnames[0]]+'.h','w')
-   
-
-    print('// Dendro: {{{ ',file=c_file)
-    print('// Dendro: original ops: ', count_ops(lexp),file=c_file)
-
-    # print("--------------------------------------------------------")
-    # print("Now trying Common Subexpression Detection and Collection")
-    # print("--------------------------------------------------------")
-
-    # Common Subexpression Detection and Collection
-    # for i in range(len(ex)):
-    #     # print("--------------------------------------------------------")
-    #     # print(ex[i])
-    #     # print("--------------------------------------------------------")
-    #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-    #     ee_syms = numbered_symbols(prefix=ee_name)
-    #     _v = cse(ex[i],symbols=ee_syms)
-    #     # print(type(_v))
-    #     for (v1,v2) in _v[0]:
-    #         print("double %s = %s;" % (v1, v2))
-    #     print("%s = %s" % (vnames[i], _v[1][0]))
-
-    #mex = Matrix(ex)
-    ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-    ee_syms = numbered_symbols(prefix=ee_name)
-    _v = cse(lexp, symbols=ee_syms, optimizations='basic')
-
-    custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
-
-    rops=0
-    print('// Dendro: printing temp variables',file=c_file)
-    for (v1, v2) in _v[0]:
-        # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
-        print('double ', end='', file=c_file)
-        print(change_deriv_names_cuda(ccode(v2, assign_to=v1, user_functions=custom_functions)),file=c_file)
-        rops = rops + count_ops(v2)
-
-
-    print('// Dendro: printing variables',file=c_file)
-    for i, e in enumerate(_v[1]):
-        print("//--",file=c_file)
-        # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
-        f = open(filenames[str(vnames[0])]+'.gv','w')
-        print(dotprint(e), file=f)
-        f.close()
-        print(change_deriv_names_cuda(ccode(e, assign_to=lname[i], user_functions=custom_functions)),file=c_file)
-        #c_file.write('\n')
-        rops = rops + count_ops(e)
-
-    print('// Dendro: reduced ops: ', rops,file=c_file)
-    print('// Dendro: }}} ',file=c_file)
-
-
-    c_file.close()
-    print('generating code for '+vnames[0]+' completed')
-
-
-def generate_separate_cuda(ex,vname, arrIdx, idx):
-    """
-    Generate the C++ code by simplifying the expressions.
-    """
-    # print(ex)
-    if len(ex)!=1 :
-        print ('pass each variable separately ',end='\n')
-        return
-
-    mi = [0, 1, 2, 4, 5, 8]
-    midx = ['0', '1', '2', '3', '4', '5']
-
-    # total number of expressions
-    # print("--------------------------------------------------------")
-    num_e = 0
-    lexp = []
-    lname = []
-    for i, e in enumerate(ex):
-        if type(e) == list:
-            num_e = num_e + len(e)
-            for j, ev in enumerate(e):
-                lexp.append(ev)
-                lname.append(vname+idx[:1]+arrIdx[i]+repr(j)+idx[1:])
-        elif type(e) == Matrix:
-            num_e = num_e + len(e)
-            for j, k in enumerate(mi):
-                lexp.append(e[k])
-                lname.append(vname+idx[:1]+arrIdx[i]+midx[j]+idx[1:])
-        else:
-            num_e = num_e + 1
-            lexp.append(e)
-            lname.append(vname+idx[:1]+arrIdx[i]+idx[1:])
-
-    # print(num_e)
-    # print(len(lname))
-
-     #file names to write genrated code
-    filenames ={ '*alpha':'a_rhs','*At':'At_rhs','*B':'B_rhs','*beta':'b_rhs','*chi':'chi_rhs','*Gt':'Gt_rhs','*gt':'gt_rhs','*K':'K_rhs','CalGt':'CalGt','Gt_rhs_s1_':'Gt_rhs_s1_','Gt_rhs_s2_':'Gt_rhs_s2_','Gt_rhs_s3_':'Gt_rhs_s3_','Gt_rhs_s4_':'Gt_rhs_s4_','Gt_rhs_s5_':'Gt_rhs_s5_','Gt_rhs_s6_':'Gt_rhs_s6_','Gt_rhs_s7_':'Gt_rhs_s7_'}
-
-    c_file=open(filenames[arrIdx[0]]+'.h','w')
-    print('generating code for '+arrIdx[0])
-
-
-
-
-
-    print('// Dendro: {{{ ',file=c_file)
-    print('// Dendro: original ops: ', count_ops(lexp),file=c_file)
-
-    # print("--------------------------------------------------------")
-    # print("Now trying Common Subexpression Detection and Collection")
-    # print("--------------------------------------------------------")
-
-    # Common Subexpression Detection and Collection
-    # for i in range(len(ex)):
-    #     # print("--------------------------------------------------------")
-    #     # print(ex[i])
-    #     # print("--------------------------------------------------------")
-    #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-    #     ee_syms = numbered_symbols(prefix=ee_name)
-    #     _v = cse(ex[i],symbols=ee_syms)
-    #     # print(type(_v))
-    #     for (v1,v2) in _v[0]:
-    #         print("double %s = %s;" % (v1, v2))
-    #     print("%s = %s" % (vnames[i], _v[1][0]))
-
-    #mex = Matrix(ex)
-    ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-    ee_syms = numbered_symbols(prefix=ee_name)
-    _v = cse(lexp, symbols=ee_syms, optimizations='basic')
-
-    custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
-
-    rops=0
-    print('// Dendro: printing temp variables',file=c_file)
-    for (v1, v2) in _v[0]:
-        # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
-        print('double ', end='', file=c_file)
-        print(change_deriv_names_cuda(ccode(v2, assign_to=v1, user_functions=custom_functions)),file=c_file)
-        rops = rops + count_ops(v2)
-
-
-    print('// Dendro: printing variables',file=c_file)
-    for i, e in enumerate(_v[1]):
-        print("//--",file=c_file)
-        # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
-        f = open(filenames[str(arrIdx[0])]+'.gv','w')
-        print(dotprint(e), file=f)
-        f.close()
-        print(change_deriv_names_cuda(ccode(e, assign_to=lname[i], user_functions=custom_functions)),file=c_file)
-        #c_file.write('\n')
-        rops = rops + count_ops(e)
-
-    print('// Dendro: reduced ops: ', rops,file=c_file)
-
-    c_file.close()
-    print('generating code for '+arrIdx[0]+' completed')
 
 
 
@@ -1315,29 +1122,33 @@ def change_deriv_names_cuda(str):
     c_str=str
     derivs=['agrad','grad','kograd']
     for deriv in derivs:
-        key=deriv+'\(\d, dev_var_in\[\*\w+\+pp\]\)'
+        key=deriv+'\(\d, dev_var_in\[\w+\+pp\]\)'
         slist=regex.findall(key,c_str)
         for s in slist:
-            w1=s.split('(')
+            w1=s.split('(') 
             w2=w1[1].split(')')[0].split(',')
             rep=w1[0]
-            w3=w2[1].split('*')
-            w4=w3[1].split("Int+")
-            rep=rep+'_'+w2[0].strip()+'_'+w4[0].strip()+'['+w4[1].strip()
+            w3=w2[0].strip()
+            w4=w2[1].split("[")[1].split("]")[0].split("Int+")
+            w5=w4[0].strip()
+            w6=w4[1].strip()
+            rep=rep+'_'+w3+'_'+w5+'['+w6+']'
             c_str=c_str.replace(s,rep)
 
     derivs2=['grad2']
     for deriv in derivs2:
-        key=deriv+'\(\d, \d, dev_var_in\[\*\w+\+pp\]\)'
+        key=deriv+'\(\d, \d, dev_var_in\[\w+\+pp\]\)'
         slist=regex.findall(key,c_str)
         for s in slist:
-            w1=s.split('(')
+            w1=s.split('(')  
             w2=w1[1].split(')')[0].split(',')
             rep=w1[0]
-            w3=w2[2].split('*')
-            w4=w3[1].split("Int")
-            for v in w2:
-                rep=rep+'_'+w2[0].strip()+'_'+w2[1].strip()+'_'+w4[0].strip()+'['+w4[1].strip()
+            w3=w2[0].strip()
+            w4=w2[1].strip()
+            w5=w2[2].split("[")[1].split("]")[0].split("Int+")
+            w6=w5[0].strip()
+            w7=w5[1].strip()
+            rep=rep+'_'+w3+'_'+w4+'_'+w6+'['+w7+']'
             c_str=c_str.replace(s,rep)
     return c_str
 
