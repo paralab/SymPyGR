@@ -73,7 +73,6 @@ __global__ void __compute_a_rhs(double** __unzipOutVar, const double**__unzipInV
 		 ijk_lm[2*2+1]=min(ijk_lm[2*2+0]+tile_sz[2],sz[2]-3);
 		 //printf(" iter : %d threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n",iter, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
-
 		//load data from global to shared memory
 		cuda::__loadGlobalToShared3D<double>(&__unzipInVar[cuda::VAR::U_K][offset],(double *) K,(const unsigned int *) ijk_lm,(const unsigned int *) sz,(const unsigned int *) tile_sz);
 		cuda::__loadGlobalToShared3D<double>(&__unzipInVar[cuda::VAR::U_ALPHA][offset],(double *) alpha,(const unsigned int *) ijk_lm,(const unsigned int *) sz,(const unsigned int *) tile_sz);

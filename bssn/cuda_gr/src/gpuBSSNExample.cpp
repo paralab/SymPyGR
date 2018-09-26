@@ -222,9 +222,15 @@ int main (int argc, char** argv)
                                         maxBlkSz*numberOfConcurrentBlocks);
         temp2DInputArrays[index] = cuda::alloc2DCudaArray<double>(streamWiseVarIn[index],
                                 bssn::BSSN_NUM_VARS,maxBlkSz*numberOfConcurrentBlocks);
-        derivWorkSpaces[index].allocateDerivMemory(maxBlkSz*numberOfConcurrentBlocks);
-        derivPointers[index] = cuda::allocateDerivativeMemory(&derivWorkSpaces[index]);
-        CUDA_CHECK_ERROR();
+
+        // to ensure the parallel execution within streams. if not want can remove and have only one
+            cuda::profile::t_cudaMalloc_derivs.start();
+                derivWorkSpaces[index].allocateDerivMemory(maxBlkSz, numberOfConcurrentBlocks);
+                CUDA_CHECK_ERROR();
+            cuda::profile::t_cudaMalloc_derivs.stop();
+
+            derivPointers[index] = cuda::copyValueToDevice(&derivWorkSpaces[index]);
+            CUDA_CHECK_ERROR();
     }
 
     for(unsigned int blk=0; blk<blkList.size(); blk+=numberOfConcurrentBlocks) {
@@ -274,6 +280,7 @@ int main (int argc, char** argv)
         std::vector<cuda::_Block> blkCudaList;
         blkCudaList.resize(tempBlkList.size());
         double hx[3];
+        unsigned int UNZIP_DOF_SZ = 0;
 
         for(unsigned int blkIndex=0;blkIndex<tempBlkList.size();blkIndex++)
         {
@@ -298,23 +305,23 @@ int main (int argc, char** argv)
 
             blkCudaList[blkIndex]=cuda::_Block((const double *)ptmin,(const double *)ptmax, offset,
                                     bflag,(const unsigned int*)sz, (const double *)hx);
+            UNZIP_DOF_SZ+=sz[0]*sz[1]*sz[2];
 
         }
 
         cuda::profile::initialize();
-       
+        // data copying to the gpu
+        cuda::copyArrayToDevice( streamWiseBlkLists[blk%streamCount],
+                    &(*(blkCudaList.begin())),blkCudaList.size(), streams[blk%streamCount]);
+        cuda::copy2DCudaArray<double>(streamWiseVarIn[blk%streamCount], temp2DInputArrays[blk%streamCount],
+                             24, UNZIP_DOF_SZ, UNZIP_INPUT_REFERENCESS[blk%streamCount], streams[blk%streamCount]);
+        
+
+
         cuda::computeRHS(globalOutput[counter],(const double **)streamWiseVarIn[blk%streamCount],
                 &(*(blkCudaList.begin())), blkCudaList.size(), streams[blk%streamCount], 
-                streamWiseBlkLists[blk%streamCount], temp2DInputArrays[blk%streamCount], 
-                UNZIP_INPUT_REFERENCESS[blk%streamCount],derivWorkSpaces[blk%streamCount],
-                derivPointers[blk%streamCount], cudaDeviceProperties, bssnComputeParams,
-                UNZIP_OUTPUT_REFERENCESS[blk%streamCount]);
-
-        //  if(blk % streamCount == 0) {
-        //      printf("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\n");
-        //     cudaDeviceSynchronize();
-        //     CUDA_CHECK_ERROR();
-        // }
+                streamWiseBlkLists[blk%streamCount], UNZIP_INPUT_REFERENCESS[blk%streamCount],
+                derivPointers[blk%streamCount], cudaDeviceProperties, bssnComputeParams, UNZIP_OUTPUT_REFERENCESS[blk%streamCount]);
 
         counter++;
     }

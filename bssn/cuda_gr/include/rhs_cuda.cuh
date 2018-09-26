@@ -33,7 +33,7 @@ namespace cuda
      **/
      void computeRHS(double **unzipVarsRHS, 
      const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks, cudaStream_t stream, cuda::_Block* blockListReference,
-     double** tmp2D, double** referenceToInput,cuda::MemoryDerivs derivWorkSpace, cuda::MemoryDerivs* derivPointer, cudaDeviceProp* cudaDeviceProperties,
+     double** referenceToInput, cuda::MemoryDerivs* derivPointer, cudaDeviceProp* cudaDeviceProperties,
      cuda::BSSNComputeParams* bSSNComputeParams, double** outputReference);
 
 

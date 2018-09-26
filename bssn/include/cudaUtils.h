@@ -97,7 +97,7 @@ namespace cuda
       void dealloc2DCudaArray(T ** & __array2D,  unsigned int sz1, cudaStream_t stream);
 
       template<typename T>
-        inline T * copyValueToDeviceAllocateDerivMemory(T* __devicePtr, const T* in, cudaStream_t stream);
+        inline T * copyDeriveValues(T* __devicePtr, const T* in, cudaStream_t stream);
 
     template<typename T>
     inline T * allocateDerivativeMemory(const T* in);
@@ -146,7 +146,7 @@ namespace cuda
     }
 
     template<typename T>
-    inline T * copyValueToDeviceAllocateDerivMemory(T* __devicePtr, const T* in, cudaStream_t stream)
+    inline T * copyDeriveValues(T* __devicePtr, const T* in, cudaStream_t stream)
     {
 
         cudaMemcpyAsync(__devicePtr,in,sizeof(T),cudaMemcpyHostToDevice, stream);
@@ -221,7 +221,7 @@ namespace cuda
     }
 
     template <typename T>
-    T** copy2DCudaArray(const T** in,  T** tmp2D, unsigned int sz1,
+    T** copy2DCudaArray(T** in,  T** tmp2D, unsigned int sz1,
          unsigned int sz2, T** temp2d, cudaStream_t stream)
     {
 

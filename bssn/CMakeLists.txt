@@ -55,8 +55,8 @@ if(WITH_CUDA)
         set(CUDA_SEPARABLE_COMPILATION ON)
 
         #list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_30,code=sm_30)
-        #list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_50,code=sm_50)
-        list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_60,code=sm_60)
+        list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_50,code=sm_50)
+        #list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_60,code=sm_60)
         #list( APPEND CUDA_NVCC_FLAGS -gencode arch=compute_61,code=sm_61)
 
         #list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_60,code=compute_60)
