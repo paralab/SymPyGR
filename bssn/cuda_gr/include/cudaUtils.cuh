@@ -130,7 +130,7 @@ namespace cuda
         const unsigned int k_e=ijk_lm[2*2+1];
 
 
-        for(unsigned int k=k_b+threadIdx.z;k<k_e;k+=blockDim.z)
+        for(unsigned int k=k_b;k<k_e;k+=1)
             for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
                 for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
                     sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )] = __globalIn[k*(sz[1]*sz[0])+j*(sz[0])+i];
@@ -174,7 +174,7 @@ namespace cuda
         const unsigned int k_e=ijk_lm[2*2+1];
 
 
-        for(unsigned int k=k_b+threadIdx.z;k<k_e;k+=blockDim.z)
+        for(unsigned int k=k_b;k<k_e;k+=1)
             for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
                 for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
                     __globalOut[k*(sz[1]*sz[0])+j*(sz[0])+i]=sharedIn[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )];
@@ -200,9 +200,9 @@ namespace cuda
         const unsigned int k_e=ijk_lm[2*2+1];
 
 
-        for(unsigned int k=k_b+threadIdx.z;k<k_e;k+=blockDim.z)
-            for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
-                for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
+        for(unsigned int k=k_b+threadIdx.y;k<k_e;k+=blockDim.y)
+            for(unsigned int j=j_b+threadIdx.x;j<j_e;j+=blockDim.x)
+                for(unsigned int i=i_b;i<i_e;i+=1)
                 {
                     (sharedIn[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]>0) ?  sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]=true : sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]=false;
                 }

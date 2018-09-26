@@ -17,6 +17,10 @@
 #define CUDA_CALLABLE_MEMBER
 #endif
 
+
+#define DENDRO_BLOCK_ALIGN_FACTOR 16
+#define DENDRO_BLOCK_ALIGN_FACTOR_LOG 4
+
 namespace cuda
 {
 
@@ -39,6 +43,9 @@ namespace cuda
 
                     /**block size in 3D*/
                     unsigned int m_uiSz[3];
+
+                    /**align the block dimensions*/
+                    unsigned int m_uiAlignSz[3];
 
                     /**dx size*/
                     double m_uiDx[3];
@@ -71,6 +78,10 @@ namespace cuda
                 m_uiDx[1]=0.0;
                 m_uiDx[2]=0.0;
 
+                m_uiAlignSz[0]=DENDRO_BLOCK_ALIGN_FACTOR;
+                m_uiAlignSz[1]=DENDRO_BLOCK_ALIGN_FACTOR;
+                m_uiAlignSz[2]=DENDRO_BLOCK_ALIGN_FACTOR;
+
 
 
 
@@ -100,6 +111,10 @@ namespace cuda
                 m_uiDx[0]=p_dx[0];
                 m_uiDx[1]=p_dx[1];
                 m_uiDx[2]=p_dx[2];
+
+                ((m_uiSz[0] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[0]=m_uiSz[0] : m_uiAlignSz[0]=((m_uiSz[0]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
+                ((m_uiSz[1] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[1]=m_uiSz[1] : m_uiAlignSz[1]=((m_uiSz[1]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
+                ((m_uiSz[2] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[2]=m_uiSz[2] : m_uiAlignSz[2]=((m_uiSz[2]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
 
 
             }
@@ -134,6 +149,13 @@ namespace cuda
             CUDA_CALLABLE_MEMBER const unsigned int * getSz() const
             {
                 return  m_uiSz;
+            }
+
+
+            /**@returns get spatial dx*/
+            CUDA_CALLABLE_MEMBER const unsigned int * getAlignedSz() const
+            {
+                return  m_uiAlignSz;
             }
 
 

@@ -50,7 +50,24 @@ void cuda::profile::initialize()
 void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
 
 
-    const unsigned int NUM_DERIV_OPS=3396;
+    /*
+     * deriv    |    block   |            pp            |   total               |
+     * dx       |       3    |      4 mul + 3 add =7    |    24+35+46 = 105     |
+     * dxx      |       2    |      6 mul + 4 add =10   |    11*3 =33    |
+     * adx      |       3    |      5 mul + 4 add =9    |    72     |
+     * kox      |      11    |      8 mul + 6 add =16   |    72     |
+     *
+     * total pp =2865
+     * total block =19
+     *
+     *
+     * */
+
+    // floating point operation computed once per block
+    const unsigned int NUM_DERIV_OPS_BLOCK=19;
+    // floating point operation computed for each pp
+    const unsigned int NUM_DERIV_OPS_PP=2865;
+
     unsigned long int unzipInternal=0;
     unsigned long int unzipTotal=0;
 
@@ -94,7 +111,7 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(flops)";
-    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<((unzipInternal*NUM_DERIV_OPS)/t_stat)<<std::endl;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<(((unzipInternal*NUM_DERIV_OPS_PP)+localBlkList.size()*NUM_DERIV_OPS_BLOCK)/t_stat)<<std::endl;
 
 
     t_stat=t_rhs.seconds;

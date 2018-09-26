@@ -185,7 +185,7 @@ blockDim_z="blockDim.z"
 
 # x,y,z bounds of the time i_lm[0] is the min and i_lm[1] is the max. 
 tile_sz="tile_sz"
-dendro_block_sz="sz"
+dendro_block_sz="alignedSz"
 tile_limits="ijk_lm"
 
 
@@ -411,6 +411,7 @@ def cudaComputeDerivKernelSource(fname,cuda_deriv_kernel_names,cuda_deriv_passes
             ofile.write("const unsigned int SM_ID="+blockId_x+"%NUM_SM_UNITS;\n")
             ofile.write("const unsigned int offset=dblock.getOffset();\n")
             ofile.write("const unsigned int *sz=dblock.getSz();\n")
+            ofile.write("const unsigned int *alignedSz=dblock.getAlignedSz();\n")
             ofile.write("const double* hx=dblock.getDx();\n")
 
             ofile.write("const double dx=hx[0];\n")
@@ -521,12 +522,12 @@ def cudaComputeDerivKernelSource(fname,cuda_deriv_kernel_names,cuda_deriv_passes
                 ofile.write("\t\t//sync to make sure all the data is loaded\n")
 
                 for deriv in cuda_deriv_passes[deriv_pass]:
-                    if(deriv.DerivType=="d"):
+                    if((deriv.DerivType=="d") and (deriv.DerivDir=="x")):
                         ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
                         ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
                         ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
                         for deriv1 in cuda_deriv_passes[deriv_pass]:
-                            if((e in dd) and (deriv1.DerivType=="dd") and ((deriv1.DerivDir=="xy") or (deriv1.DerivDir=="xz") or (deriv1.DerivDir=="yz"))):
+                            if((e in dd) and (deriv1.DerivType=="dd") and ((deriv1.DerivDir=="xy") or (deriv1.DerivDir=="xz"))):
                                 ofile.write("\t\t// computing deriv "+deriv1.DerivDir+" for variable "+e+" \n")
                                 #ofile.write("\t\t"+deriv1.DerivOutput+" = &"+beta0+"[0];\n")
                                 ofile.write("\t\t"+deriv1.DerivFuncCall+"\n")
@@ -534,7 +535,8 @@ def cudaComputeDerivKernelSource(fname,cuda_deriv_kernel_names,cuda_deriv_passes
                                 # write the mixed derivatives
                                 #ofile.write("\t\t"+storeVar+"((double *) "+deriv1.DerivOutput+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
                                 ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                                ofile.write("\t\t__syncthreads();\n")
+                                if((deriv1.DerivDir=="xy")):
+                                    ofile.write("\t\t__syncthreads();\n")
                                 ofile.write("\n")
                         #write the x, y,z derivs.
                         #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
@@ -542,36 +544,88 @@ def cudaComputeDerivKernelSource(fname,cuda_deriv_kernel_names,cuda_deriv_passes
                         ofile.write("\t\t__syncthreads();\n")
                         ofile.write("\n")
 
+                    if((deriv.DerivType=="d") and (deriv.DerivDir=="y")):
+                        ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
+                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                        for deriv1 in cuda_deriv_passes[deriv_pass]:
+                            if((e in dd) and (deriv1.DerivType=="dd") and (deriv1.DerivDir=="yz")):
+                                ofile.write("\t\t// computing deriv "+deriv1.DerivDir+" for variable "+e+" \n")
+                                #ofile.write("\t\t"+deriv1.DerivOutput+" = &"+beta0+"[0];\n")
+                                ofile.write("\t\t"+deriv1.DerivFuncCall+"\n")
+                                ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                                # write the mixed derivatives
+                                #ofile.write("\t\t"+storeVar+"((double *) "+deriv1.DerivOutput+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                                ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                                #ofile.write("\t\t__syncthreads();\n")
+                                ofile.write("\n")
+                        #write the x, y,z derivs.
+                        #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t__syncthreads();\n")
+                        ofile.write("\n")
+
+                    if((deriv.DerivType=="d") and (deriv.DerivDir=="z")):
+                        ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
+                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                        ofile.write("\t\t__syncthreads();\n")
+
                 ofile.write("\n")
+
+                derivCount=0
 
                 for deriv in cuda_deriv_passes[deriv_pass]:
                     if((e in dd) and (deriv.DerivType=="dd")  and ((deriv.DerivDir=="xx") or (deriv.DerivDir=="yy") or (deriv.DerivDir=="zz"))):
                         ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                        #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        #ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t__syncthreads();\n")
+                        derivCount=derivCount+1
+                        if(derivCount==2):
+                            derivCount=0
+                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                            #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t__syncthreads();\n")
+                        if(deriv.DerivDir=="zz"):
+                            ofile.write("\t\t__syncthreads();\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t__syncthreads();\n")
 
                 ofile.write("\n")
 
                 for deriv in cuda_deriv_passes[deriv_pass]:
-                    if( (e in ad) and (deriv.DerivType=="ad")):
-                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                        #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        #ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t__syncthreads();\n")
-
-                for deriv in cuda_deriv_passes[deriv_pass]:
                     if( (e in ad) and (deriv.DerivType=="ko")):
                         ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                        #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        #ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t__syncthreads();\n")
+                        derivCount=derivCount+1
+                        if(derivCount==2):
+                            derivCount=0
+                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                            #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t__syncthreads();\n")
+                        if(deriv.DerivDir=="z"):
+                            ofile.write("\t\t__syncthreads();\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t__syncthreads();\n")
+
+                for deriv in cuda_deriv_passes[deriv_pass]:
+                    if( (e in ad) and (deriv.DerivType=="ad")):
+                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                        derivCount=derivCount+1
+                        if(derivCount==2):
+                            derivCount=0
+                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                            #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t__syncthreads();\n")
+                        if(deriv.DerivDir=="z"):
+                            ofile.write("\t\t__syncthreads();\n")
+                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                            ofile.write("\t\t__syncthreads();\n")
+
 
             ofile.write("\t\t} // end of block tile loop\n\n")
             #ofile.write("\t\t__syncthreads();\n")
@@ -1045,7 +1099,7 @@ def main():
     adzn = varOutShared
 
     kodxn = varOutShared
-    kodyn = varOutShared
+    kodyn = varOutShared1
     kodzn = varOutShared
 
 
@@ -1082,26 +1136,26 @@ def main():
 
 
     ### !!!!!!! NOTE: WHEN SPECIFYING THE TILE SZ MAKE SURE YOU HAVE 5 POINTS FOR ONE SIDED DERIVS, WHEN THE TILE LOAD THE BLOCK IN THE ITERATIONS
-
+    TileSz1D=9
     cuda_deriv_passes=[
 
         # deriv pass 1
         [
-            Derivative(DerivType="d",DerivDir="x",DerivName="deriv_x",DerivTile1D=11,DerivInput=varInShared,DerivOutput="grad_0",IB=3,IE=-3,JB=1,JE=-1,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dx),
-            Derivative(DerivType="d",DerivDir="y",DerivName="deriv_y",DerivTile1D=11,DerivInput=varInShared,DerivOutput="grad_1",IB=3,IE=-3,JB=3,JE=-3,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dy),
-            Derivative(DerivType="d",DerivDir="z",DerivName="deriv_z",DerivTile1D=11,DerivInput=varInShared,DerivOutput="grad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dz),
-            Derivative(DerivType="dd",DerivDir="xx",DerivName="deriv_xx",DerivTile1D=11,DerivInput=varInShared,DerivOutput="grad2_0_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dxx),
-            Derivative(DerivType="dd",DerivDir="yy",DerivName="deriv_yy",DerivTile1D=11,DerivInput=varInShared,DerivOutput="grad2_1_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dyy),
-            Derivative(DerivType="dd",DerivDir="zz",DerivName="deriv_zz",DerivTile1D=11,DerivInput=varInShared,DerivOutput="grad2_2_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dzz),
-            Derivative(DerivType="ko",DerivDir="x",DerivName="ko_deriv_x",DerivTile1D=11,DerivInput=varInShared,DerivOutput="kograd_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodx),
-            Derivative(DerivType="ko",DerivDir="y",DerivName="ko_deriv_y",DerivTile1D=11,DerivInput=varInShared,DerivOutput="kograd_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kody),
-            Derivative(DerivType="ko",DerivDir="z",DerivName="ko_deriv_z",DerivTile1D=11,DerivInput=varInShared,DerivOutput="kograd_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodz),
-            Derivative(DerivType="ad",DerivDir="x",DerivName="adv_deriv_x",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adx),
-            Derivative(DerivType="ad",DerivDir="y",DerivName="adv_deriv_y",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_ady),
-            Derivative(DerivType="ad",DerivDir="z",DerivName="adv_deriv_z",DerivTile1D=11,DerivInput=varInShared,DerivOutput="agrad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adz),
-            Derivative(DerivType="dd",DerivDir="xy",DerivName="deriv_xy",DerivTile1D=11,DerivInput=dxn,DerivOutput="grad2_0_1",IB=3,IE=-3,JB=3,JE=-3,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dxy),
-            Derivative(DerivType="dd",DerivDir="xz",DerivName="deriv_xz",DerivTile1D=11,DerivInput=dxn,DerivOutput="grad2_0_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dxz),
-            Derivative(DerivType="dd",DerivDir="yz",DerivName="deriv_yz",DerivTile1D=11,DerivInput=dyn,DerivOutput="grad2_1_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dyz)
+            Derivative(DerivType="d",DerivDir="x",DerivName="deriv_x",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad_0",IB=3,IE=-3,JB=1,JE=-1,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dx),
+            Derivative(DerivType="d",DerivDir="y",DerivName="deriv_y",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad_1",IB=3,IE=-3,JB=3,JE=-3,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dy),
+            Derivative(DerivType="d",DerivDir="z",DerivName="deriv_z",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dz),
+            Derivative(DerivType="dd",DerivDir="xx",DerivName="deriv_xx",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad2_0_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dxx),
+            Derivative(DerivType="dd",DerivDir="yy",DerivName="deriv_yy",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad2_1_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dyy),
+            Derivative(DerivType="dd",DerivDir="zz",DerivName="deriv_zz",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad2_2_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dzz),
+            Derivative(DerivType="ko",DerivDir="x",DerivName="ko_deriv_x",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="kograd_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodx),
+            Derivative(DerivType="ko",DerivDir="y",DerivName="ko_deriv_y",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="kograd_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kody),
+            Derivative(DerivType="ko",DerivDir="z",DerivName="ko_deriv_z",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="kograd_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodz),
+            Derivative(DerivType="ad",DerivDir="x",DerivName="adv_deriv_x",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="agrad_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adx),
+            Derivative(DerivType="ad",DerivDir="y",DerivName="adv_deriv_y",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="agrad_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_ady),
+            Derivative(DerivType="ad",DerivDir="z",DerivName="adv_deriv_z",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="agrad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adz),
+            Derivative(DerivType="dd",DerivDir="xy",DerivName="deriv_xy",DerivTile1D=TileSz1D,DerivInput=dxn,DerivOutput="grad2_0_1",IB=3,IE=-3,JB=3,JE=-3,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dxy),
+            Derivative(DerivType="dd",DerivDir="xz",DerivName="deriv_xz",DerivTile1D=TileSz1D,DerivInput=dxn,DerivOutput="grad2_0_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dxz),
+            Derivative(DerivType="dd",DerivDir="yz",DerivName="deriv_yz",DerivTile1D=TileSz1D,DerivInput=dyn,DerivOutput="grad2_1_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dyz)
 
 
         ]
@@ -1113,8 +1167,8 @@ def main():
     cuda_deriv_kernel_names=["__RSWS_computeDerivs"]
 
 
-    cudaDerivAllocDeallocHeader("../bssn/cuda_gr/include/bssn_rhs_deriv_mem_cuda.h")
-    cudaDerivAllocDeallocSource("../bssn/cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp",["bssn_rhs_deriv_mem_cuda.h"])
+    #cudaDerivAllocDeallocHeader("../bssn/cuda_gr/include/bssn_rhs_deriv_mem_cuda.h")
+    #cudaDerivAllocDeallocSource("../bssn/cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp",["bssn_rhs_deriv_mem_cuda.h"])
 
     cudaComputeDerivKernelHeader("../bssn/cuda_gr/include/derivs_bssn.cuh",cuda_deriv_kernel_names,cuda_deriv_passes,["block_cu.h","params_cu.h","bssn_rhs_deriv_mem_cuda.h","cudaUtils.cuh","derivs.cuh"])
     cudaComputeDerivKernelSource("../bssn/cuda_gr/src/derivs_bssn.cu",cuda_deriv_kernel_names,cuda_deriv_passes,["derivs_bssn.cuh"])

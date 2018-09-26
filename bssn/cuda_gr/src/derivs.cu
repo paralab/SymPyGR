@@ -68,9 +68,9 @@ namespace cuda
 
             //printf("dx threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;j<(j_e-ijk_lm[2]);j+=blockDim.x)
+                    for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);i+=1)
                     {
                         pp = IDX_L(i, j, k);
                         Dxu[pp] = (u[pp - 2] - 8.0 * u[pp - 1] + 8.0 * u[pp + 1] - u[pp + 2]) * idx_by_12;
@@ -151,9 +151,9 @@ namespace cuda
 
             //printf("dy threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1)
                     {
                         pp = IDX_L(i, j, k);
                         Dyu[pp] = (u[pp - 2 * tile_sz[0]] - 8.0 * u[pp - tile_sz[0]] + 8.0 * u[pp + tile_sz[0]] - u[pp + 2 * tile_sz[0]]) * idy_by_12;
@@ -235,9 +235,9 @@ namespace cuda
 
             //printf("dz threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1)
                     {
                         pp = IDX_L(i, j, k);
                         Dzu[pp] = (u[pp - 2 * tile_sz[0]*tile_sz[1]] - 8.0 * u[pp - tile_sz[0]*tile_sz[1]] + 8.0 * u[pp + tile_sz[0]*tile_sz[1]] - u[pp + 2 * tile_sz[0]*tile_sz[1]]) * idz_by_12;
@@ -315,9 +315,9 @@ namespace cuda
 
 
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;j<(j_e-ijk_lm[2]);j+=blockDim.x)
+                    for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);i+=1)
                     {
 
                         pp = IDX_L(i, j, k);
@@ -413,9 +413,9 @@ namespace cuda
 
             unsigned int pp;
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1)
                     {
                         pp = IDX_L(i, j, k);
                         DyDyu[pp] = (-u[pp - 2 * tile_sz[0]] + 16.0 * u[pp - tile_sz[0]] - 30.0 * u[pp]
@@ -502,9 +502,9 @@ namespace cuda
             const double idz_sqrd_by_12 = idz_sqrd / 12.0;
             unsigned int pp;
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1)
                     {
                         pp = IDX_L(i, j, k);
                         DzDzu[pp] = (-u[pp - 2 * tile_sz[0]*tile_sz[1]] + 16.0 * u[pp - tile_sz[0]*tile_sz[1]] - 30.0 * u[pp]
@@ -585,9 +585,9 @@ namespace cuda
             const double idx_by_12 = idx / 12.0;
             unsigned int pp;
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;j<(j_e-ijk_lm[2]);j+=blockDim.x)
+                    for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);i+=1)
                     {
                         pp = IDX_L(i, j, k);
 
@@ -723,9 +723,9 @@ namespace cuda
 
             unsigned int pp;
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1)
                     {
                         pp = IDX_L(i, j, k);
 
@@ -870,9 +870,9 @@ namespace cuda
 
             unsigned int pp;
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1)
                     {
                         pp = IDX_L(i, j, k);
 
@@ -1015,9 +1015,9 @@ namespace cuda
             const double spr2 = smr2;
             const double spr1 = smr1;*/
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;j<(j_e-ijk_lm[2]);j+=blockDim.x)
+                    for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);i+=1)
                     {
                         pp = IDX_L(i, j, k);
 
@@ -1187,9 +1187,9 @@ namespace cuda
 
 
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.y;k<(k_e-ijk_lm[4]);k+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1)
                     {
                         const int pp = IDX_L(i, j, k);
 
@@ -1358,9 +1358,9 @@ namespace cuda
             unsigned int pp;
 
 
-            for(unsigned int k=(k_b-ijk_lm[4])+threadIdx.z;k<(k_e-ijk_lm[4]);k+=+blockDim.z)
-                for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
-                    for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+            for(unsigned int j=(j_b-ijk_lm[2])+threadIdx.y;j<(j_e-ijk_lm[2]);j+=blockDim.y)
+                for(unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;i<(i_e-ijk_lm[0]);i+=blockDim.x)
+                    for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1)
                     {
                         pp= IDX_L(i, j, k);
 
