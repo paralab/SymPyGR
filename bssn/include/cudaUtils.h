@@ -64,6 +64,7 @@ namespace cuda
       template <typename T>
       T** alloc2DCudaArray(unsigned int sz1,  unsigned int sz2);
 
+
       /**
        * @brief allocates a 2D cuda array on the device and copy data.
        * @param[in] sz1: dim 1 size
@@ -72,6 +73,16 @@ namespace cuda
        * */
       template <typename T>
       T** alloc2DCudaArray(const T** in,unsigned int sz1,  unsigned int sz2);
+
+      /**
+       * @brief copy back 2D array from Device to Host
+       * @param[in] in: Device 2D array pointer
+       * @param[in] out: Host 2D array pointer
+       * @param[in] sz1: dim 1 size
+       * @param[in] sz1: dim 2 size
+       * */
+      template <typename T>
+      void copy2DArrayToHost(T** in, T** out, unsigned int sz1,  unsigned int sz2);
 
 
       /**
@@ -167,6 +178,21 @@ namespace cuda
         delete [] tmp2D;
 
         return __tmp2d;
+    }
+
+
+    template <typename T>
+    void copy2DArrayToHost(T** in, T** out, unsigned int sz1,  unsigned int sz2)
+    {
+        T** tmp2D=new T*[sz1];
+        cudaMemcpy(tmp2D, in, sizeof(T)*sz1, cudaMemcpyDeviceToHost);
+        CUDA_CHECK_ERROR();
+
+        for(unsigned int i=0; i<sz1; i++)
+        {
+            cudaMemcpy(out[i], tmp2D[i], sizeof(T)*sz2, cudaMemcpyDeviceToHost);
+            CUDA_CHECK_ERROR();
+        }
     }
 
 

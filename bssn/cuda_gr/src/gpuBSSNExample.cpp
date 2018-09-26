@@ -135,7 +135,7 @@ int main (int argc, char** argv)
     bssn::timer::total_runtime.start();
 
 
-    /*for(unsigned int blk=0;blk<blkList.size();blk++) {
+    for(unsigned int blk=0;blk<blkList.size();blk++) {
         offset = blkList[blk].getOffset();
         sz[0] = blkList[blk].getAllocationSzX();
         sz[1] = blkList[blk].getAllocationSzY();
@@ -153,7 +153,7 @@ int main (int argc, char** argv)
 
         bssnrhs_sep(varUnzipOutCPU, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
 
-    }*/
+    }
 
     bssn::timer::total_runtime.stop();
 
@@ -230,7 +230,16 @@ int main (int argc, char** argv)
 #endif
 
 
-
+    double threshold = 1e-10;
+    for(int bssn_var=0; bssn_var<bssn::BSSN_NUM_VARS; bssn_var++){
+        for (int point=0; point<UNZIP_DOF; point++){
+            double diff = varUnzipOutGPU[bssn_var][point] - varUnzipOutCPU[bssn_var][point];
+            if (fabs(diff)>threshold){
+                printf("ERROR \t GPU:%f \t CPU:%f \t Diff:%f\n", varUnzipOutGPU[bssn_var][point], varUnzipOutCPU[bssn_var][point], diff);
+                exit(0);
+            }
+        }
+    }
 
 
 

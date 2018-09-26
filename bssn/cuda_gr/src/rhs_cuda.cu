@@ -93,7 +93,7 @@ namespace cuda
         threadBlock=dim3(6,6,6);
         cuda::profile::t_rhs.start();
 
-        /*cuda::__compute_a_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_a_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
         cuda::__compute_b_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
@@ -118,7 +118,7 @@ namespace cuda
         CUDA_CHECK_ERROR();
 
         cudaDeviceSynchronize();
-        CUDA_CHECK_ERROR();*/
+        CUDA_CHECK_ERROR();
 
         cuda::profile::t_rhs.stop();
 
@@ -133,6 +133,8 @@ namespace cuda
         cudaFree(cuda::__BSSN_NUM_VARS);
         cudaFree(cuda::__BSSN_CONSTRAINT_NUM_VARS);
         cudaFree(cuda::__GPU_BLOCK_SHARED_MEM_UTIL);
+
+        cuda::copy2DArrayToHost<double>(cuda::__UNZIP_OUTPUT, unzipVarsRHS, BSSN_NUM_VARS, UNZIP_DOF_SZ);
 
         cuda::dealloc2DCudaArray(cuda::__UNZIP_INPUT,BSSN_NUM_VARS);
         cuda::dealloc2DCudaArray(cuda::__UNZIP_OUTPUT,BSSN_NUM_VARS);
