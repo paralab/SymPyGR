@@ -104,6 +104,9 @@ namespace cuda
 
     template <typename T>
     void copyBackMemory(T ** & __array2D, unsigned int sz1, cudaStream_t stream);
+
+    template <typename T>
+      void copy2DArrayToHost(T** in, T** out, unsigned int sz1,  unsigned int sz2, cudaStream_t stream, unsigned int offset);
 }
 
 
@@ -260,7 +263,7 @@ namespace cuda
     {
         T** tmp2D=new T*[sz1];
 
-        cudaMemcpyAsync(tmp2D,__array2D,sizeof(T*)*sz1,cudaMemcpyDeviceToHost, stream);
+        cudaMemcpyAsync(tmp2D, __array2D, sizeof(T*)*sz1, cudaMemcpyDeviceToHost, stream);
         CUDA_CHECK_ERROR();
 
         for(unsigned int i=0;i<sz1;i++)
@@ -273,6 +276,20 @@ namespace cuda
 
         cudaFree(__array2D);
         CUDA_CHECK_ERROR();
+    }
+
+    template <typename T>
+    void copy2DArrayToHost(T** in, T** out, unsigned int sz1,  unsigned int sz2, cudaStream_t stream, unsigned int offset)
+    {
+        T** tmp2D=new T*[sz1];
+        cudaMemcpyAsync(tmp2D, in, sizeof(T)*sz1, cudaMemcpyDeviceToHost, stream);
+        CUDA_CHECK_ERROR();
+
+        for(unsigned int i=0; i<sz1; i++)
+        {
+            cudaMemcpyAsync(&out[i][offset], tmp2D[i], sizeof(T)*sz2, cudaMemcpyDeviceToHost, stream);
+            CUDA_CHECK_ERROR();
+        }
     }
 }
 

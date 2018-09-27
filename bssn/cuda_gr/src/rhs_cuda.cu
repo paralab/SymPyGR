@@ -42,7 +42,7 @@ namespace cuda
 
         cuda::profile::t_derivs.start();
 
-        cuda::__RSWS_computeDerivs <<<blockGrid,threadBlock>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__RSWS_computeDerivs <<<blockGrid,threadBlock, 0, stream>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
         // cudaDeviceSynchronize();
@@ -53,7 +53,7 @@ namespace cuda
         threadBlock=dim3(6,6,6);
         cuda::profile::t_rhs.start();
 
-        cuda::__compute_a_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__compute_a_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
         cuda::__compute_b_rhs<<<blockGrid,threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
@@ -77,8 +77,6 @@ namespace cuda
         cuda::__compute_B_rhs<<<blockGrid, threadBlock, 0, stream>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
-        cudaDeviceSynchronize();
-        CUDA_CHECK_ERROR();
 
         cuda::profile::t_rhs.stop();
 
