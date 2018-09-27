@@ -317,12 +317,14 @@ int main (int argc, char** argv)
         cuda::copy2DCudaArray<double>(streamWiseVarIn[blk%streamCount], temp2DInputArrays[blk%streamCount],
                              bssn::BSSN_NUM_VARS, UNZIP_DOF_SZ, UNZIP_INPUT_REFERENCESS[blk%streamCount], 
                              streams[blk%streamCount]);
+        printf("stream index ================================== %d\n", blk%streamCount);
         
         cuda::computeRHS(varUnzipOutGPU,(const double **)streamWiseVarIn[blk%streamCount],
                 &(*(blkCudaList.begin())), blkCudaList.size(), streams[blk%streamCount], 
                 streamWiseBlkLists[blk%streamCount], UNZIP_INPUT_REFERENCESS[blk%streamCount],
                 derivPointers[blk%streamCount], cudaDeviceProperties, bssnComputeParams, 
                 UNZIP_OUTPUT_REFERENCESS[blk%streamCount]);
+
         // cudaDeviceSynchronize();
         // CUDA_CHECK_ERROR();
         // // memory copy to the cpu
