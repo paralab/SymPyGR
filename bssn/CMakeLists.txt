@@ -63,7 +63,7 @@ if(WITH_CUDA)
         #list( APPEND CUDA_NVCC_FLAGS -gencode=arch=compute_61,code=compute_61)
         list( APPEND CUDA_NVCC_FLAGS -use_fast_math )
         list( APPEND CUDA_NVCC_FLAGS -std=c++11)
-        list( APPEND CUDA_NVCC_FLAGS -maxrregcount 32)
+        list( APPEND CUDA_NVCC_FLAGS -maxrregcount 64)
     endif()
 endif()
 
