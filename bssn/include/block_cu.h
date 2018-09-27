@@ -18,8 +18,8 @@
 #endif
 
 
-#define DENDRO_BLOCK_ALIGN_FACTOR 16
-#define DENDRO_BLOCK_ALIGN_FACTOR_LOG 4
+#define DENDRO_BLOCK_ALIGN_FACTOR 1
+#define DENDRO_BLOCK_ALIGN_FACTOR_LOG 0
 
 namespace cuda
 {
@@ -78,9 +78,9 @@ namespace cuda
                 m_uiDx[1]=0.0;
                 m_uiDx[2]=0.0;
 
-                m_uiAlignSz[0]=DENDRO_BLOCK_ALIGN_FACTOR;
-                m_uiAlignSz[1]=DENDRO_BLOCK_ALIGN_FACTOR;
-                m_uiAlignSz[2]=DENDRO_BLOCK_ALIGN_FACTOR;
+                m_uiAlignSz[0]=0;
+                m_uiAlignSz[1]=0;
+                m_uiAlignSz[2]=0;
 
 
 

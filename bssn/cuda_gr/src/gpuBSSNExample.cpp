@@ -44,13 +44,14 @@ int main (int argc, char** argv)
     blkList.resize(numBlocks);
 
     unsigned int unzipSz=0;
+    const unsigned int BLOCK_ALIGNMENT_FACTOR=32;
 
     for(unsigned int i=0;i<numBlocks;i++)
     {
         blkList[i]=ot::Block(2,2,2,blkLevs[i],eleOrder);
         blkList[i].setBlkNodeFlag(0);
         blkList[i].setOffset(unzipSz);
-        unzipSz+=(std::ceil((blkList[i].getAllocationSzX()/(double)DENDRO_BLOCK_ALIGN_FACTOR))*DENDRO_BLOCK_ALIGN_FACTOR)*(std::ceil((blkList[i].getAllocationSzY()/(double)DENDRO_BLOCK_ALIGN_FACTOR))*DENDRO_BLOCK_ALIGN_FACTOR)*(std::ceil((blkList[i].getAllocationSzZ()/(double)DENDRO_BLOCK_ALIGN_FACTOR))*DENDRO_BLOCK_ALIGN_FACTOR);
+        unzipSz+=(std::ceil((blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ()/(double)BLOCK_ALIGNMENT_FACTOR))*BLOCK_ALIGNMENT_FACTOR);
     }
 
     delete [] blkLevs;
