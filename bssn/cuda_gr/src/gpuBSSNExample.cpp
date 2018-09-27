@@ -4,7 +4,7 @@
 
 
 #include "gpuBSSNExample.h"
-
+#include "temp_test_grad_arrays.h"
 
 int main (int argc, char** argv)
 {
@@ -229,17 +229,27 @@ int main (int argc, char** argv)
 
 #endif
 
-
+    // Verify intermediate arrays
     double threshold = 1e-10;
-    for(int bssn_var=0; bssn_var<bssn::BSSN_NUM_VARS; bssn_var++){
-        for (int point=0; point<UNZIP_DOF; point++){
-            double diff = varUnzipOutGPU[bssn_var][point] - varUnzipOutCPU[bssn_var][point];
-            if (fabs(diff)>threshold){
-                printf("ERROR \t GPU:%f \t CPU:%f \t Diff:%f\n", varUnzipOutGPU[bssn_var][point], varUnzipOutCPU[bssn_var][point], diff);
-                exit(0);
-            }
+    for (int i=0; i<sz[0]*sz[1]*sz[2]; i++){
+        double diff = cuda::gpu_grad_0_alpha[i] - cpu_grad_0_alpha[i];
+        if (fabs(diff)>threshold){
+            printf("ERROR \t GPU:%f \t CPU:%f \t Diff:%f \tindex:%d\n", cuda::gpu_grad_0_alpha[i], cpu_grad_0_alpha[i], diff, i);
+            exit(0);
         }
     }
+  
+    // // Final output verification
+    // double threshold = 1e-10;
+    // for(int bssn_var=0; bssn_var<bssn::BSSN_NUM_VARS; bssn_var++){
+    //     for (int point=0; point<UNZIP_DOF; point++){
+    //         double diff = varUnzipOutGPU[bssn_var][point] - varUnzipOutCPU[bssn_var][point];
+    //         if (fabs(diff)>threshold){
+    //             printf("ERROR \t GPU:%f \t CPU:%f \t Diff:%f\n", varUnzipOutGPU[bssn_var][point], varUnzipOutCPU[bssn_var][point], diff);
+    //             exit(0);
+    //         }
+    //     }
+    // }
 
 
 

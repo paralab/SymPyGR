@@ -2,6 +2,7 @@
 // Created by milinda on 8/10/18.
 //
 #include "rhs_cuda.cuh"
+#include "temp_test_grad_arrays.h"
 
 
 namespace cuda
@@ -88,6 +89,17 @@ namespace cuda
         cudaDeviceSynchronize();
         CUDA_CHECK_ERROR();
 
+        // --------------------- TESTING PURPOSE --------------------------
+        // try to copy back grad arrays to cpu
+        // recover the pointer first
+        cuda::MemoryDerivs md;
+        cudaMemcpy(&md, cuda::__BSSN_DERIV_WORKSPACE, sizeof(cuda::MemoryDerivs), cudaMemcpyDeviceToHost);
+        CUDA_CHECK_ERROR();
+        // call method to copy arrays to host
+        cuda::intermediate_arrays_dtoh(md, maxBlkSz*numSM);
+        // cuda::release_intermediate_array_memory();
+        // --------------------- TESTING PURPOSE DONE----------------------
+  
         cuda::profile::t_derivs.stop();
 
         threadBlock=dim3(6,6,6);

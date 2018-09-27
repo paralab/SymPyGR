@@ -73,6 +73,7 @@ if(WITH_CUDA)
             cuda_gr/include/bssn_rhs_deriv_mem_cuda.h
             cuda_gr/include/params_cu.h
             cuda_gr/include/profile_gpu.h
+            cuda_gr/include/temp_test_grad_arrays.h
         )
 
 
@@ -81,6 +82,7 @@ if(WITH_CUDA)
             cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp
             cuda_gr/src/params_cu.cpp
             cuda_gr/src/profile_gpu.cpp
+            cuda_gr/src/temp_test_grad_arrays.cpp
             )
 
 endif()
