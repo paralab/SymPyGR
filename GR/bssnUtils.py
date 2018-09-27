@@ -1136,7 +1136,7 @@ def main():
 
 
     ### !!!!!!! NOTE: WHEN SPECIFYING THE TILE SZ MAKE SURE YOU HAVE 5 POINTS FOR ONE SIDED DERIVS, WHEN THE TILE LOAD THE BLOCK IN THE ITERATIONS
-    TileSz1D=9
+    TileSz1D=12
     cuda_deriv_passes=[
 
         # deriv pass 1
@@ -1167,8 +1167,8 @@ def main():
     cuda_deriv_kernel_names=["__RSWS_computeDerivs"]
 
 
-    #cudaDerivAllocDeallocHeader("../bssn/cuda_gr/include/bssn_rhs_deriv_mem_cuda.h")
-    #cudaDerivAllocDeallocSource("../bssn/cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp",["bssn_rhs_deriv_mem_cuda.h"])
+    cudaDerivAllocDeallocHeader("../bssn/cuda_gr/include/bssn_rhs_deriv_mem_cuda.h")
+    cudaDerivAllocDeallocSource("../bssn/cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp",["bssn_rhs_deriv_mem_cuda.h"])
 
     cudaComputeDerivKernelHeader("../bssn/cuda_gr/include/derivs_bssn.cuh",cuda_deriv_kernel_names,cuda_deriv_passes,["block_cu.h","params_cu.h","bssn_rhs_deriv_mem_cuda.h","cudaUtils.cuh","derivs.cuh"])
     cudaComputeDerivKernelSource("../bssn/cuda_gr/src/derivs_bssn.cu",cuda_deriv_kernel_names,cuda_deriv_passes,["derivs_bssn.cuh"])

@@ -120,22 +120,10 @@ namespace cuda
     __device__ void __loadGlobalToShared3D(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int i_b=ijk_lm[2*0+0];
-        const unsigned int i_e=ijk_lm[2*0+1];
+        const unsigned int t_id =threadIdx.x + threadIdx.y*(blockDim.y) + threadIdx.z * (blockDim.y*blockDim.z);
+        if(t_id>=((ijk_lm[1]-ijk_lm[0])*(ijk_lm[3]-ijk_lm[2])*(ijk_lm[5]-ijk_lm[4]))) return;
 
-        const unsigned int j_b=ijk_lm[2*1+0];
-        const unsigned int j_e=ijk_lm[2*1+1];
-
-        const unsigned int k_b=ijk_lm[2*2+0];
-        const unsigned int k_e=ijk_lm[2*2+1];
-
-
-        for(unsigned int k=k_b;k<k_e;k+=1)
-            for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
-                for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
-                    sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )] = __globalIn[k*(sz[1]*sz[0])+j*(sz[0])+i];
-
-
+        sharedOut[threadIdx.z*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x] = __globalIn[(ijk_lm[4])*(sz[1]*sz[0])+(ijk_lm[2])*(sz[0])+(ijk_lm[0])+t_id];
 
         return ;
 
@@ -164,20 +152,10 @@ namespace cuda
     __device__ void __storeSharedToGlobal3D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int i_b=ijk_lm[2*0+0];
-        const unsigned int i_e=ijk_lm[2*0+1];
+        const unsigned int t_id =threadIdx.x + threadIdx.y*(blockDim.y) + threadIdx.z * (blockDim.y*blockDim.z);
+        if(t_id>=((ijk_lm[1]-ijk_lm[0])*(ijk_lm[3]-ijk_lm[2])*(ijk_lm[5]-ijk_lm[4]))) return;
 
-        const unsigned int j_b=ijk_lm[2*1+0];
-        const unsigned int j_e=ijk_lm[2*1+1];
-
-        const unsigned int k_b=ijk_lm[2*2+0];
-        const unsigned int k_e=ijk_lm[2*2+1];
-
-
-        for(unsigned int k=k_b;k<k_e;k+=1)
-            for(unsigned int j=j_b+threadIdx.y;j<j_e;j+=blockDim.y)
-                for(unsigned int i=i_b+threadIdx.x;i<i_e;i+=blockDim.x)
-                    __globalOut[k*(sz[1]*sz[0])+j*(sz[0])+i]=sharedIn[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )];
+        __globalOut[(ijk_lm[4])*(sz[1]*sz[0])+(ijk_lm[2])*(sz[0])+(ijk_lm[0])+t_id]=sharedIn[threadIdx.z*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x];
 
 
 
@@ -190,22 +168,11 @@ namespace cuda
     __device__ void __extractSign3D(const T* sharedIn,  bool * sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int i_b=ijk_lm[2*0+0];
-        const unsigned int i_e=ijk_lm[2*0+1];
+        if((threadIdx.x>=(ijk_lm[1]-ijk_lm[0])) || (threadIdx.y>=(ijk_lm[3]-ijk_lm[2])) || (threadIdx.z>=(ijk_lm[5]-ijk_lm[4]))) return;
 
-        const unsigned int j_b=ijk_lm[2*1+0];
-        const unsigned int j_e=ijk_lm[2*1+1];
+        (sharedIn[(threadIdx.z) * (tile_sz[0]*tile_sz[1]) + (threadIdx.y) * (tile_sz[0])+ (threadIdx.x)]>0) ?  sharedOut[(threadIdx.z) * (tile_sz[0]*tile_sz[1]) + (threadIdx.y) * (tile_sz[0])+ (threadIdx.x)]=true : sharedOut[(threadIdx.z) * (tile_sz[0]*tile_sz[1]) + (threadIdx.y) * (tile_sz[0])+ (threadIdx.x)]=false;
 
-        const unsigned int k_b=ijk_lm[2*2+0];
-        const unsigned int k_e=ijk_lm[2*2+1];
-
-
-        for(unsigned int k=k_b+threadIdx.y;k<k_e;k+=blockDim.y)
-            for(unsigned int j=j_b+threadIdx.x;j<j_e;j+=blockDim.x)
-                for(unsigned int i=i_b;i<i_e;i+=1)
-                {
-                    (sharedIn[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]>0) ?  sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]=true : sharedOut[(k-k_b) * (tile_sz[0]*tile_sz[1]) + (j-j_b) * (tile_sz[0])+ (i-i_b )]=false;
-                }
+        return;
 
     }
 

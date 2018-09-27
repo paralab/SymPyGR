@@ -76,7 +76,7 @@ namespace cuda
 
 
         dim3 blockGrid(numBlocks,1);
-        dim3 threadBlock(32,4,1);
+        dim3 threadBlock(2,2,2);
 
 
         cuda::profile::t_derivs.start();
