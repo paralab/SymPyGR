@@ -16,6 +16,10 @@ namespace cuda
     /** number of blocks*/
     unsigned int*  __DENDRO_NUM_BLOCKS=NULL;
 
+    unsigned int * __GPU_BLOCK_MAP=NULL;
+
+    extern unsigned int * __NUM_GPU_BLOCKS=NULL;
+
     /** number of evol vars */
     unsigned int* __BSSN_NUM_VARS=NULL;
 

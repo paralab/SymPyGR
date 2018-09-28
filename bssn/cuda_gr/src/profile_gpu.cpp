@@ -72,7 +72,7 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
     unsigned long int unzipTotal=0;
 
     const char separator    = ' ';
-    const int nameWidth     = 30;
+    const int nameWidth     = 60;
     const int numWidth      = 10;
 
     for(unsigned int blk=0;blk<localBlkList.size();blk++)
@@ -91,7 +91,8 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"+cuda_overall(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;;
 
-
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(flops) overal: ";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<(((unzipInternal*NUM_DERIV_OPS_PP)+localBlkList.size()*NUM_DERIV_OPS_BLOCK)/t_stat)<<std::endl;
 
     t_stat=t_H2D_Comm.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -H2D(s)";

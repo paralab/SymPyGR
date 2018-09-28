@@ -9,12 +9,34 @@
 int main (int argc, char** argv)
 {
     if(argc<2)
-        std::cout<<"Usage: "<<argv[0]<<" low_level high_level numBlocks"<<std::endl;
+        std::cout<<"Usage: "<<argv[0]<<" low_level high_level numBlocks threadX threadY threadZ numStreams"<<std::endl;
 
 
     const unsigned int low_level=atoi(argv[1]);
     const unsigned int high_level=atoi(argv[2]);
     const unsigned int numBlocks=atoi(argv[3]);
+
+    unsigned int threadX=2;
+    unsigned int threadY=2;
+    unsigned int threadZ=2;
+    unsigned int numStreams=4;
+
+    if(argc>3)
+    {
+        threadX=atoi(argv[3]);
+        threadY=atoi(argv[4]);
+        threadZ=atoi(argv[5]);
+    }
+
+    bool useAsync=false;
+
+    if(argc>5)
+    {
+        useAsync=true;
+        numStreams=atoi(argv[6]);
+    }
+
+
 
     const double mean = 0.5*(high_level-low_level);
     const double sd=(high_level-mean);
@@ -218,10 +240,19 @@ int main (int argc, char** argv)
 
     }
 
+    dim3 gpuGrid;
+    std::vector<unsigned int > gpuBlockMap;
+    dim3 threadBlock(threadX,threadY,threadZ);
+
+    cuda::computeDendroBlockToGPUMap(&(*(blkList.begin())),blkList.size(),gpuBlockMap,gpuGrid);
+
+
     cuda::profile::initialize();
 
-    cuda::computeRHS(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams);
-
+    if(useAsync)
+        cuda::computeRHSAsync(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams,gpuBlockMap,gpuGrid,threadBlock,numStreams);
+    else
+        cuda::computeRHS(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams,gpuBlockMap,gpuGrid,threadBlock);
     cuda::profile::printOutput(blkList);
 
     std::cout<<YLW<<" ================================"<<NRM<<std::endl;

@@ -32,10 +32,13 @@ namespace cuda
      * @brief performs kernel pre-launch tasks and launch the bssnrhs kernel
      *
      **/
-     void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars);
+    void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim);
 
 
-
+    /**
+     * @brief Asynchronous version of the computeRHS() function call.
+     * */
+    void computeRHSAsync(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams);
 
 
 
