@@ -52,19 +52,6 @@ namespace cuda
 
         cuda::profile::t_H2D_Comm.stop();
 
-        unsigned int maxBlkSz=0;
-        for(unsigned int blk=0;blk<numBlocks;blk++)
-        {
-            const unsigned int* sz=blkList[blk].getSz();
-            if(maxBlkSz<(sz[0]*sz[1]*sz[2]))
-                maxBlkSz=sz[0]*sz[1]*sz[2];
-        }
-
-        const unsigned int derivSz=(maxBlkSz);
-        cuda::__DENDRO_BLK_MAX_SZ=cuda::copyValueToDevice(&derivSz);
-        //const size_t deriv_mem_sz= derivSz*(deviceProp.multiProcessorCount);
-        const unsigned int numSM=deviceProp.multiProcessorCount;
-
         //std::cout<<"deriv alloc begin"<<std::endl;
 
         cuda::profile::t_cudaMalloc_derivs.start();
@@ -88,9 +75,6 @@ namespace cuda
 
 
         cuda::__RSWS_computeDerivs <<<gridDim,blockDim>>> ((const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__GPU_BLOCK_MAP,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        cudaDeviceSynchronize();
         CUDA_CHECK_ERROR();
 
         cuda::profile::t_derivs.stop();

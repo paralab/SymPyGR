@@ -142,6 +142,13 @@ int main (int argc, char** argv)
 
     }
 
+    unsigned int maxBlkSz=0;
+    for(unsigned int i=0;i<blkList.size();i++)
+    {
+        if(maxBlkSz<(blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ()))
+            maxBlkSz=blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ();
+    }
+
     std::cout<<YLW<<" ================================"<<NRM<<std::endl;
     std::cout<<YLW<<"     data init end             "<<NRM<<std::endl;
     std::cout<<YLW<<" ================================"<<NRM<<std::endl;
