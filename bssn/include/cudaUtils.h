@@ -46,15 +46,22 @@ namespace cuda
       * @param[in] out: device pointer where the data is copied to.
       * */
       template<typename T>
-       T * copyArrayToDevice(const T* in, unsigned int numElems);
+       T * copyArrayToDevice(T* __devicePtr, const T* in, unsigned int numElems);
 
+    /**
+      * @breif allocate mesh blocks in gpu
+      * @param[in] in : input array
+      * @param[in] out: device pointer where the data is copied to.
+      * */
+    template<typename T>
+    T * allocateMemoryForArray(unsigned int numElems);
 
     /**
      * @breif copy value to device
      * @param[in] in : input value
      * @param[in] out: device pointer where the data is copied to.
      * */
-      template<typename T>
+    template<typename T>
       inline T * copyValueToDevice(const T* in);
 
 
@@ -128,14 +135,22 @@ namespace cuda
 {
 
     template<typename T>
-    T * copyArrayToDevice(const T* in, unsigned int numElems)
+    T * copyArrayToDevice(T* __devicePtr, const T* in, unsigned int numElems)
+    {
+
+        cudaMemcpy(__devicePtr,in,sizeof(T)*numElems,cudaMemcpyHostToDevice);
+        CUDA_CHECK_ERROR();
+
+        return __devicePtr;
+
+    }
+
+    template<typename T>
+    T * allocateMemoryForArray(unsigned int numElems)
     {
 
         T* __devicePtr;
         cudaMalloc(&__devicePtr,sizeof(T)*numElems);
-        CUDA_CHECK_ERROR();
-
-        cudaMemcpy(__devicePtr,in,sizeof(T)*numElems,cudaMemcpyHostToDevice);
         CUDA_CHECK_ERROR();
 
         return __devicePtr;
