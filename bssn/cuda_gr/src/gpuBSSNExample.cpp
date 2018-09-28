@@ -21,19 +21,19 @@ int main (int argc, char** argv)
     unsigned int threadZ=2;
     unsigned int numStreams=4;
 
-    if(argc>3)
+    if(argc>4)
     {
-        threadX=atoi(argv[3]);
-        threadY=atoi(argv[4]);
-        threadZ=atoi(argv[5]);
+        threadX=atoi(argv[4]);
+        threadY=atoi(argv[5]);
+        threadZ=atoi(argv[6]);
     }
 
     bool useAsync=false;
 
-    if(argc>5)
+    if(argc>7)
     {
         useAsync=true;
-        numStreams=atoi(argv[6]);
+        numStreams=atoi(argv[7]);
     }
 
 
