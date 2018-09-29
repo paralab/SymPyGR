@@ -73,7 +73,8 @@ int main (int argc, char** argv)
         blkList[i]=ot::Block(2,2,2,blkLevs[i],eleOrder);
         blkList[i].setBlkNodeFlag(0);
         blkList[i].setOffset(unzipSz);
-        unzipSz+=(std::ceil((blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ()/(double)BLOCK_ALIGNMENT_FACTOR))*BLOCK_ALIGNMENT_FACTOR);
+        unzipSz+=(std::ceil((blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()
+                *blkList[i].getAllocationSzZ()/(double)BLOCK_ALIGNMENT_FACTOR))*BLOCK_ALIGNMENT_FACTOR);
     }
 
     delete [] blkLevs;
@@ -145,8 +146,10 @@ int main (int argc, char** argv)
     unsigned int maxBlkSz=0;
     for(unsigned int i=0;i<blkList.size();i++)
     {
-        if(maxBlkSz<(blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ()))
-            maxBlkSz=blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()*blkList[i].getAllocationSzZ();
+        int blkSize = (std::ceil((blkList[i].getAllocationSzX()*blkList[i].getAllocationSzY()
+                    *blkList[i].getAllocationSzZ()/(double)BLOCK_ALIGNMENT_FACTOR))*BLOCK_ALIGNMENT_FACTOR);
+        if(maxBlkSz<blkSize)
+            maxBlkSz=blkSize;
     }
 
     std::cout<<YLW<<" ================================"<<NRM<<std::endl;
@@ -222,30 +225,7 @@ int main (int argc, char** argv)
     blkCudaList.resize(blkList.size());
     double hx[3];
 
-    for(unsigned int blk=0;blk<blkList.size();blk++)
-    {
-        offset=blkList[blk].getOffset();
-        sz[0]=blkList[blk].getAllocationSzX();
-        sz[1]=blkList[blk].getAllocationSzY();
-        sz[2]=blkList[blk].getAllocationSzZ();
-
-        bflag=blkList[blk].getBlkNodeFlag();
-
-        dx = blkList[blk].computeGridDx();
-        dy = blkList[blk].computeGridDy();
-        dz = blkList[blk].computeGridDz();
-
-        hx[0]=dx;
-        hx[1]=dy;
-        hx[2]=dz;
-
-        ptmax[0] = ptmin[0] + dx * (sz[0]);
-        ptmax[1] = ptmin[1] + dx * (sz[1]);
-        ptmax[2] = ptmin[2] + dx * (sz[2]);
-
-        blkCudaList[blk]=cuda::_Block((const double *)ptmin,(const double *)ptmax,offset,bflag,(const unsigned int*)sz, (const double *)hx);
-
-    }
+    
 
     dim3 gpuGrid;
     std::vector<unsigned int > gpuBlockMap;
@@ -268,11 +248,6 @@ int main (int argc, char** argv)
 
 #endif
 
-
-
-
-
-
     for(unsigned int var=0;var<bssn::BSSN_NUM_VARS;var++)
     {
         delete [] varUnzipIn[var];
@@ -280,12 +255,9 @@ int main (int argc, char** argv)
         delete [] varUnzipOutGPU[var];
     }
 
-
     delete [] varUnzipIn;
     delete [] varUnzipOutCPU;
     delete [] varUnzipOutGPU;
-
-
 
     return 0;
 
