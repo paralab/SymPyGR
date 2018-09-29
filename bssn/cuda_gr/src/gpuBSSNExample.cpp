@@ -28,7 +28,7 @@ int main (int argc, char** argv)
         threadZ=atoi(argv[6]);
     }
 
-    bool useAsync=true;
+    bool useAsync=false;
 
     if(argc>7)
     {
@@ -237,6 +237,7 @@ int main (int argc, char** argv)
         cudaDeviceProp deviceProp;
         cudaGetDeviceProperties(&deviceProp,0);
         const unsigned int numSM=deviceProp.multiProcessorCount;
+        streamCount = 2;
         cudaStream_t stream;
         cudaStream_t streams[streamCount];
 
@@ -281,6 +282,7 @@ int main (int argc, char** argv)
         
         int counter = 0;
         int globalUnzipDOF = 0;
+        bool isStarted = false;
         for(unsigned int blk=0; blk<numberOfTotalBlks; blk+=numSM) {
 
             int numberOfBlksForNextIteration = (blk+numSM > numberOfTotalBlks?(numberOfTotalBlks - blk) : numSM);
@@ -319,18 +321,28 @@ int main (int argc, char** argv)
             copyOffsets[streamSelected] = globalUnzipDOF;
 
             cuda::copy2DCudaArray<double>((const double **)varUnzipIn, 
-                    cpuAllocationsOn2DInputArray[streamSelected], bssn::BSSN_NUM_VARS, 
-                    copySizes[streamSelected], referencesTo2DInputArray[streamSelected], globalUnzipDOF);
+                    cpuAllocationsOn2DInputArray[streamSelected], bssn::BSSN_NUM_VARS,
+                    copySizes[streamSelected], referencesTo2DInputArray[streamSelected], globalUnzipDOF,
+                    streams[streamSelected]);
             cuda::__DENDRO_BLOCK_LIST = cuda::copyArrayToDevice<cuda::_Block>(blkLists[streamSelected], 
-                                    &(*(blkCudaList.begin())), blkCudaList.size());
-            
-           cuda::computeRHSAsync(blkOutput[streamSelected], referencesTo2DInputArray[streamSelected], cuda::__DENDRO_BLOCK_LIST,
-            blkCudaList.size(), cuda::__BSSN_COMPUTE_PARMS, gpuBlockMap,gpuGrid,threadBlock, streamCount);
+                                    &(*(blkCudaList.begin())), blkCudaList.size(), streams[streamSelected]);
+            if(isStarted) {
+                //wait on other one to finish - first one will not weight on this
+                cudaStreamSynchronize(streams[(streamSelected+1)%streamCount]);
+            }
+            cuda::computeRHSAsync(blkOutput[streamSelected], referencesTo2DInputArray[streamSelected], 
+                cuda::__DENDRO_BLOCK_LIST, blkCudaList.size(), cuda::__BSSN_COMPUTE_PARMS, 
+                gpuBlockMap,gpuGrid,threadBlock, streamCount, streams[streamSelected]);
 
             //data copy back 
-            cuda::copy2DArrayToHost<double>( blkOutput[streamSelected], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
-                        copySizes[streamSelected], copyOffsets[streamSelected]);
+            if(isStarted) {
+                //wait on other one to finish
+                cuda::copy2DArrayToHost<double>(blkOutput[(streamSelected+1)%streamCount], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
+                    copySizes[(streamSelected+1)%streamCount], copyOffsets[(streamSelected+1)%streamCount], streams[(streamSelected+1)%streamCount]);
+            }
 
+            if(!isStarted)isStarted=true;
+            
             globalUnzipDOF+=temp_unzip_dof;
             counter++;
         }

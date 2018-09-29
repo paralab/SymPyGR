@@ -40,7 +40,7 @@ namespace cuda
      * */
      void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
         cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
-        std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams);
+        std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams, cudaStream_t stream);
 
 
 

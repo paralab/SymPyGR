@@ -151,7 +151,8 @@ namespace cuda
 
     void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
                 cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
-                std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim, unsigned int numStreams)
+                std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim, unsigned int numStreams,
+                cudaStream_t stream)
     {
         cuda::profile::t_overall.start();
 
@@ -160,7 +161,7 @@ namespace cuda
         const unsigned int BSSN_CONSTRAINT_NUM_VARS=6;
 
 
-        cuda::__RSWS_computeDerivs <<<gridDim,blockDim>>> ((const double**)INPUT_REFERENCE,cuda::__BSSN_DERIV_WORKSPACE, DENDRO_BLOCK_LIST,cuda::__GPU_BLOCK_MAP,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__RSWS_computeDerivs <<<gridDim,blockDim, 0, stream>>> ((const double**)INPUT_REFERENCE,cuda::__BSSN_DERIV_WORKSPACE, DENDRO_BLOCK_LIST,cuda::__GPU_BLOCK_MAP,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
         /*
