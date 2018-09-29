@@ -112,10 +112,63 @@ namespace cuda
      * */
     void computeDendroBlockToGPUMap(const ot::Block* blkList, unsigned int numBlocks, std::vector<unsigned int >& blockMap,dim3 & gridDim);
 
+    /*  *****************************      newly defined functions ************* */
 
+     /**
+       * @allocate a 2D array and get the reference .
+       * @param[in] sz1: dim 1 size
+       * */
+    template <typename T>
+    T** getReferenceTo2DArray(unsigned int sz1);
 
+     /**
+      * @breif allocate mesh blocks in gpu
+      * @param[in] in : input array
+      * @param[in] out: device pointer where the data is copied to.
+      * */
+    template<typename T>
+    T * allocateMemoryForArray(unsigned int numElems);
 
+     /**
+       * @brief allocates a 2D cuda array on the device.
+       * @param[in] sz1: dim 1 size
+       * @param[in] sz2: dim 2 size
+       * @returns the double pointer to the 2D array.
+       * */
+      template <typename T>
+      T** alloc2DGPUArray(unsigned int sz1,  unsigned int sz2);
 
+      /**
+       * @copy data to the 2D array.
+       * @param[in] sz1: dim 1 size
+       * */
+    template <typename T>
+    T** copy2DCudaArray(const T** in,  T** tmp2D, unsigned int sz1, unsigned int sz2,  T** inputReferenceGPU, 
+                        unsigned int offset);
+
+    /**
+      * @breif send mesh blocks to the gpu
+      * @param[in] in : input array
+      * @param[in] out: device pointer where the data is copied to.
+      * */
+      template<typename T>
+       T * copyArrayToDevice(T* __devicePtr, const T* in, unsigned int numElems);
+
+    /**
+       * @copy a 2D array from GPU to CPU.
+       * @param[in] sz1: dim 1 size
+       * */
+    template <typename T>
+    void copy2DArrayToHost(T** in, T** out, unsigned int sz1,  unsigned int sz2, unsigned int offset);
+
+    /**
+       * @brief allocates a 2D cuda array on the device and return the reference to those arrays.
+       * @param[in] sz1: dim 1 size
+       * @param[in] sz2: dim 2 size
+       * @returns the double pointer to the 2D array.
+       * */
+      template <typename T>
+      T** getReferencesToArrays(unsigned int sz1,  unsigned int sz2);
 
 }
 
@@ -291,6 +344,106 @@ namespace cuda
         delete [] tmp2D;
 
         return __tmp2d;
+    }
+
+     template <typename T>
+    T** getReferenceTo2DArray(unsigned int sz1) {
+         T** __tmp2d;
+        cudaMalloc(&__tmp2d,sizeof(T*)*sz1);
+        CUDA_CHECK_ERROR();
+
+        return __tmp2d;
+    }
+
+    template<typename T>
+    T * allocateMemoryForArray(unsigned int numElems)
+    {
+
+        T* __devicePtr;
+        cudaMalloc(&__devicePtr,sizeof(T)*numElems);
+        CUDA_CHECK_ERROR();
+
+        return __devicePtr;
+
+    }
+
+    template <typename T>
+    T** alloc2DGPUArray(unsigned int sz1,  unsigned int sz2)
+    {
+        T** __tmp2d;
+        cudaMalloc(&__tmp2d,sizeof(T*)*sz1);
+        CUDA_CHECK_ERROR();
+
+        T** tmp2D=new T*[sz1];
+
+        for(unsigned int i=0;i<sz1;i++)
+        {
+            cudaMalloc(&tmp2D[i],sizeof(T)*sz2);
+            CUDA_CHECK_ERROR();
+        }
+
+        cudaMemcpy(__tmp2d,tmp2D,sizeof(T*)*sz1,cudaMemcpyHostToDevice);
+        CUDA_CHECK_ERROR();
+        delete [] tmp2D;
+
+        return __tmp2d;
+    }
+
+    template <typename T>
+    T** copy2DCudaArray(const T** in,  T** tmp2D, unsigned int sz1, unsigned int sz2, T** inputReferenceGPU,
+                        unsigned int offset)
+    {
+        for(unsigned int i=0;i<sz1;i++)
+        {
+            cudaMemcpy(tmp2D[i], &in[i][offset], sizeof(T)*sz2, cudaMemcpyHostToDevice);
+            CUDA_CHECK_ERROR();
+        }
+        
+        cudaMemcpy(inputReferenceGPU, tmp2D, sizeof(T*)*sz1, cudaMemcpyHostToDevice);
+        CUDA_CHECK_ERROR();
+
+        return inputReferenceGPU;
+    }
+
+    template<typename T>
+    T * copyArrayToDevice(T* __devicePtr, const T* in, unsigned int numElems)
+    {
+
+        cudaMemcpy(__devicePtr,in,sizeof(T)*numElems,cudaMemcpyHostToDevice);
+        CUDA_CHECK_ERROR();
+
+        return __devicePtr;
+
+    }
+
+    template <typename T>
+    void copy2DArrayToHost(T** in, T** out, unsigned int sz1,  unsigned int sz2, unsigned int offset)
+    {
+        T** tmp2D=new T*[sz1];
+        cudaMemcpy(tmp2D, in, sizeof(T)*sz1, cudaMemcpyDeviceToHost);
+        CUDA_CHECK_ERROR();
+
+        for(unsigned int i=0; i<sz1; i++)
+        {
+            cudaMemcpy(&out[i][offset], tmp2D[i], sizeof(T)*sz2, cudaMemcpyDeviceToHost);
+            CUDA_CHECK_ERROR();
+        }
+    }
+
+    template <typename T>
+    T** getReferencesToArrays(unsigned int sz1, unsigned int sz2)
+    {
+
+        T** tmp2D=new T*[sz1];
+
+        for(unsigned int i=0;i<sz1;i++)
+        {
+            cudaMalloc(&tmp2D[i],sizeof(T)*sz2);
+            CUDA_CHECK_ERROR();
+
+        }
+
+        return tmp2D;
     }
 
 
