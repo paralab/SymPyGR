@@ -38,7 +38,9 @@ namespace cuda
     /**
      * @brief Asynchronous version of the computeRHS() function call.
      * */
-    void computeRHSAsync(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams);
+     void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
+        cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
+        std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams, cudaStream_t stream);
 
 
 
