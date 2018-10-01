@@ -392,6 +392,7 @@ int main (int argc, char** argv)
             blkCudaList[blk]=cuda::_Block((const double *)ptmin,(const double *)ptmax,offset,bflag,(const unsigned int*)sz, (const double *)hx);
 
         }
+        cuda::computeDendroBlockToGPUMap(&(*(blkList.begin())),blkList.size(),gpuBlockMap,gpuGrid);
         cuda::computeRHS(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams,gpuBlockMap,gpuGrid,threadBlock);
     }
         
