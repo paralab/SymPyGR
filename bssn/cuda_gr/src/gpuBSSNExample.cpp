@@ -214,7 +214,7 @@ int main (int argc, char** argv)
     
 
     dim3 gpuGrid;
-    std::vector<unsigned int > gpuBlockMap;
+    std::vector<int > gpuBlockMap;
     dim3 threadBlock(threadX,threadY,threadZ);
 
 
@@ -224,7 +224,6 @@ int main (int argc, char** argv)
        
 
         unsigned int numberOfTotalBlks = blkList.size();
-        cuda::computeDendroBlockToGPUMap(&(*(blkList.begin())),blkList.size(),gpuBlockMap,gpuGrid);
         unsigned int maxBlkSz=0;
         for(unsigned int i=0;i<numberOfTotalBlks;i++)
         {
@@ -244,12 +243,11 @@ int main (int argc, char** argv)
         // data copy to the GPU    
         cuda::__CUDA_DEVICE_PROPERTIES = cuda::getGPUDeviceInfo(0);
 
-         
-        
         double*** referencesTo2DInputArray = new double**[streamCount];
         double*** blkOutput = new double**[streamCount];
         double*** cpuAllocationsOn2DInputArray = new double**[streamCount];
         cuda::_Block** blkLists = new cuda::_Block* [streamCount];
+        int ** blockMaps = new int* [streamCount];
         int copySizes[streamCount];
         int copyOffsets[streamCount];
 
@@ -258,8 +256,9 @@ int main (int argc, char** argv)
             referencesTo2DInputArray[index] = cuda::getReferenceTo2DArray<double>(bssn::BSSN_NUM_VARS);
             cpuAllocationsOn2DInputArray[index] = cuda::getReferencesToArrays<double>(bssn::BSSN_NUM_VARS, 
                                                 maxBlkSz * numSM);
-            blkLists[index] = cuda::allocateMemoryForArray<cuda::_Block>(numberOfTotalBlks);
+            blkLists[index] = cuda::allocateMemoryForArray<cuda::_Block>(numSM);
             blkOutput[index] = cuda::alloc2DGPUArray<double>(bssn::BSSN_NUM_VARS, maxBlkSz * numSM);
+            blockMaps[index] = cuda::allocateMemoryForArray<int>(numSM*2);
         }
 
         cuda::__BSSN_COMPUTE_PARMS = cuda::copyValueToDevice(&bssnParams);
@@ -277,8 +276,6 @@ int main (int argc, char** argv)
 
         unsigned int sendCount[streamCount];
         unsigned int sendOffset[streamCount];
-        const unsigned int NUM_GPU_BLOCKS=(gpuBlockMap.size()>>1u);
-        cuda::__GPU_BLOCK_MAP=cuda::copyArrayToDeviceAsync(&(*(gpuBlockMap.begin())),NUM_GPU_BLOCKS,(const cudaStream_t*)streams,(unsigned int *)sendCount,(unsigned int *)sendOffset,streamCount);
         
         int counter = 0;
         int globalUnzipDOF = 0;
@@ -316,7 +313,12 @@ int main (int argc, char** argv)
                                 (const unsigned int*)sz, (const double *)hx);
                 temp_unzip_dof += (std::ceil((sz[0]*sz[1]*sz[2]/(double)BLOCK_ALIGNMENT_FACTOR))*BLOCK_ALIGNMENT_FACTOR);
             }
-
+            
+            cuda::computeDendroBlockToGPUMap(&(*(blkList.begin())),numberOfBlksForNextIteration, gpuBlockMap,gpuGrid, blk);
+            unsigned int NUM_GPU_BLOCKS = (gpuBlockMap.size()>>1u);
+            cuda::copyArrayToDevice<int>(blockMaps[streamSelected], &(*(gpuBlockMap.begin())), 
+                                        2*NUM_GPU_BLOCKS, streams[streamSelected]);
+            
             copySizes[streamSelected] = temp_unzip_dof;
             copyOffsets[streamSelected] = globalUnzipDOF;
 
@@ -332,7 +334,7 @@ int main (int argc, char** argv)
             }
             cuda::computeRHSAsync(blkOutput[streamSelected], referencesTo2DInputArray[streamSelected], 
                 cuda::__DENDRO_BLOCK_LIST, blkCudaList.size(), cuda::__BSSN_COMPUTE_PARMS, 
-                gpuBlockMap,gpuGrid,threadBlock, streamCount, streams[streamSelected]);
+                gpuBlockMap,gpuGrid,threadBlock, streamCount, streams[streamSelected], (const unsigned int*)blockMaps[streamSelected]);
 
             //data copy back 
             if(isStarted) {
@@ -343,7 +345,7 @@ int main (int argc, char** argv)
 
             if(!isStarted)isStarted=true;
             
-            globalUnzipDOF+=temp_unzip_dof;
+            globalUnzipDOF += temp_unzip_dof;
             counter++;
         }
 
@@ -392,7 +394,7 @@ int main (int argc, char** argv)
             blkCudaList[blk]=cuda::_Block((const double *)ptmin,(const double *)ptmax,offset,bflag,(const unsigned int*)sz, (const double *)hx);
 
         }
-        cuda::computeDendroBlockToGPUMap(&(*(blkList.begin())),blkList.size(),gpuBlockMap,gpuGrid);
+        cuda::computeDendroBlockToGPUMap(&(*(blkList.begin())),blkList.size(),gpuBlockMap,gpuGrid, 0);
         cuda::computeRHS(varUnzipOutGPU,(const double **)varUnzipIn,&(*(blkCudaList.begin())),blkCudaList.size(),(const cuda::BSSNComputeParams*) &bssnParams,gpuBlockMap,gpuGrid,threadBlock);
     }
         

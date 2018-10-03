@@ -9,7 +9,7 @@ namespace cuda
 
 
 
-    void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim)
+    void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,std::vector< int >& blockMap,dim3 gridDim,dim3 blockDim)
     {
         cuda::profile::t_overall.start();
 
@@ -27,7 +27,6 @@ namespace cuda
         const unsigned int BSSN_CONSTRAINT_NUM_VARS=6;
 
         const unsigned int NUM_GPU_BLOCKS=(blockMap.size()>>1u);
-
         const unsigned int UNZIP_DOF_SZ=blkList[numBlocks-1].getOffset()+(blkList[numBlocks-1].getAlignedSz()[0]*blkList[numBlocks-1].getAlignedSz()[1]*blkList[numBlocks-1].getAlignedSz()[2]);
 
 
@@ -36,7 +35,8 @@ namespace cuda
         cuda::__DENDRO_NUM_BLOCKS=cuda::copyValueToDevice(&numBlocks);
 
         cuda::__NUM_GPU_BLOCKS=cuda::copyValueToDevice(&NUM_GPU_BLOCKS);
-        cuda::__GPU_BLOCK_MAP=cuda::copyArrayToDevice(&(*(blockMap.begin())),NUM_GPU_BLOCKS);
+
+        cuda::__GPU_BLOCK_MAP=cuda::copyArrayToDevice((unsigned int*)&(*(blockMap.begin())),2*NUM_GPU_BLOCKS);
 
         cuda::__BSSN_NUM_VARS=cuda::copyValueToDevice(&BSSN_NUM_VARS);
         cuda::__BSSN_CONSTRAINT_NUM_VARS=cuda::copyValueToDevice(&BSSN_CONSTRAINT_NUM_VARS);
@@ -151,8 +151,8 @@ namespace cuda
 
     void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
                 cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
-                std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim, unsigned int numStreams,
-                cudaStream_t stream)
+                std::vector< int >& blockMap,dim3 gridDim,dim3 blockDim, unsigned int numStreams,
+                cudaStream_t stream, const unsigned int* gpuBlkMap)
     {
         cuda::profile::t_overall.start();
 
@@ -161,7 +161,7 @@ namespace cuda
         const unsigned int BSSN_CONSTRAINT_NUM_VARS=6;
 
 
-        cuda::__RSWS_computeDerivs <<<gridDim,blockDim, 0, stream>>> ((const double**)INPUT_REFERENCE,cuda::__BSSN_DERIV_WORKSPACE, DENDRO_BLOCK_LIST,cuda::__GPU_BLOCK_MAP,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__RSWS_computeDerivs <<<gridDim,blockDim, 0, stream>>> ((const double**)INPUT_REFERENCE,cuda::__BSSN_DERIV_WORKSPACE, DENDRO_BLOCK_LIST, gpuBlkMap,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
         /*

@@ -32,7 +32,7 @@ namespace cuda
      * @brief performs kernel pre-launch tasks and launch the bssnrhs kernel
      *
      **/
-    void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim);
+    void computeRHS(double **unzipVarsRHS, const double **uZipVars,const cuda::_Block* blkList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,std::vector<int >& blockMap,dim3 gridDim,dim3 blockDim);
 
 
     /**
@@ -40,7 +40,7 @@ namespace cuda
      * */
      void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
         cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
-        std::vector<unsigned int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams, cudaStream_t stream);
+        std::vector< int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams, cudaStream_t stream, const unsigned int* gpuBlkMap);
 
 
 

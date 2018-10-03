@@ -9,7 +9,6 @@ __global__ void __RSWS_computeDerivs(const double**__unzipInVar,MemoryDerivs* __
 
 for(unsigned int blk=__gpuBlockMap[2*blockIdx.x];blk<__gpuBlockMap[2*blockIdx.x+1];++blk){
 
-
 // blocks assigned to each gpu block 
 const _Block dblock=__dendroBlkList[blk];
 const unsigned int NUM_SM_UNITS=__deviceProperties->multiProcessorCount;
@@ -27,7 +26,6 @@ const unsigned int bflag=dblock.getBFlag();
 
 
 const unsigned int tile_sz[3]={12,12,12};
-// printf("sz =====================================%d\n", sz[0]);
 
 //allocate memory for shared deriv variables. 
 const unsigned int Lb = 0;// load begin bound

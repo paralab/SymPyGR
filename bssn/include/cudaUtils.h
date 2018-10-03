@@ -110,7 +110,7 @@ namespace cuda
      * @param[in] numBlocks: number of data blocks,
      * @param[out] blockMap: (blockMap[2*blocDim.x] , blockMap[2*blocDim.x+1]) begin & end of data block that is going to be process by the gpu block
      * */
-    void computeDendroBlockToGPUMap(const ot::Block* blkList, unsigned int numBlocks, std::vector<unsigned int >& blockMap,dim3 & gridDim);
+    void computeDendroBlockToGPUMap(const ot::Block* blkList, unsigned int numBlocks, std::vector< int >& blockMap,dim3 & gridDim, unsigned int start);
 
     /*  *****************************      newly defined functions ************* */
 
