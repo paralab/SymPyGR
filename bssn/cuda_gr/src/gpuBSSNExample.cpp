@@ -28,7 +28,7 @@ int main (int argc, char** argv)
         threadZ=atoi(argv[6]);
     }
 
-    bool useAsync=true;
+    bool useAsync=false;
 
     if(argc>7)
     {
@@ -237,7 +237,6 @@ int main (int argc, char** argv)
         cudaGetDeviceProperties(&deviceProp,0);
         // deviceProp.multiProcessorCount
         const unsigned int numSM=deviceProp.multiProcessorCount;
-        streamCount = 3;
         cudaStream_t stream;
         cudaStream_t streams[streamCount];
 
@@ -263,7 +262,7 @@ int main (int argc, char** argv)
             blkOutput[index] = cuda::alloc2DGPUArray<double>(bssn::BSSN_NUM_VARS, maxBlkSz * numSM);
             blockMaps[index] = cuda::allocateMemoryForArray<int>(numSM*2);
 
-        cuda::profile::t_cudaMalloc_derivs.start();
+            cuda::profile::t_cudaMalloc_derivs.start();
 
                 derivWorkSpaces[index].allocateDerivMemory(maxBlkSz,numSM);
                 CUDA_CHECK_ERROR();
@@ -271,7 +270,7 @@ int main (int argc, char** argv)
                 derivPointers[index] = cuda::copyValueToDevice(&derivWorkSpaces[index]);
                 CUDA_CHECK_ERROR();
 
-        cuda::profile::t_cudaMalloc_derivs.stop();
+            cuda::profile::t_cudaMalloc_derivs.stop();
         }
 
         cuda::__BSSN_COMPUTE_PARMS = cuda::copyValueToDevice(&bssnParams);
@@ -287,6 +286,7 @@ int main (int argc, char** argv)
             int numberOfBlksForNextIteration = (blk+numSM > numberOfTotalBlks?(numberOfTotalBlks - blk) : numSM);
             int temp_unzip_dof = 0;
             int streamSelected = counter%streamCount;
+            int previousStreamSelected = (counter-1)%streamCount;
             std::vector<cuda::_Block> blkCudaList;
             blkCudaList.resize(numberOfBlksForNextIteration);
             
@@ -337,9 +337,11 @@ int main (int argc, char** argv)
                 (const unsigned int*)blockMaps[streamSelected], derivPointers[streamSelected]);
 
             //data copy back 
-            cuda::copy2DArrayToHost<double>(blkOutput[streamSelected], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
-                copySizes[streamSelected], copyOffsets[streamSelected], streams[streamSelected]);
-            
+            if(counter>0) {
+                cuda::copy2DArrayToHost<double>(blkOutput[previousStreamSelected], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
+                    copySizes[previousStreamSelected], copyOffsets[previousStreamSelected], streams[previousStreamSelected]);
+            }
+                
             globalUnzipDOF += temp_unzip_dof;
             counter++;
         }
