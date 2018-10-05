@@ -28,7 +28,7 @@ int main (int argc, char** argv)
         threadZ=atoi(argv[6]);
     }
 
-    bool useAsync=false;
+    bool useAsync=true;
 
     if(argc>7)
     {
@@ -235,8 +235,9 @@ int main (int argc, char** argv)
          
         cudaDeviceProp deviceProp;
         cudaGetDeviceProperties(&deviceProp,0);
+        // deviceProp.multiProcessorCount
         const unsigned int numSM=deviceProp.multiProcessorCount;
-        streamCount = 2;
+        streamCount = 3;
         cudaStream_t stream;
         cudaStream_t streams[streamCount];
 
@@ -244,6 +245,8 @@ int main (int argc, char** argv)
         cuda::__CUDA_DEVICE_PROPERTIES = cuda::getGPUDeviceInfo(0);
 
         double*** referencesTo2DInputArray = new double**[streamCount];
+        cuda::MemoryDerivs* derivWorkSpaces = new cuda::MemoryDerivs[streamCount];
+        cuda::MemoryDerivs** derivPointers = new cuda::MemoryDerivs*[streamCount];
         double*** blkOutput = new double**[streamCount];
         double*** cpuAllocationsOn2DInputArray = new double**[streamCount];
         cuda::_Block** blkLists = new cuda::_Block* [streamCount];
@@ -259,20 +262,19 @@ int main (int argc, char** argv)
             blkLists[index] = cuda::allocateMemoryForArray<cuda::_Block>(numSM);
             blkOutput[index] = cuda::alloc2DGPUArray<double>(bssn::BSSN_NUM_VARS, maxBlkSz * numSM);
             blockMaps[index] = cuda::allocateMemoryForArray<int>(numSM*2);
-        }
 
-        cuda::__BSSN_COMPUTE_PARMS = cuda::copyValueToDevice(&bssnParams);
         cuda::profile::t_cudaMalloc_derivs.start();
 
-                cuda::MemoryDerivs derivWorkSpace;
-                derivWorkSpace.allocateDerivMemory(maxBlkSz,numSM);
+                derivWorkSpaces[index].allocateDerivMemory(maxBlkSz,numSM);
                 CUDA_CHECK_ERROR();
 
-                cuda::__BSSN_DERIV_WORKSPACE=cuda::copyValueToDevice(&derivWorkSpace);
+                derivPointers[index] = cuda::copyValueToDevice(&derivWorkSpaces[index]);
                 CUDA_CHECK_ERROR();
 
         cuda::profile::t_cudaMalloc_derivs.stop();
+        }
 
+        cuda::__BSSN_COMPUTE_PARMS = cuda::copyValueToDevice(&bssnParams);
 
         unsigned int sendCount[streamCount];
         unsigned int sendOffset[streamCount];
@@ -326,34 +328,27 @@ int main (int argc, char** argv)
                     cpuAllocationsOn2DInputArray[streamSelected], bssn::BSSN_NUM_VARS,
                     copySizes[streamSelected], referencesTo2DInputArray[streamSelected], globalUnzipDOF,
                     streams[streamSelected]);
-            cuda::__DENDRO_BLOCK_LIST = cuda::copyArrayToDevice<cuda::_Block>(blkLists[streamSelected], 
+            cuda::copyArrayToDevice<cuda::_Block>(blkLists[streamSelected], 
                                     &(*(blkCudaList.begin())), blkCudaList.size(), streams[streamSelected]);
-            if(isStarted) {
-                //wait on other one to finish - first one will not weight on this
-                cudaStreamSynchronize(streams[(streamSelected+1)%streamCount]);
-            }
+            
             cuda::computeRHSAsync(blkOutput[streamSelected], referencesTo2DInputArray[streamSelected], 
-                cuda::__DENDRO_BLOCK_LIST, blkCudaList.size(), cuda::__BSSN_COMPUTE_PARMS, 
-                gpuBlockMap,gpuGrid,threadBlock, streamCount, streams[streamSelected], (const unsigned int*)blockMaps[streamSelected]);
+                blkLists[streamSelected], blkCudaList.size(), cuda::__BSSN_COMPUTE_PARMS, 
+                gpuBlockMap,gpuGrid,threadBlock, streamCount, streams[streamSelected],
+                (const unsigned int*)blockMaps[streamSelected], derivPointers[streamSelected]);
 
             //data copy back 
-            if(isStarted) {
-                //wait on other one to finish
-                cuda::copy2DArrayToHost<double>(blkOutput[(streamSelected+1)%streamCount], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
-                    copySizes[(streamSelected+1)%streamCount], copyOffsets[(streamSelected+1)%streamCount], streams[(streamSelected+1)%streamCount]);
-            }
-
-            if(!isStarted)isStarted=true;
+            cuda::copy2DArrayToHost<double>(blkOutput[streamSelected], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
+                copySizes[streamSelected], copyOffsets[streamSelected], streams[streamSelected]);
             
             globalUnzipDOF += temp_unzip_dof;
             counter++;
         }
 
-        cuda::profile::t_cudaMalloc_derivs.start();
-            derivWorkSpace.deallocateDerivMemory();
-            CUDA_CHECK_ERROR();
-        cuda::profile::t_cudaMalloc_derivs.stop();
         for (int index=0; index<streamCount; index++) {
+            cuda::profile::t_cudaMalloc_derivs.start();
+                    derivWorkSpaces[index].deallocateDerivMemory();
+                CUDA_CHECK_ERROR();
+            cuda::profile::t_cudaMalloc_derivs.stop();
             cudaStreamDestroy(streams[index]);
             cudaFree(blkLists[index]);
             cuda::dealloc2DCudaArray( referencesTo2DInputArray[index],bssn::BSSN_NUM_VARS);

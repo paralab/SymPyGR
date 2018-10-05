@@ -152,7 +152,7 @@ namespace cuda
     void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
                 cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
                 std::vector< int >& blockMap,dim3 gridDim,dim3 blockDim, unsigned int numStreams,
-                cudaStream_t stream, const unsigned int* gpuBlkMap)
+                cudaStream_t stream, const unsigned int* gpuBlkMap, cuda::MemoryDerivs* derivWorkspacePointer)
     {
         cuda::profile::t_overall.start();
 
@@ -161,7 +161,7 @@ namespace cuda
         const unsigned int BSSN_CONSTRAINT_NUM_VARS=6;
 
 
-        cuda::__RSWS_computeDerivs <<<gridDim,blockDim, 0, stream>>> ((const double**)INPUT_REFERENCE,cuda::__BSSN_DERIV_WORKSPACE, DENDRO_BLOCK_LIST, gpuBlkMap,cuda::__CUDA_DEVICE_PROPERTIES);
+        cuda::__RSWS_computeDerivs <<<gridDim,blockDim, 0, stream>>> ((const double**)INPUT_REFERENCE, derivWorkspacePointer, DENDRO_BLOCK_LIST, gpuBlkMap,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
         /*
@@ -176,10 +176,11 @@ namespace cuda
 
         cuda::__compute_chi_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
+        */
+        // cuda::__compute_At_rhs<<<gridDim,blockDim, 0, stream>>>(OUTPUT_REFERENCE,(const double**)INPUT_REFERENCE,derivWorkspacePointer,DENDRO_BLOCK_LIST,bssnPars,cuda::__CUDA_DEVICE_PROPERTIES);
+        // CUDA_CHECK_ERROR();
 
-        cuda::__compute_At_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
+        /*
         cuda::__compute_K_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
         CUDA_CHECK_ERROR();
 
