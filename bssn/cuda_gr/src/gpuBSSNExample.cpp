@@ -340,6 +340,11 @@ int main (int argc, char** argv)
             if(counter>0) {
                 cuda::copy2DArrayToHost<double>(blkOutput[previousStreamSelected], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
                     copySizes[previousStreamSelected], copyOffsets[previousStreamSelected], streams[previousStreamSelected]);
+            } 
+            if(blk+numberOfBlksForNextIteration == numberOfTotalBlks) {
+                //handling last iteration
+                cuda::copy2DArrayToHost<double>(blkOutput[streamSelected], varUnzipOutGPU, bssn::BSSN_NUM_VARS, 
+                    copySizes[streamSelected], copyOffsets[streamSelected], streams[streamSelected]);
             }
                 
             globalUnzipDOF += temp_unzip_dof;
