@@ -26,20 +26,45 @@ import sympy as sympy
 import re as re
 import os as os
 
+import cudaSharedMemManager as SharedMemManager
+
 
 ## ==== BSSN GPU code generation paramerters
 
-d = ["alpha", "beta0", "beta1", "beta2",
+D = ["alpha", "beta0", "beta1", "beta2",
       "B0", "B1", "B2",
       "chi", "Gt0", "Gt1", "Gt2", "K",
       "gt0", "gt1", "gt2", "gt3", "gt4", "gt5",
       "At0", "At1", "At2", "At3", "At4", "At5" ]
 
 # variable names, to access the 2D array.
-varEnum=["cuda::VAR::U_ALPHA","cuda::VAR::U_BETA0","cuda::VAR::U_BETA1","cuda::VAR::U_BETA2","cuda::VAR::U_B0","cuda::VAR::U_B1","cuda::VAR::U_B2","cuda::VAR::U_CHI","cuda::VAR::U_GT0","cuda::VAR::U_GT1","cuda::VAR::U_GT2","cuda::VAR::U_K","cuda::VAR::U_SYMGT0","cuda::VAR::U_SYMGT1","cuda::VAR::U_SYMGT2","cuda::VAR::U_SYMGT3","cuda::VAR::U_SYMGT4","cuda::VAR::U_SYMGT5","cuda::VAR::U_SYMAT0","cuda::VAR::U_SYMAT1","cuda::VAR::U_SYMAT2","cuda::VAR::U_SYMAT3","cuda::VAR::U_SYMAT4","cuda::VAR::U_SYMAT5"]
+VAR_ENUM=["cuda::VAR::U_ALPHA",
+          "cuda::VAR::U_BETA0",
+          "cuda::VAR::U_BETA1",
+          "cuda::VAR::U_BETA2",
+          "cuda::VAR::U_B0",
+          "cuda::VAR::U_B1",
+          "cuda::VAR::U_B2",
+          "cuda::VAR::U_CHI",
+          "cuda::VAR::U_GT0",
+          "cuda::VAR::U_GT1",
+          "cuda::VAR::U_GT2",
+          "cuda::VAR::U_K",
+          "cuda::VAR::U_SYMGT0",
+          "cuda::VAR::U_SYMGT1",
+          "cuda::VAR::U_SYMGT2",
+          "cuda::VAR::U_SYMGT3",
+          "cuda::VAR::U_SYMGT4",
+          "cuda::VAR::U_SYMGT5",
+          "cuda::VAR::U_SYMAT0",
+          "cuda::VAR::U_SYMAT1",
+          "cuda::VAR::U_SYMAT2",
+          "cuda::VAR::U_SYMAT3",
+          "cuda::VAR::U_SYMAT4",
+          "cuda::VAR::U_SYMAT5"]
 
 # enum to symbolic input vars dictionary
-varEnumToInputSymbol={ "alpha" : "cuda::VAR::U_ALPHA",
+VAR_ENUM_TO_INPUT_SYM =  { "alpha" : "cuda::VAR::U_ALPHA",
                        "beta0" : "cuda::VAR::U_BETA0",
                        "beta1" : "cuda::VAR::U_BETA1",
                        "beta2" : "cuda::VAR::U_BETA2",
@@ -66,7 +91,7 @@ varEnumToInputSymbol={ "alpha" : "cuda::VAR::U_ALPHA",
                       }
 
 # enum to symbolic output vars dictionary
-varEnumToOutputSymbol={    "a_rhs" : "cuda::VAR::U_ALPHA",
+VAR_ENUM_TO_OUTPUT_SYM={   "a_rhs" : "cuda::VAR::U_ALPHA",
                            "b_rhs0" : "cuda::VAR::U_BETA0",
                            "b_rhs1" : "cuda::VAR::U_BETA1",
                            "b_rhs2" : "cuda::VAR::U_BETA2",
@@ -96,119 +121,123 @@ varEnumToOutputSymbol={    "a_rhs" : "cuda::VAR::U_ALPHA",
 custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
 
 # second derivs required for RHS
-dd = ["gt0", "gt1", "gt2", "gt3", "gt4", "gt5", "chi",
+DD = ["gt0", "gt1", "gt2", "gt3", "gt4", "gt5", "chi",
        "alpha", "beta0", "beta1", "beta2" ]
 
 # advective derivatives
-ad = ["gt0", "gt1", "gt2", "gt3", "gt4", "gt5",
+AD = ["gt0", "gt1", "gt2", "gt3", "gt4", "gt5",
        "At0", "At1", "At2", "At3", "At4", "At5",
        "alpha", "beta0", "beta1", "beta2", "chi", "Gt0", "Gt1", "Gt2", "K",
        "B0", "B1", "B2"] 
 
+KO=AD
+
 # first derivs required for constraints--no gauge variables
-con_d = [ "chi", "Gt0", "Gt1", "Gt2", "K",
+CONSTRAINT_D = [ "chi", "Gt0", "Gt1", "Gt2", "K",
            "gt0", "gt1", "gt2", "gt3", "gt4", "gt5",
            "At0", "At1", "At2", "At3", "At4", "At5" ]
 
 # second derivs required for constraints--no gauge variables
-con_dd = ["gt0", "gt1", "gt2", "gt3", "gt4", "gt5", "chi"]
+CONSTRAINT_DD = ["gt0", "gt1", "gt2", "gt3", "gt4", "gt5", "chi"]
 
 
-pd = ["grad_0_", "grad_1_", "grad_2_"]
-pad = ["agrad_0_", "agrad_1_", "agrad_2_"]
-pkod = ["kograd_0_", "kograd_1_", "kograd_2_"]
-pdd = ["grad2_0_0_", "grad2_0_1_", "grad2_0_2_", "grad2_1_1_", "grad2_1_2_", "grad2_2_2_"]
+PREFIX_D   = ["grad_0_", "grad_1_", "grad_2_"]
+PREFIX_AD  = ["agrad_0_", "agrad_1_", "agrad_2_"]
+PREFIX_KOD = ["kograd_0_", "kograd_1_", "kograd_2_"]
+PREFIX_DD  = ["grad2_0_0_", "grad2_0_1_", "grad2_0_2_", "grad2_1_1_", "grad2_1_2_", "grad2_2_2_"]
 
 # first derivative in i direction
-func_i=[]
-for f in d:
-    for p in pd:
-        func_i.append(p+f)
+FUNC_D_I=[]
+for f in D:
+    for p in PREFIX_D:
+        FUNC_D_I.append(p+f)
 
 # second derivative in ij direction
-func_ij=[]
-for f in dd:
-    for p in pdd:
-        func_ij.append(p+f)
+FUNC_D_IJ=[]
+for f in DD:
+    for p in PREFIX_DD:
+        FUNC_D_IJ.append(p+f)
 
 #advective derivative in i direction
-afunc_i=[]
-for f in ad:
-    for p in pad:
-        afunc_i.append(p+f)
+FUNC_AD_I=[]
+for f in AD:
+    for p in PREFIX_AD:
+        FUNC_AD_I.append(p+f)
 
 
 #Kriess-Oliger derivative in i direction
-kofunc_i=[]
-for f in d:
-    for p in pkod:
-        kofunc_i.append(p+f)
+FUNC_KOD_I=[]
+for f in D:
+    for p in PREFIX_KOD:
+        FUNC_KOD_I.append(p+f)
 
 
 # cuda utility functions 
 ## Note all the device vars which is global starts with __
-loadVar="cuda::__loadGlobalToShared3D<double>"
-storeVar="cuda::__storeSharedToGlobal3D<double>"
-signExtract="cuda::__extractSign3D<double>"
+FUNC_LOAD_VAR="cuda::__loadGlobalToShared3D<double>"
+FUNC_STORE_VAR="cuda::__storeSharedToGlobal3D<double>"
+FUNC_SIGN_EXT="cuda::__extractSign3D<double>"
 
-unzipIn="__unzipInVar"
-unzipout="__unzipOutVar"
+VAR_UNZIP_IN="__unzipInVar"
+VAR_UNZIP_OUT="__unzipOutVar"
 
 
 ## shift vector block shared variables to compute advective derivs
-beta0="beta0"
-beta1="beta1"
-beta2="beta2"
+VAR_BETA0="beta0"
+VAR_BETA1="beta1"
+VAR_BETA2="beta2"
+
+VAR_BETA0_BOOL="beta0_bool"
+VAR_BETA1_BOOL="beta1_bool"
+VAR_BETA2_BOOL="beta2_bool"
+
 
 # shared input variable name for derivative kernels
-varInShared="unzipVarInShared"
+VAR_IN_SHARED="unzipVarInShared"
 # shared output variable name for derivative kernels
-varOutShared="unzipVarOutShared"
-varOutShared1="unzipVarOutShared1"
+VAR_OUT_SHARED_0="unzipVarOutShared0"
+VAR_OUT_SHARED_1="unzipVarOutShared1"
 
 
 # block ids
-blockId_x="blockIdx.x"
-blockId_y="blockIdx.y"
-blockId_z="blockIdx.z"
+VAR_BLK_ID_X="blockIdx.x"
+VAR_BLK_ID_Y="blockIdx.y"
+VAR_BLK_ID_Z="blockIdx.z"
 
 # thread ids
-threadId_x="threadIdx.x"
-threadId_y="threadIdx.y"
-threadId_z="threadIdx.x"
+VAR_TRD_ID_X="threadIdx.x"
+VAR_TRD_ID_Y="threadIdx.y"
+VAR_TRD_ID_Z="threadIdx.z"
 
 # block dim
-blockDim_x="blockDim.x"
-blockDim_y="blockDim.y"
-blockDim_z="blockDim.z"
+VAR_BLK_DIM_X="blockDim.x"
+VAR_BLK_DIM_Y="blockDim.y"
+VAR_BLK_DIM_Z="blockDim.z"
 
 
 # x,y,z bounds of the time i_lm[0] is the min and i_lm[1] is the max. 
-tile_sz="tile_sz"
-dendro_block_sz="alignedSz"
-tile_limits="ijk_lm"
+VAR_TILE_SZ="tile_sz"
+VAR_DENDRO_BLK_ALIGNED_SZ="alignedSz"
+VAR_TILE_LIMITS="ijk_lm"
+VAR_TILE_LIMITS_STORE="tile_lm"
 
 
-#max number of pad provided by the unzip operation in dendro
-dendro_blk_pad=3
-# required pad to compute the deriv in the current pass. 
-dendro_blk_req_pad=0
-
-## tile size of the gpu load functions.
-dendro_tile_sz=0;
-
-
-DerivStruct="MemoryDerivs"
-Block_CU="cuda::_Block"
-BSSNComputePars="BSSNComputeParams"
+TYPE_DERIV_STRUCT="MemoryDerivs"
+TYPE_BLK_CU="cuda::_Block"
+TYPE_BSSN_COMP_PARS="BSSNComputeParams"
 
 
 ##
 # generate the code to allocate derivative memory variables (allocated size unzip_dof)
 ##
 def cudaDerivAllocDeallocHeader(fname,headers=[]):
-    with open(fname, 'w') as ofile:
+    
+    func_i=FUNC_D_I
+    func_ij=FUNC_D_IJ
+    afunc_i=FUNC_AD_I
+    kofunc_i=FUNC_KOD_I
 
+    with open(fname, 'w') as ofile:
         ofile.write("// generated by Dendro-GR SymPyGR code gernation framework\n")
         ofile.write("//date: "+str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+"\n")
         fileName,fileExt=os.path.splitext(os.path.basename(fname))
@@ -222,10 +251,16 @@ def cudaDerivAllocDeallocHeader(fname,headers=[]):
         ofile.write("\n")
         ofile.write("namespace cuda {\n")
 
-
-        ofile.write("\tstruct "+DerivStruct+"{\n\n")
-
+        ofile.write("\tstruct "+TYPE_DERIV_STRUCT+"{\n\n")
+        ofile.write("/**@brief upper bound of the block size processed by the GPU*/\n")
         ofile.write("\t unsigned int __maxBlkSz;\n")
+
+        ofile.write("/**@brief number of streams the kernel get executed*/\n")
+        ofile.write("\t unsigned int __numStream;\n")
+
+        ofile.write("/**@brief size per stream*/\n")
+        ofile.write("\t unsigned int __szPerStream;\n")
+
 
         for deriv in func_i:
             ofile.write("\t double* __"+deriv+";\n")
@@ -243,7 +278,7 @@ def cudaDerivAllocDeallocHeader(fname,headers=[]):
         ofile.write("\n")
 
         ofile.write("\t/**@brief memory allocation for deriv variables */\n")
-        ofile.write("\tvoid allocateDerivMemory(unsigned int maxBlkSz, unsigned int numSM); \n")
+        ofile.write("\tvoid allocateDerivMemory(unsigned int maxBlkSz, unsigned int numSM,unsigned int numStreams=1); \n")
 
         ofile.write("\n")
         ofile.write("\n")
@@ -263,11 +298,17 @@ def cudaDerivAllocDeallocHeader(fname,headers=[]):
     
     ofile.close()
 
-
 ##
 # generate the code to allocate derivative memory variables (allocated size unzip_dof)
 ##
 def cudaDerivAllocDeallocSource(fname,headers=[]):
+    
+    func_i=FUNC_D_I
+    func_ij=FUNC_D_IJ
+    afunc_i=FUNC_AD_I
+    kofunc_i=FUNC_KOD_I
+
+
     with open(fname, 'w') as ofile:
         ofile.write("// generated by Dendro-GR SymPyGR code gernation framework\n")
         ofile.write("//date: "+str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+"\n")
@@ -280,10 +321,13 @@ def cudaDerivAllocDeallocSource(fname,headers=[]):
         ofile.write("\n")
 
         ofile.write("\t/**@brief memory allocation for deriv variables */\n")
-        ofile.write("\tvoid cuda::"+DerivStruct+"::allocateDerivMemory(unsigned int maxBlkSz, unsigned int numSM){ \n")
+        ofile.write("\tvoid cuda::"+TYPE_DERIV_STRUCT+"::allocateDerivMemory(unsigned int maxBlkSz, unsigned int numSM,unsigned int numStreams){ \n")
 
         ofile.write("\t\t __maxBlkSz=maxBlkSz;\n")
-        ofile.write("\t\t const size_t bytes=sizeof(double)*numSM*maxBlkSz;\n")
+        ofile.write("\t\t __numStream=numStreams;\n")
+        ofile.write("\t\t __szPerStream=numSM*maxBlkSz;\n")
+
+        ofile.write("\t\t const size_t bytes=sizeof(double)*numSM*maxBlkSz*numStreams;\n")
 
         for deriv in func_i:
             ofile.write("\t\t cudaMalloc((void **)&__"+deriv+",bytes);\n")
@@ -310,7 +354,7 @@ def cudaDerivAllocDeallocSource(fname,headers=[]):
         ofile.write("\n")
 
         ofile.write("\t/**@brief memory deallocation for deriv variables */\n")
-        ofile.write("\tvoid cuda::"+DerivStruct+"::deallocateDerivMemory(){ \n")
+        ofile.write("\tvoid cuda::"+TYPE_DERIV_STRUCT+"::deallocateDerivMemory(){ \n")
 
         for deriv in func_i:
             ofile.write("\t\t cudaFree((void *)__"+deriv+");\n")
@@ -340,27 +384,90 @@ def cudaDerivAllocDeallocSource(fname,headers=[]):
 
     ofile.close()
 
-##
-# generate the code to compute derivs  (header)
-# derivatives are written indirectly to the global memory.
-##
-def cudaComputeDerivKernelHeader(fname,cuda_deriv_kernel_names, cuda_deriv_passes,headers=[]):
 
-    # cuda device properties
-    cuda_device="__deviceProperties"
+def computeTileStore(dir,out,padWidth=3):
+
+    padWidth=str(padWidth)
+    out.write("\n")
+    if(dir=="x"):
+
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[0]="+padWidth+";\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[1]=("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0]);\n")
+        out.write("\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[2]=(iter_y)? "+padWidth+": 0;\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[3]=(iter_y==(BLK_ITERATIONS_Y-1)) ? ("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]) : "+"("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]-"+padWidth+")" +";\n")
+        out.write("\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[4]=(iter_z)? "+padWidth+": 0;\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[5]=(iter_z==(BLK_ITERATIONS_Z-1)) ? ("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]) : "+"("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]-"+padWidth+")" +";\n")
+        out.write("\n")
+
+    elif(dir=="y"):
+
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[0]=(iter_x)? "+padWidth+": 0;\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[1]=(iter_x==(BLK_ITERATIONS_X-1)) ? ("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0]) : "+"("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0]-"+padWidth+")" +";\n")
+        out.write("\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[2]="+padWidth+";\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[3]=("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]);\n")
+        out.write("\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[4]=(iter_z)? "+padWidth+": 0;\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[5]=(iter_z==(BLK_ITERATIONS_Z-1)) ? ("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]) : "+"("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]-"+padWidth+")" +";\n")
+        out.write("\n")
+
+    elif(dir=="z"):
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[0]=(iter_x)? "+padWidth+": 0;\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[1]=(iter_x==(BLK_ITERATIONS_X-1)) ? ("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0]) : "+"("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0]-"+padWidth+")" +";\n")
+        out.write("\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[2]=(iter_y)? "+padWidth+": 0;\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[3]=(iter_y==(BLK_ITERATIONS_Y-1)) ? ("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]) : "+"("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]-"+padWidth+")" +";\n")
+        out.write("\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[4]="+padWidth+";\n")
+        out.write("\t\t"+VAR_TILE_LIMITS_STORE+"[5]=("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]);\n")
+        out.write("\n")
+
+    out.write("\n")
+
+
+
+
+def cudaCompute(fname_cuh,fname_cu,derivs,outs,varnames,kernelName,headers=[]):
+     # cuda device properties
+    VAR_CUDA_DEVICE="__deviceProperties"
     # dendro block list parameters
-    dendro_blkList="__dendroBlkList"
-    numBlocks="cuda::__DENDRO_NUM_BLOCKS"
-    #x% of block shared memory utilised for the bssn computations
-    sharedMemUtil="cuda::__GPU_BLOCK_SHARED_MEM_UTIL"
-    derivWorkSpace="__derivWorkspace"
-    gpuBlockMap="__gpuBlockMap"
-    max_dendro_blk_sz=derivWorkSpace+"->__maxBlkSz"
+    VAR_DENDRO_BLK_LIST="__dendroBlkList"
+    VAR_NUM_BLOCKS="cuda::__DENDRO_NUM_BLOCKS"
+    VAR_DERIV_WORKSPACE="__derivWorkspace"
+    VAR_GPU_BLOCK_MAP="__gpuBlockMap"
+    VAR_MAX_DENDRO_BLK_SZ=VAR_DERIV_WORKSPACE+"->__maxBlkSz"
+    VAR_DW_SZ_PER_STREAM=VAR_DERIV_WORKSPACE+"->__szPerStream"
 
-    with open(fname, 'w') as ofile:
+    VAR_BSSN_PARAMS="__bssnParams"
+    TYPE_BSSN_PARAMS="cuda::BSSNComputeParams"
+
+    FUNC_DERIV_COMP="__compute_derivatives"
+    FUNC_COMP_RHS_PRE="__compute"
+    FUNC_KO_DISS="__ko_dissipation"
+
+    VAR_SHARED_MEM="__sm_base"
+    TYPE_SHARED_MEM="double"
+
+    VAR_ADV_COMPRESS_0=VAR_BETA0_BOOL
+    VAR_ADV_COMPRESS_1=VAR_BETA1_BOOL
+    VAR_ADV_COMPRESS_2=VAR_BETA2_BOOL
+    TYPE_ADV_COMPRESS="bool"
+
+    VAR_DBLOCK="dblock"
+    VAR_STREAM_ID="stream_id"
+    VAR_DERIV_WORKSPACE_OFFSET=VAR_STREAM_ID+"*("+VAR_DW_SZ_PER_STREAM+") + SM_ID*("+VAR_MAX_DENDRO_BLK_SZ+")"
+
+
+
+    ######################################################
+    # Writing the header
+    ######################################################
+    with open(fname_cuh, 'w') as ofile:
         ofile.write("// generated by Dendro-GR SymPyGR code gernation framework\n")
         ofile.write("//date: "+str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+"\n")
-        fileName,fileExt=os.path.splitext(os.path.basename(fname))
+        fileName,fileExt=os.path.splitext(os.path.basename(fname_cuh))
         ofile.write("#ifndef "+fileName.upper()+"_"+fileExt[1:].upper()+" \n")
         ofile.write("#define "+fileName.upper()+"_"+fileExt[1:].upper()+" \n")
         ofile.write("#include<iostream>\n")
@@ -371,367 +478,405 @@ def cudaComputeDerivKernelHeader(fname,cuda_deriv_kernel_names, cuda_deriv_passe
 
         ofile.write("namespace cuda {\n")
         ofile.write("\n")
-        for deriv_kernel in cuda_deriv_kernel_names:
-            ofile.write("/**compute derivative kernel "+deriv_kernel+"*/\n")
-            ofile.write("__global__ void "+deriv_kernel+"(const double**"+unzipIn+","+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList, const unsigned int * "+gpuBlockMap+", const cudaDeviceProp* __deviceProperties);\n")
-            ofile.write("\n")
-        
-        ofile.write("}// end of namespace cuda\n")
 
-        ofile.write("\n")
-        ofile.write("\n")
-        ofile.write("#endif\n")
-    
-    ofile.close()
-
-
-
-##
-# generate the code to compute derivs (source)
-# # derivatives are written indirectly (use shared mem then to global memory) to the global memory.
-##
-def cudaComputeDerivKernelSource(fname,cuda_deriv_kernel_names,cuda_deriv_passes,headers=[]):
-
-    # cuda device properties
-    cuda_device="__deviceProperties"
-    # dendro block list parameters
-    dendro_blkList="__dendroBlkList"
-    numBlocks="cuda::__DENDRO_NUM_BLOCKS"
-    #x% of block shared memory utilised for the bssn computations
-    sharedMemUtil="cuda::__GPU_BLOCK_SHARED_MEM_UTIL"
-    derivWorkSpace="__derivWorkspace"
-    gpuBlockMap="__gpuBlockMap"
-    max_dendro_blk_sz=derivWorkSpace+"->__maxBlkSz"
-
-
-    with open(fname, 'w') as ofile:
-        ofile.write("// generated by Dendro-GR SymPyGR code gernation framework\n")
-        ofile.write("//date: "+str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+"\n")
-        for header in headers:
-            ofile.write("#include \""+header+"\"\n")
-        ofile.write("\n")
-        ofile.write("namespace cuda {\n")
-
-        ofile.write("\n")
-
-        for deriv_pass in range(0,len(cuda_deriv_kernel_names)):
-            ofile.write("/**compute derivative kernel "+cuda_deriv_kernel_names[deriv_pass]+" */\n")
-            ofile.write("__global__ void "+cuda_deriv_kernel_names[deriv_pass]+"(const double**"+unzipIn+","+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList, const unsigned int * "+ gpuBlockMap+", const cudaDeviceProp*__deviceProperties){\n")
-            ofile.write("\n")
-
-            ofile.write("for(unsigned int blk="+gpuBlockMap+"[2*"+blockId_x+"];blk<"+gpuBlockMap+"[2*"+blockId_x+"+1];++blk){\n\n\n")
-            ofile.write("// blocks assigned to each gpu block \n")
-
-            #ofile.write("const _Block dblock="+dendro_blkList+"["+blockId_x+"];\n")
-            ofile.write("const _Block dblock="+dendro_blkList+"[blk];\n")
-            ofile.write("const unsigned int NUM_SM_UNITS="+cuda_device+"->multiProcessorCount;\n")
-            ofile.write("const unsigned int SM_ID="+blockId_x+"%NUM_SM_UNITS;\n")
-            ofile.write("const unsigned int offset=dblock.getOffset();\n")
-            ofile.write("const unsigned int *sz=dblock.getSz();\n")
-            ofile.write("const unsigned int *alignedSz=dblock.getAlignedSz();\n")
-            ofile.write("const double* hx=dblock.getDx();\n")
-
-            ofile.write("const double dx=hx[0];\n")
-            ofile.write("const double dy=hx[1];\n")
-            ofile.write("const double dz=hx[2];\n")
-
-            ofile.write("const double* ptmin=dblock.getPtMin();\n")
-            ofile.write("const double* ptmax=dblock.getPtMax();\n")
-            ofile.write("const unsigned int bflag=dblock.getBFlag();\n")
-            ofile.write("\n")
-            #ofile.write("const unsigned int blkSz=sz[0]*sz[1]*sz[2];\n")
-
-            ofile.write("\n")
-
-            ofile.write("const unsigned int "+tile_sz+"[3]={"+str(cuda_deriv_passes[deriv_pass][0].DerivTile1D)+","+str(cuda_deriv_passes[deriv_pass][0].DerivTile1D)+","+str(cuda_deriv_passes[deriv_pass][0].DerivTile1D)+"};\n")
-            #ofile.write("const unsigned int TILE_SZ="+tile_sz+"[0]*"+tile_sz+"[1]*"+tile_sz+"[2]"+";\n")
-
-            dendro_tile_sz=(cuda_deriv_passes[deriv_pass][0].DerivTile1D)**3
-            ofile.write("\n")
-            ofile.write("\n")
-
-            # allocate memory for shared deriv variables.
-            ofile.write("//allocate memory for shared deriv variables. \n")
-
-            dendro_blk_req_pad=0
-            for deriv in cuda_deriv_passes[deriv_pass]:
-                if(dendro_blk_req_pad<deriv.padWidth):
-                    dendro_blk_req_pad=deriv.padWidth
-
-
-            if(dendro_blk_req_pad>dendro_blk_pad):
-                print("code generation error : maxPadwith for derivatives is larger than the dendro block pad width\n")
-
-            ofile.write("const unsigned int Lb = "+str(dendro_blk_pad-dendro_blk_req_pad)+";// load begin bound\n")
-            ofile.write("const unsigned int Le = sz[0]-"+str(dendro_blk_pad-dendro_blk_req_pad)+";// load end bound\n")
-
-            #ofile.write("const unsigned int BLK_INTERATIONS = max(1,(int)ceil((double)(Le-Lb-"+tile_sz+"[0])/("+tile_sz+"[0]-2*" +str(dendro_blk_req_pad)+")));\n")
-            ofile.write("\tconst unsigned int BLK_INTERATIONS = ((Le-Lb)<"+tile_sz+"[0])? 1: ((int)ceil((double)(Le-Lb-"+tile_sz+"[0])/("+tile_sz+"[0]-2*" +str(dendro_blk_req_pad)+")))+1;\n")
-            ofile.write("\n")
-
-            ofile.write("unsigned int ijk_lm[3*2];")
-            ofile.write("\n")
-
-            # allocate memory for shared deriv variables. 
-            ofile.write("//allocate memory for shared deriv variables. \n")
-
-            ofile.write("\n")
-            ofile.write("\n")
-            
-            ofile.write("//allocate memory for shared unzip input. \n")
-            ofile.write("__shared__ double "+varInShared+"["+str(dendro_tile_sz)+"];\n")
-            ofile.write("__shared__ double "+varOutShared+"["+str(dendro_tile_sz)+"];\n")
-            ofile.write("__shared__ double "+varOutShared1+"["+str(dendro_tile_sz)+"];\n")
-
-
-            '''for deriv in cuda_deriv_passes[deriv_pass]:
-                ofile.write("double * "+deriv.DerivOutput+"=&derivOut[0];\n")'''
-
-
-            ## beta0, beta1, beta2 for advective deriv computations
-
-            advecAlloc=False
-            for deriv in cuda_deriv_passes[deriv_pass]:
-                if(deriv.DerivType=="ad"):
-                    advecAlloc=True
-
-            if(advecAlloc):
-                ofile.write("__shared__ bool "+beta0+ "["+str(dendro_tile_sz)+"];\n")
-                ofile.write("__shared__ bool "+beta1+ "["+str(dendro_tile_sz)+"];\n")
-                ofile.write("__shared__ bool "+beta2+ "["+str(dendro_tile_sz)+"];\n\n")
-
-
-            ofile.write("for(unsigned int iter=0;iter<BLK_INTERATIONS;iter++){\n\n")
-
-            ofile.write("\t\t "+tile_limits+"[2*0+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -2*iter*"+str(dendro_blk_req_pad)+"));\n")
-            ofile.write("\t\t "+tile_limits+"[2*0+1]=min("+tile_limits+"[2*0+0]+"+tile_sz+"[0],sz[0]-"+str(dendro_blk_pad-dendro_blk_req_pad)+ ");\n")
-
-            ofile.write("\n")
-
-            ofile.write("\t\t "+tile_limits+"[2*1+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -2*iter*"+str(dendro_blk_req_pad)+"));\n")
-            ofile.write("\t\t "+tile_limits+"[2*1+1]=min("+tile_limits+"[2*1+0]+"+tile_sz+"[1],sz[1]-"+str(dendro_blk_pad-dendro_blk_req_pad)+ ");\n")
-
-            ofile.write("\n")
-
-            ofile.write("\t\t "+tile_limits+"[2*2+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -2*iter*"+str(dendro_blk_req_pad)+"));\n")
-            ofile.write("\t\t "+tile_limits+"[2*2+1]=min("+tile_limits+"[2*2+0]+"+tile_sz+"[2],sz[2]-"+str(dendro_blk_pad-dendro_blk_req_pad)+ ");\n")
-
-            ofile.write("\t\t //printf(\" iter : %d threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
-            ofile.write("\n")
-
-            if(advecAlloc):
-                ofile.write("\t\t"+loadVar+"(&"+unzipIn+"[cuda::VAR::U_BETA0][offset],(double *) "+varInShared+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                ofile.write("\t\t"+loadVar+"(&"+unzipIn+"[cuda::VAR::U_BETA1][offset],(double *) "+varOutShared+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                ofile.write("\t\t"+loadVar+"(&"+unzipIn+"[cuda::VAR::U_BETA2][offset],(double *) "+varOutShared1+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                ofile.write("\t\t__syncthreads();\n")
-                ofile.write("\t\t"+signExtract+"((double *)"+varInShared+",(bool *) "+beta0+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                ofile.write("\t\t"+signExtract+"((double *)"+varOutShared+",(bool *) "+beta1+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                ofile.write("\t\t"+signExtract+"((double *)"+varOutShared1+",(bool *) "+beta2+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                ofile.write("\t\t__syncthreads();\n")
-
-            for e in d:
-                enumStr=varEnum[d.index(e)]
-                ofile.write("\n")
-                ofile.write("\t\t//load input data from global to shared memory\n")
-
-                ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+enumStr+"][offset],(double *) "+varInShared+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                ofile.write("\t\t__syncthreads();\n")
-                ofile.write("\t\t//sync to make sure all the data is loaded\n")
-
-                for deriv in cuda_deriv_passes[deriv_pass]:
-                    if((deriv.DerivType=="d") and (deriv.DerivDir=="x")):
-                        ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
-                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                        for deriv1 in cuda_deriv_passes[deriv_pass]:
-                            if((e in dd) and (deriv1.DerivType=="dd") and ((deriv1.DerivDir=="xy") or (deriv1.DerivDir=="xz"))):
-                                ofile.write("\t\t// computing deriv "+deriv1.DerivDir+" for variable "+e+" \n")
-                                #ofile.write("\t\t"+deriv1.DerivOutput+" = &"+beta0+"[0];\n")
-                                ofile.write("\t\t"+deriv1.DerivFuncCall+"\n")
-                                ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                                # write the mixed derivatives
-                                #ofile.write("\t\t"+storeVar+"((double *) "+deriv1.DerivOutput+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                                ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                                if((deriv1.DerivDir=="xy")):
-                                    ofile.write("\t\t__syncthreads();\n")
-                                ofile.write("\n")
-                        #write the x, y,z derivs.
-                        #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t__syncthreads();\n")
-                        ofile.write("\n")
-
-                    if((deriv.DerivType=="d") and (deriv.DerivDir=="y")):
-                        ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
-                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                        for deriv1 in cuda_deriv_passes[deriv_pass]:
-                            if((e in dd) and (deriv1.DerivType=="dd") and (deriv1.DerivDir=="yz")):
-                                ofile.write("\t\t// computing deriv "+deriv1.DerivDir+" for variable "+e+" \n")
-                                #ofile.write("\t\t"+deriv1.DerivOutput+" = &"+beta0+"[0];\n")
-                                ofile.write("\t\t"+deriv1.DerivFuncCall+"\n")
-                                ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                                # write the mixed derivatives
-                                #ofile.write("\t\t"+storeVar+"((double *) "+deriv1.DerivOutput+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                                ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv1.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                                #ofile.write("\t\t__syncthreads();\n")
-                                ofile.write("\n")
-                        #write the x, y,z derivs.
-                        #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t__syncthreads();\n")
-                        ofile.write("\n")
-
-                    if((deriv.DerivType=="d") and (deriv.DerivDir=="z")):
-                        ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
-                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                        ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                        ofile.write("\t\t__syncthreads();\n")
-
-                ofile.write("\n")
-
-                derivCount=0
-
-                for deriv in cuda_deriv_passes[deriv_pass]:
-                    if((e in dd) and (deriv.DerivType=="dd")  and ((deriv.DerivDir=="xx") or (deriv.DerivDir=="yy") or (deriv.DerivDir=="zz"))):
-                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        derivCount=derivCount+1
-                        if(derivCount==2):
-                            derivCount=0
-                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                            #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t__syncthreads();\n")
-                        if(deriv.DerivDir=="zz"):
-                            ofile.write("\t\t__syncthreads();\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t__syncthreads();\n")
-
-                ofile.write("\n")
-
-                for deriv in cuda_deriv_passes[deriv_pass]:
-                    if( (e in ad) and (deriv.DerivType=="ko")):
-                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        derivCount=derivCount+1
-                        if(derivCount==2):
-                            derivCount=0
-                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                            #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t__syncthreads();\n")
-                        if(deriv.DerivDir=="z"):
-                            ofile.write("\t\t__syncthreads();\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t__syncthreads();\n")
-
-                for deriv in cuda_deriv_passes[deriv_pass]:
-                    if( (e in ad) and (deriv.DerivType=="ad")):
-                        ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
-                        derivCount=derivCount+1
-                        if(derivCount==2):
-                            derivCount=0
-                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
-                            #ofile.write("\t\t"+storeVar+"((double *) "+deriv.DerivOutput+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared1+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t__syncthreads();\n")
-                        if(deriv.DerivDir=="z"):
-                            ofile.write("\t\t__syncthreads();\n")
-                            ofile.write("\t\t"+storeVar+"((double *) "+varOutShared+",&("+derivWorkSpace+"->__"+deriv.DerivOutput+"_"+ e +"[SM_ID*("+max_dendro_blk_sz+")]),(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
-                            ofile.write("\t\t__syncthreads();\n")
-
-
-            ofile.write("\t\t} // end of block tile loop\n\n")
-            #ofile.write("\t\t__syncthreads();\n")
-
-            ofile.write("} // end of block assigned to gpu block loop "+cuda_deriv_kernel_names[deriv_pass]+"\n\n")
-
-            ofile.write("} // end of kernel "+cuda_deriv_kernel_names[deriv_pass]+"\n\n")
-            ofile.write("\n")
-
-        ofile.write("}// end of namespace cuda\n")
-        ofile.close()
-
-# generates the header file for bssn equation computations.
-# fname: file name to be written to
-# outs: symbolic expressions for bssn equations in sympy dendro frameworl
-# varnames: variable names.
-
-
-##
-# RHS code generation unstaged
-##
-def cudaComputeRHSHeaderUnStaged(fname,outs,varnames,headers=[]):
-    with open(fname, 'w') as ofile:
-        ofile.write("// generated by Dendro-GR SymPyGR code gernation framework\n")
-        ofile.write("//date: "+str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+"\n")
-        fileName,fileExt=os.path.splitext(os.path.basename(fname))
-        ofile.write("#ifndef "+fileName.upper()+"_"+fileExt[1:].upper()+" \n")
-        ofile.write("#define "+fileName.upper()+"_"+fileExt[1:].upper()+" \n")
-        ofile.write("#include<iostream>\n")
-        ofile.write("#include\"cuda_runtime.h\"\n")
-        ofile.write("#include<device_launch_parameters.h>\n")
-        for header in headers:
-            ofile.write("#include \""+header+"\"\n")
-
-        ofile.write("namespace cuda {\n")
+        ofile.write("/**@brief compute derivs \n")
+        ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+        ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+        ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+        ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+        ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+        #ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+        ofile.write("*/ \n")
+        ofile.write("__device__ void "+FUNC_DERIV_COMP+"(const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* dblock, const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+",const cudaDeviceProp* "+VAR_CUDA_DEVICE+", "+TYPE_SHARED_MEM+"* "+VAR_SHARED_MEM+", "+TYPE_ADV_COMPRESS+"* "+VAR_ADV_COMPRESS_0+", "+TYPE_ADV_COMPRESS+"* "+VAR_ADV_COMPRESS_1+", "+TYPE_ADV_COMPRESS+"* "+VAR_ADV_COMPRESS_2+",unsigned int "+VAR_STREAM_ID+");\n")
         ofile.write("\n")
 
         for var in varnames:
-            ofile.write("/** computes rhs "+var+"*/\n")
-            ofile.write("__global__ void __compute_"+var+"(double** "+unzipout+", const double**"+unzipIn+", "+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList, const "+BSSNComputePars+"* __bssnPar, const cudaDeviceProp*__deviceProperties);\n")
+            ofile.write("/**@brief compute "+var+" \n")
+            ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+            ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+            ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+            ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+            ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+            ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+            ofile.write("*/ \n")
+            ofile.write("__device__ void "+FUNC_COMP_RHS_PRE+"_"+var+"(double **"+VAR_UNZIP_OUT+", const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* dblock, const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+",const cudaDeviceProp* "+VAR_CUDA_DEVICE+", "+TYPE_SHARED_MEM+"* "+VAR_SHARED_MEM+", unsigned int "+VAR_STREAM_ID+");\n")
+            ofile.write("\n")
 
-        #ofile.write("/**computes bssn equations using gpu. */\n")
-        #ofile.write("void rhs_bssn(double** "+unzipout+", const double**"+unzipIn+", "+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList ,unsigned int numBlocks, const "+BSSNComputePars+"* __bssnPar, const cudaDeviceProp*__deviceProperties);\n")
-        #ofile.write("\n")
+        ofile.write("/**@brief apply KO dissipation \n")
+        ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+        ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+        ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+        ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+        ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+        ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+        ofile.write("*/ \n")
+        ofile.write("__device__ void "+FUNC_KO_DISS+"(double **"+VAR_UNZIP_OUT+", const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* dblock, const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+",const cudaDeviceProp* "+VAR_CUDA_DEVICE+", "+TYPE_SHARED_MEM+"* "+VAR_SHARED_MEM+", unsigned int "+VAR_STREAM_ID+");\n")
+        ofile.write("\n")
 
+        ofile.write("/**@brief compute RHS \n")
+        ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+        ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+        ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+        ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+        ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+        ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+        ofile.write("*/ \n")
+        ofile.write("__global__ void "+kernelName+"(double **"+VAR_UNZIP_OUT+", const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* "+VAR_DENDRO_BLK_LIST+", const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+",const cudaDeviceProp* "+VAR_CUDA_DEVICE+", unsigned int "+VAR_STREAM_ID+");\n")
+        ofile.write("\n")
         ofile.write("}// end of namespace cuda\n")
+
         ofile.write("\n")
         ofile.write("\n")
         ofile.write("#endif\n")
 
-##
-# # RHS code generation unstaged source.
-##
-def cudaComputeRHSSourceUnStaged(fname,outs,varnames,headers=[],sharedMemSz=48*1024):
 
-    # cuda device properties
-    cuda_device="__deviceProperties"
-    # dendro block list parameters
-    dendro_blkList="__dendroBlkList"
-    bssnParams="__bssnPar"
-    numBlocks="cuda::__DENDRO_NUM_BLOCKS"
-    #x% of block shared memory utilised for the bssn computations
-    sharedMemUtil="cuda::__GPU_BLOCK_SHARED_MEM_UTIL"
-    derivWorkSpace="__derivWorkspace"
-    max_dendro_blk_sz=derivWorkSpace+"->__maxBlkSz"
+    ofile.close()
 
-    sharedMemUtilFactor=0.8
+    
+    ######################################################
+    # Writing the source
+    ######################################################
 
-    with open(fname, 'w') as ofile:
+    with open(fname_cu, 'w') as ofile:
         ofile.write("// generated by Dendro-GR SymPyGR code gernation framework\n")
         ofile.write("//date: "+str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+"\n")
-        ofile.write("\n")
-        ofile.write("\n")
-        for header in headers:
-            ofile.write("#include \""+header+"\"\n")
+        ofile.write("#include \""+os.path.basename(fname_cuh)+"\"\n")
+        # namespace begin
+        ofile.write("namespace cuda {\n\n")
 
-        ofile.write("namespace cuda { \n\n\n\n")
 
-        mi = [0, 1, 2, 4, 5, 8]
-        midx = ['00', '01', '02', '11', '12', '22']
+        ofile.write("/**@brief compute RHS \n")
+        ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+        ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+        ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+        ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+        ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+        ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+        ofile.write("*/ \n")
+        # function begin
+        ofile.write("__global__ void "+kernelName+"(double **"+VAR_UNZIP_OUT+", const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* "+VAR_DENDRO_BLK_LIST+", const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+" ,const cudaDeviceProp* "+VAR_CUDA_DEVICE+", unsigned int "+VAR_STREAM_ID+"){\n\n")
+
+        ofile.write("// shared memory allocation for deriv and rhs computation\n")
+        memManager=SharedMemManager.MemoryManager(maxMemSz=48*1024,memUsable=41*1024,cout=ofile,baseName=VAR_SHARED_MEM,varType=TYPE_SHARED_MEM)
+
+        deriv_tile_sz_1d=0
+        deriv_req_pad=0
+        deriv_max_pad=3
+
+        for deriv in derivs:
+            if deriv_tile_sz_1d <deriv.DerivTile1D :
+                deriv_tile_sz_1d=deriv.DerivTile1D
+            if deriv_req_pad < deriv.padWidth :
+                deriv_req_pad =deriv.padWidth
+
+        deriv_tile_sz=deriv_tile_sz_1d**3
+
+        ofile.write("\t__shared__ bool "+VAR_BETA0_BOOL+ "["+str(deriv_tile_sz)+"];\n")
+        ofile.write("\t__shared__ bool "+VAR_BETA1_BOOL+ "["+str(deriv_tile_sz)+"];\n")
+        ofile.write("\t__shared__ bool "+VAR_BETA2_BOOL+ "["+str(deriv_tile_sz)+"];\n\n")
+
+
+        ofile.write("\tfor(unsigned int blk="+VAR_GPU_BLOCK_MAP+"[2*"+VAR_BLK_ID_X+"];blk<"+VAR_GPU_BLOCK_MAP+"[2*"+VAR_BLK_ID_X+"+1];++blk){\n\n\n")
+        ofile.write("\t// blocks assigned to each gpu block \n")
+
+        ofile.write("\tconst _Block * "+VAR_DBLOCK+"=&"+VAR_DENDRO_BLK_LIST+"[blk];\n")
+
+
+        ofile.write("\t// compute the derivatives\n")
+        ofile.write("\t"+FUNC_DERIV_COMP+"("+VAR_UNZIP_IN+","+VAR_DERIV_WORKSPACE+","+VAR_DBLOCK+","+VAR_GPU_BLOCK_MAP+","+VAR_BSSN_PARAMS+","+VAR_CUDA_DEVICE+","+VAR_SHARED_MEM+","+VAR_ADV_COMPRESS_0+","+VAR_ADV_COMPRESS_1+","+VAR_ADV_COMPRESS_2+","+VAR_STREAM_ID+");\n")
+        ofile.write("\t__syncthreads();\n")
+
+        ofile.write("\t// compute the RHS\n")
+        for var in varnames:
+            ofile.write("\t"+FUNC_COMP_RHS_PRE+"_"+var+"("+VAR_UNZIP_OUT+","+VAR_UNZIP_IN+","+VAR_DERIV_WORKSPACE+","+VAR_DBLOCK+","+VAR_GPU_BLOCK_MAP+","+VAR_BSSN_PARAMS+","+VAR_CUDA_DEVICE+","+VAR_SHARED_MEM+","+VAR_STREAM_ID+");\n")
+            ofile.write("\t__syncthreads();\n")
+
+        ofile.write("\t"+FUNC_KO_DISS+"("+VAR_UNZIP_OUT+","+VAR_UNZIP_IN+","+VAR_DERIV_WORKSPACE+","+VAR_DBLOCK+","+VAR_GPU_BLOCK_MAP+","+VAR_BSSN_PARAMS+","+VAR_CUDA_DEVICE+","+VAR_SHARED_MEM+","+VAR_STREAM_ID+");\n")
+        ofile.write("\t__syncthreads();\n")
+
+        ofile.write("\t}// end of the block loop\n")
+
+        ofile.write("} // end of kernel \n\n")
+        ofile.write("\n")
+
+
+
+        ofile.write("/**@brief compute derivs \n")
+        ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+        ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+        ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+        ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+        ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+        #ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+        ofile.write("*/ \n")
+        ofile.write("__device__ void "+FUNC_DERIV_COMP+"(const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* dblock, const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+",const cudaDeviceProp* "+VAR_CUDA_DEVICE+", "+TYPE_SHARED_MEM+"* "+VAR_SHARED_MEM+", "+TYPE_ADV_COMPRESS+"* "+VAR_ADV_COMPRESS_0+", "+TYPE_ADV_COMPRESS+"* "+VAR_ADV_COMPRESS_1+", "+TYPE_ADV_COMPRESS+"* "+VAR_ADV_COMPRESS_2+", unsigned int "+VAR_STREAM_ID+"){\n")
+        ofile.write("\n")
+
+
+        ofile.write("\tconst unsigned int NUM_SM_UNITS="+VAR_CUDA_DEVICE+"->multiProcessorCount;\n")
+        ofile.write("\tconst unsigned int SM_ID=get_smid();//"+VAR_BLK_ID_X+"%NUM_SM_UNITS;\n")
+        ofile.write("\tconst unsigned int offset=dblock->getOffset();\n")
+        ofile.write("\tconst unsigned int *sz=dblock->getSz();\n")
+        ofile.write("\tconst unsigned int *"+VAR_DENDRO_BLK_ALIGNED_SZ+"=dblock->getAlignedSz();\n")
+        ofile.write("\tconst double* hx=dblock->getDx();\n")
+
+        ofile.write("\tconst double dx=hx[0];\n")
+        ofile.write("\tconst double dy=hx[1];\n")
+        ofile.write("\tconst double dz=hx[2];\n")
+
+        ofile.write("\tconst double* ptmin=dblock->getPtMin();\n")
+        ofile.write("\tconst double* ptmax=dblock->getPtMax();\n")
+        ofile.write("\tconst unsigned int bflag=dblock->getBFlag();\n")
+        ofile.write("\n")
+
+        if(deriv_req_pad>deriv_max_pad):
+            print("code generation error : maxPadwith for derivatives is larger than the dendro block pad width\n")
+            os.sys.exit(0)
+
+        ofile.write("\tconst unsigned int "+VAR_TILE_SZ+"[3]={"+str(deriv_tile_sz_1d)+","+str(deriv_tile_sz_1d)+","+str(deriv_tile_sz_1d)+"};\n")
+
+        memManager.malloc(VAR_IN_SHARED,deriv_tile_sz,ofile,prefix="\t")
+        memManager.malloc(VAR_OUT_SHARED_0,deriv_tile_sz,ofile,prefix="\t")
+        memManager.malloc(VAR_OUT_SHARED_1,deriv_tile_sz,ofile,prefix="\t")
+
+        ofile.write("\tconst unsigned int Lb = "+str(deriv_max_pad-deriv_req_pad)+";// load begin bound\n")
+        ofile.write("\tconst unsigned int Le = sz[0]-"+str(deriv_max_pad-deriv_req_pad)+";// load end bound\n")
+
+
+        # !! Note that we assume tile size are cubic.
+        ofile.write("//!! Note that we assume tile size are cubic.\n")
+        ofile.write("\tconst unsigned int BLK_ITERATIONS_X = ((Le-Lb)<"+VAR_TILE_SZ+"[0])? 1: ((int)ceil((double)(Le-Lb-"+VAR_TILE_SZ+"[0])/("+VAR_TILE_SZ+"[0]-2*" +str(deriv_req_pad)+")))+1;\n")
+        ofile.write("\tconst unsigned int BLK_ITERATIONS_Y = BLK_ITERATIONS_X;\n")
+        ofile.write("\tconst unsigned int BLK_ITERATIONS_Z = BLK_ITERATIONS_X;\n")
+        ofile.write("\n")
+
+        ofile.write("\tunsigned int "+VAR_TILE_LIMITS+"[3*2];\n")
+        ofile.write("\tunsigned int "+VAR_TILE_LIMITS_STORE+"[3*2];\n")
+
+
+        ofile.write("\tfor(unsigned int iter_z=0;iter_z<BLK_ITERATIONS_Z;iter_z++){\n\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*2+0]=max("+str(deriv_max_pad-deriv_req_pad)+",(int)("+str(deriv_max_pad-deriv_req_pad)+" + "+VAR_TILE_SZ+"[2]*iter_z -2*iter_z*"+str(deriv_req_pad)+"));\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*2+1]=min("+VAR_TILE_LIMITS+"[2*2+0]+"+VAR_TILE_SZ+"[2]-1,sz[2]-"+str(deriv_max_pad-deriv_req_pad)+ "-1);\n")
+        ofile.write("\n")
 
         ofile.write("\n")
-        idx="[pp]"
+        ofile.write("\t\t if(("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]+1)<="+str(2*deriv_req_pad+3)+") \n\t\t  "+VAR_TILE_LIMITS+"[4]="+VAR_TILE_LIMITS+"[4]-("+str(2*deriv_req_pad+3)+"-("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]+1)) ; \n ")
+        ofile.write("\n")
+
+        ofile.write("\t  for(unsigned int iter_y=0;iter_y<BLK_ITERATIONS_Y;iter_y++){\n\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*1+0]=max("+str(deriv_max_pad-deriv_req_pad)+",(int)("+str(deriv_max_pad-deriv_req_pad)+" + "+VAR_TILE_SZ+"[1]*iter_y -2*iter_y*"+str(deriv_req_pad)+"));\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*1+1]=min("+VAR_TILE_LIMITS+"[2*1+0]+"+VAR_TILE_SZ+"[1]-1,sz[1]-"+str(deriv_max_pad-deriv_req_pad)+ "-1);\n")
+        ofile.write("\n")
+
+        ofile.write("\t\t if(("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]+1)<="+str(2*deriv_req_pad+3)+") \n\t\t  "+VAR_TILE_LIMITS+"[2]="+VAR_TILE_LIMITS+"[2]-("+str(2*deriv_req_pad+3)+"-("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]+1)) ; \n ")
+        ofile.write("\n")
+
+        ofile.write("\t    for(unsigned int iter_x=0;iter_x<BLK_ITERATIONS_X;iter_x++){\n")
+
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*0+0]=max("+str(deriv_max_pad-deriv_req_pad)+",(int)("+str(deriv_max_pad-deriv_req_pad)+" + "+VAR_TILE_SZ+"[0]*iter_x -2*iter_x*"+str(deriv_req_pad)+"));\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*0+1]=min("+VAR_TILE_LIMITS+"[2*0+0]+"+VAR_TILE_SZ+"[0]-1,sz[0]-"+str(deriv_max_pad-deriv_req_pad)+ "-1);\n")
+
+        ofile.write("\n")
+
+        ofile.write("\t\t if(("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0]+1)<="+str(2*deriv_req_pad+3)+") \n\t\t  "+VAR_TILE_LIMITS+"[0]="+VAR_TILE_LIMITS+"[0]-("+str(2*deriv_req_pad+3)+"-("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0]+1)) ; \n ")
+        ofile.write("\n")
+
+        ofile.write("\n")
+        ofile.write("\t\t //if(threadIdx.x ==0 && threadIdx.y==0 && threadIdx.z==0)\n")
+        ofile.write("\t\t //printf(\" iter %d %d %d : threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter_x,iter_y,iter_z, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
+        ofile.write("\n")
+
+        ofile.write("\t\t"+FUNC_LOAD_VAR+"(&"+VAR_UNZIP_IN+"[cuda::VAR::U_BETA0][offset],(double *) "+VAR_IN_SHARED+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+        ofile.write("\t\t"+FUNC_LOAD_VAR+"(&"+VAR_UNZIP_IN+"[cuda::VAR::U_BETA1][offset],(double *) "+VAR_OUT_SHARED_0+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+        ofile.write("\t\t"+FUNC_LOAD_VAR+"(&"+VAR_UNZIP_IN+"[cuda::VAR::U_BETA2][offset],(double *) "+VAR_OUT_SHARED_1+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+        ofile.write("\t\t__syncthreads();\n")
+        ofile.write("\t\t"+FUNC_SIGN_EXT+"((double *)"+VAR_IN_SHARED+",(bool *) "+VAR_BETA0_BOOL+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+        ofile.write("\t\t"+FUNC_SIGN_EXT+"((double *)"+VAR_OUT_SHARED_0+",(bool *) "+VAR_BETA1_BOOL+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+        ofile.write("\t\t"+FUNC_SIGN_EXT+"((double *)"+VAR_OUT_SHARED_1+",(bool *) "+VAR_BETA2_BOOL+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+        ofile.write("\t\t__syncthreads();\n")
+
+        for e in D:
+            enumStr=VAR_ENUM[D.index(e)]
+            ofile.write("\n")
+            ofile.write("\t\t//load input data from global to shared memory\n")
+
+            ofile.write("\t\t"+FUNC_LOAD_VAR+"(&"+VAR_UNZIP_IN+"["+enumStr+"][offset],(double *) "+VAR_IN_SHARED+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+            ofile.write("\t\t__syncthreads();\n")
+            ofile.write("\t\t//sync to make sure all the data is loaded\n")
+
+            for deriv in derivs:
+                if((deriv.DerivType=="d") and (deriv.DerivDir=="x")):
+                    ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
+                    ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                    ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                    for deriv1 in derivs:
+                        if((e in DD) and (deriv1.DerivType=="dd") and ((deriv1.DerivDir=="xy") or (deriv1.DerivDir=="xz"))):
+                            ofile.write("\t\t// computing deriv "+deriv1.DerivDir+" for variable "+e+" \n")
+                            ofile.write("\t\t"+deriv1.DerivFuncCall+"\n")
+                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+
+                            if(deriv1.DerivDir=="xy"):
+                                computeTileStore("y",ofile,deriv_req_pad)
+                            elif(deriv1.DerivDir=="xz"):
+                                computeTileStore("z",ofile,deriv_req_pad)
+
+                            #!!!! NOTE that for mixed derivs you need to store the padding region as well.
+                            ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_1+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv1.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                            if((deriv1.DerivDir=="xy")):
+                                ofile.write("\t\t__syncthreads();\n")
+                            ofile.write("\n")
+
+                    computeTileStore("x",ofile,deriv_req_pad)
+                    ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_0+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                    ofile.write("\t\t__syncthreads();\n")
+                    ofile.write("\n")
+
+                if((deriv.DerivType=="d") and (deriv.DerivDir=="y")):
+                    ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
+                    ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                    ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                    for deriv1 in derivs:
+                        if((e in DD) and (deriv1.DerivType=="dd") and (deriv1.DerivDir=="yz")):
+                            ofile.write("\t\t// computing deriv "+deriv1.DerivDir+" for variable "+e+" \n")
+                            ofile.write("\t\t"+deriv1.DerivFuncCall+"\n")
+                            ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                            computeTileStore("z",ofile,deriv_req_pad)
+                            ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_1+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv1.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                            #ofile.write("\t\t__syncthreads();\n")
+                            ofile.write("\n")
+                    #write the x, y,z derivs.
+
+                    computeTileStore("y",ofile,deriv_req_pad)
+                    ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_0+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                    ofile.write("\t\t__syncthreads();\n")
+                    ofile.write("\n")
+
+                if((deriv.DerivType=="d") and (deriv.DerivDir=="z")):
+                    ofile.write("\t\t// computing deriv "+deriv.DerivDir+" for variable "+e+" \n")
+                    ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                    ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                    computeTileStore("z",ofile,deriv_req_pad)
+                    ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_0+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                    ofile.write("\t\t__syncthreads();\n")
+
+            ofile.write("\n")
+
+            derivCount=0
+
+            for deriv in derivs:
+                if((e in DD) and (deriv.DerivType=="dd")  and ((deriv.DerivDir=="xx") or (deriv.DerivDir=="yy") or (deriv.DerivDir=="zz"))):
+                    ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                    ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                    if(deriv.DerivDir=="xx"):
+                        computeTileStore("x",ofile,deriv_req_pad)
+                    elif(deriv.DerivDir=="yy"):
+                        computeTileStore("y",ofile,deriv_req_pad)
+                    elif(deriv.DerivDir=="zz"):
+                        computeTileStore("z",ofile,deriv_req_pad)
+                    ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_0+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                    ofile.write("\t\t__syncthreads();\n")
+
+            ofile.write("\n")
+
+            for deriv in derivs:
+                if( (e in KO) and (deriv.DerivType=="ko")):
+                    ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                    ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                    if(deriv.DerivDir=="x"):
+                        computeTileStore("x",ofile,deriv_req_pad)
+                    elif(deriv.DerivDir=="y"):
+                        computeTileStore("y",ofile,deriv_req_pad)
+                    elif(deriv.DerivDir=="z"):
+                        computeTileStore("z",ofile,deriv_req_pad)
+                    ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_0+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                    ofile.write("\t\t__syncthreads();\n")
+
+            for deriv in derivs:
+                if( (e in AD) and (deriv.DerivType=="ad")):
+                    ofile.write("\t\t"+deriv.DerivFuncCall+"\n")
+                    ofile.write("\t\t__syncthreads();\n") # not essential if each thread writes only the points it has computed in the block.
+                    if(deriv.DerivDir=="x"):
+                        computeTileStore("x",ofile,deriv_req_pad)
+                    elif(deriv.DerivDir=="y"):
+                        computeTileStore("y",ofile,deriv_req_pad)
+                    elif(deriv.DerivDir=="z"):
+                        computeTileStore("z",ofile,deriv_req_pad)
+                    ofile.write("\t\t"+FUNC_STORE_VAR+"((double *) "+VAR_OUT_SHARED_0+",&("+VAR_DERIV_WORKSPACE+"->__"+deriv.DerivOutput+"_"+ e +"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                    ofile.write("\t\t__syncthreads();\n")
+
+
+
+        ofile.write("\t\t  } // end of block tile loop x\n")
+        ofile.write("\t\t } // end of block tile loop y\n")
+        ofile.write("\t\t} // end of block tile loop z\n\n")
+
+        ofile.write("} // end of function "+FUNC_DERIV_COMP+"\n\n")
+
+
+        ##############################################################################
+        ## RHS code generation
+        ##############################################################################
 
         for var_id in range(0,len(varnames)):
+
+            memManager.deallocAll()
+            memManager.clearScopeVariables()
+
+            ofile.write("/**@brief compute "+varnames[var_id]+" \n")
+            ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+            ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+            ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+            ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+            ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+            ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+            ofile.write("*/ \n")
+            ofile.write("__device__ void "+FUNC_COMP_RHS_PRE+"_"+varnames[var_id]+"(double **"+VAR_UNZIP_OUT+", const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* dblock, const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+",const cudaDeviceProp* "+VAR_CUDA_DEVICE+", "+TYPE_SHARED_MEM+"* "+VAR_SHARED_MEM+", unsigned int "+VAR_STREAM_ID+"){\n")
+            ofile.write("\n\n")
+
+
+            mi = [0, 1, 2, 4, 5, 8]
+            midx = ['00', '01', '02', '11', '12', '22']
+
+            ofile.write("\n")
+            idx="[pp]"
+
+            ofile.write("\t///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n")
+            ofile.write("\t//                             generated code for "+varnames[var_id]+"              begin   \n")
+            ofile.write("\t///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////\n")
             varOut=varnames[var_id]
             exp=outs[var_id]
 
+            ofile.write("\t// bssn compute parameters \n")
+
+            ofile.write("\tconst double lambda[4]={"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[0],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[1],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[2],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[3]};\n")
+            ofile.write("\tconst double lambda_f[2]={"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA_F[0],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA_F[1]};\n")
+            ofile.write("\tconst double kosigma="+VAR_BSSN_PARAMS+"->KO_DISS_SIGMA;\n")
+            ofile.write("\tconst double ETA_R0="+VAR_BSSN_PARAMS+"->ETA_R0;\n")
+            ofile.write("\tconst double R0="+VAR_BSSN_PARAMS+"->ETA_R0;\n")
+            ofile.write("\tconst double ETA_DAMPING="+VAR_BSSN_PARAMS+"->ETA_DAMPING;\n")
+            ofile.write("\tconst double ETA_DAMPING_EXP="+VAR_BSSN_PARAMS+"->ETA_DAMPING_EXP;\n")
+            ofile.write("\tconst double ETA_CONST="+VAR_BSSN_PARAMS+"->ETA_CONST;\n")
+            ofile.write("\tconst double eta_power[2]={"+VAR_BSSN_PARAMS+"->BSSN_ETA_POWER[0],"+VAR_BSSN_PARAMS+"->BSSN_ETA_POWER[1]};\n")
+
             print("code generation for : "+varOut)
+
+
+            ofile.write("\tconst unsigned int NUM_SM_UNITS="+VAR_CUDA_DEVICE+"->multiProcessorCount;\n")
+            ofile.write("\tconst unsigned int SM_ID=get_smid();//"+VAR_BLK_ID_X+"%NUM_SM_UNITS;\n")
+            ofile.write("\tconst unsigned int offset=dblock->getOffset();\n")
+            ofile.write("\tconst unsigned int *sz=dblock->getSz();\n")
+            ofile.write("\tconst unsigned int *"+VAR_DENDRO_BLK_ALIGNED_SZ+"=dblock->getAlignedSz();\n")
+            ofile.write("\tconst double* hx=dblock->getDx();\n")
+
+            ofile.write("\tconst double dx=hx[0];\n")
+            ofile.write("\tconst double dy=hx[1];\n")
+            ofile.write("\tconst double dz=hx[2];\n")
+
+            ofile.write("\tconst double* ptmin=dblock->getPtMin();\n")
+            ofile.write("\tconst double* ptmax=dblock->getPtMax();\n")
+            ofile.write("\tconst unsigned int bflag=dblock->getBFlag();\n")
+
+            ofile.write("\n")
 
             num_e = 0
             lexp = []
@@ -776,9 +921,9 @@ def cudaComputeRHSSourceUnStaged(fname,outs,varnames,headers=[],sharedMemSz=48*1
                 for j, ev in enumerate(exp):
                     regm=re.findall(re.compile(r"([A-Z,a-z,0-9,_]*\[pp\])"),dendro.change_deriv_names(str(ev)))
                     for varDep in regm:
-                        if varDep[0:-4] in varEnumToInputSymbol.keys():
+                        if varDep[0:-4] in VAR_ENUM_TO_INPUT_SYM.keys():
                             bssnInputVars.append(varDep[0:-4])
-                        elif varDep[0:-4] in varEnumToOutputSymbol.keys():
+                        elif varDep[0:-4] in VAR_ENUM_TO_OUTPUT_SYM.keys():
                             bssnOutputVars.append(varDep[0:-4])
                         else:
                             for key,value in custom_functions.items():
@@ -792,9 +937,9 @@ def cudaComputeRHSSourceUnStaged(fname,outs,varnames,headers=[],sharedMemSz=48*1
                 #print(exp.free_symbols)
                 regm=re.findall(re.compile(r"([A-Z,a-z,0-9,_]*\[pp\])"),dendro.change_deriv_names(str(exp)))
                 for varDep in regm:
-                    if varDep[0:-4] in varEnumToInputSymbol.keys():
+                    if varDep[0:-4] in VAR_ENUM_TO_INPUT_SYM.keys():
                         bssnInputVars.append(varDep[0:-4])
-                    elif varDep[0:-4] in varEnumToOutputSymbol.keys():
+                    elif varDep[0:-4] in VAR_ENUM_TO_OUTPUT_SYM.keys():
                         bssnOutputVars.append(varDep[0:-4])
                     else:
                         for key,value in custom_functions.items():
@@ -808,9 +953,9 @@ def cudaComputeRHSSourceUnStaged(fname,outs,varnames,headers=[],sharedMemSz=48*1
                 regm=re.findall(re.compile(r"([A-Z,a-z,0-9,_]*\[pp\])"),dendro.change_deriv_names(str(exp)))
                 for varDep in regm:
                     #print (varDep[0:-4])
-                    if varDep[0:-4] in varEnumToInputSymbol.keys():
+                    if varDep[0:-4] in VAR_ENUM_TO_INPUT_SYM.keys():
                         bssnInputVars.append(varDep[0:-4])
-                    elif varDep[0:-4] in varEnumToOutputSymbol.keys():
+                    elif varDep[0:-4] in VAR_ENUM_TO_OUTPUT_SYM.keys():
                         bssnOutputVars.append(varDep[0:-4])
                     else:
                         for key,value in custom_functions.items():
@@ -820,7 +965,7 @@ def cudaComputeRHSSourceUnStaged(fname,outs,varnames,headers=[],sharedMemSz=48*1
 
 
             for lvar in lname:
-                if lvar[0:-4] in varEnumToOutputSymbol.keys():
+                if lvar[0:-4] in VAR_ENUM_TO_OUTPUT_SYM.keys():
                     bssnOutputVars.append(lvar[0:-4])
                 else:
                     bssnStagedVars.append(lvar[0:-4])
@@ -830,246 +975,325 @@ def cudaComputeRHSSourceUnStaged(fname,outs,varnames,headers=[],sharedMemSz=48*1
             bssnStagedVars=list(set(bssnStagedVars))
             derivVars=list(set(derivVars))
 
-            total_dep=len(bssnInputVars)+len(bssnStagedVars)+len(derivVars)+len(bssnOutputVars);
-            rhs_tile_size=math.floor(((sharedMemUtilFactor*sharedMemSz)/(total_dep*8))**(1.0/3.0))
 
-            print("dependenacy computation completed\n")
+            total_dep=len(bssnInputVars)+len(bssnStagedVars)+len(derivVars)+len(bssnOutputVars)
+            rhs_tile_size_1d=math.floor(((memManager.getMemUsable())/(total_dep*8))**(1.0/3.0))
 
-
-            ofile.write("/** computes rhs "+varOut+"*/\n")
-            ofile.write("__global__ void __compute_"+varOut+"(double** "+unzipout+", const double**"+unzipIn+", "+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList, const "+BSSNComputePars+"* __bssnPar, const cudaDeviceProp*__deviceProperties){\n")
-
-            ofile.write("\tconst _Block dblock="+dendro_blkList+"["+blockId_x+"];\n")
-            ofile.write("\tconst unsigned int NUM_SM_UNITS="+cuda_device+"->multiProcessorCount;\n")
-            ofile.write("\tconst unsigned int SM_ID="+blockId_x+"%NUM_SM_UNITS;\n")
-            ofile.write("\tconst unsigned int offset=dblock.getOffset();\n")
-            ofile.write("\tconst unsigned int *sz=dblock.getSz();\n")
-            ofile.write("\tconst double* hx=dblock.getDx();\n")
-            ofile.write("\tconst double* ptmin=dblock.getPtMin();\n")
-            ofile.write("\tconst double* ptmax=dblock.getPtMax();\n")
-
-
-            ofile.write("\t// bssn compute parameters \n")
-
-            ofile.write("\tconst double lambda[4]={__bssnPar->BSSN_LAMBDA[0],__bssnPar->BSSN_LAMBDA[1],__bssnPar->BSSN_LAMBDA[2],__bssnPar->BSSN_LAMBDA[3]};\n")
-            ofile.write("\tconst double lambda_f[2]={__bssnPar->BSSN_LAMBDA_F[0],__bssnPar->BSSN_LAMBDA_F[1]};\n")
-            ofile.write("\tconst double kosigma=__bssnPar->KO_DISS_SIGMA;\n")
-            ofile.write("\tconst double ETA_R0=__bssnPar->ETA_R0;\n")
-            ofile.write("\tconst double R0=__bssnPar->ETA_R0;\n")
-            ofile.write("\tconst double ETA_DAMPING=__bssnPar->ETA_DAMPING;\n")
-            ofile.write("\tconst double ETA_DAMPING_EXP=__bssnPar->ETA_DAMPING_EXP;\n")
-            ofile.write("\tconst double ETA_CONST=__bssnPar->ETA_CONST;\n")
-            ofile.write("\tconst double eta_power[2]={__bssnPar->BSSN_ETA_POWER[0],__bssnPar->BSSN_ETA_POWER[1]};\n")
-
-            ofile.write("\tconst double dx=hx[0];\n")
-            ofile.write("\tconst double dy=hx[1];\n")
-            ofile.write("\tconst double dz=hx[2];\n")
-
-            ofile.write("\tconst unsigned int bflag=dblock.getBFlag();\n")
-            ofile.write("\n")
-            ofile.write("\tconst unsigned int blkSz=sz[0]*sz[1]*sz[2];\n")
-            ofile.write("\n")
-
-            ofile.write("\tconst unsigned int "+tile_sz+"[3]={"+str(rhs_tile_size)+","+str(rhs_tile_size)+","+str(rhs_tile_size)+"};\n")
-            ofile.write("\tconst unsigned int TILE_SZ="+tile_sz+"[0]*"+tile_sz+"[1]*"+tile_sz+"[2]"+";\n")
+            ofile.write("\tconst unsigned int "+VAR_TILE_SZ+"[3]={"+str(rhs_tile_size_1d)+","+str(rhs_tile_size_1d)+","+str(rhs_tile_size_1d)+"};\n")
+            rhs_tile_size=rhs_tile_size_1d**3
 
             ofile.write("\t\n")
-            dendro_blk_req_pad=0;
+            # no padding region required for rhs computation
+            rhs_req_pad=0
 
-            ofile.write("\tconst unsigned int Lb = "+str(dendro_blk_pad-dendro_blk_req_pad)+";// load begin bound\n")
-            ofile.write("\tconst unsigned int Le = sz[0]-"+str(dendro_blk_pad-dendro_blk_req_pad)+";// load end bound\n")
-
-            #ofile.write("const unsigned int BLK_INTERATIONS = max(1,(int)ceil((double)(Le-Lb-"+tile_sz+"[0])/("+tile_sz+"[0]-2*" +str(dendro_blk_req_pad)+")));\n")
-            ofile.write("\tconst unsigned int BLK_INTERATIONS = ((Le-Lb)<"+tile_sz+"[0])? 1: ((int)ceil((double)(Le-Lb-"+tile_sz+"[0])/("+tile_sz+"[0]-2*" +str(dendro_blk_req_pad)+")))+1;\n")
-            ofile.write("\n")
-
-            ofile.write("\tunsigned int ijk_lm[3*2];")
-            ofile.write("\n")
-
-            # allocate memory for shared deriv variables.
-            ofile.write("\t//allocate memory for shared deriv variables. \n")
-
-            ofile.write("\n")
-            ofile.write("\n")
             ofile.write("\t //input vars begin\n")
             for var in bssnInputVars:
-                ofile.write("\t__shared__ double "+var+"[" + str(rhs_tile_size**3) + "];\n")
+                memManager.malloc(var,rhs_tile_size,ofile,prefix="\t")
             ofile.write("\t //input vars end\n")
 
             ofile.write("\t // staged vars begin\n")
             for var in bssnStagedVars:
-                ofile.write("\t__shared__ double "+var+"[" + str(rhs_tile_size**3) + "];\n")
+                memManager.malloc(var,rhs_tile_size,ofile,prefix="\t")
 
             ofile.write("\t // staged vars end\n")
 
             ofile.write("\t // deriv vars begin\n")
             for var in derivVars:
-                ofile.write("\t__shared__ double "+var+"[" + str(rhs_tile_size**3) + "];\n")
+                memManager.malloc(var,rhs_tile_size,ofile,prefix="\t")
             ofile.write("\t // deriv vars end\n")
 
             ofile.write("\t // output vars begin\n")
             for var in bssnOutputVars:
-                ofile.write("\t__shared__ double "+var+"[" + str(rhs_tile_size**3) + "];\n")
+                memManager.malloc(var,rhs_tile_size,ofile,prefix="\t")
             ofile.write("\t // output vars end\n")
 
 
-            ofile.write("\tfor(unsigned int iter=0;iter<BLK_INTERATIONS;iter++){\n\n")
-            ofile.write("\t\t "+tile_limits+"[2*0+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[0]*iter -2*iter*"+str(dendro_blk_req_pad)+"));\n")
-            ofile.write("\t\t "+tile_limits+"[2*0+1]=min("+tile_limits+"[2*0+0]+"+tile_sz+"[0],sz[0]-"+ str(dendro_blk_pad) +");\n")
-            ofile.write("\t\t "+tile_limits+"[2*1+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[1]*iter -2*iter*"+str(dendro_blk_req_pad)+"));\n")
-            ofile.write("\t\t "+tile_limits+"[2*1+1]=min("+tile_limits+"[2*1+0]+"+tile_sz+"[1],sz[1]-"+ str(dendro_blk_pad) +");\n")
-            ofile.write("\t\t "+tile_limits+"[2*2+0]=max("+str(dendro_blk_pad-dendro_blk_req_pad)+",(int)("+str(dendro_blk_pad-dendro_blk_req_pad)+" + "+tile_sz+"[2]*iter -2*iter*"+str(dendro_blk_req_pad)+"));\n")
-            ofile.write("\t\t "+tile_limits+"[2*2+1]=min("+tile_limits+"[2*2+0]+"+tile_sz+"[2],sz[2]-"+ str(dendro_blk_pad) +");\n")
+            ofile.write("\tconst unsigned int Lb = "+str(deriv_max_pad-rhs_req_pad)+";// load begin bound\n")
+            ofile.write("\tconst unsigned int Le = sz[0]-"+str(deriv_max_pad-rhs_req_pad)+";// load end bound\n")
 
-            ofile.write("\t\t //printf(\" iter : %d threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
+            # !! Note that we assume tile size are cubic.
+            ofile.write("//!! Note that we assume tile size are cubic.\n")
+            ofile.write("\tconst unsigned int BLK_ITERATIONS_X = ((Le-Lb)<"+VAR_TILE_SZ+"[0])? 1: ((int)ceil((double)(Le-Lb-"+VAR_TILE_SZ+"[0])/("+VAR_TILE_SZ+"[0]-2*" +str(rhs_req_pad)+")))+1;\n")
+            ofile.write("\tconst unsigned int BLK_ITERATIONS_Y = BLK_ITERATIONS_X;\n")
+            ofile.write("\tconst unsigned int BLK_ITERATIONS_Z = BLK_ITERATIONS_X;\n")
             ofile.write("\n")
 
-            ofile.write("\t\t//load data from global to shared memory\n")
-            for var in bssnInputVars:
-                ofile.write("\t\t"+loadVar+"(&"+unzipIn+"["+varEnumToInputSymbol[var]+"][offset],(double *) "+var+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+            ofile.write("\tunsigned int "+VAR_TILE_LIMITS+"[3*2];\n")
+            ofile.write("\tunsigned int "+VAR_TILE_LIMITS_STORE+"[3*2];\n")
 
-            for var in derivVars:
-                ofile.write("\t\t"+loadVar+"(&("+derivWorkSpace+"->__"+var+"[offset]),(double *) "+var+",(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+            ofile.write("\tfor(unsigned int iter_z=0;iter_z<BLK_ITERATIONS_Z;iter_z++){\n\n")
+            ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*2+0]=max("+str(deriv_max_pad-rhs_req_pad)+",(int)("+str(deriv_max_pad-rhs_req_pad)+" + "+VAR_TILE_SZ+"[2]*iter_z -2*iter_z*"+str(rhs_req_pad)+"));\n")
+            ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*2+1]=min("+VAR_TILE_LIMITS+"[2*2+0]+"+VAR_TILE_SZ+"[2]-1,sz[2]-"+str(deriv_max_pad-rhs_req_pad)+"-1);\n")
+            ofile.write("\n")
 
-            ofile.write("\t__syncthreads();\n\n")
+            ofile.write("\t  for(unsigned int iter_y=0;iter_y<BLK_ITERATIONS_Y;iter_y++){\n\n")
+            ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*1+0]=max("+str(deriv_max_pad-rhs_req_pad)+",(int)("+str(deriv_max_pad-rhs_req_pad)+" + "+VAR_TILE_SZ+"[1]*iter_y -2*iter_y*"+str(rhs_req_pad)+"));\n")
+            ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*1+1]=min("+VAR_TILE_LIMITS+"[2*1+0]+"+VAR_TILE_SZ+"[1]-1,sz[1]-"+str(deriv_max_pad-rhs_req_pad)+"-1);\n")
+            ofile.write("\n")
 
-            ofile.write("\t\tconst unsigned int i_b=ijk_lm[2*0+0];\n")
-            ofile.write("\t\tconst unsigned int i_e=ijk_lm[2*0+1];\n")
+            ofile.write("\t    for(unsigned int iter_x=0;iter_x<BLK_ITERATIONS_X;iter_x++){\n")
 
-            ofile.write("\t\tconst unsigned int j_b=ijk_lm[2*1+0];\n")
-            ofile.write("\t\tconst unsigned int j_e=ijk_lm[2*1+1];\n")
+            ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*0+0]=max("+str(deriv_max_pad-rhs_req_pad)+",(int)("+str(deriv_max_pad-rhs_req_pad)+" + "+VAR_TILE_SZ+"[0]*iter_x -2*iter_x*"+str(rhs_req_pad)+"));\n")
+            ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*0+1]=min("+VAR_TILE_LIMITS+"[2*0+0]+"+VAR_TILE_SZ+"[0]-1,sz[0]-"+str(deriv_max_pad-rhs_req_pad)+"-1);\n")
+            ofile.write("\n")
+            ofile.write("\n")
 
-            ofile.write("\t\tconst unsigned int k_b=ijk_lm[2*2+0];\n")
-            ofile.write("\t\tconst unsigned int k_e=ijk_lm[2*2+1];\n")
+            ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[0]=0;\n")
+            ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[1]="+VAR_TILE_LIMITS+"[1] - "+VAR_TILE_LIMITS+"[0];\n")
+            ofile.write("\n")
+            ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[2]=0;\n")
+            ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[3]="+VAR_TILE_LIMITS+"[3] - "+VAR_TILE_LIMITS+"[2];\n")
+            ofile.write("\n")
+            ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[4]=0;\n")
+            ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[5]="+VAR_TILE_LIMITS+"[5] - "+VAR_TILE_LIMITS+"[4];\n")
 
-            ofile.write("\t\tunsigned int l_x=i_e-i_b;\n")
-            ofile.write("\t\tunsigned int l_y=j_e-j_b;\n")
-            ofile.write("\t\tunsigned int l_z=k_e-k_b;\n")
-
-            ofile.write("\t\tif(threadIdx.x>=l_x || threadIdx.y >= l_y || threadIdx.z>=l_z) return;\n")
-
-            ofile.write("\t\tif(l_x<blockDim.x) l_x=blockDim.x;\n")
-            ofile.write("\t\tif(l_y<blockDim.y) l_y=blockDim.y;\n")
-            ofile.write("\t\tif(l_z<blockDim.z) l_z=blockDim.z;\n")
-
-            ofile.write("\t\tconst unsigned int ix_b= (i_b + ("+threadId_x+" * l_x)/"+blockDim_x+")-ijk_lm[0];\n")
-            ofile.write("\t\tconst unsigned int ix_e= (i_b + (("+threadId_x+" +1)* l_x)/"+blockDim_x+")-ijk_lm[0];\n\n")
-
-            ofile.write("\t\tconst unsigned int jy_b= (j_b + ("+threadId_y+" * l_y)/"+blockDim_y+")-ijk_lm[2];\n")
-            ofile.write("\t\tconst unsigned int jy_e= (j_b + (("+threadId_y+"+1)* l_y)/"+blockDim_y+")-ijk_lm[2];\n")
-
-            ofile.write("\t\tconst unsigned int kz_b= (k_b + ("+threadId_z+" * l_z)/"+blockDim_z+")-ijk_lm[4];\n")
-            ofile.write("\t\tconst unsigned int kz_e= (k_b + (("+threadId_z+"+1)* l_z)/"+blockDim_z+")-ijk_lm[4];\n")
+            ofile.write("\t\t //if(threadIdx.x ==0 && threadIdx.y==0 && threadIdx.z==0)\n")
+            ofile.write("\t\t //printf(\" iter %d %d %d : threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter_x,iter_y,iter_z, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
 
             ofile.write("\n\n")
 
+
+            ofile.write("\t\t //load data from global to shared memory\n")
+            for var in bssnInputVars:
+                ofile.write("\t\t "+FUNC_LOAD_VAR+"(&"+VAR_UNZIP_IN+"["+VAR_ENUM_TO_INPUT_SYM[var]+"][offset],(double *) "+var+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+
+            for var in derivVars:
+                ofile.write("\t\t "+FUNC_LOAD_VAR+"(&("+VAR_DERIV_WORKSPACE+"->__"+var+"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(double *) "+var+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+
+            ofile.write("\t\t __syncthreads();\n\n")
+
+            ofile.write("\n\n")
+            #/*|| ("+VAR_TRD_ID_Z+">=("+VAR_TILE_LIMITS+"[5]-"+VAR_TILE_LIMITS+"[4]))*/
+            ofile.write("\tif(!(("+VAR_TRD_ID_X+">("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0])) || ("+VAR_TRD_ID_Y+">("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]))) ){ \n\n")
+
             ofile.write("\t\t double x,y,z,r_coord,eta;\n")
+            ofile.write("\t\t unsigned int pp=0*"+VAR_TILE_SZ+"[0]*"+VAR_TILE_SZ+"[1]+"+VAR_TRD_ID_Y+"*"+VAR_TILE_SZ+"[1]+"+VAR_TRD_ID_X+";\n")
+            ofile.write("\t\t  for(unsigned int k=0;k<=(ijk_lm[5]-ijk_lm[4]);++k,pp+="+VAR_TILE_SZ+"[0]*"+VAR_TILE_SZ+"[1]){\n")
 
-            ofile.write("\t\t for (unsigned int k=kz_b;k<kz_e;k++){\n")
-            ofile.write("\t\t  z = ptmin[2] + (k+ijk_lm[4])*dz;\n")
-            ofile.write("\t\t    for (unsigned int j=jy_b;j<jy_e;j++){\n")
-            ofile.write("\t\t     y = ptmin[1] + (j+ijk_lm[2])*dy;\n")
-            ofile.write("\t\t      for (unsigned int i=ix_b;i<ix_e;i++){\n")
-            ofile.write("\t\t       x = ptmin[0] + (i+ijk_lm[0])*dx;\n")
-
-            ofile.write("\t\t\n\n")
-            ofile.write("\t\t       r_coord = sqrt(x*x + y*y + z*z);\n")
-            ofile.write("\t\t       eta=ETA_CONST;\n")
-            ofile.write("\t\t       if (r_coord >= ETA_R0) {\n")
-            ofile.write("\t\t          eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n")
-            ofile.write("\t\t       }\n\n")
+            ofile.write("\t\t\t  z = ptmin[2] + (k+"+VAR_TILE_LIMITS+"[4])*dz;\n")
+            ofile.write("\t\t\t  y = ptmin[1] + ("+VAR_TRD_ID_Y+"+"+VAR_TILE_LIMITS+"[2])*dy;\n")
+            ofile.write("\t\t\t  x = ptmin[0] + ("+VAR_TRD_ID_X+"+"+VAR_TILE_LIMITS+"[0])*dx;\n")
+            ofile.write("\t\t\t  r_coord = sqrt(x*x + y*y + z*z);\n")
+            ofile.write("\t\t\t  eta=ETA_CONST;\n")
+            ofile.write("\t\t\t  if (r_coord >= ETA_R0) {\n")
+            ofile.write("\t\t\t     eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n")
+            ofile.write("\t\t\t  }\n\n")
 
 
-            ofile.write("\t\t      const unsigned int pp=k*"+tile_sz+"[0]*"+tile_sz+"[1]+j*"+tile_sz+"[1]+i;\n")
 
-            ofile.write("\t\t      // Dendro: {{{ \n")
-            ofile.write("\t\t      // Dendro: original ops: "+str(sympy.count_ops(lexp))+"\n")
+            ofile.write("\t\t\t  // Dendro: {{{ \n")
+            ofile.write("\t\t\t  // Dendro: original ops: "+str(sympy.count_ops(lexp))+"\n")
 
             rops=0
-            ofile.write("\t\t      // Dendro: printing temp variables\n")
+            ofile.write("\t\t\t     // Dendro: printing temp variables\n")
             for (v1, v2) in _v[0]:
-                ofile.write('\t\t   double ')
-                ofile.write("\t\t"+dendro.change_deriv_names(sympy.ccode(v2, assign_to=v1, user_functions=custom_functions))+"\n")
+                ofile.write("\t\t const double ")
+                ofile.write(dendro.change_deriv_names(sympy.ccode(v2, assign_to=v1, user_functions=custom_functions))+"\n")
                 rops = rops + sympy.count_ops(v2)
 
-            ofile.write("\t\t      // Dendro: printing variables\n\n")
+            ofile.write("\t\t\t      // Dendro: printing variables\n\n")
             for i, e in enumerate(_v[1]):
-                ofile.write("\t\t      "+dendro.change_deriv_names(sympy.ccode(e, assign_to=lname[i], user_functions=custom_functions))+"\n")
+                ofile.write("\t\t   "+dendro.change_deriv_names(sympy.ccode(e, assign_to=lname[i], user_functions=custom_functions))+"\n")
                 rops = rops + sympy.count_ops(e)
 
 
-            ofile.write("\t\t      // Dendro: reduced ops: "+str(rops)+"\n")
-            ofile.write("\t\t      // Dendro: }}} \n")
+            ofile.write("\t\t\t      // Dendro: reduced ops: "+str(rops)+"\n")
+            ofile.write("\t\t\t      // Dendro: }}} \n")
+            ofile.write("\t\t\t     } //loop z end \n")
 
+            ofile.write("\t}// end of the if for the thread idx \n")
 
-            ofile.write("\t\t    }\n")
-            ofile.write("\t\t  }\n")
-            ofile.write("\t\t}\n")
+            ofile.write("\t\t\t__syncthreads();\n\n")
 
-            ofile.write("\t__syncthreads();\n\n")
-
-            ofile.write("\t// sotre computed variables\n\n")
+            ofile.write("\t\t\t// sotre computed variables\n\n")
             for var in bssnOutputVars:
-                ofile.write("\t\t"+storeVar+"("+var+", &"+unzipout+"["+varEnumToOutputSymbol[var]+"][offset],(const unsigned int *) "+tile_limits+",(const unsigned int *) "+dendro_block_sz+",(const unsigned int *) "+tile_sz+");\n")
+                ofile.write("\t\t"+FUNC_STORE_VAR+"("+var+", &"+VAR_UNZIP_OUT+"["+VAR_ENUM_TO_OUTPUT_SYM[var]+"][offset],(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
 
-            ofile.write("\t__syncthreads();\n")
+            ofile.write("\t\t   __syncthreads();\n")
 
-            ofile.write("\t}\n\n")
-            ofile.write("}\n")
+            ofile.write("\t  } // end of block assigned to gpu block loop x \n\n")
+            ofile.write("\t } // end of block assigned to gpu block loop y \n\n")
+            ofile.write("\t} // end of block assigned to gpu block loop z \n\n")
 
-        '''ofile.write("/**computes bssn equations using gpu. This is a generated code by Dendro-GR symbolic framework */\n")
-        ofile.write("void rhs_bssn(double** "+unzipout+", const double**"+unzipIn+", "+DerivStruct+"* __derivWorkspace, const "+ Block_CU+ "* __dendroBlkList, unsigned int numBlocks, const "+BSSNComputePars+"* __bssnPar, const cudaDeviceProp*__deviceProperties){\n")
+            ofile.write("} // end of function" +FUNC_COMP_RHS_PRE+"_"+varnames[var_id]+" \n\n")
+
+
+        memManager.deallocAll()
+        memManager.clearScopeVariables()
+
+        ofile.write("/**@brief apply KO dissipation \n")
+        ofile.write(" @param[in] "+VAR_UNZIP_IN+": unzipped input array (global memory) \n")
+        ofile.write(" @param[in] "+TYPE_DERIV_STRUCT+": allocated workspace for derivative computations \n")
+        ofile.write(" @param[in] "+VAR_DENDRO_BLK_LIST+": dendro block list \n")
+        ofile.write(" @param[in] "+VAR_GPU_BLOCK_MAP+": gpu block map  \n")
+        ofile.write(" @param[in] "+VAR_CUDA_DEVICE+": cuda device properties  \n")
+        ofile.write(" @param[out] "+VAR_UNZIP_OUT+": unzipped output computed rhs  \n")
+        ofile.write("*/ \n")
+        ofile.write("__device__ void "+FUNC_KO_DISS+"(double **"+VAR_UNZIP_OUT+", const double**"+VAR_UNZIP_IN+","+TYPE_DERIV_STRUCT+"* __derivWorkspace, const "+ TYPE_BLK_CU+ "* dblock, const unsigned int * "+VAR_GPU_BLOCK_MAP+",const "+TYPE_BSSN_PARAMS+" * "+VAR_BSSN_PARAMS+",const cudaDeviceProp* "+VAR_CUDA_DEVICE+", "+TYPE_SHARED_MEM+"* "+VAR_SHARED_MEM+", unsigned int "+VAR_STREAM_ID+"){\n")
         ofile.write("\n")
 
-        ofile.write("\tconst _Block dblock="+dendro_blkList+"["+blockId_x+"];\n")
-        ofile.write("\tconst unsigned int NUM_SM_UNITS="+cuda_device+"->multiProcessorCount;\n")
-        ofile.write("\tconst unsigned int SM_ID="+blockId_x+"%NUM_SM_UNITS;\n")
-        ofile.write("\tconst unsigned int offset=dblock.getOffset();\n")
-        ofile.write("\tconst unsigned int *sz=dblock.getSz();\n")
-        ofile.write("\tconst double* hx=dblock.getDx();\n")
+        ofile.write("\t// bssn compute parameters \n")
+
+        ofile.write("\tconst double lambda[4]={"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[0],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[1],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[2],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA[3]};\n")
+        ofile.write("\tconst double lambda_f[2]={"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA_F[0],"+VAR_BSSN_PARAMS+"->BSSN_LAMBDA_F[1]};\n")
+        ofile.write("\tconst double kosigma="+VAR_BSSN_PARAMS+"->KO_DISS_SIGMA;\n")
+        ofile.write("\tconst double ETA_R0="+VAR_BSSN_PARAMS+"->ETA_R0;\n")
+        ofile.write("\tconst double R0="+VAR_BSSN_PARAMS+"->ETA_R0;\n")
+        ofile.write("\tconst double ETA_DAMPING="+VAR_BSSN_PARAMS+"->ETA_DAMPING;\n")
+        ofile.write("\tconst double ETA_DAMPING_EXP="+VAR_BSSN_PARAMS+"->ETA_DAMPING_EXP;\n")
+        ofile.write("\tconst double ETA_CONST="+VAR_BSSN_PARAMS+"->ETA_CONST;\n")
+        ofile.write("\tconst double eta_power[2]={"+VAR_BSSN_PARAMS+"->BSSN_ETA_POWER[0],"+VAR_BSSN_PARAMS+"->BSSN_ETA_POWER[1]};\n")
+
+
+        ofile.write("\tconst unsigned int NUM_SM_UNITS="+VAR_CUDA_DEVICE+"->multiProcessorCount;\n")
+        ofile.write("\tconst unsigned int SM_ID=get_smid();//"+VAR_BLK_ID_X+"%NUM_SM_UNITS;\n")
+        ofile.write("\tconst unsigned int offset=dblock->getOffset();\n")
+        ofile.write("\tconst unsigned int *sz=dblock->getSz();\n")
+        ofile.write("\tconst unsigned int *"+VAR_DENDRO_BLK_ALIGNED_SZ+"=dblock->getAlignedSz();\n")
+        ofile.write("\tconst double* hx=dblock->getDx();\n")
 
         ofile.write("\tconst double dx=hx[0];\n")
         ofile.write("\tconst double dy=hx[1];\n")
         ofile.write("\tconst double dz=hx[2];\n")
 
-        ofile.write("\tconst double* ptmin=dblock.getPtMin();\n")
-        ofile.write("\tconst double* ptmax=dblock.getPtMax();\n")
-        ofile.write("\tconst unsigned int bflag=dblock.getBFlag();\n")
+        ofile.write("\tconst double* ptmin=dblock->getPtMin();\n")
+        ofile.write("\tconst double* ptmax=dblock->getPtMax();\n")
+        ofile.write("\tconst unsigned int bflag=dblock->getBFlag();\n")
+
+        total_dep=4
+        rhs_req_pad=0
+        rhs_tile_size_1d=math.floor(((memManager.getMemUsable())/(total_dep*8))**(1.0/3.0))
+
+
+
+        ofile.write("\tconst unsigned int "+VAR_TILE_SZ+"[3]={"+str(rhs_tile_size_1d)+","+str(rhs_tile_size_1d)+","+str(rhs_tile_size_1d)+"};\n")
+        rhs_tile_size=rhs_tile_size_1d**3
+
+        VAR_KO_TEMP=["kograd_0","kograd_1","kograd_2"]
+        VAR_KO_TEMP_RHS=["unZipSharedOut"]
+
+        for var in VAR_KO_TEMP:
+            memManager.malloc(var,rhs_tile_size,ofile,prefix="\t")
+
+        for var in VAR_KO_TEMP_RHS:
+            memManager.malloc(var,rhs_tile_size,ofile,prefix="\t")
+
+
+        ofile.write("\tconst unsigned int Lb = "+str(deriv_max_pad-rhs_req_pad)+";// load begin bound\n")
+        ofile.write("\tconst unsigned int Le = sz[0]-"+str(deriv_max_pad-rhs_req_pad)+";// load end bound\n")
+
+        # !! Note that we assume tile size are cubic.
+        ofile.write("//!! Note that we assume tile size are cubic.\n")
+        ofile.write("\tconst unsigned int BLK_ITERATIONS_X = ((Le-Lb)<"+VAR_TILE_SZ+"[0])? 1: ((int)ceil((double)(Le-Lb-"+VAR_TILE_SZ+"[0])/("+VAR_TILE_SZ+"[0]-2*" +str(rhs_req_pad)+")))+1;\n")
+        ofile.write("\tconst unsigned int BLK_ITERATIONS_Y = BLK_ITERATIONS_X;\n")
+        ofile.write("\tconst unsigned int BLK_ITERATIONS_Z = BLK_ITERATIONS_X;\n")
         ofile.write("\n")
-        ofile.write("\tconst unsigned int blkSz=sz[0]*sz[1]*sz[2];\n")
+
+        ofile.write("\tunsigned int "+VAR_TILE_LIMITS+"[3*2];\n")
+        ofile.write("\tunsigned int "+VAR_TILE_LIMITS_STORE+"[3*2];\n")
+
+        ofile.write("\tfor(unsigned int iter_z=0;iter_z<BLK_ITERATIONS_Z;iter_z++){\n\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*2+0]=max("+str(deriv_max_pad-rhs_req_pad)+",(int)("+str(deriv_max_pad-rhs_req_pad)+" + "+VAR_TILE_SZ+"[2]*iter_z -2*iter_z*"+str(rhs_req_pad)+"));\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*2+1]=min("+VAR_TILE_LIMITS+"[2*2+0]+"+VAR_TILE_SZ+"[2]-1,sz[2]-"+str(deriv_max_pad-rhs_req_pad)+"-1);\n")
         ofile.write("\n")
 
-        ofile.write("//compute all the derivs for the all bssn variables begin============================================================================================================\n")
-        for deriv_pass in range(0,len(cuda_deriv_kernel_names)):
-            ofile.write("\t// performing deriv pass "+str(deriv_pass)+"\n")
-            ofile.write("\tcuda::"+cuda_deriv_kernel_names[deriv_pass]+"<<<dim3(numBlocks,1),dim3(10,10,10)>>>("+unzipIn+", "+derivWorkSpace+", "+dendro_blkList+", "+cuda_device+");\n")
-            ofile.write("\tCUDA_CHECK_ERROR();\n")
-            ofile.write("\tcudaDeviceSynchronize();\n")
-            ofile.write("\tCUDA_CHECK_ERROR();\n")
+        ofile.write("\t  for(unsigned int iter_y=0;iter_y<BLK_ITERATIONS_Y;iter_y++){\n\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*1+0]=max("+str(deriv_max_pad-rhs_req_pad)+",(int)("+str(deriv_max_pad-rhs_req_pad)+" + "+VAR_TILE_SZ+"[1]*iter_y -2*iter_y*"+str(rhs_req_pad)+"));\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*1+1]=min("+VAR_TILE_LIMITS+"[2*1+0]+"+VAR_TILE_SZ+"[1]-1,sz[1]-"+str(deriv_max_pad-rhs_req_pad)+"-1);\n")
+        ofile.write("\n")
 
+        ofile.write("\t    for(unsigned int iter_x=0;iter_x<BLK_ITERATIONS_X;iter_x++){\n")
 
-        ofile.write("\t//sync threads after deriv computation \n")
-        #ofile.write("\t__syncthreads();\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*0+0]=max("+str(deriv_max_pad-rhs_req_pad)+",(int)("+str(deriv_max_pad-rhs_req_pad)+" + "+VAR_TILE_SZ+"[0]*iter_x -2*iter_x*"+str(rhs_req_pad)+"));\n")
+        ofile.write("\t\t "+VAR_TILE_LIMITS+"[2*0+1]=min("+VAR_TILE_LIMITS+"[2*0+0]+"+VAR_TILE_SZ+"[0]-1,sz[0]-"+str(deriv_max_pad-rhs_req_pad)+"-1);\n")
+        ofile.write("\n")
+        ofile.write("\n")
 
-        ofile.write("\t//compute all the derivs for the all bssn variables end ============================================================================================================\n")
+        ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[0]=0;\n")
+        ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[1]="+VAR_TILE_LIMITS+"[1] - "+VAR_TILE_LIMITS+"[0];\n")
+        ofile.write("\n")
+        ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[2]=0;\n")
+        ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[3]="+VAR_TILE_LIMITS+"[3] - "+VAR_TILE_LIMITS+"[2];\n")
+        ofile.write("\n")
+        ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[4]=0;\n")
+        ofile.write("\t\t"+VAR_TILE_LIMITS_STORE+"[5]="+VAR_TILE_LIMITS+"[5] - "+VAR_TILE_LIMITS+"[4];\n")
 
-        ofile.write("\n\n\n")
-        ofile.write("\t//call for rhs compute begin============================================================================================================\n")
+        ofile.write("\t\t //if(threadIdx.x ==0 && threadIdx.y==0 && threadIdx.z==0)\n")
+        ofile.write("\t\t //printf(\" iter %d %d %d : threadid (%d,%d,%d) tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \\n\",iter_x,iter_y,iter_z, threadIdx.x,threadIdx.y,threadIdx.z,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);\n\n")
 
-        for var_id in range(0,len(varnames)):
-            ofile.write("\tcuda::__compute_"+varnames[var_id]+"<<<dim3(numBlocks,1),dim3(10,10,10)>>>("+unzipout+","+unzipIn+", "+derivWorkSpace+", "+dendro_blkList+", "+bssnParams+", "+cuda_device+");\n")
-            ofile.write("\tCUDA_CHECK_ERROR();\n")
-            ofile.write("\tcudaDeviceSynchronize();\n")
-            ofile.write("\tCUDA_CHECK_ERROR();\n")
-
-
-        #ofile.write("cudaDeviceSynchronize();\n")
-        #ofile.write("CUDA_CHECK_ERROR();\n")
-
-        ofile.write("//call for rhs compute end==============================================================================================================\n")
         ofile.write("\n\n")
-        ofile.write("}// end of main kernel\n\n")'''
-        ofile.write("} // end of namespace cuda \n\n\n\n")
+
+        ofile.write("\t\t unsigned int pp;\n")
+        for var_id in range(0,len(varnames)):
+
+            mi = [0, 1, 2, 4, 5, 8]
+            midx = ['00', '01', '02', '11', '12', '22']
+
+            varOut=varnames[var_id]
+            exp=outs[var_id]
+
+            num_e = 0
+            lexp = []
+            lname = []
+            idx=""
+
+            if type(exp) == list:
+                num_e = num_e + len(exp)
+                for j, ev in enumerate(exp):
+                    lexp.append(ev)
+                    lname.append(varOut+repr(j)+idx)
+            elif type(exp) == sympy.Matrix:
+                num_e = num_e + len(exp)
+                for j, k in enumerate(mi):
+                    lexp.append(exp[k])
+                    lname.append(varOut+midx[j]+idx)
+            else:
+                num_e = num_e + 1
+                lexp.append(exp)
+                lname.append(varOut+idx)
+
+            for rhs in lname:
+                var_d=list(VAR_ENUM_TO_INPUT_SYM.keys())[list(VAR_ENUM_TO_INPUT_SYM.values()).index(VAR_ENUM_TO_OUTPUT_SYM[rhs])]
+
+                ofile.write("\t\t //ko dissipation for variable "+var_d+"\n\n")
+                for var in VAR_KO_TEMP:
+                    ofile.write("\t\t "+FUNC_LOAD_VAR+"(&("+VAR_DERIV_WORKSPACE+"->__"+var+"_"+var_d+"[("+VAR_DERIV_WORKSPACE_OFFSET+")]),(double *) "+var+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+
+                #ofile.write("\t\t "+FUNC_LOAD_VAR+"(&"+VAR_UNZIP_IN+"["+VAR_ENUM_TO_INPUT_SYM[var_d]+"][offset],(double *) "+VAR_KO_TEMP_RHS[0]+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                ofile.write("\t\t "+FUNC_LOAD_VAR+"(&"+VAR_UNZIP_OUT+"["+VAR_ENUM_TO_OUTPUT_SYM[rhs]+"][offset],(double *) "+VAR_KO_TEMP_RHS[0]+",(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                ofile.write("\t\t __syncthreads();\n\n")
+
+                ofile.write("\t\tif(!(("+VAR_TRD_ID_X+">("+VAR_TILE_LIMITS+"[1]-"+VAR_TILE_LIMITS+"[0])) || ("+VAR_TRD_ID_Y+">("+VAR_TILE_LIMITS+"[3]-"+VAR_TILE_LIMITS+"[2]))) ){ \n\n")
+
+                ofile.write("\t\t pp=0*"+VAR_TILE_SZ+"[0]*"+VAR_TILE_SZ+"[1]+"+VAR_TRD_ID_Y+"*"+VAR_TILE_SZ+"[1]+"+VAR_TRD_ID_X+";\n")
+                ofile.write("\t\t  for(unsigned int k=0;k<=(ijk_lm[5]-ijk_lm[4]);++k,pp+="+VAR_TILE_SZ+"[0]*"+VAR_TILE_SZ+"[1]){\n")
+
+                ofile.write("\t\t  "+VAR_KO_TEMP_RHS[0]+"[pp]  += kosigma * ("+VAR_KO_TEMP[0]+"[pp] +"+VAR_KO_TEMP[1]+"[pp] + "+VAR_KO_TEMP[2]+"[pp]);\n")
+
+                ofile.write("\t\t  } //loop z end \n")
+                ofile.write("\t\t}// end of the if for the thread idx \n")
+                ofile.write("\t\t__syncthreads();\n\n")
+
+                ofile.write("\t\t// sotre computed variables\n\n")
+                ofile.write("\t\t"+FUNC_STORE_VAR+"("+VAR_KO_TEMP_RHS[0]+", &"+VAR_UNZIP_OUT+"["+VAR_ENUM_TO_OUTPUT_SYM[rhs]+"][offset],(const unsigned int *) "+VAR_TILE_LIMITS+",(const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+", (const unsigned int *) "+VAR_TILE_LIMITS_STORE+",(const unsigned int *) "+VAR_TILE_SZ+");\n")
+                ofile.write("\t\t__syncthreads();\n\n")
+
+        ofile.write("\t  } // end of block assigned to gpu block loop x \n\n")
+        ofile.write("\t } // end of block assigned to gpu block loop y \n\n")
+        ofile.write("\t} // end of block assigned to gpu block loop z \n\n")
+
+
+        ofile.write("}// end of function "+FUNC_KO_DISS+"\n")
+
+
+        ofile.write("}// end of namespace cuda\n")
+        ofile.close()
+
+
+        
+
+
+
 
 
 
@@ -1100,47 +1324,47 @@ def main():
     kodyn = "kograd_1"
     kodzn = "kograd_2"
     '''
-    dxn  =  varOutShared
-    dxxn =  varOutShared
+    dxn  =  VAR_OUT_SHARED_0
+    dxxn =  VAR_OUT_SHARED_0
 
-    dyn  = varOutShared
-    dyyn = varOutShared1
+    dyn  = VAR_OUT_SHARED_0
+    dyyn = VAR_OUT_SHARED_0
 
-    dzn  = varOutShared
-    dzzn = varOutShared
+    dzn  = VAR_OUT_SHARED_0
+    dzzn = VAR_OUT_SHARED_0
 
-    dxyn = varOutShared1
-    dxzn = varOutShared1
-    dyzn = varOutShared1
+    dxyn = VAR_OUT_SHARED_1
+    dxzn = VAR_OUT_SHARED_1
+    dyzn = VAR_OUT_SHARED_1
 
-    adxn = varOutShared
-    adyn = varOutShared1
-    adzn = varOutShared
+    adxn = VAR_OUT_SHARED_0
+    adyn = VAR_OUT_SHARED_0
+    adzn = VAR_OUT_SHARED_0
 
-    kodxn = varOutShared
-    kodyn = varOutShared1
-    kodzn = varOutShared
+    kodxn = VAR_OUT_SHARED_0
+    kodyn = VAR_OUT_SHARED_0
+    kodzn = VAR_OUT_SHARED_0
 
 
-    func_dx="deriv42_x((double *) "+dxn+",(const double *) "+varInShared+",dx, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-    func_dy="deriv42_y((double *) "+dyn+",(const double *) "+varInShared+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-    func_dz="deriv42_z((double *) "+dzn+",(const double *) "+varInShared+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+    func_dx="deriv42_x((double *) "+dxn+",(const double *) "+VAR_IN_SHARED+",dx, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_dy="deriv42_y((double *) "+dyn+",(const double *) "+VAR_IN_SHARED+",dy, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_dz="deriv42_z((double *) "+dzn+",(const double *) "+VAR_IN_SHARED+",dz, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
 
-    func_dxx="deriv42_xx((double *) "+dxxn+",(const double *) "+varInShared+",dx, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-    func_dxy="deriv42_y((double *) "+dxyn+",(const double *) "+dxn+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-    func_dxz="deriv42_z((double *) "+dxzn+",(const double *) "+dxn+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+    func_dxx="deriv42_xx((double *) "+dxxn+",(const double *) "+VAR_IN_SHARED+",dx, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_dxy="deriv42_y((double *) "+dxyn+",(const double *) "+dxn+",dy, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_dxz="deriv42_z((double *) "+dxzn+",(const double *) "+dxn+",dz, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
 
-    func_dyy="deriv42_yy((double *) "+dyyn+",(const double *) "+varInShared+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-    func_dyz="deriv42_z((double *) " +dyzn+",(const double *) "+dyn+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
-    func_dzz="deriv42_zz((double *) "+dzzn+",(const double *) "+varInShared+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 2, bflag);"
+    func_dyy="deriv42_yy((double *) "+dyyn+",(const double *) "+VAR_IN_SHARED+",dy, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_dyz="deriv42_z((double *) " +dyzn+",(const double *) "+dyn+",dz, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_dzz="deriv42_zz((double *) "+dzzn+",(const double *) "+VAR_IN_SHARED+",dz, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
 
-    func_adx="deriv42adv_x((double *) "+adxn+",(const double *) "+varInShared+",dx, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const bool*) "+ beta0+" , 3, bflag);"
-    func_ady="deriv42adv_y((double *) "+adyn+",(const double *) "+varInShared+",dy, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const bool*) "+ beta1+" , 3, bflag);"
-    func_adz="deriv42adv_z((double *) "+adzn+",(const double *) "+varInShared+",dz, (const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", (const bool*) "+ beta2+" , 3, bflag);"
+    func_adx="deriv42adv_x((double *) "+adxn+",(const double *) "+VAR_IN_SHARED+",dx, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", (const bool*) "+ VAR_BETA0_BOOL+" , 3, bflag);"
+    func_ady="deriv42adv_y((double *) "+adyn+",(const double *) "+VAR_IN_SHARED+",dy, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", (const bool*) "+ VAR_BETA1_BOOL+" , 3, bflag);"
+    func_adz="deriv42adv_z((double *) "+adzn+",(const double *) "+VAR_IN_SHARED+",dz, (const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", (const bool*) "+ VAR_BETA2_BOOL+" , 3, bflag);"
 
-    func_kodx="ko_deriv42_x((double *) "+kodxn+",(const double *) "+varInShared+",dx,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 3, bflag);"
-    func_kody="ko_deriv42_y((double *) "+kodyn+",(const double *) "+varInShared+",dy,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) "+tile_sz+", 3, bflag);"
-    func_kodz="ko_deriv42_z((double *) "+kodzn+",(const double *) "+varInShared+",dz,(const unsigned int *) "+tile_limits+" , (const unsigned int *) "+dendro_block_sz+" , (const unsigned int *) " +tile_sz+", 3, bflag);"
+    func_kodx="ko_deriv42_x((double *) "+kodxn+",(const double *) "+VAR_IN_SHARED+",dx,(const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_kody="ko_deriv42_y((double *) "+kodyn+",(const double *) "+VAR_IN_SHARED+",dy,(const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) "+VAR_TILE_SZ+", 3, bflag);"
+    func_kodz="ko_deriv42_z((double *) "+kodzn+",(const double *) "+VAR_IN_SHARED+",dz,(const unsigned int *) "+VAR_TILE_LIMITS+" , (const unsigned int *) "+VAR_DENDRO_BLK_ALIGNED_SZ+" , (const unsigned int *) " +VAR_TILE_SZ+", 3, bflag);"
 
 
     ## number of passes for cuda derivatives.
@@ -1156,51 +1380,35 @@ def main():
 
     ### !!!!!!! NOTE: WHEN SPECIFYING THE TILE SZ MAKE SURE YOU HAVE 5 POINTS FOR ONE SIDED DERIVS, WHEN THE TILE LOAD THE BLOCK IN THE ITERATIONS
     TileSz1D=12
-    cuda_deriv_passes=[
-
-        # deriv pass 1
-        [
-            Derivative(DerivType="d",DerivDir="x",DerivName="deriv_x",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad_0",IB=3,IE=-3,JB=1,JE=-1,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dx),
-            Derivative(DerivType="d",DerivDir="y",DerivName="deriv_y",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad_1",IB=3,IE=-3,JB=3,JE=-3,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dy),
-            Derivative(DerivType="d",DerivDir="z",DerivName="deriv_z",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dz),
-            Derivative(DerivType="dd",DerivDir="xx",DerivName="deriv_xx",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad2_0_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dxx),
-            Derivative(DerivType="dd",DerivDir="yy",DerivName="deriv_yy",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad2_1_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dyy),
-            Derivative(DerivType="dd",DerivDir="zz",DerivName="deriv_zz",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="grad2_2_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dzz),
-            Derivative(DerivType="ko",DerivDir="x",DerivName="ko_deriv_x",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="kograd_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodx),
-            Derivative(DerivType="ko",DerivDir="y",DerivName="ko_deriv_y",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="kograd_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kody),
-            Derivative(DerivType="ko",DerivDir="z",DerivName="ko_deriv_z",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="kograd_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodz),
-            Derivative(DerivType="ad",DerivDir="x",DerivName="adv_deriv_x",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="agrad_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adx),
-            Derivative(DerivType="ad",DerivDir="y",DerivName="adv_deriv_y",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="agrad_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_ady),
-            Derivative(DerivType="ad",DerivDir="z",DerivName="adv_deriv_z",DerivTile1D=TileSz1D,DerivInput=varInShared,DerivOutput="agrad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adz),
+    bssn_derivs=[
+            Derivative(DerivType="d",DerivDir="x",DerivName="deriv_x",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="grad_0",IB=3,IE=-3,JB=1,JE=-1,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dx),
+            Derivative(DerivType="d",DerivDir="y",DerivName="deriv_y",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="grad_1",IB=3,IE=-3,JB=3,JE=-3,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dy),
+            Derivative(DerivType="d",DerivDir="z",DerivName="deriv_z",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="grad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dz),
+            Derivative(DerivType="dd",DerivDir="xx",DerivName="deriv_xx",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="grad2_0_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dxx),
+            Derivative(DerivType="dd",DerivDir="yy",DerivName="deriv_yy",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="grad2_1_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dyy),
+            Derivative(DerivType="dd",DerivDir="zz",DerivName="deriv_zz",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="grad2_2_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dzz),
+            Derivative(DerivType="ko",DerivDir="x",DerivName="ko_deriv_x",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="kograd_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodx),
+            Derivative(DerivType="ko",DerivDir="y",DerivName="ko_deriv_y",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="kograd_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kody),
+            Derivative(DerivType="ko",DerivDir="z",DerivName="ko_deriv_z",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="kograd_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_kodz),
+            Derivative(DerivType="ad",DerivDir="x",DerivName="adv_deriv_x",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="agrad_0",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adx),
+            Derivative(DerivType="ad",DerivDir="y",DerivName="adv_deriv_y",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="agrad_1",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_ady),
+            Derivative(DerivType="ad",DerivDir="z",DerivName="adv_deriv_z",DerivTile1D=TileSz1D,DerivInput=VAR_IN_SHARED,DerivOutput="agrad_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_adz),
             Derivative(DerivType="dd",DerivDir="xy",DerivName="deriv_xy",DerivTile1D=TileSz1D,DerivInput=dxn,DerivOutput="grad2_0_1",IB=3,IE=-3,JB=3,JE=-3,KB=1,KE=-1,padWidth=3,DerivFuncCall="_RSWS_"+func_dxy),
             Derivative(DerivType="dd",DerivDir="xz",DerivName="deriv_xz",DerivTile1D=TileSz1D,DerivInput=dxn,DerivOutput="grad2_0_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dxz),
             Derivative(DerivType="dd",DerivDir="yz",DerivName="deriv_yz",DerivTile1D=TileSz1D,DerivInput=dyn,DerivOutput="grad2_1_2",IB=3,IE=-3,JB=3,JE=-3,KB=3,KE=-3,padWidth=3,DerivFuncCall="_RSWS_"+func_dyz)
-
-
         ]
 
 
-    ]
-
-
-    cuda_deriv_kernel_names=["__RSWS_computeDerivs"]
-
+    
 
     #cudaDerivAllocDeallocHeader("../bssn/cuda_gr/include/bssn_rhs_deriv_mem_cuda.h")
     #cudaDerivAllocDeallocSource("../bssn/cuda_gr/src/bssn_rhs_deriv_mem_cuda.cpp",["bssn_rhs_deriv_mem_cuda.h"])
 
-    cudaComputeDerivKernelHeader("../bssn/cuda_gr/include/derivs_bssn.cuh",cuda_deriv_kernel_names,cuda_deriv_passes,["block_cu.h","params_cu.h","bssn_rhs_deriv_mem_cuda.h","cudaUtils.cuh","derivs.cuh"])
-    cudaComputeDerivKernelSource("../bssn/cuda_gr/src/derivs_bssn.cu",cuda_deriv_kernel_names,cuda_deriv_passes,["derivs_bssn.cuh"])
+    
+    subset_exp=bssn.outs#[0:4]
+    subset_var=bssn.vnames#[0:4]
 
-
-    #subset_exp=bssn_stages.outs[0:1]
-    #subset_var=bssn_stages.vnames[0:1]
-    #subset_exp=bssn_stages.outs[5:len(bssn_stages.outs)]
-    #subset_var=bssn_stages.vnames[5:len(bssn_stages.outs)]
-    #subset_exp=bssn.outs[0:len(bssn.outs)]
-    #subset_var=bssn.vnames[0:len(bssn.vnames)]
-    #cudaComputeRHSHeaderUnStaged("../../../BSSN_GR/cuda_gr/include/rhs_bssn.cuh",subset_exp,subset_var,["block_cu.h","params_cu.h","bssn_rhs_deriv_mem_cuda.h","cudaUtils.cuh","derivs.cuh","derivs_bssn.cuh","cudaUtils.h"])
-    #cudaComputeRHSSourceUnStaged("../../../BSSN_GR/cuda_gr/src/rhs_bssn.cu",subset_exp,subset_var,["rhs_bssn.cuh"])
+    cudaCompute("../bssn/cuda_gr/include/rhs_bssn.cuh","../bssn/cuda_gr/src/rhs_bssn.cu",bssn_derivs,subset_exp,subset_var,"__computeBSSNRHS",["block_cu.h","params_cu.h","bssn_rhs_deriv_mem_cuda.h","cudaUtils.cuh","derivs.cuh","cudaUtils.h"])
 
 
 if __name__ == "__main__":
