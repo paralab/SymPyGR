@@ -21,12 +21,20 @@
 #include "rhs.h"
 #include "block_cu.h"
 #include "profile_gpu.h"
+#include "parameters.h"
+#include "point.h"
+#include "grDef.h"
+#include <chrono>
 #ifdef BSSN_ENABLE_CUDA
     #include "rhs_cuda.cuh"
 #endif
 
 
 
+
+typedef std::chrono::high_resolution_clock Time;
+typedef std::chrono::milliseconds ms;
+typedef std::chrono::duration<float> fsec;
 
 
 #endif //DENDRO_5_0_GPUBSSNEXAMPLE_H

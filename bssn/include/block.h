@@ -15,6 +15,9 @@
 
 #include "dendro.h"
 #include <assert.h>
+#include "point.h"
+
+extern unsigned int m_uiMaxDepth;
 
 #define GHOST_WIDTH 3
 #define DX 1e-3
@@ -133,6 +136,20 @@ namespace ot
 
      /**@brief computes and returns the space discretization (grid domain) */
      double computeGridDz () const;
+
+       /**@brief computes and returns the space discretization on x direction (problem domain)*/
+     double computeDx(const Point & d_min,const Point & d_max) const ;
+     /**@brief computes and returns the space discretization on x direction (problem domain)*/
+     double computeDy(const Point & d_min,const Point & d_max) const ;
+     /**@brief computes and returns the space discretization on x direction (problem domain)*/
+     double computeDz(const Point & d_min,const Point & d_max) const ;
+
+    inline unsigned int getAlignedBlockSz() const
+     {
+       unsigned int tmp;
+      ((m_uiSzX & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? tmp=m_uiSzX : tmp=((m_uiSzX/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
+      return tmp*m_uiSzY*m_uiSzZ;
+     }
 
 
    };

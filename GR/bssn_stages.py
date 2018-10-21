@@ -149,6 +149,14 @@ B_rhs = [_Gt_rhs[i] - eta_func * B[i] +
          l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
          for i in dendro.e_i]
 
+'''
+#Note: B_rhs has some mismatches with staged version with unstaged gpu code. but gpu /cpu unstaged versions match. Hence, B_rhs is changed to unstaged version 
+B_rhs = [Gt_rhs[i] - eta_func * B[i] +
+         l3 * dendro.vec_j_ad_j(b, B[i]) -
+         l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
+         for i in dendro.e_i]
+'''
+
 
 #_I = gt*igt
 #print(simplify(_I))

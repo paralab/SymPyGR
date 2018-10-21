@@ -7,6 +7,7 @@
 #include "derivs.h"
 #include "grUtils.h"
 #include "profile_param.h"
+#include "parameters.h"
 
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 

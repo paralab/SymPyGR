@@ -31,7 +31,8 @@
 //#define DendroIntL unsigned int
 typedef unsigned __int128 DendroUInt_128;
 
-
+#define DENDRO_BLOCK_ALIGN_FACTOR 1
+#define DENDRO_BLOCK_ALIGN_FACTOR_LOG 0
 
 
 // mesh.h # defines.

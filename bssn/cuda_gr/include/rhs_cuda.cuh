@@ -19,6 +19,10 @@
 #include "rhs_bssn.cuh"
 #include "profile_gpu.h"
 #include "cudaUtils.cuh"
+#include "grDef.h"
+#include "parameters.h"
+#include "block.h"
+#include "rhs.h"
 
 
 
@@ -33,16 +37,6 @@ namespace cuda
      *
      **/
     void computeRHS(double **unzipVarsRHS, const double **uZipVars,const ot::Block* dendroBlockList,unsigned int numBlocks,const cuda::BSSNComputeParams* bssnPars,dim3 blockDim,const Point & pt_min, const Point & pt_max,unsigned int numStreams,unsigned int device=0);
-
-
-    /**
-     * @brief Asynchronous version of the computeRHS() function call.
-     * */
-     void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
-        cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
-        std::vector< int >& blockMap,dim3 gridDim,dim3 blockDim,unsigned int numStreams, 
-        cudaStream_t stream, const unsigned int* gpuBlkMap, cuda::MemoryDerivs* derivWorkspacePointer);
-
 
 
 

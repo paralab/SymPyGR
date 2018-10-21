@@ -64,7 +64,7 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;
 
-            if((j>=(j_e-ijk_lm[2])) || (k>=(k_e-ijk_lm[4])) ) return;
+            if((j>(j_e-ijk_lm[2])) || (k>(k_e-ijk_lm[4])) ) return;
 
             const double idx = 1.0 / dx;
             const double idx_by_2 = 0.5 * idx;
@@ -74,7 +74,7 @@ namespace cuda
             //printf("dx threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
             unsigned int pp = IDX_L((i_b-ijk_lm[0]), j, k);
 
-            for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);++i, ++pp)
+            for(unsigned int i=(i_b-ijk_lm[0]);i<=(i_e-ijk_lm[0]);++i, ++pp)
                   Dxu[pp] = (u[pp - 2] - 8.0 * u[pp - 1] + 8.0 * u[pp + 1] - u[pp + 2]) * idx_by_12;
 
 
@@ -146,7 +146,7 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (k>=(k_e-ijk_lm[4]))) return;
+            if((i>(i_e-ijk_lm[0])) || (k>(k_e-ijk_lm[4]))) return;
 
             const double idy = 1.0 / dy;
             const double idy_by_2 = 0.5 * idy;
@@ -156,7 +156,7 @@ namespace cuda
             //printf("dy threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
 
             unsigned int pp = IDX_L(i, (j_b-ijk_lm[2]), k);
-            for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1, pp+=tile_sz[0])
+            for(unsigned int j=(j_b-ijk_lm[2]);j<=(j_e-ijk_lm[2]);j+=1, pp+=tile_sz[0])
                Dyu[pp] = (u[pp - 2 * tile_sz[0]] - 8.0 * u[pp - tile_sz[0]] + 8.0 * u[pp + tile_sz[0]] - u[pp + 2 * tile_sz[0]]) * idy_by_12;
 
 
@@ -230,7 +230,7 @@ namespace cuda
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (j>=(j_e-ijk_lm[2]))) return;
+            if((i>(i_e-ijk_lm[0])) || (j>(j_e-ijk_lm[2]))) return;
 
 
             const double idz = 1.0 / dz;
@@ -240,7 +240,7 @@ namespace cuda
 
             //printf("dz threadid (%d,%d,%d) loop begin: (%d,%d,%d) loop end: (%d,%d,%d)  tile begin: (%d,%d,%d) tile end: (%d,%d,%d) \n", threadIdx.x,threadIdx.y,threadIdx.z,ix_b,jy_b,kz_b,ix_e,jy_e,kz_e,ijk_lm[0],ijk_lm[2],ijk_lm[4],ijk_lm[1],ijk_lm[3],ijk_lm[5]);
             unsigned int pp = IDX_L(i, j, (k_b-ijk_lm[4]));
-            for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1, pp+=(tile_sz[0]*tile_sz[1]))
+            for(unsigned int k=(k_b-ijk_lm[4]);k<=(k_e-ijk_lm[4]);k+=1, pp+=(tile_sz[0]*tile_sz[1]))
                 Dzu[pp] = (u[pp - 2 * tile_sz[0]*tile_sz[1]] - 8.0 * u[pp - tile_sz[0]*tile_sz[1]] + 8.0 * u[pp + tile_sz[0]*tile_sz[1]] - u[pp + 2 * tile_sz[0]*tile_sz[1]]) * idz_by_12;
 
 
@@ -311,13 +311,13 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;
 
-            if((j>=(j_e-ijk_lm[2])) || (k>=(k_e-ijk_lm[4])) ) return;
+            if((j>(j_e-ijk_lm[2])) || (k>(k_e-ijk_lm[4])) ) return;
 
             const double idx_sqrd = 1.0 / (dx * dx);
             const double idx_sqrd_by_12 = idx_sqrd / 12.0;
 
             unsigned int pp = IDX_L((i_b-ijk_lm[0]), j, k);
-            for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);i+=1,++pp)
+            for(unsigned int i=(i_b-ijk_lm[0]);i<=(i_e-ijk_lm[0]);i+=1,++pp)
             {
 
 
@@ -411,14 +411,14 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (k>=(k_e-ijk_lm[4]))) return;
+            if((i>(i_e-ijk_lm[0])) || (k>(k_e-ijk_lm[4]))) return;
 
             const double idy_sqrd = 1.0 / (dy * dy);
             const double idy_sqrd_by_12 = idy_sqrd / 12.0;
 
             unsigned int pp=IDX_L(i, (j_b-ijk_lm[2]), k);
 
-            for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1,pp+=tile_sz[0])
+            for(unsigned int j=(j_b-ijk_lm[2]);j<=(j_e-ijk_lm[2]);j+=1,pp+=tile_sz[0])
             {
                 DyDyu[pp] = (-u[pp - 2 * tile_sz[0]] + 16.0 * u[pp - tile_sz[0]] - 30.0 * u[pp]
                             + 16.0 * u[pp + tile_sz[0]] - u[pp + 2 * tile_sz[0]]
@@ -503,13 +503,13 @@ namespace cuda
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (j>=(j_e-ijk_lm[2]))) return;
+            if((i>(i_e-ijk_lm[0])) || (j>(j_e-ijk_lm[2]))) return;
 
             const double idz_sqrd = 1.0 / (dz * dz);
             const double idz_sqrd_by_12 = idz_sqrd / 12.0;
             unsigned int pp= IDX_L(i, j, (k_b-ijk_lm[4]));
 
-            for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1,pp+=(tile_sz[0]*tile_sz[1]))
+            for(unsigned int k=(k_b-ijk_lm[4]);k<=(k_e-ijk_lm[4]);k+=1,pp+=(tile_sz[0]*tile_sz[1]))
             {
                 DzDzu[pp] = (-u[pp - 2 * tile_sz[0]*tile_sz[1]] + 16.0 * u[pp - tile_sz[0]*tile_sz[1]] - 30.0 * u[pp]
                              + 16.0 * u[pp + tile_sz[0]*tile_sz[1]] - u[pp + 2 * tile_sz[0]*tile_sz[1]]) * idz_sqrd_by_12;
@@ -587,14 +587,14 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;
 
-            if((j>=(j_e-ijk_lm[2])) || (k>=(k_e-ijk_lm[4])) ) return;
+            if((j>(j_e-ijk_lm[2])) || (k>(k_e-ijk_lm[4])) ) return;
 
             const double idx = 1.0 / dx;
             const double idx_by_2 = 0.50 * idx;
             const double idx_by_12 = idx / 12.0;
             unsigned int pp=IDX_L((i_b-ijk_lm[0]), j, k);
 
-            for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);i+=1,++pp)
+            for(unsigned int i=(i_b-ijk_lm[0]);i<=(i_e-ijk_lm[0]);i+=1,++pp)
             {
                         (betax[pp]) ? Dxu[pp] = (-3.0 * u[pp - 1]
                                                  - 10.0 * u[pp]
@@ -725,7 +725,7 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (k>=(k_e-ijk_lm[4]))) return;
+            if((i>(i_e-ijk_lm[0])) || (k>(k_e-ijk_lm[4]))) return;
 
             const double idy = 1.0 / dy;
             const double idy_by_2 = 0.50 * idy;
@@ -733,7 +733,7 @@ namespace cuda
 
             unsigned int pp=IDX_L(i, (j_b-ijk_lm[2]), k);
 
-            for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1,pp+=(tile_sz[0]))
+            for(unsigned int j=(j_b-ijk_lm[2]);j<=(j_e-ijk_lm[2]);j+=1,pp+=(tile_sz[0]))
             {
                          (betay[pp]) ? Dyu[pp] = (-3.0 * u[pp - tile_sz[0]]
                                     - 10.0 * u[pp]
@@ -866,7 +866,7 @@ namespace cuda
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (j>=(j_e-ijk_lm[2]))) return;
+            if((i>(i_e-ijk_lm[0])) || (j>(j_e-ijk_lm[2]))) return;
 
             const double idz = 1.0 / dz;
             const double idz_by_2 = 0.50 * idz;
@@ -874,7 +874,7 @@ namespace cuda
 
             unsigned int pp = IDX_L(i, j, (k_b-ijk_lm[4]));
 
-            for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1,pp+=(tile_sz[0]*tile_sz[1]))
+            for(unsigned int k=(k_b-ijk_lm[4]);k<=(k_e-ijk_lm[4]);k+=1,pp+=(tile_sz[0]*tile_sz[1]))
             {
                     (betaz[pp])? Dzu[pp]=(-3.0 * u[pp - tile_sz[0]*tile_sz[1]]
                                        - 10.0 * u[pp]
@@ -1005,7 +1005,7 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.x;
 
-            if((j>=(j_e-ijk_lm[2])) || (k>=(k_e-ijk_lm[4])) ) return;
+            if((j>(j_e-ijk_lm[2])) || (k>(k_e-ijk_lm[4])) ) return;
 
 
             const double pre_factor_6_dx = -1.0 / 64.0 / dx;
@@ -1020,7 +1020,7 @@ namespace cuda
             const double spr2 = smr2;
             const double spr1 = smr1;*/
 
-            for(unsigned int i=(i_b-ijk_lm[0]);i<(i_e-ijk_lm[0]);i+=1,++pp)
+            for(unsigned int i=(i_b-ijk_lm[0]);i<=(i_e-ijk_lm[0]);i+=1,++pp)
             {
                   Du[pp] = pre_factor_6_dx *
                        (
@@ -1036,49 +1036,43 @@ namespace cuda
 
 
 
-           /* if(i_b==ib && ix_b==ib)
+            if(ijk_lm[0]==pw)
             {
-                for(unsigned int k=kz_b;k<kz_e;k++)
-                    for(unsigned int j=jy_b;j<jy_e;j++)
-                    {
 
-                        Du[IDX_L(ix_b, j, k)] = pre_factor_6_dx *
-                                              (
-                                                      -u[IDX_L(ix_b + 4, j, k)]
-                                                      + 6.0 * u[IDX_L(ix_b + 3, j, k)]
-                                                      - 15.0 * u[IDX_L(ix_b + 2, j, k)]
-                                                      + 20.0 * u[IDX_L(ix_b + 1, j, k)]
-                                                      - 15.0 * u[IDX_L(ix_b, j, k)]
-                                                      + 6.0 * u[IDX_L(ix_b - 1, j, k)]
-                                                      - u[IDX_L(ix_b - 2, j, k)]
-                                              );
 
-                    }
+                 Du[IDX_L((i_b-ijk_lm[0]), j, k)] = pre_factor_6_dx *
+                                          (
+                                                -u[IDX_L((i_b-ijk_lm[0]) + 4, j, k)]
+                                                + 6.0 * u[IDX_L((i_b-ijk_lm[0]) + 3, j, k)]
+                                                - 15.0 * u[IDX_L((i_b-ijk_lm[0]) + 2, j, k)]
+                                                + 20.0 * u[IDX_L((i_b-ijk_lm[0]) + 1, j, k)]
+                                                - 15.0 * u[IDX_L((i_b-ijk_lm[0]), j, k)]
+                                                + 6.0 * u[IDX_L((i_b-ijk_lm[0]) - 1, j, k)]
+                                                - u[IDX_L((i_b-ijk_lm[0]) - 2, j, k)]
+                                          );
+
 
             }
 
 
-            if(i_e==ie && ix_e==ie)
+            if(ijk_lm[1]==(sz[0]-1-pw))
             {
-                for(unsigned int k=kz_b;k<kz_e;k++)
-                    for(unsigned int j=jy_b;j<jy_e;j++)
-                    {
 
-                        Du[IDX_L(ix_e - 1, j, k)] = pre_factor_6_dx *
-                                                  (
-                                                          -u[IDX_L(ix_e + 1, j, k)]
-                                                          + 6.0 * u[IDX_L(ix_e, j, k)]
-                                                          - 15.0 * u[IDX_L(ix_e - 1, j, k)]
-                                                          + 20.0 * u[IDX_L(ix_e - 2, j, k)]
-                                                          - 15.0 * u[IDX_L(ix_e - 3, j, k)]
-                                                          + 6.0 * u[IDX_L(ix_e - 4, j, k)]
-                                                          - u[IDX_L(ix_e - 5, j, k)]
-                                                  );
-                    }
+                 Du[IDX_L((i_e-ijk_lm[0]), j, k)] = pre_factor_6_dx *
+                                             (
+                                                     -u[IDX_L((i_e-ijk_lm[0]) + 1, j, k)]
+                                                     + 6.0 * u[IDX_L((i_e-ijk_lm[0]), j, k)]
+                                                     - 15.0 * u[IDX_L((i_e-ijk_lm[0]) - 1, j, k)]
+                                                     + 20.0 * u[IDX_L((i_e-ijk_lm[0]) - 2, j, k)]
+                                                     - 15.0 * u[IDX_L((i_e-ijk_lm[0]) - 3, j, k)]
+                                                     + 6.0 * u[IDX_L((i_e-ijk_lm[0]) - 4, j, k)]
+                                                     - u[IDX_L((i_e-ijk_lm[0]) - 5, j, k)]
+                                             );
+
             }
 
 
-        if ((bflag & (1u << OCT_DIR_LEFT)) && (i_b==ib && (ix_b+ijk_lm[0])==ib)  ) {
+        /*if ((bflag & (1u << OCT_DIR_LEFT)) && (i_b==ib && (ix_b+ijk_lm[0])==ib)  ) {
 
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
@@ -1177,7 +1171,7 @@ namespace cuda
             const unsigned int k=(k_b-ijk_lm[4])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (k>=(k_e-ijk_lm[4]))) return;
+            if((i>(i_e-ijk_lm[0])) || (k>(k_e-ijk_lm[4]))) return;
 
             const double pre_factor_6_dy = -1.0 / 64.0 / dy;
 
@@ -1190,7 +1184,7 @@ namespace cuda
             const double spr1 = smr1;*/
 
             unsigned int pp=IDX_L(i, (j_b-ijk_lm[2]), k);
-            for(unsigned int j=(j_b-ijk_lm[2]);j<(j_e-ijk_lm[2]);j+=1,pp+=(tile_sz[0]*tile_sz[1]))
+            for(unsigned int j=(j_b-ijk_lm[2]);j<=(j_e-ijk_lm[2]);j+=1,pp+=(tile_sz[0]*tile_sz[1]))
             {
                         Du[pp] = pre_factor_6_dy *
                                 (
@@ -1206,50 +1200,42 @@ namespace cuda
             }
 
 
-           /* if(j_b==jb && jy_b==jb)
+            if((ijk_lm[2])==pw)
             {
 
-                for(unsigned int k=kz_b;k<kz_e;k++)
-                    for(unsigned int i=ix_b;i<ix_e;i++)
-                    {
-                        Du[IDX_L(i, jy_b, k)] = pre_factor_6_dy *
+
+                        Du[IDX_L(i, (j_b-ijk_lm[2]), k)] = pre_factor_6_dy *
                                               (
-                                                      -u[IDX_L(i, jy_b + 4, k)]
-                                                      + 6.0 * u[IDX_L(i, jy_b + 3, k)]
-                                                      - 15.0 * u[IDX_L(i, jy_b + 2, k)]
-                                                      + 20.0 * u[IDX_L(i, jy_b + 1, k)]
-                                                      - 15.0 * u[IDX_L(i, jy_b, k)]
-                                                      + 6.0 * u[IDX_L(i, jy_b - 1, k)]
-                                                      - u[IDX_L(i, jy_b - 2, k)]
+                                                      -u[IDX_L(i, (j_b-ijk_lm[2]) + 4, k)]
+                                                      + 6.0 * u[IDX_L(i, (j_b-ijk_lm[2]) + 3, k)]
+                                                      - 15.0 * u[IDX_L(i, (j_b-ijk_lm[2]) + 2, k)]
+                                                      + 20.0 * u[IDX_L(i, (j_b-ijk_lm[2]) + 1, k)]
+                                                      - 15.0 * u[IDX_L(i, (j_b-ijk_lm[2]), k)]
+                                                      + 6.0 * u[IDX_L(i, (j_b-ijk_lm[2]) - 1, k)]
+                                                      - u[IDX_L(i, (j_b-ijk_lm[2]) - 2, k)]
                                               );
 
-                    }
-
             }
 
 
-            if(j_e==je && jy_e==je)
+            if(ijk_lm[3]==(sz[1]-1-pw))
             {
-                for(unsigned int k=kz_b;k<kz_e;k++)
-                    for(unsigned int i=ix_b;i<ix_e;i++)
-                    {
 
-                        Du[IDX_L(i, jy_e - 1, k)] = pre_factor_6_dy *
+                        Du[IDX_L(i, (j_e-ijk_lm[2]), k)] = pre_factor_6_dy *
                                                   (
-                                                          -u[IDX_L(i, jy_e + 1, k)]
-                                                          + 6.0 * u[IDX_L(i, jy_e, k)]
-                                                          - 15.0 * u[IDX_L(i, jy_e - 1, k)]
-                                                          + 20.0 * u[IDX_L(i, jy_e - 2, k)]
-                                                          - 15.0 * u[IDX_L(i, jy_e - 3, k)]
-                                                          + 6.0 * u[IDX_L(i, jy_e - 4, k)]
-                                                          - u[IDX_L(i, jy_e - 5, k)]
+                                                          -u[IDX_L(i, (j_e-ijk_lm[2]) + 1, k)]
+                                                          + 6.0 * u[IDX_L(i, (j_e-ijk_lm[2]), k)]
+                                                          - 15.0 * u[IDX_L(i, (j_e-ijk_lm[2]) - 1, k)]
+                                                          + 20.0 * u[IDX_L(i, (j_e-ijk_lm[2]) - 2, k)]
+                                                          - 15.0 * u[IDX_L(i, (j_e-ijk_lm[2]) - 3, k)]
+                                                          + 6.0 * u[IDX_L(i, (j_e-ijk_lm[2]) - 4, k)]
+                                                          - u[IDX_L(i, (j_e-ijk_lm[2]) - 5, k)]
                                                   );
-                    }
 
             }
 
 
-        if ((bflag & (1u << OCT_DIR_DOWN)) && (j_b==jb && (jy_b+ijk_lm[2])==jb) ) {
+        /*if ((bflag & (1u << OCT_DIR_DOWN)) && (j_b==jb && (jy_b+ijk_lm[2])==jb) ) {
 
                 for(unsigned int k=kz_b;k<kz_e;k++)
                     for(unsigned int i=ix_b;i<ix_e;i++)
@@ -1348,7 +1334,7 @@ namespace cuda
             const unsigned int j=(j_b-ijk_lm[2])+threadIdx.y+threadIdx.z*blockDim.y;
             const unsigned int i=(i_b-ijk_lm[0])+threadIdx.x;
 
-            if((i>=(i_e-ijk_lm[0])) || (j>=(j_e-ijk_lm[2]))) return;
+            if((i>(i_e-ijk_lm[0])) || (j>(j_e-ijk_lm[2]))) return;
 
             const double pre_factor_6_dz = -1.0 / 64.0 / dz;
 
@@ -1362,7 +1348,7 @@ namespace cuda
             unsigned int pp=IDX_L(i, j, (k_b-ijk_lm[4]));
 
 
-            for(unsigned int k=(k_b-ijk_lm[4]);k<(k_e-ijk_lm[4]);k+=1,pp+=(tile_sz[0]*tile_sz[1]))
+            for(unsigned int k=(k_b-ijk_lm[4]);k<=(k_e-ijk_lm[4]);k+=1,pp+=(tile_sz[0]*tile_sz[1]))
             {
                 Du[pp] = pre_factor_6_dz *
                  (
@@ -1376,52 +1362,45 @@ namespace cuda
                  );
             }
 
-            /*if(k_b==kb && kz_b==kb)
+            if(ijk_lm[4]==pw)
             {
 
-                for(unsigned int j=jy_b;j<jy_e;j++)
-                    for(unsigned int i=ix_b;i<ix_e;i++)
-                    {
 
-                        Du[IDX_L(i, j, kz_b)] = pre_factor_6_dz *
+                        Du[IDX_L(i, j, (k_b-ijk_lm[4]))] = pre_factor_6_dz *
                                               (
-                                                      -u[IDX_L(i, j, kz_b + 4)]
-                                                      + 6.0 * u[IDX_L(i, j, kz_b + 3)]
-                                                      - 15.0 * u[IDX_L(i, j, kz_b + 2)]
-                                                      + 20.0 * u[IDX_L(i, j, kz_b + 1)]
-                                                      - 15.0 * u[IDX_L(i, j, kz_b)]
-                                                      + 6.0 * u[IDX_L(i, j, kz_b - 1)]
-                                                      - u[IDX_L(i, j, kz_b - 2)]
+                                                      -u[IDX_L(i, j, (k_b-ijk_lm[4]) + 4)]
+                                                      + 6.0 * u[IDX_L(i, j, (k_b-ijk_lm[4]) + 3)]
+                                                      - 15.0 * u[IDX_L(i, j, (k_b-ijk_lm[4]) + 2)]
+                                                      + 20.0 * u[IDX_L(i, j, (k_b-ijk_lm[4]) + 1)]
+                                                      - 15.0 * u[IDX_L(i, j, (k_b-ijk_lm[4]))]
+                                                      + 6.0 * u[IDX_L(i, j, (k_b-ijk_lm[4]) - 1)]
+                                                      - u[IDX_L(i, j, (k_b-ijk_lm[4]) - 2)]
                                               );
 
-                    }
 
             }
 
 
-            if(k_e==ke && kz_e==ke)
+            if(ijk_lm[5]==(sz[2]-1-pw))
             {
-                for(unsigned int j=jy_b;j<jy_e;j++)
-                    for(unsigned int i=ix_b;i<ix_e;i++)
-                    {
 
-                        Du[IDX_L(i, j, kz_e - 1)] = pre_factor_6_dz *
+                        Du[IDX_L(i, j, (k_e-ijk_lm[4]))] = pre_factor_6_dz *
                                                   (
-                                                          -u[IDX_L(i, j, kz_e + 1)]
-                                                          + 6.0 * u[IDX_L(i, j, kz_e)]
-                                                          - 15.0 * u[IDX_L(i, j, kz_e - 1)]
-                                                          + 20.0 * u[IDX_L(i, j, kz_e - 2)]
-                                                          - 15.0 * u[IDX_L(i, j, kz_e - 3)]
-                                                          + 6.0 * u[IDX_L(i, j, kz_e - 4)]
-                                                          - u[IDX_L(i, j, kz_e - 5)]
+                                                          -u[IDX_L(i, j, (k_e-ijk_lm[4]) + 1)]
+                                                          + 6.0 * u[IDX_L(i, j, (k_e-ijk_lm[4]))]
+                                                          - 15.0 * u[IDX_L(i, j, (k_e-ijk_lm[4]) - 1)]
+                                                          + 20.0 * u[IDX_L(i, j, (k_e-ijk_lm[4]) - 2)]
+                                                          - 15.0 * u[IDX_L(i, j, (k_e-ijk_lm[4]) - 3)]
+                                                          + 6.0 * u[IDX_L(i, j, (k_e-ijk_lm[4]) - 4)]
+                                                          - u[IDX_L(i, j, (k_e-ijk_lm[4]) - 5)]
                                                   );
 
-                    }
+
 
             }
 
 
-        if ((bflag & (1u << OCT_DIR_BACK)) && (k_b==kb && (kz_b+ijk_lm[4])==kb) ) {
+        /*if ((bflag & (1u << OCT_DIR_BACK)) && (k_b==kb && (kz_b+ijk_lm[4])==kb) ) {
 
                 for(unsigned int j=jy_b;j<jy_e;j++)
                     for(unsigned int i=ix_b;i<ix_e;i++)

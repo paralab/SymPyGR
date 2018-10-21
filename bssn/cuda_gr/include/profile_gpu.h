@@ -35,11 +35,11 @@ namespace cuda
         /**memory allocation deallocation time*/
         extern bssn_profiler_t t_cudaMalloc_derivs;
 
-        /**deriv computation time*/
-        extern bssn_profiler_t t_derivs;
+        /**total rhs computation time*/
+        extern bssn_profiler_t t_rhs_gpu;
+        extern bssn_profiler_t t_rhs_cpu;
+        extern bssn_profiler_t t_rhs_total;
 
-        /**rhs time*/
-        extern bssn_profiler_t t_rhs;
 
 
 

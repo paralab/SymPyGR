@@ -27,6 +27,9 @@ set(INC_FILES
         include/profile_param.h
         include/block.h
         include/grUtils.h
+        include/parameters.h
+        include/point.h
+        include/bh.h
         )
 
 set(SRC_FILES
@@ -36,6 +39,8 @@ set(SRC_FILES
         src/profile_param.cpp
         src/block.cpp
         src/grUtils.cpp
+        src/parameters.cpp
+        src/point.cpp
         )
 
 if(WITH_CUDA)
@@ -89,7 +94,7 @@ set(CUDA_GR_INC
         cuda_gr/include/cudaUtils.cuh
         cuda_gr/include/derivs.cuh
         #cuda_gr/include/rhs.cuh
-        cuda_gr/include/derivs_bssn.cuh
+        #cuda_gr/include/derivs_bssn.cuh
         cuda_gr/include/rhs_bssn.cuh
         cuda_gr/include/rhs_cuda.cuh
         )
@@ -98,7 +103,7 @@ set(CUDA_GR_SRC
         cuda_gr/src/cudaUtils.cu
         cuda_gr/src/derivs.cu
         #cuda_gr/src/rhs.cu
-        cuda_gr/src/derivs_bssn.cu
+        #cuda_gr/src/derivs_bssn.cu
         cuda_gr/src/rhs_bssn.cu
         cuda_gr/src/rhs_cuda.cu
         )

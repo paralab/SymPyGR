@@ -10,6 +10,8 @@
 
 #include "block.h"
 
+unsigned int m_uiMaxDepth=8;
+
 ot::Block::Block()
 {
 
@@ -88,3 +90,17 @@ void ot::Block::setOffset(DendroIntL offset)
     m_uiOffset=offset;
 }
 
+double ot::Block::computeDx(const Point & d_min,const Point & d_max) const
+{
+    return ((d_max.x()-d_min.x())/((double)(1u<<m_uiMaxDepth)))*(computeGridDx());
+}
+
+double ot::Block::computeDy(const Point & d_min,const Point & d_max) const
+{
+    return ((d_max.y()-d_min.y())/((double)(1u<<m_uiMaxDepth)))*(computeGridDy());
+}
+
+double ot::Block::computeDz(const Point & d_min,const Point & d_max) const
+{
+    return ((d_max.z()-d_min.z())/((double)(1u<<m_uiMaxDepth)))*(computeGridDz());
+}

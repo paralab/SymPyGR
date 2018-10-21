@@ -24,21 +24,6 @@
 #include "bssn_rhs_deriv_mem_cuda.h"
 
 
-#define __Rx (cuda::_bssn::__BSSN_COMPD_MAX[0]-cuda::_bssn::__BSSN_COMPD_MIN[0])
-#define __Ry (cuda::_bssn::__BSSN_COMPD_MAX[1]-cuda::_bssn::__BSSN_COMPD_MIN[1])
-#define __Rz (cuda::_bssn::__BSSN_COMPD_MAX[2]-cuda::_bssn::__BSSN_COMPD_MIN[2])
-
-#define __RgX (cuda::_bssn::__BSSN_OCTREE_MAX[0]-cuda::_bssn::__BSSN_OCTREE_MIN[0])
-#define __RgY (cuda::_bssn::__BSSN_OCTREE_MAX[1]-cuda::_bssn::__BSSN_OCTREE_MIN[1])
-#define __RgZ (cuda::_bssn::__BSSN_OCTREE_MAX[2]-cuda::_bssn::__BSSN_OCTREE_MIN[2])
-
-#define __GRIDX_TO_X(xg) (((__Rx/__RgX)*(xg-cuda::_bssn::__BSSN_OCTREE_MIN[0]))+cuda::_bssn::__BSSN_COMPD_MIN[0])
-#define __GRIDY_TO_Y(yg) (((__Ry/__RgY)*(yg-cuda::_bssn::__BSSN_OCTREE_MIN[1]))+cuda::_bssn::__BSSN_COMPD_MIN[1])
-#define __GRIDZ_TO_Z(zg) (((__Rz/__RgZ)*(zg-cuda::_bssn::__BSSN_OCTREE_MIN[2]))+cuda::_bssn::__BSSN_COMPD_MIN[2])
-
-#define __X_TO_GRIDX(xc) (((__RgX/__Rx)*(xc-cuda::_bssn::__BSSN_COMPD_MIN[0]))+cuda::_bssn::__BSSN_OCTREE_MIN[0])
-#define __Y_TO_GRIDY(yc) (((__RgY/__Ry)*(yc-cuda::_bssn::__BSSN_COMPD_MIN[1]))+cuda::_bssn::__BSSN_OCTREE_MIN[1])
-#define __Z_TO_GRIDZ(zc) (((__RgZ/__Rz)*(zc-cuda::_bssn::__BSSN_COMPD_MIN[2]))+cuda::_bssn::__BSSN_OCTREE_MIN[2])
 
 
 
@@ -52,7 +37,6 @@ namespace cuda
         double BSSN_LAMBDA[4];
         double BSSN_LAMBDA_F[2];
 
-        double BSSN_ETA_R0;
         double BSSN_ETA_POWER[2];
 
         double ETA_CONST;

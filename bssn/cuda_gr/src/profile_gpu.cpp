@@ -20,11 +20,12 @@ namespace cuda
         /**memory allocation deallocation time*/
         bssn_profiler_t t_cudaMalloc_derivs;
 
-        /**deriv computation time*/
-        bssn_profiler_t t_derivs;
+       
+        /**total rhs computation time*/
+        bssn_profiler_t t_rhs_gpu;
+        bssn_profiler_t t_rhs_cpu;
+        bssn_profiler_t t_rhs_total;
 
-        /**rhs time*/
-        bssn_profiler_t t_rhs;
 
 
 
@@ -35,12 +36,13 @@ namespace cuda
 
 void cuda::profile::initialize()
 {
-    t_overall.start();
+   t_overall.start();
     t_H2D_Comm.start();
     t_D2H_Comm.start();
     t_cudaMalloc_derivs.start();
-    t_derivs.start();
-    t_rhs.start();
+    t_rhs_total.start();
+    t_rhs_cpu.start();
+    t_rhs_gpu.start();
 
 }
 
@@ -51,22 +53,41 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
 
 
     /*
-     * deriv    |    block   |            pp            |   total               |
-     * dx       |       3    |      4 mul + 3 add =7    |    24+35+46 = 105     |
-     * dxx      |       2    |      6 mul + 4 add =10   |    11*3 =33    |
-     * adx      |       3    |      5 mul + 4 add =9    |    72     |
-     * kox      |      11    |      8 mul + 6 add =16   |    72     |
+       * deriv    |    block   |            pp            |   total               |
+       * dx       |       3    |      4 mul + 3 add =7    |    24+35+46 = 105     |
+       * dxx      |       2    |      6 mul + 4 add =10   |    11*3 =33    |
+       * adx      |       3    |      5 mul + 4 add =9    |    72     |
+       * kox      |      11    |      8 mul + 6 add =16   |    72     |
+       *
+       * total pp =2865
+       * total block =19
+       *
+       *
+       * */
+
+
+    /* var              original                after CSE
+     * a_rhs               12                      12
+     * b_rhs               51                      39
+     * gt_rhs             210                     162
+     * chi_rhs             22                      20
+     * At_rhs          630012                    3569
+     * K_rhs             3960                     501
+     * Gt_rhs           16710                     732
+     * B_rhs            17226                     765
      *
-     * total pp =2865
-     * total block =19
-     *
-     *
+     * total            668203	                 5800
+
      * */
+
+
 
     // floating point operation computed once per block
     const unsigned int NUM_DERIV_OPS_BLOCK=19;
     // floating point operation computed for each pp
     const unsigned int NUM_DERIV_OPS_PP=2865;
+
+    const unsigned int NUM_RHS_OPS_PP=5800+24*4;
 
     unsigned long int unzipInternal=0;
     unsigned long int unzipTotal=0;
@@ -81,10 +102,8 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
         unzipTotal+=(localBlkList[blk].get1DArraySize()*localBlkList[blk].get1DArraySize()*localBlkList[blk].get1DArraySize());
     }
 
-
     std::cout<<"unzip dof: "<<unzipTotal<<std::endl;
     std::cout<<"unzip internal: "<<unzipInternal<<std::endl;
-
 
     double t_stat;
     t_stat=t_overall.seconds;
@@ -107,21 +126,31 @@ void cuda::profile::printOutput(const std::vector<ot::Block>& localBlkList) {
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(malloc)(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
-    t_stat=t_derivs.seconds;
+    /*t_stat=t_derivs.seconds;
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -deriv(compute)(flops)";
-    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<(((unzipInternal*NUM_DERIV_OPS_PP)+localBlkList.size()*NUM_DERIV_OPS_BLOCK)/t_stat)<<std::endl;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<(((unzipInternal*NUM_DERIV_OPS_PP)+localBlkList.size()*NUM_DERIV_OPS_BLOCK)/t_stat)<<std::endl;*/
 
-
-    t_stat=t_rhs.seconds;
-    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -rhs(compute)(s)";
+    t_stat=t_rhs_cpu.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -rhs_cpu(compute)(s)";
     std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
 
 
+    t_stat=(t_rhs_total.seconds-t_rhs_cpu.seconds);
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -rhs_gpu(compute)(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
+    t_stat=t_rhs_total.seconds;
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -rhs_total(compute)(s)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<t_stat<<std::endl;
+
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator) <<"  -overall(flops)";
+    std::cout << std::left << std::setw(nameWidth) << std::setfill(separator)<<(((unzipInternal*(NUM_DERIV_OPS_PP+NUM_RHS_OPS_PP))+localBlkList.size()*NUM_DERIV_OPS_BLOCK)/t_stat)<<std::endl;
 
     return;
+
 
 
 }

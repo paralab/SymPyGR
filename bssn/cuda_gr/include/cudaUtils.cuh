@@ -71,7 +71,7 @@ namespace cuda
     * @param[in] tile_sz: tile sz
     */
     template <typename T>
-    __device__ void __storeSharedToGlobal1D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+    __device__ void __storeSharedToGlobal1D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz,const unsigned int* tile_sz);
 
 
     /**
@@ -83,11 +83,11 @@ namespace cuda
     * @param[in] tile_sz: tile sz
     */
     template <typename T>
-    __device__ void __storeSharedToGlobal3D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz);
+    __device__ void __storeSharedToGlobal3D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int * tile_lm , const unsigned int* tile_sz);
 
 
-
-
+    /**get the SM ID of the thread being executed*/
+    __device__ unsigned int get_smid(void);
 
 }
 
@@ -120,10 +120,12 @@ namespace cuda
     __device__ void __loadGlobalToShared3D(const T* __globalIn, T* sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        const unsigned int t_id =threadIdx.x + threadIdx.y*(blockDim.y) + threadIdx.z * (blockDim.y*blockDim.z);
-        if(t_id>=((ijk_lm[1]-ijk_lm[0])*(ijk_lm[3]-ijk_lm[2])*(ijk_lm[5]-ijk_lm[4]))) return;
+        // note that this should not be >= for 3d code generation
+        if((threadIdx.y>(ijk_lm[3]-ijk_lm[2])) || (threadIdx.x>(ijk_lm[1]-ijk_lm[0]))) return;
 
-        sharedOut[threadIdx.z*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x] = __globalIn[(ijk_lm[4])*(sz[1]*sz[0])+(ijk_lm[2])*(sz[0])+(ijk_lm[0])+t_id];
+        for(unsigned int z=ijk_lm[4];z<=ijk_lm[5];z++)
+            sharedOut[(z-ijk_lm[4])*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x] = __globalIn[(z)*(sz[1]*sz[0])+(ijk_lm[2]+threadIdx.y)*(sz[0])+(ijk_lm[0]+threadIdx.x)];
+
 
         return ;
 
@@ -148,15 +150,14 @@ namespace cuda
 
 
 
-    template<typename T>
-    __device__ void __storeSharedToGlobal3D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
+    template <typename T>
+    __device__ void __storeSharedToGlobal3D(const T* sharedIn, T* __globalOut,const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int * tile_lm ,const unsigned int* tile_sz)
     {
 
-        const unsigned int t_id =threadIdx.x + threadIdx.y*(blockDim.y) + threadIdx.z * (blockDim.y*blockDim.z);
-        if(t_id>=((ijk_lm[1]-ijk_lm[0])*(ijk_lm[3]-ijk_lm[2])*(ijk_lm[5]-ijk_lm[4]))) return;
+        if((threadIdx.y>(tile_lm[3]-tile_lm[2])) || (threadIdx.x>(tile_lm[1]-tile_lm[0]))) return;
 
-        __globalOut[(ijk_lm[4])*(sz[1]*sz[0])+(ijk_lm[2])*(sz[0])+(ijk_lm[0])+t_id]=sharedIn[threadIdx.z*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x];
-
+        for(unsigned int z=tile_lm[4];z<=tile_lm[5];z++)
+            __globalOut[(ijk_lm[4]+z)*(sz[1]*sz[0])+(ijk_lm[2]+tile_lm[2]+threadIdx.y)*(sz[0])+(ijk_lm[0]+tile_lm[0]+threadIdx.x)]=sharedIn[(z)*(tile_sz[0]*tile_sz[1])+(threadIdx.y+tile_lm[2])*(tile_sz[0])+(threadIdx.x+tile_lm[0])];
 
 
         return ;
@@ -168,9 +169,10 @@ namespace cuda
     __device__ void __extractSign3D(const T* sharedIn,  bool * sharedOut, const unsigned int* ijk_lm, const unsigned int * sz, const unsigned int* tile_sz)
     {
 
-        if((threadIdx.x>=(ijk_lm[1]-ijk_lm[0])) || (threadIdx.y>=(ijk_lm[3]-ijk_lm[2])) || (threadIdx.z>=(ijk_lm[5]-ijk_lm[4]))) return;
+        if((threadIdx.y>(ijk_lm[3]-ijk_lm[2])) || (threadIdx.x>(ijk_lm[1]-ijk_lm[0]))) return;
 
-        (sharedIn[(threadIdx.z) * (tile_sz[0]*tile_sz[1]) + (threadIdx.y) * (tile_sz[0])+ (threadIdx.x)]>0) ?  sharedOut[(threadIdx.z) * (tile_sz[0]*tile_sz[1]) + (threadIdx.y) * (tile_sz[0])+ (threadIdx.x)]=true : sharedOut[(threadIdx.z) * (tile_sz[0]*tile_sz[1]) + (threadIdx.y) * (tile_sz[0])+ (threadIdx.x)]=false;
+        for(unsigned int z=ijk_lm[4];z<=ijk_lm[5];z++)
+            (sharedIn[(z-ijk_lm[4])*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x]>0) ?  sharedOut[(z-ijk_lm[4])*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x]=true : sharedOut[(z-ijk_lm[4])*(tile_sz[0]*tile_sz[1])+threadIdx.y*(tile_sz[0])+threadIdx.x]=false;
 
         return;
 

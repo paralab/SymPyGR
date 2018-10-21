@@ -67,7 +67,7 @@ a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 #         l2 * dendro.vec_j_del_j(b, b[i])
 b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
         l2 * dendro.vec_j_ad_j(b, b[i])
-         for i in dendro.e_i ] + dendro.kodiss(b)
+         for i in dendro.e_i ] + 0*dendro.kodiss(b)
 
 gt_rhs = dendro.lie(b, gt, weight) - 2*a*At + 0*dendro.kodiss(gt)
 

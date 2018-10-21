@@ -10,6 +10,7 @@
 #ifndef DENDRO_5_0_BLOCK_CU_H
 #define DENDRO_5_0_BLOCK_CU_H
 
+#include "dendro.h"
 
 #ifdef __CUDACC__
 #define CUDA_CALLABLE_MEMBER __host__ __device__
@@ -17,9 +18,6 @@
 #define CUDA_CALLABLE_MEMBER
 #endif
 
-
-#define DENDRO_BLOCK_ALIGN_FACTOR 1
-#define DENDRO_BLOCK_ALIGN_FACTOR_LOG 0
 
 namespace cuda
 {
@@ -113,8 +111,11 @@ namespace cuda
                 m_uiDx[2]=p_dx[2];
 
                 ((m_uiSz[0] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[0]=m_uiSz[0] : m_uiAlignSz[0]=((m_uiSz[0]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
-                ((m_uiSz[1] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[1]=m_uiSz[1] : m_uiAlignSz[1]=((m_uiSz[1]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
-                ((m_uiSz[2] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[2]=m_uiSz[2] : m_uiAlignSz[2]=((m_uiSz[2]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
+                m_uiAlignSz[1]=m_uiSz[1];
+                m_uiAlignSz[2]=m_uiSz[2];
+                //((m_uiSz[1] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[1]=m_uiSz[1] : m_uiAlignSz[1]=((m_uiSz[1]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
+                //((m_uiSz[2] & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? m_uiAlignSz[2]=m_uiSz[2] : m_uiAlignSz[2]=((m_uiSz[2]/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
+
 
 
             }
@@ -159,6 +160,13 @@ namespace cuda
             }
 
 
+            /**@returns get aligned size of the block*/
+            CUDA_CALLABLE_MEMBER const unsigned int getAlignedBlockSz() const
+            {
+                return  m_uiAlignSz[0]*m_uiAlignSz[1]*m_uiAlignSz[2];
+            }
+
+
             /**@returns get blocks sz*/
 
             CUDA_CALLABLE_MEMBER const double * getDx() const
@@ -172,29 +180,6 @@ namespace cuda
 
 } // end of namespace cuda
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #endif //DENDRO_5_0_BLOCK_CU_H
-
 
 

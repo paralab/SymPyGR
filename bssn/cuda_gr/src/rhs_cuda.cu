@@ -89,14 +89,14 @@ namespace cuda
                 hx[2]=dz;
 
 
-                ptmin[0]=GRIDX_TO_X(dendroBlockList[blk].getBlockNode().minX())-3*dx;
-                ptmin[1]=GRIDY_TO_Y(dendroBlockList[blk].getBlockNode().minY())-3*dy;
-                ptmin[2]=GRIDZ_TO_Z(dendroBlockList[blk].getBlockNode().minZ())-3*dz;
+                ptmin[0]=GRIDX_TO_X(0)-3*dx;
+                ptmin[1]=GRIDY_TO_Y(0)-3*dy;
+                ptmin[2]=GRIDZ_TO_Z(0)-3*dz;
 
 
-                ptmax[0]=GRIDX_TO_X(dendroBlockList[blk].getBlockNode().maxX())+3*dx;
-                ptmax[1]=GRIDY_TO_Y(dendroBlockList[blk].getBlockNode().maxY())+3*dy;
-                ptmax[2]=GRIDZ_TO_Z(dendroBlockList[blk].getBlockNode().maxZ())+3*dz;
+                ptmax[0]=GRIDX_TO_X((1u<<m_uiMaxDepth))+3*dx;
+                ptmax[1]=GRIDY_TO_Y((1u<<m_uiMaxDepth))+3*dy;
+                ptmax[2]=GRIDZ_TO_Z((1u<<m_uiMaxDepth))+3*dz;
 
                 cudaBlkList[c_in]=cuda::_Block((const double *)ptmin,(const double *)ptmax,offset,bflag,(const unsigned int*)sz, (const double *)hx);
                 blkListGPU[c_in]=dendroBlockList[blk];
@@ -203,13 +203,14 @@ namespace cuda
                 dy=blkListCPU[blk].computeDy(pt_min,pt_max);
                 dz=blkListCPU[blk].computeDz(pt_min,pt_max);
 
-                ptmin[0]=GRIDX_TO_X(blkListCPU[blk].getBlockNode().minX())-3*dx;
-                ptmin[1]=GRIDY_TO_Y(blkListCPU[blk].getBlockNode().minY())-3*dy;
-                ptmin[2]=GRIDZ_TO_Z(blkListCPU[blk].getBlockNode().minZ())-3*dz;
+                ptmin[0]=GRIDX_TO_X(0)-3*dx;
+                ptmin[1]=GRIDY_TO_Y(0)-3*dy;
+                ptmin[2]=GRIDZ_TO_Z(0)-3*dz;
 
-                ptmax[0]=GRIDX_TO_X(blkListCPU[blk].getBlockNode().maxX())+3*dx;
-                ptmax[1]=GRIDY_TO_Y(blkListCPU[blk].getBlockNode().maxY())+3*dy;
-                ptmax[2]=GRIDZ_TO_Z(blkListCPU[blk].getBlockNode().maxZ())+3*dz;
+                ptmax[0]=GRIDX_TO_X((1u<<m_uiMaxDepth))+3*dx;
+                ptmax[1]=GRIDY_TO_Y((1u<<m_uiMaxDepth))+3*dy;
+                ptmax[2]=GRIDZ_TO_Z((1u<<m_uiMaxDepth))+3*dz;
+    
 
                 bssnrhs_sep(unzipVarsRHS, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
 
@@ -355,14 +356,15 @@ namespace cuda
                 dy=blkListCPU[blk].computeDy(pt_min,pt_max);
                 dz=blkListCPU[blk].computeDz(pt_min,pt_max);
 
-                ptmin[0]=GRIDX_TO_X(blkListCPU[blk].getBlockNode().minX())-3*dx;
-                ptmin[1]=GRIDY_TO_Y(blkListCPU[blk].getBlockNode().minY())-3*dy;
-                ptmin[2]=GRIDZ_TO_Z(blkListCPU[blk].getBlockNode().minZ())-3*dz;
+                
+                ptmin[0]=GRIDX_TO_X(0)-3*dx;
+                ptmin[1]=GRIDY_TO_Y(0)-3*dy;
+                ptmin[2]=GRIDZ_TO_Z(0)-3*dz;
 
-                ptmax[0]=GRIDX_TO_X(blkListCPU[blk].getBlockNode().maxX())+3*dx;
-                ptmax[1]=GRIDY_TO_Y(blkListCPU[blk].getBlockNode().maxY())+3*dy;
-                ptmax[2]=GRIDZ_TO_Z(blkListCPU[blk].getBlockNode().maxZ())+3*dz;
 
+                ptmax[0]=GRIDX_TO_X((1u<<m_uiMaxDepth))+3*dx;
+                ptmax[1]=GRIDY_TO_Y((1u<<m_uiMaxDepth))+3*dy;
+                ptmax[2]=GRIDZ_TO_Z((1u<<m_uiMaxDepth))+3*dz;
                 bssnrhs_sep(unZipRHS_CPU, (const double **)uZipVars, offset, ptmin, ptmax, sz, bflag);
 
             }
@@ -437,53 +439,5 @@ namespace cuda
 
     }
 
-    void computeRHSAsync(double **OUTPUT_REFERENCE, double **INPUT_REFERENCE, 
-                cuda::_Block* DENDRO_BLOCK_LIST, unsigned int numBlocks, cuda::BSSNComputeParams* bssnPars,
-                std::vector< int >& blockMap,dim3 gridDim,dim3 blockDim, unsigned int numStreams,
-                cudaStream_t stream, const unsigned int* gpuBlkMap, cuda::MemoryDerivs* derivWorkspacePointer)
-    {
-        cuda::profile::t_overall.start();
-
-        const double GPU_BLOCK_SHARED_MEM_UTIL=0.8;
-        const unsigned int BSSN_NUM_VARS=24;
-        const unsigned int BSSN_CONSTRAINT_NUM_VARS=6;
-
-
-        cuda::__RSWS_computeDerivs <<<gridDim,blockDim, 0, stream>>> ((const double**)INPUT_REFERENCE, derivWorkspacePointer, DENDRO_BLOCK_LIST, gpuBlkMap,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        /*
-        cuda::__compute_a_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        cuda::__compute_b_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        cuda::__compute_gt_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        cuda::__compute_chi_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-        */
-        // cuda::__compute_At_rhs<<<gridDim,blockDim, 0, stream>>>(OUTPUT_REFERENCE,(const double**)INPUT_REFERENCE,derivWorkspacePointer,DENDRO_BLOCK_LIST,bssnPars,cuda::__CUDA_DEVICE_PROPERTIES);
-        // CUDA_CHECK_ERROR();
-
-        /*
-        cuda::__compute_K_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        cuda::__compute_Gt_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        cuda::__compute_B_rhs<<<blockGrid,threadBlock>>>(cuda::__UNZIP_OUTPUT,(const double**)cuda::__UNZIP_INPUT,cuda::__BSSN_DERIV_WORKSPACE,cuda::__DENDRO_BLOCK_LIST,cuda::__BSSN_COMPUTE_PARMS,cuda::__CUDA_DEVICE_PROPERTIES);
-        CUDA_CHECK_ERROR();
-
-        cudaDeviceSynchronize();
-        CUDA_CHECK_ERROR();
-
-        */
-
-        cuda::profile::t_overall.stop();
-    }
 
 }

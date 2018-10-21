@@ -31,16 +31,14 @@ namespace cuda
 
 
 
-    void computeDendroBlockToGPUMap(const ot::Block* blkList, unsigned int numBlocks, 
-                std::vector< int >& blockMap,dim3 & gridDim, unsigned int start)
+    void computeDendroBlockToGPUMap(const ot::Block* blkList, unsigned int numBlocks, unsigned int*& blockMap,dim3 & gridDim)
     {
-        std::vector<unsigned int> dendroBlockToGPUBlockMap;
-        dendroBlockToGPUBlockMap.resize(numBlocks);
+        unsigned int * dendroBlockToGPUBlockMap=new unsigned int [numBlocks];
 
         unsigned int DATA_BLOCK_GROUP_THRESHOLD_1D=32;
         unsigned int blkSzCount=0;
         unsigned int gpuBlockId=0;
-        for(unsigned int blk=start;blk<numBlocks;++blk)
+        for(unsigned int blk=0;blk<numBlocks;++blk)
         {
             blkSzCount+=blkList[blk].get1DArraySize();
             dendroBlockToGPUBlockMap[blk]=gpuBlockId;
@@ -53,23 +51,22 @@ namespace cuda
 
         }
 
-        const unsigned int TOTAL_GPU_BLOCKS=dendroBlockToGPUBlockMap.back()+1;
+        const unsigned int TOTAL_GPU_BLOCKS=dendroBlockToGPUBlockMap[numBlocks-1]+1;
         gridDim=dim3(TOTAL_GPU_BLOCKS,1,1);
-    
-        blockMap.clear();
 
-        blockMap.resize(TOTAL_GPU_BLOCKS*2);
+
+        blockMap=new unsigned int [2*TOTAL_GPU_BLOCKS];
         gpuBlockId=0;
-        
+
         unsigned int blkCount=0;
-        while(blkCount<dendroBlockToGPUBlockMap.size())
+        while(blkCount<numBlocks)
         {
             //std::cout<<"gpublock ID: "<<gpuBlockId<<" blkCount: "<<blkCount<<std::endl;
             blockMap[2*gpuBlockId]=blkCount;
-            if(blkCount<(dendroBlockToGPUBlockMap.size()-1) && dendroBlockToGPUBlockMap[blkCount]==dendroBlockToGPUBlockMap[blkCount+1])
+            if(blkCount<(numBlocks-1) && dendroBlockToGPUBlockMap[blkCount]==dendroBlockToGPUBlockMap[blkCount+1])
             {
                 blkCount++;
-                while(blkCount<(dendroBlockToGPUBlockMap.size()-1) && dendroBlockToGPUBlockMap[blkCount]==dendroBlockToGPUBlockMap[blkCount+1]) blkCount++;
+                while(blkCount<(numBlocks-1) && dendroBlockToGPUBlockMap[blkCount]==dendroBlockToGPUBlockMap[blkCount+1]) blkCount++;
                 blockMap[2*gpuBlockId+1]=blkCount+1;
 
             }else {
@@ -80,7 +77,9 @@ namespace cuda
 
         }
 
-        /*for(unsigned int blk=0;blk<blkList.size();++blk)
+        delete [] dendroBlockToGPUBlockMap;
+
+        /*for(unsigned int blk=0;blk<numBlocks;++blk)
             std::cout<<"blk: "<<blk<<" gpu bid : "<<dendroBlockToGPUBlockMap[blk]<<" block size: "<<blkList[blk].get1DArraySize()<<std::endl;
 
         for(unsigned int bid=0;bid<TOTAL_GPU_BLOCKS;bid++)
