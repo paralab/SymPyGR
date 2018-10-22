@@ -15,7 +15,8 @@
 
 #include "cuda_runtime.h"
 #include "block.h"
-#include<stdio.h>
+#include <stdio.h>
+#include <iostream>
 
 
 //Macro for checking cuda errors following a cuda launch or api call
