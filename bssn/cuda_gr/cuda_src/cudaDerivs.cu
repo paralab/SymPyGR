@@ -5,18 +5,40 @@
  
 #include "cudaDerivs.cuh"
 
-__global__ void calc_derivs1(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
+__global__ void calc_derivs1(int tile_size, double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "para_derivs_offsets.h"
 ){
-    int tid = blockIdx.x*64 + threadIdx.x;
+    __shared__ double shared_var_in[4096];
+
+    int tile_x = blockIdx.x%tile_size;
+    int tile_y = blockIdx.x/tile_size%tile_size;
+    int tile_z = blockIdx.x/tile_size/tile_size;
+
+    int x_offset = tile_x*10;
+    int y_offset = tile_y*10;
+    int z_offset = tile_z*10;
+
+    int nx = host_sz_x; 
+    int ny = host_sz_y;
 
     #include "calc_deriv_calls_1.cuh"
 }
 
-__global__ void calc_derivs2(double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
+__global__ void calc_derivs2(int tile_size, double * dev_var_out, double * dev_var_in, double hx, double hy, double hz, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag,
     #include "para_derivs_offsets.h"
 ){
-    int tid = blockIdx.x*64 + threadIdx.x;
+    __shared__ double shared_var_in[4096];
+
+    int tile_x = blockIdx.x%tile_size;
+    int tile_y = blockIdx.x/tile_size%tile_size;
+    int tile_z = blockIdx.x/tile_size/tile_size;
+
+    int x_offset = tile_x*10;
+    int y_offset = tile_y*10;
+    int z_offset = tile_z*10;
+
+    int nx = host_sz_x; 
+    int ny = host_sz_y;
 
     #include "calc_deriv_calls_2.cuh"
 }
@@ -53,6 +75,10 @@ void calc_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double
     int number_of_threads_required;
     int number_of_blocks;
 
+    int x = ceil((ie-ib)/10.0);
+    int y = ceil((je-jb)/10.0);
+    int z = ceil((ke-kb)/10.0);
+
     if (bflag!=0){
         number_of_threads_required=ceil((ie-ib)*(je-jb)*(ke-kb));
         number_of_blocks=ceil(1.0*number_of_threads_required/64);
@@ -66,15 +92,12 @@ void calc_deriv_kernel_wrapper(double * dev_var_out, double * dev_var_in, double
             #include "args_derivs_offsets.h"
         );
     }else{
-        number_of_threads_required=ceil((ie-ib)*(je-jb)*(ke-kb));
-        number_of_blocks=ceil(1.0*number_of_threads_required/64);
-        calc_derivs1 <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
+        number_of_blocks = x*y*z;
+        calc_derivs1 <<< number_of_blocks, 1000, 0, stream>>> (x, dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
             #include "args_derivs_offsets.h"
         );
-    
-        number_of_threads_required=ceil((ie-ib)*(je-jb)*(ke-kb));
-        number_of_blocks=ceil(1.0*number_of_threads_required/64);
-        calc_derivs2 <<< number_of_blocks, 64, 0, stream>>> (dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
+
+        calc_derivs2 <<< number_of_blocks, 1000, 0, stream>>> (x, dev_var_out, dev_var_in, hx, hy, hz, host_sz_x, host_sz_y, host_sz_z, bflag,
             #include "args_derivs_offsets.h"
         );
     }

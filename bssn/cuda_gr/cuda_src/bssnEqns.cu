@@ -59,4 +59,6 @@ void calc_bssn_eqns_kernel_wrapper(double * dev_var_in, double * dev_var_out, co
         hz, hy, hx, 
         #include "args_derivs_offsets.h"
     ); 
+
+    CHECK_ERROR(cudaGetLastError(), "rhs computation Kernel launch failed");
 }
