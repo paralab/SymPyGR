@@ -86,8 +86,8 @@ void calc_bssnrhs(double * dev_var_out, double * dev_var_in, const unsigned int 
         #include "args_derivs_offsets.h"
     );
 
-    get_output_kernel_wrapper(dev_var_out, sz, stream,
-        #include "args_derivs_offsets.h"
-    );
+    // get_output_kernel_wrapper(dev_var_out, sz, stream,
+    //     #include "args_derivs_offsets.h"
+    // );
     return;
 }
