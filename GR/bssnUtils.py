@@ -452,19 +452,71 @@ with open("generated/calc_ko_deriv_calls_bflag.cuh", "w") as funcs_call_file:
 ###########################################################################
 
 # positions Direction Wise
-dirnVisePositions = {"calc_deriv42_x" : [3, 1, 1], "calc_deriv42_y": [3, 3, 1], "calc_deriv42_z": [3, 3, 3]}
+dirnVisePositions = {"calc_deriv42_x" : [3, 1, 1],
+                     "calc_deriv42_y": [3, 3, 1],
+                     "calc_deriv42_z": [3, 3, 3],
+                     "calc_deriv42_xx": [3, 3, 3],
+                     "calc_deriv42_yy": [3, 3, 3],
+                    "calc_deriv42_zz" : [3, 3, 3]
+                     }
 
 # deriv wise access locations
 stencils = {"calc_deriv42_x" : ["", 1, "idx_by_12"],
             "calc_deriv42_y": ["*16", 16, "idy_by_12"],
-            "calc_deriv42_z": ["*16*16", "16*16", "idz_by_12"]
+            "calc_deriv42_z": ["*16*16", "16*16", "idz_by_12"],
+            "calc_deriv42_xx": ["", 1, "idx_sqrd_by_12"],
+            "calc_deriv42_yy": ["*16", 16, "idy_sqrd_by_12"],
+            "calc_deriv42_zz" : ["*16*16", "16*16", "idz_sqrd_by_12"],
             }
+
+# output line setting
+outputLine = {"calc_deriv42_x" : "\toutput[pp] = (dev_var_in[loc_pp - 2{}] - 8.0 * dev_var_in[loc_pp - {}] + "
+                                 "8.0 * dev_var_in[loc_pp + {}] - dev_var_in[loc_pp + 2{}]) * {};\n",
+            "calc_deriv42_y": "\toutput[pp] = (dev_var_in[loc_pp - 2{}] - 8.0 * dev_var_in[loc_pp - {}] + "
+                                 "8.0 * dev_var_in[loc_pp + {}] - dev_var_in[loc_pp + 2{}]) * {};\n",
+            "calc_deriv42_z": "\toutput[pp] = (dev_var_in[loc_pp - 2{}] - 8.0 * dev_var_in[loc_pp - {}] + "
+                                 "8.0 * dev_var_in[loc_pp + {}] - dev_var_in[loc_pp + 2{}]) * {};\n",
+            "calc_deriv42_xx": "\toutput[pp] = ((-1)*dev_var_in[loc_pp-2{}] + 16.0*dev_var_in[loc_pp-{}] "
+                               "- 30.0*dev_var_in[loc_pp] + 16.0*dev_var_in[loc_pp+{}] - dev_var_in[loc_pp+2{}])*{};\n",
+            "calc_deriv42_yy":  "\toutput[pp] = ((-1)*dev_var_in[loc_pp-2{}] + 16.0*dev_var_in[loc_pp-{}] "
+                               "- 30.0*dev_var_in[loc_pp] + 16.0*dev_var_in[loc_pp+{}] - dev_var_in[loc_pp+2{}])*{};\n",
+            "calc_deriv42_zz": "\toutput[pp] = ((-1)*dev_var_in[loc_pp-2{}] + 16.0*dev_var_in[loc_pp-{}] "
+                                 "- 30.0*dev_var_in[loc_pp] + 16.0*dev_var_in[loc_pp+{}] - dev_var_in[loc_pp+2{}])*{};\n"
+            }
+
 # deriv wise direction names
-distances = {"calc_deriv42_x" : "dx", "calc_deriv42_y": "dy" , "calc_deriv42_z": "dz"}
+distances = {
+            "calc_deriv42_x" : "dx",
+            "calc_deriv42_y": "dy" ,
+            "calc_deriv42_z": "dz",
+            "calc_deriv42_xx":"(dx*dx)",
+            "calc_deriv42_yy" : "(dy*dy)",
+            "calc_deriv42_zz" : "(dz*dz)"
+            }
+
+# method parameters
+methodParameters = {
+            "calc_deriv42_x" : "dx",
+            "calc_deriv42_y": "dy" ,
+            "calc_deriv42_z": "dz",
+            "calc_deriv42_xx":"dx",
+            "calc_deriv42_yy" : "dy",
+            "calc_deriv42_zz" : "dz"
+            }
 
 # method names
-pd = ["calc_deriv42_x", "calc_deriv42_y", "calc_deriv42_z"]
+pd = ["calc_deriv42_x", "calc_deriv42_y", "calc_deriv42_z", "calc_deriv42_xx", "calc_deriv42_yy", "calc_deriv42_zz"]
 
+# const variables setting
+constVariables = {"calc_deriv42_x" : "idx",
+                    "calc_deriv42_y": "idy",
+                    "calc_deriv42_z": "idz",
+                    "calc_deriv42_xx": "idx_sqrd",
+                    "calc_deriv42_yy": "idy_sqrd",
+                    "calc_deriv42_zz" : "idz_sqrd"
+                    }
+
+# generating code in the cuda file with shared memory
 with open("generated/deviceDerivsShared.cu", "w") as declare_deriv_file:
     addHeader(declare_deriv_file, "bssn/cuda_gr/cuda_src")
 
@@ -477,7 +529,7 @@ with open("generated/deviceDerivsShared.cu", "w") as declare_deriv_file:
                       "const int u_offset, double {}, const unsigned int host_sz_x, const unsigned int host_sz_y, " \
                       "const unsigned int host_sz_z, int bflag)\n"
     for var in pd:
-        declare_deriv_file.write(methodSignature.format(var, distances[var]))
+        declare_deriv_file.write(methodSignature.format(var, methodParameters[var]))
         declare_deriv_file.write("{\n")
         declare_deriv_file.write("\tint tile_x = blockIdx.x%tile_size;\n")
         declare_deriv_file.write("\tint tile_y = blockIdx.x/tile_size%tile_size;\n")
@@ -517,16 +569,15 @@ with open("generated/deviceDerivsShared.cu", "w") as declare_deriv_file:
         declare_deriv_file.write("\tint ny = host_sz_y;\n")
         declare_deriv_file.write("\n")
 
-        declare_deriv_file.write("\tconst double i{} = 1.0/{};\n".format(distances[var], distances[var]))
-        declare_deriv_file.write("\tconst double {} = i{} / 12.0;\n".format(stencils[var][2], distances[var]))
+        declare_deriv_file.write("\tconst double {} = 1.0/{};\n".format(constVariables[var], distances[var]))
+        declare_deriv_file.write("\tconst double {} = {} / 12.0;\n".format(stencils[var][2], constVariables[var]))
         declare_deriv_file.write("\n")
 
         declare_deriv_file.write("\tint pp = IDX(i, j, k);\n")
         declare_deriv_file.write("\tint loc_pp = k_shared*{}*{} + j_shared*{} + i_shared;\n".format(tile_sz+6, tile_sz+6, tile_sz+6))
         declare_deriv_file.write("\n")
 
-        declare_deriv_file.write("\toutput[pp] = (dev_var_in[loc_pp - 2{}] - 8.0 * dev_var_in[loc_pp - {}] + "
-                                 "8.0 * dev_var_in[loc_pp + {}] - dev_var_in[loc_pp + 2{}]) * {};\n".format(
+        declare_deriv_file.write(outputLine[var].format(
                                 stencils[var][0], stencils[var][1], stencils[var][1], stencils[var][0], stencils[var][2]))
 
         declare_deriv_file.write("\n")
