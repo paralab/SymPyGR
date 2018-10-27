@@ -306,10 +306,14 @@ with open("generated/calc_deriv_calls_1_bflag.cuh", "w") as funcs_call_file:
 with open("generated/calc_deriv_calls_2.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
-    # calc_deriv42_y(tid, grad2_0_1_gt0, grad_0_gt0, 0, hy, host_sz_x, host_sz_y, host_sz_z, bflag);
-    template_y = "calc_deriv42_y(tid, {}, {}, 0, hy, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
-    # calc_deriv42_z(tid, grad2_0_2_gt0, grad_0_gt0, 0, hz, host_sz_x, host_sz_y, host_sz_z, bflag);
-    template_z = "calc_deriv42_z(tid, {}, {}, 0, hz, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
+    helo_length = 2
+    helo_length_adv = 3
+    # globaltoshared(grad_0_gt0, shared_var_in, 0, 2, x_offset, y_offset, z_offset, nx, ny);
+    template_global_to_shared = "globaltoshared({}, shared_var_in, 0, {}, x_offset, y_offset, z_offset, nx, ny);\n"
+    # calc_deriv42_y(tile_size, grad2_0_1_gt0, grad_0_gt0, 0, hy, host_sz_x, host_sz_y, host_sz_z, bflag);
+    template_y = "calc_deriv42_y(tile_size, {}, shared_var_in, 0, hy, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
+    # calc_deriv42_z(tile_size, grad2_0_2_gt0, grad_0_gt0, 0, hz, host_sz_x, host_sz_y, host_sz_z, bflag);
+    template_z = "calc_deriv42_z(tile_size, {}, shared_var_in, 0, hz, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
 
     for offset in dd:
         dxn = "grad_0_" + offset
@@ -318,24 +322,34 @@ with open("generated/calc_deriv_calls_2.cuh", "w") as funcs_call_file:
         dxzn = "grad2_0_2_" + offset
         dyzn = "grad2_1_2_" + offset
 
+        funcs_call_file.write(template_global_to_shared.format(dxn, helo_length))
         funcs_call_file.write(template_y.format(dxyn, dxn))
         funcs_call_file.write(template_z.format(dxzn, dxn))
+
+        funcs_call_file.write("\n")
+
+        funcs_call_file.write(template_global_to_shared.format(dyn, helo_length))
         funcs_call_file.write(template_z.format(dyzn, dyn))
 
         funcs_call_file.write("\n")
 
-    # calc_deriv42_adv_x(tid, agrad_0_alpha, dev_var_in, alphaInt, hx, beta0Int, host_sz_x, host_sz_y, host_sz_z, bflag);
-    template_adv_x = "calc_deriv42_adv_x(tid, {}, dev_var_in, {}, hx, beta0Int, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
-    # calc_deriv42_adv_y(tid, agrad_1_alpha, dev_var_in, alphaInt, hy, beta1Int, host_sz_x, host_sz_y, host_sz_z, bflag);
-    template_adv_y = "calc_deriv42_adv_y(tid, {}, dev_var_in, {}, hy, beta1Int, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
-    # calc_deriv42_adv_z(tid, agrad_2_gt4, dev_var_in, gt4Int, hz, beta2Int, host_sz_x, host_sz_y, host_sz_z, bflag);
-    template_adv_z = "calc_deriv42_adv_z(tid, {}, dev_var_in, {}, hz, beta2Int, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
+    funcs_call_file.write("\n")
+    funcs_call_file.write("\n")
+
+    template_global_to_shared_adv = "globaltoshared(dev_var_in, shared_var_in, {}, {}, x_offset, y_offset, z_offset, nx, ny);\n"
+    # calc_deriv42_adv_x(tile_size, agrad_0_alpha, dev_var_in, alphaInt, hx, beta0Int, host_sz_x, host_sz_y, host_sz_z, bflag);
+    template_adv_x = "calc_deriv42_adv_x(tile_size, {}, dev_var_in, shared_var_in, {}, hx, beta0Int, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
+    # calc_deriv42_adv_y(tile_size, agrad_1_alpha, dev_var_in, alphaInt, hy, beta1Int, host_sz_x, host_sz_y, host_sz_z, bflag);
+    template_adv_y = "calc_deriv42_adv_y(tile_size, {}, dev_var_in, shared_var_in, {}, hy, beta1Int, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
+    # calc_deriv42_adv_z(tile_size, agrad_2_gt4, dev_var_in, gt4Int, hz, beta2Int, host_sz_x, host_sz_y, host_sz_z, bflag);
+    template_adv_z = "calc_deriv42_adv_z(tile_size, {}, dev_var_in, shared_var_in, {}, hz, beta2Int, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
 
     for offset in ad:
         dxn = "agrad_0_" + offset
         dyn = "agrad_1_" + offset
         dzn = "agrad_2_" + offset
 
+        funcs_call_file.write(template_global_to_shared_adv.format( varEnumToInputSymbol[offset], helo_length_adv))
         funcs_call_file.write(template_adv_x.format(dxn, varEnumToInputSymbol[offset]))
         funcs_call_file.write(template_adv_y.format(dyn, varEnumToInputSymbol[offset]))
         funcs_call_file.write(template_adv_z.format(dzn, varEnumToInputSymbol[offset]))
