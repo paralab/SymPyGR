@@ -223,6 +223,9 @@ with open("generated/bssnrhs_cuda_mdealloc.h", "w") as funcs_dealloc_file:
 with open("generated/calc_deriv_calls_1.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
 
+    helo_length = 2
+    # globaltoshared(dev_var_in, shared_var_in, alphaInt, 2, x_offset, y_offset, z_offset, nx, ny);
+    template_global_to_shared = "globaltoshared(dev_var_in, shared_var_in, {}, {}, x_offset, y_offset, z_offset, nx, ny);\n"
     # calc_deriv42_x(tile_size, grad_0_alpha, shared_var_in, alphaInt, hx, host_sz_x, host_sz_y, host_sz_z, bflag);
     template_x = "calc_deriv42_x(tile_size, {}, shared_var_in, {}, hx, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
     # calc_deriv42_xx(tile_size, grad2_0_0_alpha, shared_var_in, alphaInt, hx, host_sz_x, host_sz_y, host_sz_z, bflag);
@@ -239,6 +242,8 @@ with open("generated/calc_deriv_calls_1.cuh", "w") as funcs_call_file:
     template_zz = "calc_deriv42_zz(tile_size, {}, shared_var_in, {}, hz, host_sz_x, host_sz_y, host_sz_z, bflag);\n"
 
     for offset in d:
+        funcs_call_file.write(template_global_to_shared.format(varEnumToInputSymbol[offset], helo_length))
+
         dxn = "grad_0_" + offset
         dxxn = "grad2_0_0_" + offset
         funcs_call_file.write(template_x.format(dxn, varEnumToInputSymbol[offset]))
@@ -255,7 +260,7 @@ with open("generated/calc_deriv_calls_1.cuh", "w") as funcs_call_file:
         if offset in dd: funcs_call_file.write(template_zz.format(dzzn, varEnumToInputSymbol[offset]))
         
         funcs_call_file.write("\n")
-        
+
 ####  Calls for derivatives - 1 when bflag set ####
 with open("generated/calc_deriv_calls_1_bflag.cuh", "w") as funcs_call_file:
     addHeader(funcs_call_file, "bssn/cuda_gr/utils")
