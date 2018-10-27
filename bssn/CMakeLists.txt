@@ -68,6 +68,7 @@ set(CUDA_GR_SRC
         cuda_gr/cuda_src/cudaDerivs.cu
         cuda_gr/cuda_src/cudaRHS.cu
         cuda_gr/cuda_src/deviceDerivs.cu
+        cuda_gr/cuda_src/deviceDerivsXYZ.cu
         cuda_gr/cuda_src/getOutput.cu
         )
 
