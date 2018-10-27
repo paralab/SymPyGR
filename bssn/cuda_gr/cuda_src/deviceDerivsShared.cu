@@ -133,3 +133,45 @@ __device__ void calc_deriv42_z(int tile_size, double * output, double * dev_var_
 
 }
 
+__device__ void calc_deriv42_xx(int tile_size, double * output, double * dev_var_in, const int u_offset, double dx, const unsigned int host_sz_x, const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)
+{
+	int tile_x = blockIdx.x%tile_size;
+	int tile_y = blockIdx.x/tile_size%tile_size;
+	int tile_z = blockIdx.x/tile_size/tile_size;
+
+	int x_offset = tile_x*10;
+	int y_offset = tile_y*10;
+	int z_offset = tile_z*10;
+
+	int i_thread = threadIdx.x % 10;
+	int j_thread = threadIdx.x/10%10;
+	int k_thread = threadIdx.x/10/10;
+
+	int i = i_thread + x_offset;
+	int j = j_thread + y_offset;
+	int k = k_thread + z_offset;
+
+	// associated shared memory location
+	int i_shared = i_thread + 3;
+	int j_shared = j_thread + 3;
+	int k_shared = k_thread + 3;
+
+	if (i>=host_sz_x-3) { return; }
+	if (i<3) return; 
+	if (j>=host_sz_y-3) { return; }
+	if (j<3) return; 
+	if (k>=host_sz_z-3) { return; }
+	if (k<3) return; 
+
+	int nx = host_sz_x; 
+	int ny = host_sz_y;
+
+	const double idx_sqrd = 1.0/(dx*dx);
+	const double idx_sqrd_by_12 = idx_sqrd / 12.0;
+
+	int pp = IDX(i, j, k);
+	int loc_pp = k_shared*16*16 + j_shared*16 + i_shared;
+
+	output[pp] = ((-1)*dev_var_in[loc_pp-2] + 16.0*dev_var_in[loc_pp-1] - 30.0*dev_var_in[loc_pp] + 16.0*dev_var_in[loc_pp+1] - dev_var_in[loc_pp+2])*idx_sqrd_by_12;
+
+}
