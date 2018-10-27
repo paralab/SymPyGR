@@ -444,3 +444,93 @@ with open("generated/calc_ko_deriv_calls_bflag.cuh", "w") as funcs_call_file:
         funcs_call_file.write(template_ko_z.format(dzn, varEnumToInputSymbol[offset]))
 
         funcs_call_file.write("\n")
+
+###########################################################################
+#
+#  Generating code for derivs with shared memory
+#
+###########################################################################
+
+# positions Direction Wise
+dirnVisePositions = {"calc_deriv42_x" : [3, 1, 1], "calc_deriv42_y": [3, 3, 1], "calc_deriv42_z": [3, 3, 3]}
+
+# deriv wise access locations
+stencils = {"calc_deriv42_x" : ["", 1, "idx_by_12"],
+            "calc_deriv42_y": ["*16", 16, "idy_by_12"],
+            "calc_deriv42_z": ["*16*16", "16*16", "idz_by_12"]
+            }
+# deriv wise direction names
+distances = {"calc_deriv42_x" : "dx", "calc_deriv42_y": "dy" , "calc_deriv42_z": "dz"}
+
+# method names
+pd = ["calc_deriv42_x", "calc_deriv42_y", "calc_deriv42_z"]
+
+with open("generated/deviceDerivsShared.cu", "w") as declare_deriv_file:
+    addHeader(declare_deriv_file, "bssn/cuda_gr/cuda_src")
+
+    declare_deriv_file.write("# include \"deviceDerivs.cuh\"\n")
+    declare_deriv_file.write("\n")
+
+    # this should be taken from the user as a parameter
+    tile_sz = 10
+    methodSignature = "__device__ void {}(int tile_size, double * output, double * dev_var_in, " \
+                      "const int u_offset, double {}, const unsigned int host_sz_x, const unsigned int host_sz_y, " \
+                      "const unsigned int host_sz_z, int bflag)\n"
+    for var in pd:
+        declare_deriv_file.write(methodSignature.format(var, distances[var]))
+        declare_deriv_file.write("{\n")
+        declare_deriv_file.write("\tint tile_x = blockIdx.x%tile_size;\n")
+        declare_deriv_file.write("\tint tile_y = blockIdx.x/tile_size%tile_size;\n")
+        declare_deriv_file.write("\tint tile_z = blockIdx.x/tile_size/tile_size;\n")
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\tint x_offset = tile_x*{};\n".format(tile_sz))
+        declare_deriv_file.write("\tint y_offset = tile_y*{};\n".format(tile_sz))
+        declare_deriv_file.write("\tint z_offset = tile_z*{};\n".format(tile_sz))
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\tint i_thread = threadIdx.x % {};\n".format(tile_sz))
+        declare_deriv_file.write("\tint j_thread = threadIdx.x/{}%{};\n".format(tile_sz, tile_sz))
+        declare_deriv_file.write("\tint k_thread = threadIdx.x/{}/{};\n".format(tile_sz, tile_sz))
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\tint i = i_thread + x_offset;\n")
+        declare_deriv_file.write("\tint j = j_thread + y_offset;\n")
+        declare_deriv_file.write("\tint k = k_thread + z_offset;\n")
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\t// associated shared memory location\n")
+        declare_deriv_file.write("\tint i_shared = i_thread + 3;\n")
+        declare_deriv_file.write("\tint j_shared = j_thread + 3;\n")
+        declare_deriv_file.write("\tint k_shared = k_thread + 3;\n")
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\tif (i>=host_sz_x-{}) {{ return; }}\n".format(dirnVisePositions[var][0]))
+        declare_deriv_file.write("\tif (i<{}) return; \n".format(dirnVisePositions[var][0]))
+        declare_deriv_file.write("\tif (j>=host_sz_y-{}) {{ return; }}\n".format(dirnVisePositions[var][1]))
+        declare_deriv_file.write("\tif (j<{}) return; \n".format(dirnVisePositions[var][1]))
+        declare_deriv_file.write("\tif (k>=host_sz_z-{}) {{ return; }}\n".format(dirnVisePositions[var][2]))
+        declare_deriv_file.write("\tif (k<{}) return; \n".format(dirnVisePositions[var][2]))
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\tint nx = host_sz_x; \n")
+        declare_deriv_file.write("\tint ny = host_sz_y;\n")
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\tconst double i{} = 1.0/{};\n".format(distances[var], distances[var]))
+        declare_deriv_file.write("\tconst double {} = i{} / 12.0;\n".format(stencils[var][2], distances[var]))
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\tint pp = IDX(i, j, k);\n")
+        declare_deriv_file.write("\tint loc_pp = k_shared*{}*{} + j_shared*{} + i_shared;\n".format(tile_sz+6, tile_sz+6, tile_sz+6))
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("\toutput[pp] = (dev_var_in[loc_pp - 2{}] - 8.0 * dev_var_in[loc_pp - {}] + "
+                                 "8.0 * dev_var_in[loc_pp + {}] - dev_var_in[loc_pp + 2{}]) * {};\n".format(
+                                stencils[var][0], stencils[var][1], stencils[var][1], stencils[var][0], stencils[var][2]))
+
+        declare_deriv_file.write("\n")
+
+        declare_deriv_file.write("}\n")
+
+        declare_deriv_file.write("\n")
