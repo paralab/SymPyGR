@@ -457,8 +457,23 @@ dirnVisePositions = {"calc_deriv42_x" : [3, 1, 1],
                      "calc_deriv42_z": [3, 3, 3],
                      "calc_deriv42_xx": [3, 3, 3],
                      "calc_deriv42_yy": [3, 3, 3],
-                    "calc_deriv42_zz" : [3, 3, 3]
+                    "calc_deriv42_zz" : [3, 3, 3],
+                    "calc_deriv42_adv_x" : [3, 3, 3],
+                    "calc_deriv42_adv_y" : [3, 3, 3],
+                    "calc_deriv42_adv_z" : [3, 3, 3]
                      }
+
+# idx by values
+idx_by = {"calc_deriv42_x" : "idx_by_12",
+            "calc_deriv42_y": "idy_by_12",
+            "calc_deriv42_z": "idz_by_12",
+            "calc_deriv42_xx": "idx_sqrd_by_12",
+            "calc_deriv42_yy": "idy_sqrd_by_12",
+            "calc_deriv42_zz" : "idz_sqrd_by_12",
+            "calc_deriv42_adv_x" : "idx_by_12",
+            "calc_deriv42_adv_y" : "idy_by_12",
+            "calc_deriv42_adv_z" : "idz_by_12"
+            }
 
 # deriv wise access locations
 stencils = {"calc_deriv42_x" : ["", 1, "idx_by_12"],
@@ -466,7 +481,7 @@ stencils = {"calc_deriv42_x" : ["", 1, "idx_by_12"],
             "calc_deriv42_z": ["*16*16", "16*16", "idz_by_12"],
             "calc_deriv42_xx": ["", 1, "idx_sqrd_by_12"],
             "calc_deriv42_yy": ["*16", 16, "idy_sqrd_by_12"],
-            "calc_deriv42_zz" : ["*16*16", "16*16", "idz_sqrd_by_12"],
+            "calc_deriv42_zz" : ["*16*16", "16*16", "idz_sqrd_by_12"]
             }
 
 # output line setting
@@ -491,7 +506,10 @@ distances = {
             "calc_deriv42_z": "dz",
             "calc_deriv42_xx":"(dx*dx)",
             "calc_deriv42_yy" : "(dy*dy)",
-            "calc_deriv42_zz" : "(dz*dz)"
+            "calc_deriv42_zz" : "(dz*dz)",
+            "calc_deriv42_adv_x" : "dx",
+            "calc_deriv42_adv_y" : "dy",
+            "calc_deriv42_adv_z" : "dz"
             }
 
 # method parameters
@@ -501,7 +519,10 @@ methodParameters = {
             "calc_deriv42_z": "dz",
             "calc_deriv42_xx":"dx",
             "calc_deriv42_yy" : "dy",
-            "calc_deriv42_zz" : "dz"
+            "calc_deriv42_zz" : "dz",
+            "calc_deriv42_adv_x" : "dx",
+            "calc_deriv42_adv_y" : "dy",
+            "calc_deriv42_adv_z" : "dz"
             }
 
 # method names
@@ -513,75 +534,142 @@ constVariables = {"calc_deriv42_x" : "idx",
                     "calc_deriv42_z": "idz",
                     "calc_deriv42_xx": "idx_sqrd",
                     "calc_deriv42_yy": "idy_sqrd",
-                    "calc_deriv42_zz" : "idz_sqrd"
+                    "calc_deriv42_zz" : "idz_sqrd",
+                    "calc_deriv42_adv_x" : "idx",
+                    "calc_deriv42_adv_y" : "idy",
+                    "calc_deriv42_adv_z" : "idz"
                     }
 
-# generating code in the cuda file with shared memory
+# output line setting for adv
+advOutputLineFirstPass = "\t\toutput[pp] = ( -  3.0 * dev_var_in[loc_pp - {}]- 10.0 * dev_var_in[loc_pp] + " \
+                         "18.0 * dev_var_in[loc_pp + {}] -  6.0 * dev_var_in[loc_pp + {}] + dev_var_in[loc_pp + {}]) * {};\n"
+
+# output line setting for adv in else
+advOutputLineSecondPass = "\t\toutput[pp] = ( -  dev_var_in[loc_pp - {}] +  6.0 * dev_var_in[loc_pp - {}] " \
+                          "- 18.0 * dev_var_in[loc_pp - {}] + 10.0 * dev_var_in[loc_pp] " \
+                          "+  3.0 * dev_var_in[loc_pp + {}]) * {};\n"
+
+# adv if output
+advFirstPassParam = {
+            "calc_deriv42_adv_x" : [1, 1, 2, 3],
+            "calc_deriv42_adv_y" : [16, 16, "2*16", "3*16"],
+            "calc_deriv42_adv_z" : ["16*16", "16*16", "2*16*16", "3*16*16"]
+            }
+
+# adv else output
+advSecondPassParam = {
+            "calc_deriv42_adv_x" : [3, 2, 1, 1],
+            "calc_deriv42_adv_y" : ["3*16", "2*16", "16", "16"],
+            "calc_deriv42_adv_z" : ["3*16*16", "2*16*16", "16*16", "16*16"]
+            }
+# adv methods
+adv = ["calc_deriv42_adv_x", "calc_deriv42_adv_y", "calc_deriv42_adv_z"]
+
+# adv beta variables
+advBeta = {
+    "calc_deriv42_adv_x": "betax",
+    "calc_deriv42_adv_y" :"betay",
+    "calc_deriv42_adv_z": "betaz"
+    }
+
+tile_sz = 10
+
+def writeToFile(declare_deriv_file, var):
+
+    declare_deriv_file.write("{\n")
+    declare_deriv_file.write("\tint tile_x = blockIdx.x%tile_size;\n")
+    declare_deriv_file.write("\tint tile_y = blockIdx.x/tile_size%tile_size;\n")
+    declare_deriv_file.write("\tint tile_z = blockIdx.x/tile_size/tile_size;\n")
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\tint x_offset = tile_x*{};\n".format(tile_sz))
+    declare_deriv_file.write("\tint y_offset = tile_y*{};\n".format(tile_sz))
+    declare_deriv_file.write("\tint z_offset = tile_z*{};\n".format(tile_sz))
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\tint i_thread = threadIdx.x % {};\n".format(tile_sz))
+    declare_deriv_file.write("\tint j_thread = threadIdx.x/{}%{};\n".format(tile_sz, tile_sz))
+    declare_deriv_file.write("\tint k_thread = threadIdx.x/{}/{};\n".format(tile_sz, tile_sz))
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\tint i = i_thread + x_offset;\n")
+    declare_deriv_file.write("\tint j = j_thread + y_offset;\n")
+    declare_deriv_file.write("\tint k = k_thread + z_offset;\n")
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\t// associated shared memory location\n")
+    declare_deriv_file.write("\tint i_shared = i_thread + 3;\n")
+    declare_deriv_file.write("\tint j_shared = j_thread + 3;\n")
+    declare_deriv_file.write("\tint k_shared = k_thread + 3;\n")
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\tif (i>=host_sz_x-{}) {{ return; }}\n".format(dirnVisePositions[var][0]))
+    declare_deriv_file.write("\tif (i<{}) return; \n".format(dirnVisePositions[var][0]))
+    declare_deriv_file.write("\tif (j>=host_sz_y-{}) {{ return; }}\n".format(dirnVisePositions[var][1]))
+    declare_deriv_file.write("\tif (j<{}) return; \n".format(dirnVisePositions[var][1]))
+    declare_deriv_file.write("\tif (k>=host_sz_z-{}) {{ return; }}\n".format(dirnVisePositions[var][2]))
+    declare_deriv_file.write("\tif (k<{}) return; \n".format(dirnVisePositions[var][2]))
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\tint nx = host_sz_x; \n")
+    declare_deriv_file.write("\tint ny = host_sz_y;\n")
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\tconst double {} = 1.0/{};\n".format(constVariables[var], distances[var]))
+    declare_deriv_file.write("\tconst double {} = {} / 12.0;\n".format(idx_by[var], constVariables[var]))
+    declare_deriv_file.write("\n")
+
+    declare_deriv_file.write("\tint pp = IDX(i, j, k);\n")
+    declare_deriv_file.write(
+        "\tint loc_pp = k_shared*{}*{} + j_shared*{} + i_shared;\n".format(tile_sz + 6, tile_sz + 6, tile_sz + 6))
+    declare_deriv_file.write("\n")
+
 with open("generated/deviceDerivsShared.cu", "w") as declare_deriv_file:
     addHeader(declare_deriv_file, "bssn/cuda_gr/cuda_src")
 
     declare_deriv_file.write("# include \"deviceDerivs.cuh\"\n")
     declare_deriv_file.write("\n")
-
-    # this should be taken from the user as a parameter
-    tile_sz = 10
     methodSignature = "__device__ void {}(int tile_size, double * output, double * dev_var_in, " \
                       "const int u_offset, double {}, const unsigned int host_sz_x, const unsigned int host_sz_y, " \
                       "const unsigned int host_sz_z, int bflag)\n"
+    # this should be taken from the user as a parameter
     for var in pd:
         declare_deriv_file.write(methodSignature.format(var, methodParameters[var]))
-        declare_deriv_file.write("{\n")
-        declare_deriv_file.write("\tint tile_x = blockIdx.x%tile_size;\n")
-        declare_deriv_file.write("\tint tile_y = blockIdx.x/tile_size%tile_size;\n")
-        declare_deriv_file.write("\tint tile_z = blockIdx.x/tile_size/tile_size;\n")
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\tint x_offset = tile_x*{};\n".format(tile_sz))
-        declare_deriv_file.write("\tint y_offset = tile_y*{};\n".format(tile_sz))
-        declare_deriv_file.write("\tint z_offset = tile_z*{};\n".format(tile_sz))
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\tint i_thread = threadIdx.x % {};\n".format(tile_sz))
-        declare_deriv_file.write("\tint j_thread = threadIdx.x/{}%{};\n".format(tile_sz, tile_sz))
-        declare_deriv_file.write("\tint k_thread = threadIdx.x/{}/{};\n".format(tile_sz, tile_sz))
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\tint i = i_thread + x_offset;\n")
-        declare_deriv_file.write("\tint j = j_thread + y_offset;\n")
-        declare_deriv_file.write("\tint k = k_thread + z_offset;\n")
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\t// associated shared memory location\n")
-        declare_deriv_file.write("\tint i_shared = i_thread + 3;\n")
-        declare_deriv_file.write("\tint j_shared = j_thread + 3;\n")
-        declare_deriv_file.write("\tint k_shared = k_thread + 3;\n")
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\tif (i>=host_sz_x-{}) {{ return; }}\n".format(dirnVisePositions[var][0]))
-        declare_deriv_file.write("\tif (i<{}) return; \n".format(dirnVisePositions[var][0]))
-        declare_deriv_file.write("\tif (j>=host_sz_y-{}) {{ return; }}\n".format(dirnVisePositions[var][1]))
-        declare_deriv_file.write("\tif (j<{}) return; \n".format(dirnVisePositions[var][1]))
-        declare_deriv_file.write("\tif (k>=host_sz_z-{}) {{ return; }}\n".format(dirnVisePositions[var][2]))
-        declare_deriv_file.write("\tif (k<{}) return; \n".format(dirnVisePositions[var][2]))
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\tint nx = host_sz_x; \n")
-        declare_deriv_file.write("\tint ny = host_sz_y;\n")
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\tconst double {} = 1.0/{};\n".format(constVariables[var], distances[var]))
-        declare_deriv_file.write("\tconst double {} = {} / 12.0;\n".format(stencils[var][2], constVariables[var]))
-        declare_deriv_file.write("\n")
-
-        declare_deriv_file.write("\tint pp = IDX(i, j, k);\n")
-        declare_deriv_file.write("\tint loc_pp = k_shared*{}*{} + j_shared*{} + i_shared;\n".format(tile_sz+6, tile_sz+6, tile_sz+6))
-        declare_deriv_file.write("\n")
+        writeToFile(declare_deriv_file, var)
 
         declare_deriv_file.write(outputLine[var].format(
                                 stencils[var][0], stencils[var][1], stencils[var][1], stencils[var][0], stencils[var][2]))
 
         declare_deriv_file.write("\n")
 
+        declare_deriv_file.write("}\n")
+
+        declare_deriv_file.write("\n")
+
+    advMethodSignature = "__device__ void {}(int tile_size, double * output, double * dev_global_var_in," \
+                         " double * dev_var_in, int u_offset, double {}, int {}, const unsigned int host_sz_x, " \
+                         "const unsigned int host_sz_y, const unsigned int host_sz_z, int bflag)\n"
+
+    for var in adv:
+        declare_deriv_file.write(advMethodSignature.format(var, methodParameters[var], advBeta[var]))
+        writeToFile(declare_deriv_file, var)
+
+        declare_deriv_file.write("\tif (dev_global_var_in[{} + pp] > 0.0) {{\n".format(advBeta[var]))
+
+
+        declare_deriv_file.write(advOutputLineFirstPass.format(
+            advFirstPassParam[var][0], advFirstPassParam[var][1], advFirstPassParam[var][2], advFirstPassParam[var][3],
+            idx_by[var]))
+        declare_deriv_file.write("\t}\n")
+
+        declare_deriv_file.write("\telse {\n")
+        declare_deriv_file.write(advOutputLineSecondPass.format(
+            advSecondPassParam[var][0], advSecondPassParam[var][1], advSecondPassParam[var][2], advSecondPassParam[var][3],
+            idx_by[var]))
+
+        declare_deriv_file.write("\t}\n")
+
+        declare_deriv_file.write("\n")
         declare_deriv_file.write("}\n")
 
         declare_deriv_file.write("\n")
