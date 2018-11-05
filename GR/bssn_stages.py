@@ -7,6 +7,8 @@ import dendro
 from sympy import *
 from sympy.physics.vector.vector import Vector
 from sympy.printing.dot import dotprint
+
+import bssnUtils as utils
 ###################################################################
 # initialize
 ###################################################################
@@ -79,7 +81,6 @@ igt = dendro.get_inverse_metric()
 
 C1 = dendro.get_first_christoffel()
 C2 = dendro.get_second_christoffel()
-#what's this...tried to comment it out and python compilation fails
 C2_spatial = dendro.get_complete_christoffel(chi)
 R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 ###################################################################
@@ -88,9 +89,7 @@ R, Rt, Rphi, CalGt = dendro.compute_ricci(Gt, chi)
 
 a_rhs = l1*dendro.lie(b, a) - 2*a*K + 0*dendro.kodiss(a)
 
-#[ewh] In the had code, this is treated as an advective derivative.
-#      I think this should be:
-#         l2 * dendro.vec_j_del_j(b, b[i])
+
 b_rhs = [ S(3)/4 * (lf0 + lf1*a) * B[i] +
         l2 * dendro.vec_j_ad_j(b, b[i])
          for i in dendro.e_i ] + 0*dendro.kodiss(b)
@@ -101,10 +100,8 @@ chi_rhs = dendro.lie(b, chi, weight) + Rational(2,3) * (chi*a*K) + 0*dendro.kodi
 
 AikAkj = Matrix([sum([At[i, k] * sum([dendro.inv_metric[k, l]*At[l, j] for l in dendro.e_i]) for k in dendro.e_i]) for i, j in dendro.e_ij])
 
-#ewh2 At_rhs = dendro.lie(b, At, weight) + dendro.trace_free(chi*(dendro.DiDj(a) + a*R)) + a*(K*At - 2*AikAkj.reshape(3, 3))
 At_rhs = dendro.lie(b, At, weight) + chi*dendro.trace_free( a*R - dendro.DiDj(a)) + a*(K*At - 2*AikAkj.reshape(3, 3)) + 0*dendro.kodiss(At)
 
-#K_rhs = dendro.vec_k_del_k(b, K) - dendro.laplacian(a) + a*(1/3*K*K + dendro.sqr(At))
 K_rhs = dendro.lie(b, K) - dendro.laplacian(a,chi) + a*(K*K/3 + dendro.sqr(At)) + 0*dendro.kodiss(K)
 
 At_UU = dendro.up_up(At)
@@ -149,51 +146,26 @@ B_rhs = [_Gt_rhs[i] - eta_func * B[i] +
          l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
          for i in dendro.e_i]
 
-'''
-#Note: B_rhs has some mismatches with staged version with unstaged gpu code. but gpu /cpu unstaged versions match. Hence, B_rhs is changed to unstaged version 
-B_rhs = [Gt_rhs[i] - eta_func * B[i] +
-         l3 * dendro.vec_j_ad_j(b, B[i]) -
-         l4 * dendro.vec_j_ad_j(b, Gt[i]) + 0*kod(i,B[i])
-         for i in dendro.e_i]
-'''
-
-
-#_I = gt*igt
-#print(simplify(_I))
-
-#_I = gt*dendro.inv_metric
-#print(simplify(_I))
-
-
-###
-# Substitute ...
-#for expr in [a_rhs, b_rhs[0], b_rhs[1], b_rhs[2], B_rhs[0], B_rhs[1], B_rhs[2], K_rhs, chi_rhs, Gt_rhs[0], Gt_rhs[1], Gt_rhs[2], gt_rhs[0], gt_rhs[0,0], gt_rhs[1,1], gt_rhs[2,2], gt_rhs[0,1], gt_rhs[0,2], gt_rhs[1,2], At_rhs[0,0], At_rhs[0,1], At_rhs[0,2], At_rhs[1,1], At_rhs[1,2], At_rhs[2,2]]:
-#    for var in [a, b[0], b[1], b[2], B[0], B[1], B[2], chi, K, gt[0,0], gt[0,1], gt[0,2], gt[1,1], gt[1,2], gt[2,2], Gt[0], Gt[1], Gt[2], At[0,0], At[0,1], At[0,2], At[1,1], At[1,2], At[2,2]]:
-#        expr.subs(d2(1,0,var), d2(0,1,var))
-#        expr.subs(d2(2,1,var), d2(1,2,var))
-#        expr.subs(d2(2,0,var), d2(0,2,var))
-#
-#print (a_rhs)
-#print (G_rhs)
-
-
-###################################################################
-# generate code
-###################################################################
-
-#outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, CalGt, Gt_rhs_s1, Gt_rhs_s2, Gt_rhs_s3, Gt_rhs_s4, Gt_rhs_s5, Gt_rhs_s6, Gt_rhs_s7, Gt_rhs, B_rhs]
-#vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'CalGt', 'Gt_rhs_s1_', 'Gt_rhs_s2_', 'Gt_rhs_s3_', 'Gt_rhs_s4_', 'Gt_rhs_s5_', 'Gt_rhs_s6_', 'Gt_rhs_s7_', 'Gt_rhs', 'B_rhs']
-
 outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, CalGt, Gt_rhs_s1, Gt_rhs_s2, Gt_rhs_s3, Gt_rhs_s4, Gt_rhs_s5, Gt_rhs_s6, Gt_rhs_s7, Gt_rhs, B_rhs]
 vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'CalGt', 'Gt_rhs_s1_', 'Gt_rhs_s2_', 'Gt_rhs_s3_', 'Gt_rhs_s4_', 'Gt_rhs_s5_', 'Gt_rhs_s6_', 'Gt_rhs_s7_', 'Gt_rhs', 'B_rhs']
 
-#dendro.generate_debug(outs, vnames)
-#dendro.generate(outs, vnames, '[pp]')
-#numVars=len(outs)
-#for i in range(0,numVars):
-    #dendro.generate_separate([outs[i]],[vnames[i]],'[pp]')
 
-#dendro.generate_separate([outs[4]],[vnames[4]],'[pp]')
 
-#dendro.generate_separate([Gt_rhs],['Gt_rhs'],'[pp]')
-#dendro.generate([CalGt, Gt_rhs_s1, Gt_rhs_s2, Gt_rhs_s3, Gt_rhs_s4, Gt_rhs_s5, Gt_rhs_s6, Gt_rhs_s7, Gt_rhs,B_rhs],['CalGt', 'Gt_rhs_s1', 'Gt_rhs_s2', 'Gt_rhs_s3', 'Gt_rhs_s4', 'Gt_rhs_s5', 'Gt_rhs_s6', 'Gt_rhs_s7', 'Gt_rhs', 'B_rhs'],'[pp]')
+###################################################################################
+#
+#Generate  code using RHS code with shared memory utilization  method in bssnUtils
+#
+###################################################################################
+
+
+########################################################################################
+#Generating code that uses 100% shared memory without manipulating thread number by user
+########################################################################################
+utils.cudaComputeRHSSourceUnStaged("rhs_unstaged_shared.cu",outs,vnames)
+
+
+###############################################################################################
+#Generating the code that uses shared memory maintaining the user defined thread no per block
+#User can define max_alloc_threads
+###############################################################################################
+# utils.cudaComputeRHSSourceUnStaged_thread_No_preserved("rhs_user defined_threadNo.cu",outs,vnames)
