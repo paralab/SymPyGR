@@ -127,3 +127,15 @@ if(WITH_CUDA)
     target_link_libraries(cudaBSSN bssn_cuda m)
     target_link_libraries(cudaBSSN ${CUDA_LIBS})
 endif()
+
+
+
+
+
+set(SOURCE_FILES examples/include/rhsTest.h examples/src/rhsTest.cpp ${INC_FILES} ${SRC_FILES} )
+add_executable(rhsTest ${SOURCE_FILES})
+target_include_directories(rhsTest PRIVATE include)
+target_include_directories(rhsTest PRIVATE examples/include)
+target_include_directories(rhsTest PRIVATE utils)
+target_link_libraries(rhsTest bssnUtils m)
+
