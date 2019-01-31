@@ -18,7 +18,8 @@ source code for the example is located at bssn/examples/include/rhsTest.h and bs
 execute, `./rhsTest 0 4 10` the
 par 1 : min level of the block.
 par 2: max level of the block.
-par 3: total number of blocks, 
+par 3: total number of blocks,
+par 4: mode 0 for unstaged 1 to staged.  
 This will create a Gaussian distribution of blocks where the levels are between min and max level, mean is (min+max)/2
 This will execute both staged and unstaged version for the smooth initial data.
 
