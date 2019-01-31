@@ -10,8 +10,8 @@ if(OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-option(WITH_CUDA " build with cuda " ON)
-option(BSSN_ENABLE_CUDA "enable cuda execution" ON)
+option(WITH_CUDA " build with cuda " OFF)
+option(BSSN_ENABLE_CUDA "enable cuda execution" OFF)
 
 
 if(BSSN_ENABLE_CUDA)
