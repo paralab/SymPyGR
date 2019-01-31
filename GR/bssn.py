@@ -128,7 +128,7 @@ B_rhs = [Gt_rhs[i] - eta_func * B[i] +
 outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
 vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
 #dendro.generate_debug(outs, vnames)
-#dendro.generate(outs, vnames, '[pp]')
+dendro.generate(outs, vnames, '[pp]')
 #numVars=len(outs)
 #for i in range(0,numVars):
 #    dendro.generate_separate([outs[i]],[vnames[i]],'[pp]')
