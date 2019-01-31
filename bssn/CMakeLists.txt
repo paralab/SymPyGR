@@ -125,7 +125,7 @@ target_link_libraries(cudaBSSN bssnUtils m)
 if(WITH_CUDA)
     target_include_directories(cudaBSSN PRIVATE ${CUDA_INCLUDE_DIRS})
     target_link_libraries(cudaBSSN bssn_cuda m)
-    target_link_libraries(cudaBSSN ${CUDA_LIBS})
+    target_link_libraries(cudaBSSN ${CUDA_LIBRARIES})
 endif()
 
 
@@ -139,3 +139,6 @@ target_include_directories(rhsTest PRIVATE examples/include)
 target_include_directories(rhsTest PRIVATE utils)
 target_link_libraries(rhsTest bssnUtils m)
 
+if(WITH_CUDA)
+    target_link_libraries(rhsTest ${CUDA_LIBRARIES})
+endif()
