@@ -3,6 +3,23 @@ project(bssn)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+option(GCC_INSTSCHED "Enable gcc instruction scheduling" OFF)
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -fopenmp -ffast-math -fstrict-aliasing -march=native -mfma -fschedule-insns2 -fsched-pressure -ffp-contract=fast")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -fopenmp -ffast-math -fstrict-aliasing -march=native -mfma -fschedule-insns2 -fsched-pressure -ffp-contract=fast")
+    if (GCC_INSTSCHED)
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fschedule-insns")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fschedule-insns")
+    else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-schedule-insns")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-schedule-insns")
+    endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -qopenmp -no-prec-div -march=native -fp-model fast=2 -complex-limited-range" )
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -qopenmp -no-prec-div -march=native -fp-model fast=2 -complex-limited-range" )
+endif()
+
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
