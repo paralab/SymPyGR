@@ -3,6 +3,23 @@ project(bssn)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
+option(GCC_INSTSCHED "Enable gcc instruction scheduling" OFF)
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -fopenmp -ffast-math -fstrict-aliasing -march=native -mfma -fschedule-insns2 -fsched-pressure -ffp-contract=fast")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -fopenmp -ffast-math -fstrict-aliasing -march=native -mfma -fschedule-insns2 -fsched-pressure -ffp-contract=fast")
+    if (GCC_INSTSCHED)
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fschedule-insns")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fschedule-insns")
+    else()
+	set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-schedule-insns")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-schedule-insns")
+    endif()
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -qopenmp -no-prec-div -march=native -fp-model fast=2 -complex-limited-range" )
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -qopenmp -no-prec-div -march=native -fp-model fast=2 -complex-limited-range" )
+endif()
+
 find_package(OpenMP REQUIRED)
 if(OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
@@ -10,8 +27,8 @@ if(OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-option(WITH_CUDA " build with cuda " ON)
-option(BSSN_ENABLE_CUDA "enable cuda execution" ON)
+option(WITH_CUDA " build with cuda " OFF)
+option(BSSN_ENABLE_CUDA "enable cuda execution" OFF)
 
 
 if(BSSN_ENABLE_CUDA)
@@ -125,5 +142,20 @@ target_link_libraries(cudaBSSN bssnUtils m)
 if(WITH_CUDA)
     target_include_directories(cudaBSSN PRIVATE ${CUDA_INCLUDE_DIRS})
     target_link_libraries(cudaBSSN bssn_cuda m)
-    target_link_libraries(cudaBSSN ${CUDA_LIBS})
+    target_link_libraries(cudaBSSN ${CUDA_LIBRARIES})
+endif()
+
+
+
+
+
+set(SOURCE_FILES examples/include/rhsTest.h examples/src/rhsTest.cpp ${INC_FILES} ${SRC_FILES} )
+add_executable(rhsTest ${SOURCE_FILES})
+target_include_directories(rhsTest PRIVATE include)
+target_include_directories(rhsTest PRIVATE examples/include)
+target_include_directories(rhsTest PRIVATE utils)
+target_link_libraries(rhsTest bssnUtils m)
+
+if(WITH_CUDA)
+    target_link_libraries(rhsTest ${CUDA_LIBRARIES})
 endif()

@@ -189,9 +189,9 @@ vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'CalGt', 'Gt
 
 #dendro.generate_debug(outs, vnames)
 #dendro.generate(outs, vnames, '[pp]')
-#numVars=len(outs)
-#for i in range(0,numVars):
-    #dendro.generate_separate([outs[i]],[vnames[i]],'[pp]')
+numVars=len(outs)
+for i in range(0,numVars):
+    dendro.generate_separate([outs[i]],[vnames[i]],'[pp]')
 
 #dendro.generate_separate([outs[4]],[vnames[4]],'[pp]')
 
