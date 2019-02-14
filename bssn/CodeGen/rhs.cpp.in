@@ -1,5 +1,5 @@
 #include "rhs.h"
-#include "gr.h"
+
 
 using namespace std;
 using namespace bssn;
@@ -148,9 +148,9 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
             cog.outl("\t deriv_zz(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_DD[5] + var ,var))
 
         if var in bssnDerivs.AD:
-            cog.outl("\t adv_deriv_x(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_AD[0] + var ,var))
-            cog.outl("\t adv_deriv_y(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_AD[1] + var ,var))
-            cog.outl("\t adv_deriv_z(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_AD[2] + var ,var))
+            cog.outl("\t adv_deriv_x(%s, %s, hx, sz, beta0, bflag);" %(bssnDerivs.PREFIX_AD[0] + var ,var))
+            cog.outl("\t adv_deriv_y(%s, %s, hx, sz, beta1, bflag);" %(bssnDerivs.PREFIX_AD[1] + var ,var))
+            cog.outl("\t adv_deriv_z(%s, %s, hx, sz, beta2, bflag);" %(bssnDerivs.PREFIX_AD[2] + var ,var))
 
 
 
@@ -199,14 +199,14 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
 #else
                 /*[[[cog
 
                 import dendro
                 import bssn
 
-# modify to use the eta const value. 
+                # modify to use the eta const value.
                 bssn.eta_func=bssn.eta
                 bssn.B_rhs = [bssn.Gt_rhs[i] - bssn.eta_func * bssn.B[i] +
                          bssn.l3 * dendro.vec_j_ad_j(bssn.b, bssn.B[i]) -
@@ -215,8 +215,8 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
 
                 outs = [bssn.a_rhs, bssn.b_rhs, bssn.gt_rhs, bssn.chi_rhs, bssn.At_rhs, bssn.K_rhs, bssn.Gt_rhs, bssn.B_rhs]
                 vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
-#outs=outs[0:3]
-#vnames=vnames[0:3]
+                #outs=outs[0:3]
+                #vnames=vnames[0:3]
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
 
@@ -576,14 +576,14 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
             cog.outl("\t deriv_zz(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_DD[5] + var ,var))
 
         if var in bssnDerivs.AD:
-            cog.outl("\t adv_deriv_x(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_AD[0] + var ,var))
-            cog.outl("\t adv_deriv_y(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_AD[1] + var ,var))
-            cog.outl("\t adv_deriv_z(%s, %s, hx, sz, bflag);" %(bssnDerivs.PREFIX_AD[2] + var ,var))
+            cog.outl("\t adv_deriv_x(%s, %s, hx, sz, beta0, bflag);" %(bssnDerivs.PREFIX_AD[0] + var ,var))
+            cog.outl("\t adv_deriv_y(%s, %s, hx, sz, beta1, bflag);" %(bssnDerivs.PREFIX_AD[1] + var ,var))
+            cog.outl("\t adv_deriv_z(%s, %s, hx, sz, beta2, bflag);" %(bssnDerivs.PREFIX_AD[2] + var ,var))
 
 
 
     ]]]*/
-//[[[end]]]
+    //[[[end]]]
 
 
     bssn::timer::t_deriv.stop();
@@ -616,7 +616,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                     eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);
                 }
 
-// a_rhs
+                // a_rhs
 
                 /*[[[cog
 
@@ -628,7 +628,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
 
             }
         }
@@ -638,7 +638,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
     bssn::timer::t_rhs_a.stop();
 
     bssn::timer::t_rhs_b.start();
-// b_rhs
+    // b_rhs
 
 
     for (unsigned int k = 3; k < nz-3; k++) {
@@ -666,7 +666,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -700,7 +700,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -733,7 +733,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -798,7 +798,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -832,7 +832,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -859,11 +859,11 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 import bssn_stages
 
                 outs = [bssn_stages.Gt_rhs_s1]
-                vnames = ['Gt_rhs_s1']
+                vnames = ['Gt_rhs_s1_']
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -890,11 +890,11 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 import bssn_stages
 
                 outs = [bssn_stages.Gt_rhs_s2]
-                vnames = ['Gt_rhs_s2']
+                vnames = ['Gt_rhs_s2_']
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -921,11 +921,11 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 import bssn_stages
 
                 outs = [bssn_stages.Gt_rhs_s3]
-                vnames = ['Gt_rhs_s3']
+                vnames = ['Gt_rhs_s3_']
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -951,11 +951,11 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 import bssn_stages
 
                 outs = [bssn_stages.Gt_rhs_s4]
-                vnames = ['Gt_rhs_s4']
+                vnames = ['Gt_rhs_s4_']
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -981,11 +981,11 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 import bssn_stages
 
                 outs = [bssn_stages.Gt_rhs_s5]
-                vnames = ['Gt_rhs_s5']
+                vnames = ['Gt_rhs_s5_']
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -1012,11 +1012,11 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 import bssn_stages
 
                 outs = [bssn_stages.Gt_rhs_s6]
-                vnames = ['Gt_rhs_s6']
+                vnames = ['Gt_rhs_s6_']
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -1043,11 +1043,11 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 import bssn_stages
 
                 outs = [bssn_stages.Gt_rhs_s7]
-                vnames = ['Gt_rhs_s7']
+                vnames = ['Gt_rhs_s7_']
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -1077,7 +1077,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -1149,7 +1149,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
                 dendro.generate_cpu(outs, vnames, '[pp]')
 
                 ]]]*/
-//[[[end]]]
+                //[[[end]]]
             }
         }
     }
@@ -1367,7 +1367,7 @@ void bssnrhs_sep(double **unzipVarsRHS, const double **uZipVars,
         cog.outl("\t free(%s);" %(deriv))
 
     ]]]*/
-//[[[end]]]
+    //[[[end]]]
     bssn::timer::t_deriv.stop();
 
 #if 0

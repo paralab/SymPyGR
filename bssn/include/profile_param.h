@@ -22,6 +22,15 @@ namespace bssn
         extern bssn_profiler_t 	total_runtime;
         extern bssn_profiler_t	t_deriv;
         extern bssn_profiler_t	t_rhs;
+        extern bssn_profiler_t	t_rhs_a;
+        extern bssn_profiler_t	t_rhs_b;
+        extern bssn_profiler_t	t_rhs_gt;
+        extern bssn_profiler_t	t_rhs_chi;
+        extern bssn_profiler_t	t_rhs_At;
+        extern bssn_profiler_t	t_rhs_K;
+        extern bssn_profiler_t	t_rhs_Gt;
+        extern bssn_profiler_t	t_rhs_B;
+
         extern bssn_profiler_t  t_bdyc;
 
 

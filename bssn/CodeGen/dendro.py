@@ -19,8 +19,8 @@ import re as regex
 
 import string
 import random
+import cog
 
-from cogapp import Cog
 
 # internal variables
 undef = symbols('undefined')

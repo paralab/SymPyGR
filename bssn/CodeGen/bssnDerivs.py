@@ -114,7 +114,7 @@ def computeRHSDerivs():
 
 def deallocDerivMemory():
     
-     for deriv in FUNC_D_I:
+    for deriv in FUNC_D_I:
         cog.outl("\t free(%s);" %(deriv))
 
     for deriv in FUNC_D_IJ:
