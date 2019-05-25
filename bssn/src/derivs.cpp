@@ -8,8 +8,8 @@
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42_x(double * const  Dxu, const double * const  u,
-               const double dx, const unsigned int *sz, unsigned bflag)
+void deriv42_x(double * __restrict const  Dxu, const double * __restrict const  u,
+               const double dx, const unsigned int * __restrict sz, unsigned bflag)
 {
 
   const double idx = 1.0/dx;
@@ -86,8 +86,8 @@ void deriv42_x(double * const  Dxu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42_y(double * const  Dyu, const double * const  u,
-               const double dy, const unsigned int *sz, unsigned bflag)
+void deriv42_y(double * __restrict const  Dyu, const double * __restrict const  u,
+               const double dy, const unsigned int * __restrict sz, unsigned bflag)
 {
   const double idy = 1.0/dy;
   const double idy_by_2 = 0.50 * idy;
@@ -162,8 +162,8 @@ void deriv42_y(double * const  Dyu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42_z(double * const  Dzu, const double * const  u,
-               const double dz, const unsigned int *sz, unsigned bflag)
+void deriv42_z(double * const __restrict  Dzu, const double * __restrict const  u,
+               const double dz, const unsigned int * __restrict sz, unsigned bflag)
 {
   const double idz = 1.0/dz;
   const double idz_by_2 = 0.50 * idz;
@@ -241,8 +241,8 @@ void deriv42_z(double * const  Dzu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42_xx(double * const  DxDxu, const double * const  u,
-                const double dx, const unsigned int *sz, unsigned bflag)
+void deriv42_xx(double * const __restrict  DxDxu, const double * const __restrict  u,
+                const double dx, const unsigned int * __restrict sz, unsigned bflag)
 {
 
   const double idx_sqrd = 1.0/(dx*dx);
@@ -326,8 +326,8 @@ void deriv42_xx(double * const  DxDxu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42_yy(double * const  DyDyu, const double * const  u,
-                const double dy, const unsigned int *sz, unsigned bflag)
+void deriv42_yy(double * const __restrict  DyDyu, const double * const __restrict  u,
+                const double dy, const unsigned int * __restrict sz, unsigned bflag)
 {
 
   const double idy_sqrd = 1.0/(dy*dy);
@@ -407,8 +407,8 @@ void deriv42_yy(double * const  DyDyu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42_zz(double * const  DzDzu, const double * const  u,
-                const double dz, const unsigned int *sz, unsigned bflag)
+void deriv42_zz(double * const __restrict  DzDzu, const double * const __restrict  u,
+                const double dz, const unsigned int * __restrict sz, unsigned bflag)
 {
 
   const double idz_sqrd = 1.0/(dz*dz);
@@ -491,9 +491,9 @@ void deriv42_zz(double * const  DzDzu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42adv_x(double * const  Dxu, const double * const  u,
-                  const double dx, const unsigned int *sz,
-                  const double * const betax, unsigned bflag)
+void deriv42adv_x(double * const __restrict  Dxu, const double * const __restrict  u,
+                  const double dx, const unsigned int * __restrict sz,
+                  const double * const __restrict betax, unsigned bflag)
 {
 
   const double idx = 1.0/dx;
@@ -632,9 +632,9 @@ void deriv42adv_x(double * const  Dxu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42adv_y(double * const  Dyu, const double * const  u,
-                  const double dy, const unsigned int *sz,
-                  const double * const betay, unsigned bflag)
+void deriv42adv_y(double * const __restrict  Dyu, const double * const __restrict  u,
+                  const double dy, const unsigned int * __restrict sz,
+                  const double * const __restrict betay, unsigned bflag)
 {
 
   const double idy = 1.0/dy;
@@ -772,9 +772,9 @@ void deriv42adv_y(double * const  Dyu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void deriv42adv_z(double * const  Dzu, const double * const  u,
-                  const double dz, const unsigned int *sz,
-                  const double * const betaz, unsigned bflag)
+void deriv42adv_z(double * const __restrict  Dzu, const double * const __restrict  u,
+                  const double dz, const unsigned int * __restrict sz,
+                  const double * const __restrict betaz, unsigned bflag)
 {
 
   const double idz = 1.0/dz;
@@ -911,8 +911,8 @@ void deriv42adv_z(double * const  Dzu, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void ko_deriv42_x(double * const  Du, const double * const  u,
-                const double dx, const unsigned int *sz, unsigned bflag)
+void ko_deriv42_x(double * const __restrict  Du, const double * const __restrict  u,
+                const double dx, const unsigned int * __restrict sz, unsigned bflag)
 {
 
   double pre_factor_6_dx = -1.0 / 64.0 / dx;
@@ -1027,8 +1027,8 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void ko_deriv42_y(double * const  Du, const double * const  u,
-                const double dy, const unsigned int *sz, unsigned bflag)
+void ko_deriv42_y(double * const __restrict  Du, const double * const __restrict  u,
+                const double dy, const unsigned int * __restrict sz, unsigned bflag)
 {
 
   double pre_factor_6_dy = -1.0 / 64.0 / dy;
@@ -1144,8 +1144,8 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
  *
  *
  *----------------------------------------------------------------------*/
-void ko_deriv42_z(double * const  Du, const double * const  u,
-                const double dz, const unsigned *sz, unsigned bflag)
+void ko_deriv42_z(double * const __restrict  Du, const double * const __restrict  u,
+                const double dz, const unsigned * __restrict sz, unsigned bflag)
 {
 
   double pre_factor_6_dz = -1.0 / 64.0 / dz;
