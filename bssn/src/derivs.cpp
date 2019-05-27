@@ -25,7 +25,7 @@ void deriv42_x(double * __restrict const  Dxu, const double * __restrict const  
   const int ie = sz[0]-3;
   const int je = sz[1]-1;
   const int ke = sz[2]-1;
-    const int n=1;
+  const int n=1;
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
@@ -106,8 +106,8 @@ void deriv42_y(double * __restrict const  Dyu, const double * __restrict const  
     const int n=nx;
 
   for (int k = kb; k < ke; k++) {
-    for (int i = ib; i < ie; i++) {
-      for (int j = jb; j < je; j++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
         int pp = IDX(i,j,k);
         Dyu[pp] = (u[pp-2*nx] - 8.0*u[pp-nx] + 8.0*u[pp+nx] - u[pp+2*nx])*idy_by_12;
       }
@@ -181,9 +181,9 @@ void deriv42_z(double * const __restrict  Dzu, const double * __restrict const  
 
   const int n = nx*ny;
 
-  for (int j = jb; j < je; j++) {
-    for (int i = ib; i < ie; i++) {
-      for (int k = kb; k < ke; k++) {
+  for (int k = kb; k < ke; k++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
         int pp = IDX(i,j,k);
         Dzu[pp] = (u[pp-2*n] - 8.0*u[pp-n] + 8.0*u[pp+n] - u[pp+2*n]) * idz_by_12;
       }
@@ -344,8 +344,8 @@ void deriv42_yy(double * const __restrict  DyDyu, const double * const __restric
   const int ke = sz[2] - 3;
 
   for (int k = kb; k < ke; k++) {
-    for (int i = ib; i < ie; i++) {
-      for (int j = jb; j < je; j++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
         int pp = IDX(i,j,k);
         DyDyu[pp] = ( -u[pp-2*nx] + 16.0 * u[pp-nx] - 30.0 * u[pp]
                                + 16.0 * u[pp+nx] - u[pp+2*nx]
@@ -426,9 +426,9 @@ void deriv42_zz(double * const __restrict  DzDzu, const double * const __restric
 
   const int n = nx * ny;
 
-  for (int j = jb; j < je; j++) {
-    for (int i = ib; i < ie; i++) {
-      for (int k = kb; k < ke; k++) {
+  for (int k = kb; k < ke; k++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
         int pp = IDX(i,j,k);
         DzDzu[pp] = ( - u[pp-2*n] + 16.0 * u[pp-n] - 30.0 * u[pp]
                    + 16.0 * u[pp+n] - u[pp+2*n] ) * idz_sqrd_by_12;
@@ -652,8 +652,8 @@ void deriv42adv_y(double * const __restrict  Dyu, const double * const __restric
   const int ke = sz[2] - 3;
 
   for (int k = kb; k < ke; k++) {
-    for (int i = ib; i < ie; i++) {
-      for (int j = jb; j < je; j++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
         int pp = IDX(i,j,k);
         if (betay[pp] > 0.0 ) {
           Dyu[pp] = ( -  3.0 * u[pp-nx]
@@ -793,9 +793,9 @@ void deriv42adv_z(double * const __restrict  Dzu, const double * const __restric
 
   const int n = nx * ny;
 
-  for (int j = jb; j < je; j++) {
-    for (int i = ib; i < ie; i++) {
-      for (int k = kb; k < ke; k++) {
+  for (int k = kb; k < ke; k++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
         int pp = IDX(i,j,k);
         if (betaz[pp] > 0.0 ) {
           Dzu[pp] = ( -  3.0 * u[pp-n]
@@ -1051,8 +1051,8 @@ void ko_deriv42_y(double * const __restrict  Du, const double * const __restrict
   const int ke = sz[2] - 3;
 
   for (int k = kb; k < ke; k++) {
-    for (int i = ib; i < ie; i++) {
-       for (int j = jb; j < je; j++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
           int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dy *
                          (
@@ -1168,11 +1168,10 @@ void ko_deriv42_z(double * const __restrict  Du, const double * const __restrict
   const int ke = sz[2] - 3;
 
   const int n = nx * ny;
-
-  for (int j = jb; j < je; j++) {
-    for (int i = ib; i < ie; i++) {
-       for (int k = kb; k < ke; k++) {
-          int pp = IDX(i,j,j);
+  for (int k = kb; k < ke; k++) {
+    for (int j = jb; j < je; j++) {
+      for (int i = ib; i < ie; i++) {
+        int pp = IDX(i,j,j);
           Du[IDX(i,j,j)] = pre_factor_6_dz *
                          (
                          -      u[pp-3*n]
