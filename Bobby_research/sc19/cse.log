@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6800 64-bit) (preloaded format=pdflatex 2018.9.11)  30 JUL 2019 10:17
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6800 64-bit) (preloaded format=pdflatex 2018.9.11)  30 JUL 2019 15:51
 entering extended mode
 **./cse.tex
 (cse.tex
@@ -1254,28 +1254,72 @@ Package: geometry 2018/04/16 v5.8 Page Geometry
 \Gm@dimlist=\toks58
 
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\geometry\geometry.
-cfg"))
+cfg")) (picins.sty Option `picins' Version 3.0 Sep. 1992, TH Darmstadt/HRZ
+\@BILD=\box79
+\@TEXT=\box80
+\d@breite=\dimen295
+\d@hoehe=\dimen296
+\d@xoff=\dimen297
+\d@yoff=\dimen298
+\d@shad=\dimen299
+\d@dash=\dimen300
+\d@boxl=\dimen301
+\d@pichskip=\dimen302
+\d@tmp=\dimen303
+\d@tmpa=\dimen304
+\d@bskip=\dimen305
+\hsiz@=\dimen306
+\p@getot@l=\dimen307
+\c@breite=\count275
+\c@hoehe=\count276
+\c@xoff=\count277
+\c@yoff=\count278
+\c@pos=\count279
+\c@shad=\count280
+\c@dash=\count281
+\c@boxl=\count282
+\c@zeilen=\count283
+\@changemode=\count284
+\c@piccaption=\count285
+\c@piccaptionpos=\count286
+\c@picpos=\count287
+\c@whole=\count288
+\c@half=\count289
+\c@tmp=\count290
+\c@tmpa=\count291
+\c@tmpb=\count292
+\c@tmpc=\count293
+\c@tmpd=\count294
+\d@leftskip=\skip67
+\ptoti=\dimen308
+\ptotii=\dimen309
+\env@box=\box81
+\d@envdp=\dimen310
+\c@hsize=\count295
+\c@envdp=\count296
+\d@envb=\dimen311
+)
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\textpos\textpos.st
 y"
 Package: textpos 2019/04/15 v1.9.1
 
 Package: textpos 2019/04/15 1.9.1, absolute positioning of text on the page
-\TP@textbox=\box79
-\TPHorizModule=\dimen295
-\TPVertModule=\dimen296
-\TP@margin=\dimen297
-\TP@absmargin=\dimen298
+\TP@textbox=\box82
+\TPHorizModule=\dimen312
+\TPVertModule=\dimen313
+\TP@margin=\dimen314
+\TP@absmargin=\dimen315
 Grid set 16 x 16 = 135.50624pt x 180.67499pt
-\TPboxrulesize=\dimen299
+\TPboxrulesize=\dimen316
 \TP@tbargs=\toks59
-\TP@prevdepth=\dimen300
+\TP@prevdepth=\dimen317
 )
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\wrapfig\wrapfig.st
 y"
-\wrapoverhang=\dimen301
-\WF@size=\dimen302
-\c@WF@wrappedlines=\count275
-\WF@box=\box80
+\wrapoverhang=\dimen318
+\WF@size=\dimen319
+\c@WF@wrappedlines=\count297
+\WF@box=\box83
 \WF@everypar=\toks60
 Package: wrapfig 2003/01/31  v 3.6
 )
@@ -1302,171 +1346,171 @@ Package: expl3 2019-07-25 L3 programming layer (loader)
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\l3kernel\expl3-cod
 e.tex"
 Package: expl3 2019-07-25 L3 programming layer (code)
-\c_max_int=\count276
-\l_tmpa_int=\count277
-\l_tmpb_int=\count278
-\g_tmpa_int=\count279
-\g_tmpb_int=\count280
-\g__kernel_prg_map_int=\count281
-\c__ior_term_ior=\count282
-\c_log_iow=\count283
-\l_iow_line_count_int=\count284
-\l__iow_line_target_int=\count285
-\l__iow_one_indent_int=\count286
-\l__iow_indent_int=\count287
-\c_zero_dim=\dimen303
-\c_max_dim=\dimen304
-\l_tmpa_dim=\dimen305
-\l_tmpb_dim=\dimen306
-\g_tmpa_dim=\dimen307
-\g_tmpb_dim=\dimen308
-\c_zero_skip=\skip67
-\c_max_skip=\skip68
-\l_tmpa_skip=\skip69
-\l_tmpb_skip=\skip70
-\g_tmpa_skip=\skip71
-\g_tmpb_skip=\skip72
+\c_max_int=\count298
+\l_tmpa_int=\count299
+\l_tmpb_int=\count300
+\g_tmpa_int=\count301
+\g_tmpb_int=\count302
+\g__kernel_prg_map_int=\count303
+\c__ior_term_ior=\count304
+\c_log_iow=\count305
+\l_iow_line_count_int=\count306
+\l__iow_line_target_int=\count307
+\l__iow_one_indent_int=\count308
+\l__iow_indent_int=\count309
+\c_zero_dim=\dimen320
+\c_max_dim=\dimen321
+\l_tmpa_dim=\dimen322
+\l_tmpb_dim=\dimen323
+\g_tmpa_dim=\dimen324
+\g_tmpb_dim=\dimen325
+\c_zero_skip=\skip68
+\c_max_skip=\skip69
+\l_tmpa_skip=\skip70
+\l_tmpb_skip=\skip71
+\g_tmpa_skip=\skip72
+\g_tmpb_skip=\skip73
 \c_zero_muskip=\muskip12
 \c_max_muskip=\muskip13
 \l_tmpa_muskip=\muskip14
 \l_tmpb_muskip=\muskip15
 \g_tmpa_muskip=\muskip16
 \g_tmpb_muskip=\muskip17
-\l_keys_choice_int=\count288
-\l__intarray_loop_int=\count289
-\c__intarray_sp_dim=\dimen309
-\g__intarray_font_int=\count290
-\c__fp_leading_shift_int=\count291
-\c__fp_middle_shift_int=\count292
-\c__fp_trailing_shift_int=\count293
-\c__fp_big_leading_shift_int=\count294
-\c__fp_big_middle_shift_int=\count295
-\c__fp_big_trailing_shift_int=\count296
-\c__fp_Bigg_leading_shift_int=\count297
-\c__fp_Bigg_middle_shift_int=\count298
-\c__fp_Bigg_trailing_shift_int=\count299
-\c__kernel_randint_max_int=\count300
-\g__fp_array_int=\count301
-\l__fp_array_loop_int=\count302
-\l__sort_length_int=\count303
-\l__sort_min_int=\count304
-\l__sort_top_int=\count305
-\l__sort_max_int=\count306
-\l__sort_true_max_int=\count307
-\l__sort_block_int=\count308
-\l__sort_begin_int=\count309
-\l__sort_end_int=\count310
-\l__sort_A_int=\count311
-\l__sort_B_int=\count312
-\l__sort_C_int=\count313
-\l__str_internal_int=\count314
-\c__str_replacement_char_int=\count315
-\l__tl_analysis_normal_int=\count316
-\l__tl_analysis_index_int=\count317
-\l__tl_analysis_nesting_int=\count318
-\l__tl_analysis_type_int=\count319
-\l__regex_internal_a_int=\count320
-\l__regex_internal_b_int=\count321
-\l__regex_internal_c_int=\count322
-\l__regex_balance_int=\count323
-\l__regex_group_level_int=\count324
-\l__regex_mode_int=\count325
-\c__regex_cs_in_class_mode_int=\count326
-\c__regex_cs_mode_int=\count327
-\l__regex_catcodes_int=\count328
-\l__regex_default_catcodes_int=\count329
-\c__regex_catcode_D_int=\count330
-\c__regex_catcode_S_int=\count331
-\c__regex_catcode_L_int=\count332
-\c__regex_catcode_O_int=\count333
-\c__regex_catcode_A_int=\count334
-\c__regex_all_catcodes_int=\count335
-\l__regex_show_lines_int=\count336
-\l__regex_min_state_int=\count337
-\l__regex_max_state_int=\count338
-\l__regex_left_state_int=\count339
-\l__regex_right_state_int=\count340
-\l__regex_capturing_group_int=\count341
-\l__regex_min_pos_int=\count342
-\l__regex_max_pos_int=\count343
-\l__regex_curr_pos_int=\count344
-\l__regex_start_pos_int=\count345
-\l__regex_success_pos_int=\count346
-\l__regex_curr_char_int=\count347
-\l__regex_curr_catcode_int=\count348
-\l__regex_last_char_int=\count349
-\l__regex_case_changed_char_int=\count350
-\l__regex_curr_state_int=\count351
-\l__regex_step_int=\count352
-\l__regex_min_active_int=\count353
-\l__regex_max_active_int=\count354
-\l__regex_replacement_csnames_int=\count355
-\l__regex_match_count_int=\count356
-\l__regex_min_submatch_int=\count357
-\l__regex_submatch_int=\count358
-\l__regex_zeroth_submatch_int=\count359
-\g__regex_trace_regex_int=\count360
-\c_empty_box=\box81
-\l_tmpa_box=\box82
-\l_tmpb_box=\box83
-\g_tmpa_box=\box84
-\g_tmpb_box=\box85
-\l__box_top_dim=\dimen310
-\l__box_bottom_dim=\dimen311
-\l__box_left_dim=\dimen312
-\l__box_right_dim=\dimen313
-\l__box_top_new_dim=\dimen314
-\l__box_bottom_new_dim=\dimen315
-\l__box_left_new_dim=\dimen316
-\l__box_right_new_dim=\dimen317
-\l__box_internal_box=\box86
-\l__coffin_internal_box=\box87
-\l__coffin_internal_dim=\dimen318
-\l__coffin_offset_x_dim=\dimen319
-\l__coffin_offset_y_dim=\dimen320
-\l__coffin_x_dim=\dimen321
-\l__coffin_y_dim=\dimen322
-\l__coffin_x_prime_dim=\dimen323
-\l__coffin_y_prime_dim=\dimen324
-\c_empty_coffin=\box88
-\l__coffin_aligned_coffin=\box89
-\l__coffin_aligned_internal_coffin=\box90
-\l_tmpa_coffin=\box91
-\l_tmpb_coffin=\box92
-\g_tmpa_coffin=\box93
-\g_tmpb_coffin=\box94
-\l__coffin_bounding_shift_dim=\dimen325
-\l__coffin_left_corner_dim=\dimen326
-\l__coffin_right_corner_dim=\dimen327
-\l__coffin_bottom_corner_dim=\dimen328
-\l__coffin_top_corner_dim=\dimen329
-\l__coffin_scaled_total_height_dim=\dimen330
-\l__coffin_scaled_width_dim=\dimen331
-\c__coffin_empty_coffin=\box95
-\l__coffin_display_coffin=\box96
-\l__coffin_display_coord_coffin=\box97
-\l__coffin_display_pole_coffin=\box98
-\l__coffin_display_offset_dim=\dimen332
-\l__coffin_display_x_dim=\dimen333
-\l__coffin_display_y_dim=\dimen334
+\l_keys_choice_int=\count310
+\l__intarray_loop_int=\count311
+\c__intarray_sp_dim=\dimen326
+\g__intarray_font_int=\count312
+\c__fp_leading_shift_int=\count313
+\c__fp_middle_shift_int=\count314
+\c__fp_trailing_shift_int=\count315
+\c__fp_big_leading_shift_int=\count316
+\c__fp_big_middle_shift_int=\count317
+\c__fp_big_trailing_shift_int=\count318
+\c__fp_Bigg_leading_shift_int=\count319
+\c__fp_Bigg_middle_shift_int=\count320
+\c__fp_Bigg_trailing_shift_int=\count321
+\c__kernel_randint_max_int=\count322
+\g__fp_array_int=\count323
+\l__fp_array_loop_int=\count324
+\l__sort_length_int=\count325
+\l__sort_min_int=\count326
+\l__sort_top_int=\count327
+\l__sort_max_int=\count328
+\l__sort_true_max_int=\count329
+\l__sort_block_int=\count330
+\l__sort_begin_int=\count331
+\l__sort_end_int=\count332
+\l__sort_A_int=\count333
+\l__sort_B_int=\count334
+\l__sort_C_int=\count335
+\l__str_internal_int=\count336
+\c__str_replacement_char_int=\count337
+\l__tl_analysis_normal_int=\count338
+\l__tl_analysis_index_int=\count339
+\l__tl_analysis_nesting_int=\count340
+\l__tl_analysis_type_int=\count341
+\l__regex_internal_a_int=\count342
+\l__regex_internal_b_int=\count343
+\l__regex_internal_c_int=\count344
+\l__regex_balance_int=\count345
+\l__regex_group_level_int=\count346
+\l__regex_mode_int=\count347
+\c__regex_cs_in_class_mode_int=\count348
+\c__regex_cs_mode_int=\count349
+\l__regex_catcodes_int=\count350
+\l__regex_default_catcodes_int=\count351
+\c__regex_catcode_D_int=\count352
+\c__regex_catcode_S_int=\count353
+\c__regex_catcode_L_int=\count354
+\c__regex_catcode_O_int=\count355
+\c__regex_catcode_A_int=\count356
+\c__regex_all_catcodes_int=\count357
+\l__regex_show_lines_int=\count358
+\l__regex_min_state_int=\count359
+\l__regex_max_state_int=\count360
+\l__regex_left_state_int=\count361
+\l__regex_right_state_int=\count362
+\l__regex_capturing_group_int=\count363
+\l__regex_min_pos_int=\count364
+\l__regex_max_pos_int=\count365
+\l__regex_curr_pos_int=\count366
+\l__regex_start_pos_int=\count367
+\l__regex_success_pos_int=\count368
+\l__regex_curr_char_int=\count369
+\l__regex_curr_catcode_int=\count370
+\l__regex_last_char_int=\count371
+\l__regex_case_changed_char_int=\count372
+\l__regex_curr_state_int=\count373
+\l__regex_step_int=\count374
+\l__regex_min_active_int=\count375
+\l__regex_max_active_int=\count376
+\l__regex_replacement_csnames_int=\count377
+\l__regex_match_count_int=\count378
+\l__regex_min_submatch_int=\count379
+\l__regex_submatch_int=\count380
+\l__regex_zeroth_submatch_int=\count381
+\g__regex_trace_regex_int=\count382
+\c_empty_box=\box84
+\l_tmpa_box=\box85
+\l_tmpb_box=\box86
+\g_tmpa_box=\box87
+\g_tmpb_box=\box88
+\l__box_top_dim=\dimen327
+\l__box_bottom_dim=\dimen328
+\l__box_left_dim=\dimen329
+\l__box_right_dim=\dimen330
+\l__box_top_new_dim=\dimen331
+\l__box_bottom_new_dim=\dimen332
+\l__box_left_new_dim=\dimen333
+\l__box_right_new_dim=\dimen334
+\l__box_internal_box=\box89
+\l__coffin_internal_box=\box90
+\l__coffin_internal_dim=\dimen335
+\l__coffin_offset_x_dim=\dimen336
+\l__coffin_offset_y_dim=\dimen337
+\l__coffin_x_dim=\dimen338
+\l__coffin_y_dim=\dimen339
+\l__coffin_x_prime_dim=\dimen340
+\l__coffin_y_prime_dim=\dimen341
+\c_empty_coffin=\box91
+\l__coffin_aligned_coffin=\box92
+\l__coffin_aligned_internal_coffin=\box93
+\l_tmpa_coffin=\box94
+\l_tmpb_coffin=\box95
+\g_tmpa_coffin=\box96
+\g_tmpb_coffin=\box97
+\l__coffin_bounding_shift_dim=\dimen342
+\l__coffin_left_corner_dim=\dimen343
+\l__coffin_right_corner_dim=\dimen344
+\l__coffin_bottom_corner_dim=\dimen345
+\l__coffin_top_corner_dim=\dimen346
+\l__coffin_scaled_total_height_dim=\dimen347
+\l__coffin_scaled_width_dim=\dimen348
+\c__coffin_empty_coffin=\box98
+\l__coffin_display_coffin=\box99
+\l__coffin_display_coord_coffin=\box100
+\l__coffin_display_pole_coffin=\box101
+\l__coffin_display_offset_dim=\dimen349
+\l__coffin_display_x_dim=\dimen350
+\l__coffin_display_y_dim=\dimen351
 \g__file_internal_ior=\read4
-\l__seq_internal_a_int=\count361
-\l__seq_internal_b_int=\count362
+\l__seq_internal_a_int=\count383
+\l__seq_internal_b_int=\count384
 )
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\l3backend\l3backen
 d-pdfmode.def"
 File: l3backend-pdfmode.def 2019-04-06 v L3 Experimental backend support: PDF m
 ode
-\l__kernel_color_stack_int=\count363
-\l__pdf_internal_box=\box99
+\l__kernel_color_stack_int=\count385
+\l__pdf_internal_box=\box102
 ))
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\l3packages\xparse\
 xparse.sty"
 Package: xparse 2019-05-28 L3 Experimental document command parser
-\l__xparse_current_arg_int=\count364
-\g__xparse_grabber_int=\count365
-\l__xparse_m_args_int=\count366
-\l__xparse_v_nesting_int=\count367
+\l__xparse_current_arg_int=\count386
+\g__xparse_grabber_int=\count387
+\l__xparse_m_args_int=\count388
+\l__xparse_v_nesting_int=\count389
 )
 Package: lipsum 2019/01/02 v2.2 150 paragraphs of Lorem Ipsum dummy text
 
@@ -1483,34 +1527,34 @@ runsystem(del cse.aex)...executed.
 (cse.aux)
 \openout1 = `cse.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 52.
+LaTeX Font Info:    ... okay on input line 52.
 
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\context\base\supp-pdf.mk
 ii"
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count368
-\scratchdimen=\dimen335
-\scratchbox=\box100
-\nofMPsegments=\count369
-\nofMParguments=\count370
+\scratchcounter=\count390
+\scratchdimen=\dimen352
+\scratchbox=\box103
+\nofMPsegments=\count391
+\nofMParguments=\count392
 \everyMPshowfont=\toks61
-\MPscratchCnt=\count371
-\MPscratchDim=\dimen336
-\MPnumerator=\count372
-\makeMPintoPDFobject=\count373
+\MPscratchCnt=\count393
+\MPscratchDim=\dimen353
+\MPnumerator=\count394
+\makeMPintoPDFobject=\count395
 \everyMPtoPDFconversion=\toks62
 ) ABD: EveryShipout initializing macros
 Package pgfplots notification 'compat/show suggested version=true': you might b
@@ -1672,13 +1716,14 @@ Package textcomp Info: Setting pplj sub-encoding to TS1/3 on input line 407.
 Package textcomp Info: Setting ptmx sub-encoding to TS1/4 on input line 408.
 Package textcomp Info: Setting ptmj sub-encoding to TS1/4 on input line 409.
 )
-\c@lstlisting=\count374
+\c@lstlisting=\count396
 Package caption Info: Begin \AtBeginDocument code.
 Package caption Info: hyperref package is loaded.
+Package caption Info: picins package is loaded.
 Package caption Info: wrapfig package is loaded.
 Package caption Info: End \AtBeginDocument code.
-\AtBeginShipoutBox=\box101
-Package hyperref Info: Link coloring ON on input line 51.
+\AtBeginShipoutBox=\box104
+Package hyperref Info: Link coloring ON on input line 52.
 
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\hyperref\nameref.s
 ty"
@@ -1688,12 +1733,14 @@ Package: nameref 2016/05/21 v2.44 Cross-referencing by name of section
 estring.sty"
 Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
-\c@section@level=\count375
+\c@section@level=\count397
 )
-LaTeX Info: Redefining \ref on input line 51.
-LaTeX Info: Redefining \pageref on input line 51.
-LaTeX Info: Redefining \nameref on input line 51.
+LaTeX Info: Redefining \ref on input line 52.
+LaTeX Info: Redefining \pageref on input line 52.
+LaTeX Info: Redefining \nameref on input line 52.
 
+! I can't write on file `cse.pdf'.
+Please type another file name for output: cse.pdf
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
@@ -1731,80 +1778,96 @@ LaTeX Info: Redefining \nameref on input line 51.
 <../sc18/figs/TopLeft.png, id=6, 2015.27907pt x 70.76437pt>
 File: ../sc18/figs/TopLeft.png Graphic file (type png)
 <use ../sc18/figs/TopLeft.png>
-Package pdftex.def Info: ../sc18/figs/TopLeft.png  used on input line 56.
+Package pdftex.def Info: ../sc18/figs/TopLeft.png  used on input line 57.
 (pdftex.def)             Requested size: 2015.27417pt x 70.76419pt.
 <../sc18/figs/BottomRight.png, id=7, 2015.27907pt x 70.76437pt>
 File: ../sc18/figs/BottomRight.png Graphic file (type png)
 <use ../sc18/figs/BottomRight.png>
-Package pdftex.def Info: ../sc18/figs/BottomRight.png  used on input line 60.
+Package pdftex.def Info: ../sc18/figs/BottomRight.png  used on input line 61.
 (pdftex.def)             Requested size: 2015.27417pt x 70.76419pt.
 <../sc18/figs/Ulogo_cmyk.pdf, id=8, 234.8775pt x 161.60374pt>
 File: ../sc18/figs/Ulogo_cmyk.pdf Graphic file (type pdf)
 <use ../sc18/figs/Ulogo_cmyk.pdf>
-Package pdftex.def Info: ../sc18/figs/Ulogo_cmyk.pdf  used on input line 64.
+Package pdftex.def Info: ../sc18/figs/Ulogo_cmyk.pdf  used on input line 65.
 (pdftex.def)             Requested size: 234.87692pt x 161.60335pt.
 
-Overfull \hbox (36.13347pt too wide) in paragraph at lines 64--65
+Overfull \hbox (180.67725pt too wide) in paragraph at lines 65--66
 [][] 
  []
 
-LaTeX Font Info:    Try loading font information for TS1+cmr on input line 107.
+LaTeX Font Info:    Try loading font information for TS1+cmr on input line 108.
 
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\base\ts1cmr.fd"
 File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
-<../sc18/figs/img_slice_level_r1.png, id=9, 301.125pt x 169.63374pt>
-File: ../sc18/figs/img_slice_level_r1.png Graphic file (type png)
-<use ../sc18/figs/img_slice_level_r1.png>
-Package pdftex.def Info: ../sc18/figs/img_slice_level_r1.png  used on input lin
-e 200.
-(pdftex.def)             Requested size: 691.62762pt x 389.6964pt.
-LaTeX Font Info:    Try loading font information for U+msa on input line 201.
+<Staging_Results.png, id=9, 526.96875pt x 328.72812pt>
+File: Staging_Results.png Graphic file (type png)
+<use Staging_Results.png>
+Package pdftex.def Info: Staging_Results.png  used on input line 112.
+(pdftex.def)             Requested size: 579.6674pt x 361.60204pt.
 
+Overfull \hbox (52.38002pt too wide) in paragraph at lines 113--114
+ \OT1/cmr/m/n/24.88 cept anal-y-sis was per-formed on the BSSNKO
+ []
+
+<tree1_initial.png, id=10, 331.73938pt x 166.6225pt>
+File: tree1_initial.png Graphic file (type png)
+<use tree1_initial.png>
+Package pdftex.def Info: tree1_initial.png  used on input line 177.
+(pdftex.def)             Requested size: 696.65298pt x 349.9074pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 178.
+See the caption package documentation for explanation.
+
+<tree1_rebuild.png, id=12, 620.3175pt x 188.20313pt>
+File: tree1_rebuild.png Graphic file (type png)
+<use tree1_rebuild.png>
+Package pdftex.def Info: tree1_rebuild.png  used on input line 196.
+(pdftex.def)             Requested size: 868.4386pt x 263.48256pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 197.
+See the caption package documentation for explanation.
+
+<tree1_staged.png, id=13, 234.37563pt x 223.83624pt>
+File: tree1_staged.png Graphic file (type png)
+<use tree1_staged.png>
+Package pdftex.def Info: tree1_staged.png  used on input line 206.
+(pdftex.def)             Requested size: 445.31113pt x 425.28644pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 207.
+See the caption package documentation for explanation.
+
+LaTeX Font Info:    Try loading font information for U+msa on input line 234.
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsa.fd"
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 201.
+LaTeX Font Info:    Try loading font information for U+msb on input line 234.
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsb.fd"
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-<../sc18/figs/img_slice_level_r10.png, id=10, 301.125pt x 169.63374pt>
-File: ../sc18/figs/img_slice_level_r10.png Graphic file (type png)
-<use ../sc18/figs/img_slice_level_r10.png>
-Package pdftex.def Info: ../sc18/figs/img_slice_level_r10.png  used on input li
-ne 204.
-(pdftex.def)             Requested size: 691.62762pt x 389.6964pt.
-<../sc18/figs/img_slice_level_r100.png, id=11, 301.125pt x 169.63374pt>
-File: ../sc18/figs/img_slice_level_r100.png Graphic file (type png)
-<use ../sc18/figs/img_slice_level_r100.png>
-Package pdftex.def Info: ../sc18/figs/img_slice_level_r100.png  used on input l
-ine 208.
-(pdftex.def)             Requested size: 691.62762pt x 389.6964pt.
 \openout5 = `cse.pyg'.
 
-runsystem(pygmentize -S default -f latex -P commandprefix=PYG > _minted-cse\def
-ault-pyg-prefix.pygstyle)...executed.
-
-(_minted-cse/default-pyg-prefix.pygstyle)
-runsystem(pygmentize -S default -f latex -P commandprefix=PYGdefault > _minted-
-cse\default.pygstyle)...executed.
-
- (_minted-cse/default.pygstyle)
-runsystem(pygmentize -l python -f latex -P commandprefix=PYG -F tokenmerge -o _
-minted-cse/6CF00026FA6B38AA70CD2146CB401D12E38F69F30584D1DF7879854EF9061249.pyg
-tex cse.pyg)...executed.
-
-
+(_minted-cse/default-pyg-prefix.pygstyle) (_minted-cse/default.pygstyle)
 (_minted-cse/6CF00026FA6B38AA70CD2146CB401D12E38F69F30584D1DF7879854EF9061249.p
 ygtex
 LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <20.74> not available
 (Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 3.
 )
-Overfull \hbox (31.11375pt too wide) in paragraph at lines 297--298
-\OT1/cmr/bx/n/24.88 Intermediate-Mass-Ratio In-spi-rals\OT1/cmr/m/n/24.88 , Mil
-inda Fer-nando, David Neilsen, Hyun Lim, Eric Hirschmann,
- []
+<../sc18/figs/dendro.pdf, id=15, 178.38142pt x 98.54477pt>
+File: ../sc18/figs/dendro.pdf Graphic file (type pdf)
+<use ../sc18/figs/dendro.pdf>
+Package pdftex.def Info: ../sc18/figs/dendro.pdf  used on input line 297.
+(pdftex.def)             Requested size: 178.38098pt x 98.54451pt.
 
+! Extra }, or forgotten \endgroup.
+\TP@commonendtextblock ...oxrulesize }\fi \egroup 
+                                                  \TP@prevdepth =\prevdepth ...
+l.300 \end{textblock}
+                     
+? 
 [1
 
 
@@ -1814,44 +1877,39 @@ Non-PDF special ignored!
 <special> papersize=120cm,91.51cm
 {C:/Users/bobby/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map} <../sc18/fig
 s/TopLeft.png (PNG copy)> <../sc18/figs/BottomRight.png (PNG copy)> <../sc18/fi
-gs/Ulogo_cmyk.pdf> <../sc18/figs/img_slice_level_r1.png> <../sc18/figs/img_slic
-e_level_r10.png> <../sc18/figs/img_slice_level_r100.png>]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 379.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 379.
+gs/Ulogo_cmyk.pdf> <./Staging_Results.png> <./tree1_initial.png> <./tree1_rebui
+ld.png> <./tree1_staged.png> <../sc18/figs/dendro.pdf>]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 381.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 381.
  (cse.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 379.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 379.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 381.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 381.
 runsystem(del cse.pyg)...executed.
 
  ) 
 Here is how much of TeX's memory you used:
- 47611 strings out of 492973
- 1090665 string characters out of 3126692
- 1476284 words of memory out of 3000000
- 50763 multiletter control sequences out of 15000+200000
- 544006 words of font info for 68 fonts, out of 3000000 for 9000
+ 47705 strings out of 492973
+ 1091294 string characters out of 3126692
+ 1481262 words of memory out of 3000000
+ 50854 multiletter control sequences out of 15000+200000
+ 542458 words of font info for 62 fonts, out of 3000000 for 9000
  1144 hyphenation exceptions out of 8191
- 64i,13n,103p,857b,623s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 64i,13n,103p,857b,619s stack positions out of 5000i,500n,10000p,200000b,50000s
  <C:\Users\bobby\AppData\Local\MiKTeX\2.9\fonts\pk\ljfour\jknappen\ec\dpi600\
 tcrm2488.pk><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/publi
 c/amsfonts/cm/cmbx12.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/font
-s/type1/public/amsfonts/cm/cmcsc10.pfb><C:/Users/bobby/AppData/Local/Programs/M
-iKTeX 2.9/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/bobby/AppData/Loc
-al/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/bobb
-y/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr12.pfb><C
-:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/
-cmr17.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/
-amsfonts/cm/cmsl12.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/
-type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/bobby/AppData/Local/Programs/MiKT
-eX 2.9/fonts/type1/public/amsfonts/cm/cmtcsc10.pfb><C:/Users/bobby/AppData/Loca
-l/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on cse.pdf (1 page, 461715 bytes).
+s/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/bobby/AppData/Local/Programs/Mi
+KTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/bobby/AppData/Loca
+l/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/bobby/
+AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/
+Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cm
+sl12.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/a
+msfonts/cm/cmsy10.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/t
+ype1/public/amsfonts/cm/cmtcsc10.pfb><C:/Users/bobby/AppData/Local/Programs/MiK
+TeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
+Output written on cse.pdf (1 page, 429301 bytes).
 PDF statistics:
- 72 PDF objects out of 1000 (max. 8388607)
+ 76 PDF objects out of 1000 (max. 8388607)
  5 named destinations out of 1000 (max. 500000)
- 43 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 53 words of extra memory for PDF output out of 10000 (max. 10000000)
 

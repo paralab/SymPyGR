@@ -1,6 +1,7 @@
 \documentclass[landscape]{a0poster}
 \input{preamble}
 \usepackage{geometry}
+\usepackage{picins}
 \geometry{paperwidth=30in,paperheight=40in,margin=2cm}
 \pagestyle{empty}
 \setcounter{secnumdepth}{0}
@@ -60,8 +61,8 @@
 	\resizebox{18\TPHorizModule}{!}{\includegraphics{../sc18/figs/BottomRight}}
 \end{textblock} 
 
-\begin{textblock}{2}(21,3.6) %<<<
-\resizebox{2.5\TPHorizModule}{!}{\includegraphics{../sc18/figs/Ulogo_cmyk}}
+\begin{textblock}{2}(21,2.5) %<<<
+\resizebox{4.5\TPHorizModule}{!}{\includegraphics{../sc18/figs/Ulogo_cmyk}}
 \end{textblock} %>>>
 
 
@@ -104,23 +105,33 @@
 		\Subhead{Contributions}
 		\vspace{-0.2in}
 		\begin{itemize}
-			\item \textbf{Wavelet Adaptive GR}. 
-			This is the first highly adaptive computational fully relativistic---i.e., including the full Einstein equations---code with 
-			an \textcolor{blue}{arbitrary localized unstructured} wavelet based adaptive mesh.
 			\item \textbf{Automatic code-generation}. Given the complexity of the Einstein equations, we have developed an automatic code generation framework for GR using \texttt{SymPy} that automatically generates architecture-optimized codes which helps to improve code portability. 
-			\item \textbf{Performance}. We developed a new parallel search algorithm, \tsearch~ to improve the efficiency of octree meshing. We also developed efficient \texttt{unzip} and \texttt{zip} operations to allow the application of the core computational kernels on small process-local regular blocks which leads to greater performance and code portability (i.e. GPU architectures).
+			\item \textbf{Performance}. Developed a tree isomorphism algorithm for common subexpression elimination. The algorithm can be adapted to different architetures by specifying a cache size. The code is designed to be portability and easily add performance improvements to any code.
 			\item \textbf{Visualization}. 
-			Code is able to represent expression trees with Graphiz and visualize expression tree staging			
-			\item \textbf{Implementation} \dendro~ is implemented in \textsc{Python} using \texttt{SymPy} for the autocode generation for the partial differntial equations. The Code is freely available at \\ \texttt{\small https://github.com/paralab/Dendro-GR} under the MIT license.
+			Code is able to represent expression trees with Graphiz and visualize expression tree staging	
+			\parpic[r]{\includegraphics[scale=1.1]{Staging_Results.png}}		
+			\item \textbf{Proof of Concept} A proof of concept analysis was performed on the BSSNKO equations presented in the Dendro-GR code. The goal is to reduce the overall runtime of the equations through better cache utilization. Expression trees were staged using a greedy algorithm to target a given cache size. The plot illustrates how the overlap between trees increases as the cache size decreases. While the overlap may cause some parts of the expression tree to be duplicated, the overall run time will be faster due to less cache misses.
+			
+			
+		%\begin{wrapfigure}{ht!}{0.5\textwidth}
+  		%	\begin{center}
+    	%		\includegraphics[scale=1.0]{Staging_Results.png}
+  		%	\end{center}
+  		%	\caption{Plot comparing the cache size specified and the simularity of }
+		%\end{wrapfigure}
+		
 		\end{itemize}
-	\end{textblock} 
+		
+	\end{textblock}
+	
 % }}}
 
-\begin{textblock}{30}(0,21.5)
+\begin{textblock}{30}(0,22.5)
 	{\color{DarkBlue}\hrule}\medskip
-	\Head{Method} %%===================================
+	\Head{Methods} %%===================================
 
 	\begin{textblock}{14}(0,0.2)
+	This research for consists of two main projects. The first is the subtree isomorphism problem that will focus on the common subexpression elimination and the second is a lower bound analysis for the number of temporary variables needed to solve the partial differential equations. The goal is to create an algorithm that will be able to analyze the different partial differential equations and reorder the temporary variable calculations to maximize cache effectiveness and variable reuse. 
 % \begin{itemize}
 % 	\item For accurate simulations, the spatial discretization $dx\leq min(m_1,m_2)/10$ where $m_1, m_2$ are the masses of the black holes.  
 % 	\item \textbf{Mass ratio Vs. Number of grid points} : $N \propto q^3$ where $q=m_1/m_2$. 
@@ -147,7 +158,7 @@
 
 
 
-\begin{textblock}{14}(14.5,-0.5)
+\begin{textblock}{14}(14.5,5)
 	\Subhead{Rebuilding}% (ORNL's \Titan~ upto $131K$ cores)} 
 
 	\vspace{-0.25in}
@@ -160,14 +171,12 @@
 	%\end{figure}	
 	\end{textblock}	
 \end{textblock}
-	
 
-\begin{textblock}{8}(8.5,4)
-
-%\begin{figure}
-%		\centering
-%		\resizebox{!}{7\TPHorizModule}{\includegraphics{../sc18/plots/strong_r10}}
-%\end{figure}	
+\begin{textblock}{14}(17,-0.5)
+	\begin{figure}
+				\includegraphics[scale = 2.1]{tree1_initial.png}
+				\caption{\large Initial Expression Tree}
+	\end{figure}
 \end{textblock}
 
 
@@ -181,40 +190,29 @@
 %\end{textblock}
 
 
-\begin{textblock}{29}(-0.25,8.5)
-	\begin{figure}
-%		\centering
-%		\begin{subfigure}{0.33\textwidth}
-%			\includegraphics[width=0.9\textwidth]{../sc18/figs/img_slice_chi_r1.png}
-%			\caption{$q=1$}
-%		\end{subfigure}
-%		\begin{subfigure}{0.33\textwidth}
-%			\includegraphics[width=0.9\textwidth]{../sc18/figs/img_slice_chi_r10.png}
-%			\caption{$q=10$}
-%		\end{subfigure}
-%		\begin{subfigure}{0.33\textwidth}
-%			\includegraphics[width=0.9\textwidth]{../sc18/figs/img_slice_chi_r100.png}
-%			\caption{$q=100$}
-%		\end{subfigure} \hfil
-		\begin{subfigure}{0.33\textwidth}
-			\includegraphics[width=\textwidth]{../sc18/figs/img_slice_level_r1.png}
-			\caption{\large $q=1$}
-		\end{subfigure}
-		\begin{subfigure}{0.33\textwidth}
-			\includegraphics[width=\textwidth]{../sc18/figs/img_slice_level_r10.png}
-			\caption{\large $q=10$}
-		\end{subfigure}
-		\begin{subfigure}{0.33\textwidth}
-			\includegraphics[width=\textwidth]{../sc18/figs/img_slice_level_r100.png}
-			\caption{\large $q=100$}
-		\end{subfigure}
-	%	\caption{\small Time step snapshots of the binary black hole problem of black hole mass ratios $1, 10 \& 100$ where we in the top row we plot the \BSSN~variable $\chi$ in the lower row we plot the WAMR grids for each case at that specific instance. \label{fig:large_q}}
+\begin{textblock}{29}(7.0,10.5)
+	\begin{figure}	
+		\centering
+			\includegraphics[scale=1.4]{tree1_rebuild.png}
+			\caption{\large Rebuilt Expression Tree}
+			
 	\end{figure}
+\end{textblock}
+
+\begin{textblock}{14}(1.5,8.5)
+	\begin{figure}
+		
+	\centering
+			\includegraphics[scale=1.9]{tree1_staged.png}
+			\caption{\large Staged Expression Tree}
+		\end{figure}
+
+	
 \end{textblock}
 
 
 \begin{textblock}{14}(0,3)
-	\Subhead{Staging}% (ORNL's \Titan~ upto $131K$ cores)} 
+	\Subhead{Staging}
 
 	\vspace{-0.25in}
 	Staging is focused on finding variable reuse within the partial differential equations. The first problem is to create an expression tree from the partial differential equations generated from the SymPy auto generated code. 
@@ -294,7 +292,11 @@
 \end{figure}
 The left panel shows the \BSSN ~formulation of the Einstein equations. These are tensor equations, with indices $i,j,\ldots$ taking the values $1, 2, 3$. On the right we show the \texttt{{\dendro\_sym}} code for these equations. \texttt{\dendro\_sym} uses \texttt{SymPy} and other tools to generate optimized C++ code to evaluate the equations. Note that $\mathcal{L}_\beta,\ D,\ \partial$ denote Lie derivative, covariant derivative and partial derivative respectively, and we have excluded $\partial_t\Gamma^i$ from \texttt{\dendro\_sym} to save space.
 
-For additional details please refer to {\bf Massively Parallel Simulations of Binary Black Hole Intermediate-Mass-Ratio Inspirals}, Milinda Fernando, David Neilsen, Hyun Lim, Eric Hirschmann, Hari Sundar, \url{https://arxiv.org/abs/1807.06128}.
+For additional details please refer to {\bf Massively Parallel Simulations of Binary Black Hole Intermediate-Mass-Ratio Inspirals}, Milinda Fernando, Hari Sundar \url{https://arxiv.org/abs/1807.06128} and the Dendro project.
+
+	\includegraphics{../sc18/figs/dendro}}
+
+
 \end{textblock}
 
 
