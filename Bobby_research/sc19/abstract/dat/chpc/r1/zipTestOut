@@ -1,0 +1,1571 @@
+[  1%] Built target genSFCMatVecTables
+[  2%] Built target genHtables
+[ 21%] Built target dendro5
+[ 22%] Built target refElOctree
+[ 22%] Built target refEl
+[ 24%] Built target bucketBench
+[ 27%] Built target laplaceEq
+[ 27%] Built target stencilExample
+[ 27%] Built target meshE2NCheck
+[ 27%] Built target meshBench
+[ 28%] Built target testInterp
+[ 30%] Built target testOctUtils
+[ 31%] Built target tstTreeSearch
+[ 35%] Built target transportEq
+[ 35%] Built target ptsSort
+[ 39%] Built target nlsmSolver
+[ 44%] Built target bssnSolver
+[ 45%] Built target sfcLaplaceEq
+[ 46%] Built target octUtilBenchmark
+[ 63%] Built target meshLoop
+[ 87%] Built target checkDerivs
+[ 95%] Built target cudaBSSN
+[ 99%] Built target zipUnzipTest
+[100%] Built target ccz4Solver
+[100%] Built target gpuTestBed
+[100%] Built target rhsTestBed
+ reading parameter file :zip8.par.json
+regRange: 4
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 2.49529e-05[0m
+[0;32m function to octree # octants : 27[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 7.04257e-05[0m
+[0;32m # const. octants: 253[0m
+[0;32m 2:1 balancing max (s): 0.000789326[0m
+[0;32m balanced # octants : 281[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 16593[0m
+[0;32mMesh generation time (max): 0.0569617[0m
+	[0;32m e2e (min,mean,max): ( 0.00325298	0.00325298	0.00325298 )[0m
+	[0;32m e2n (min,mean,max): ( 0.0206451	0.0206451	0.0206451 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.0327799	0.0327799	0.0327799 )[0m
+number of blocks : 225
+regGrid precentage: 19.9288
++runtime(s)                   5.01786                       5.01786                       5.01786                       
+-comm(s)                      2.68128e-06                   2.68128e-06                   2.68128e-06                   
+-unzip(s)                     3.51411                       3.51411                       3.51411                       
+-rhs(s)                       0.598627                      0.598627                      0.598627                      
+ reading parameter file :zip8.par.json
+regRange: 5
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 2.4586e-05[0m
+[0;32m function to octree # octants : 64[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 7.30278e-05[0m
+[0;32m # const. octants: 288[0m
+[0;32m 2:1 balancing max (s): 0.000711951[0m
+[0;32m balanced # octants : 288[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 17041[0m
+[0;32mMesh generation time (max): 0.0632984[0m
+	[0;32m e2e (min,mean,max): ( 0.002774	0.002774	0.002774 )[0m
+	[0;32m e2n (min,mean,max): ( 0.016907	0.016907	0.016907 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.0280108	0.0280108	0.0280108 )[0m
+number of blocks : 232
+regGrid precentage: 22.2222
++runtime(s)                   4.79028                       4.79028                       4.79028                       
+-comm(s)                      3.58187e-06                   3.58187e-06                   3.58187e-06                   
+-unzip(s)                     3.38071                       3.38071                       3.38071                       
+-rhs(s)                       0.571358                      0.571358                      0.571358                      
+ reading parameter file :zip8.par.json
+regRange: 10
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 2.94717e-05[0m
+[0;32m function to octree # octants : 343[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.000219807[0m
+[0;32m # const. octants: 673[0m
+[0;32m 2:1 balancing max (s): 0.00366709[0m
+[0;32m balanced # octants : 1828[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 113237[0m
+[0;32mMesh generation time (max): 0.152674[0m
+	[0;32m e2e (min,mean,max): ( 0.011225	0.011225	0.011225 )[0m
+	[0;32m e2n (min,mean,max): ( 0.0894511	0.0894511	0.0894511 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.0503209	0.0503209	0.0503209 )[0m
+number of blocks : 183
+regGrid precentage: 27.5711
++runtime(s)                   11.6844                       11.6844                       11.6844                       
+-comm(s)                      4.7842e-06                    4.7842e-06                    4.7842e-06                    
+-unzip(s)                     5.74407                       5.74407                       5.74407                       
+-rhs(s)                       2.67364                       2.67364                       2.67364                       
+ reading parameter file :zip8.par.json
+regRange: 14
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 4.1238e-05[0m
+[0;32m function to octree # octants : 729[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.000415272[0m
+[0;32m # const. octants: 1226[0m
+[0;32m 2:1 balancing max (s): 0.00370629[0m
+[0;32m balanced # octants : 2276[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 140781[0m
+[0;32mMesh generation time (max): 0.164553[0m
+	[0;32m e2e (min,mean,max): ( 0.0102131	0.0102131	0.0102131 )[0m
+	[0;32m e2n (min,mean,max): ( 0.0950708	0.0950708	0.0950708 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.0584331	0.0584331	0.0584331 )[0m
+number of blocks : 302
+regGrid precentage: 43.5852
++runtime(s)                   14.3411                       14.3411                       14.3411                       
+-comm(s)                      3.48222e-06                   3.48222e-06                   3.48222e-06                   
+-unzip(s)                     7.6886                        7.6886                        7.6886                        
+-rhs(s)                       3.26602                       3.26602                       3.26602                       
+ reading parameter file :zip8.par.json
+regRange: 15
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 5.47832e-05[0m
+[0;32m function to octree # octants : 1000[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.000795994[0m
+[0;32m # const. octants: 2024[0m
+[0;32m 2:1 balancing max (s): 0.00496243[0m
+[0;32m balanced # octants : 2864[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 176841[0m
+[0;32mMesh generation time (max): 0.251616[0m
+	[0;32m e2e (min,mean,max): ( 0.0194359	0.0194359	0.0194359 )[0m
+	[0;32m e2n (min,mean,max): ( 0.130822	0.130822	0.130822 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.0997159	0.0997159	0.0997159 )[0m
+number of blocks : 512
+regGrid precentage: 58.1006
++runtime(s)                   20.6292                       20.6292                       20.6292                       
+-comm(s)                      2.81259e-06                   2.81259e-06                   2.81259e-06                   
+-unzip(s)                     11.7285                       11.7285                       11.7285                       
+-rhs(s)                       4.40649                       4.40649                       4.40649                       
+ reading parameter file :zip8.par.json
+regRange: 20
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.000154519[0m
+[0;32m function to octree # octants : 2197[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.00131809[0m
+[0;32m # const. octants: 3018[0m
+[0;32m 2:1 balancing max (s): 0.00706499[0m
+[0;32m balanced # octants : 4222[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 260609[0m
+[0;32mMesh generation time (max): 0.410077[0m
+	[0;32m e2e (min,mean,max): ( 0.0259631	0.0259631	0.0259631 )[0m
+	[0;32m e2n (min,mean,max): ( 0.196546	0.196546	0.196546 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.172102	0.172102	0.172102 )[0m
+number of blocks : 568
+regGrid precentage: 64.8034
++runtime(s)                   26.799                        26.799                        26.799                        
+-comm(s)                      4.19654e-06                   4.19654e-06                   4.19654e-06                   
+-unzip(s)                     14.3581                       14.3581                       14.3581                       
+-rhs(s)                       6.14152                       6.14152                       6.14152                       
+ reading parameter file :zip8.par.json
+regRange: 25
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.000231042[0m
+[0;32m function to octree # octants : 4096[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.00232642[0m
+[0;32m # const. octants: 4208[0m
+[0;32m 2:1 balancing max (s): 0.00973342[0m
+[0;32m balanced # octants : 6056[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 374265[0m
+[0;32mMesh generation time (max): 0.569608[0m
+	[0;32m e2e (min,mean,max): ( 0.034384	0.034384	0.034384 )[0m
+	[0;32m e2n (min,mean,max): ( 0.307424	0.307424	0.307424 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.211074	0.211074	0.211074 )[0m
+number of blocks : 568
+regGrid precentage: 67.6354
++runtime(s)                   33.1739                       33.1739                       33.1739                       
+-comm(s)                      3.70201e-06                   3.70201e-06                   3.70201e-06                   
+-unzip(s)                     16.5828                       16.5828                       16.5828                       
+-rhs(s)                       8.24982                       8.24982                       8.24982                       
+ reading parameter file :zip8.par.json
+regRange: 30
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.000398401[0m
+[0;32m function to octree # octants : 8000[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.00375319[0m
+[0;32m # const. octants: 9080[0m
+[0;32m 2:1 balancing max (s): 0.0182614[0m
+[0;32m balanced # octants : 9472[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 587729[0m
+[0;32mMesh generation time (max): 1.10176[0m
+	[0;32m e2e (min,mean,max): ( 0.058701	0.058701	0.058701 )[0m
+	[0;32m e2n (min,mean,max): ( 0.520081	0.520081	0.520081 )[0m
+	[0;32m sm (min,mean,max): ( 9.53674e-07	9.53674e-07	9.53674e-07 )[0m
+	[0;32m blk (min,mean,max): ( 0.519931	0.519931	0.519931 )[0m
+number of blocks : 1632
+regGrid precentage: 84.4595
++runtime(s)                   63.5911                       63.5911                       63.5911                       
+-comm(s)                      7.20751e-06                   7.20751e-06                   7.20751e-06                   
+-unzip(s)                     35.2476                       35.2476                       35.2476                       
+-rhs(s)                       14.0924                       14.0924                       14.0924                       
+ reading parameter file :zip8.par.json
+regRange: 40
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.00119622[0m
+[0;32m function to octree # octants : 17576[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.00787406[0m
+[0;32m # const. octants: 23248[0m
+[0;32m 2:1 balancing max (s): 0.0450096[0m
+[0;32m balanced # octants : 24760[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 1545521[0m
+[0;32mMesh generation time (max): 2.89888[0m
+	[0;32m e2e (min,mean,max): ( 0.123503	0.123503	0.123503 )[0m
+	[0;32m e2n (min,mean,max): ( 1.10454	1.10454	1.10454 )[0m
+	[0;32m sm (min,mean,max): ( 9.53674e-07	9.53674e-07	9.53674e-07 )[0m
+	[0;32m blk (min,mean,max): ( 1.66049	1.66049	1.66049 )[0m
+number of blocks : 2976
+regGrid precentage: 88.4006
++runtime(s)                   139.09                        139.09                        139.09                        
+-comm(s)                      5.48456e-06                   5.48456e-06                   5.48456e-06                   
+-unzip(s)                     65.0844                       65.0844                       65.0844                       
+-rhs(s)                       39.7054                       39.7054                       39.7054                       
+ reading parameter file :zip8.par.json
+regRange: 50
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.00143319[0m
+[0;32m function to octree # octants : 32768[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.0107931[0m
+[0;32m # const. octants: 32824[0m
+[0;32m 2:1 balancing max (s): 0.0521953[0m
+[0;32m balanced # octants : 37696[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 2359649[0m
+[0;32mMesh generation time (max): 3.72994[0m
+	[0;32m e2e (min,mean,max): ( 0.19742	0.19742	0.19742 )[0m
+	[0;32m e2n (min,mean,max): ( 1.77229	1.77229	1.77229 )[0m
+	[0;32m sm (min,mean,max): ( 9.53674e-07	9.53674e-07	9.53674e-07 )[0m
+	[0;32m blk (min,mean,max): ( 1.75416	1.75416	1.75416 )[0m
+number of blocks : 2024
+regGrid precentage: 86.927
++runtime(s)                   174.365                       174.365                       174.365                       
+-comm(s)                      1.92923e-05                   1.92923e-05                   1.92923e-05                   
+-unzip(s)                     68.7862                       68.7862                       68.7862                       
+-rhs(s)                       58.0247                       58.0247                       58.0247                       
+ reading parameter file :zip8.par.json
+regRange: 60
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.00264703[0m
+[0;32m function to octree # octants : 59319[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.0193002[0m
+[0;32m # const. octants: 65017[0m
+[0;32m 2:1 balancing max (s): 0.097394[0m
+[0;32m balanced # octants : 72171[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 4553317[0m
+[0;32mMesh generation time (max): 6.46586[0m
+	[0;32m e2e (min,mean,max): ( 0.3864	0.3864	0.3864 )[0m
+	[0;32m e2n (min,mean,max): ( 3.44833	3.44833	3.44833 )[0m
+	[0;32m sm (min,mean,max): ( 9.53674e-07	9.53674e-07	9.53674e-07 )[0m
+	[0;32m blk (min,mean,max): ( 2.60825	2.60825	2.60825 )[0m
+number of blocks : 1639
+regGrid precentage: 88.6672
++runtime(s)                   328.974                       328.974                       328.974                       
+-comm(s)                      7.51205e-06                   7.51205e-06                   7.51205e-06                   
+-unzip(s)                     93.0359                       93.0359                       93.0359                       
+-rhs(s)                       116.533                       116.533                       116.533                       
+ reading parameter file :zip8.par.json
+regRange: 70
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.00510318[0m
+[0;32m function to octree # octants : 91125[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.0305344[0m
+[0;32m # const. octants: 99282[0m
+[0;32m 2:1 balancing max (s): 0.146091[0m
+[0;32m balanced # octants : 104630[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 6608721[0m
+[0;32mMesh generation time (max): 13.921[0m
+	[0;32m e2e (min,mean,max): ( 0.480144	0.480144	0.480144 )[0m
+	[0;32m e2n (min,mean,max): ( 4.37716	4.37716	4.37716 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 9.03363	9.03363	9.03363 )[0m
+number of blocks : 5244
+regGrid precentage: 93.0211
++runtime(s)                   507.018                       507.018                       507.018                       
+-comm(s)                      6.84708e-06                   6.84708e-06                   6.84708e-06                   
+-unzip(s)                     165.591                       165.591                       165.591                       
+-rhs(s)                       169.414                       169.414                       169.414                       
+ reading parameter file :zip8.par.json
+regRange: 80
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.00822461[0m
+[0;32m function to octree # octants : 140608[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.0387595[0m
+[0;32m # const. octants: 146336[0m
+[0;32m 2:1 balancing max (s): 0.214442[0m
+[0;32m balanced # octants : 146336[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 9252897[0m
+[0;32mMesh generation time (max): 32.925[0m
+	[0;32m e2e (min,mean,max): ( 0.671411	0.671411	0.671411 )[0m
+	[0;32m e2n (min,mean,max): ( 7.07639	7.07639	7.07639 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 25.1542	25.1542	25.1542 )[0m
+number of blocks : 10760
+regGrid precentage: 96.0857
++runtime(s)                   745.921                       745.921                       745.921                       
+-comm(s)                      2.70829e-06                   2.70829e-06                   2.70829e-06                   
+-unzip(s)                     263.386                       263.386                       263.386                       
+-rhs(s)                       240.22                        240.22                        240.22                        
+ reading parameter file :zip8.par.json
+regRange: 90
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.00931357[0m
+[0;32m function to octree # octants : 195112[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.0561713[0m
+[0;32m # const. octants: 221656[0m
+[0;32m 2:1 balancing max (s): 0.316911[0m
+[0;32m balanced # octants : 221712[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 14109865[0m
+[0;32mMesh generation time (max): 49.2092[0m
+	[0;32m e2e (min,mean,max): ( 0.808644	0.808644	0.808644 )[0m
+	[0;32m e2n (min,mean,max): ( 9.2618	9.2618	9.2618 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 39.1025	39.1025	39.1025 )[0m
+number of blocks : 11936
+regGrid precentage: 97.3948
++runtime(s)                   1064.62                       1064.62                       1064.62                       
+-comm(s)                      3.6275e-06                    3.6275e-06                    3.6275e-06                    
+-unzip(s)                     282.359                       282.359                       282.359                       
+-rhs(s)                       359.77                        359.77                        359.77                        
+ reading parameter file :zip8.par.json
+regRange: 100
+parameters read: 
+[0;33m	npes :1[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_CFL_FACTOR :0.1[0m
+[0;33m	BSSN_IO_OUTPUT_FREQ :400[0m
+[0;33m	BSSN_REMESH_TEST_FREQ :10[0m
+[0;33m	BSSN_CHECKPT_FREQ :1000[0m
+[0;33m	BSSN_RESTORE_SOLVER :0[0m
+[0;33m	BSSN_ENABLE_BLOCK_ADAPTIVITY :1[0m
+[0;33m	BSSN_VTU_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/vtu/bssn_gr1[0m
+[0;33m	BSSN_CHKPT_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/cp/bssn_cp1[0m
+[0;33m	BSSN_PROFILE_FILE_PREFIX :/scratch/kingspeak/serial/u1011531/bssn3/r1/bssn_prof[0m
+[0;33m	BSSN_IO_OUTPUT_GAP :1[0m
+[0;33m	BSSN_DENDRO_GRAIN_SZ :10[0m
+[0;33m	BSSN_ASYNC_COMM_K :4[0m
+[0;33m	BSSN_DENDRO_AMR_FAC :1[0m
+[0;33m	BSSN_USE_WAVELET_TOL_FUNCTION :1[0m
+[0;33m	BSSN_WAVELET_TOL :1e-09[0m
+[0;33m	BSSN_WAVELET_TOL_MAX:0.001[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R0: 8[0m
+[0;33m	:BSSN_WAVELET_TOL_FUNCTION_R1: 50[0m
+[0;33m	BSSN_LOAD_IMB_TOL :0.1[0m
+[0;33m	BSSN_RK45_TIME_BEGIN :0[0m
+[0;33m	BSSN_RK45_TIME_END :1000[0m
+[0;33m	BSSN_RK45_TIME_STEP_SIZE :0.01[0m
+[0;33m	BSSN_RK45_DESIRED_TOL :0.001[0m
+[0;33m	BSSN_COMPD_MIN : ( :-100 ,-100,-100 )[0m
+[0;33m	BSSN_COMPD_MAX : ( :100 ,100,100 )[0m
+[0;33m	BSSN_BLK_MIN : ( :-15 ,-15,-15 )[0m
+[0;33m	BSSN_BLK_MAX : ( :15 ,15,15 )[0m
+[0;33m	BSSN_OCTREE_MIN : ( :0 ,0,0 )[0m
+[0;33m	BSSN_OCTREE_MAX : ( :256 ,256,256 )[0m
+[0;33m	ETA_CONST :0.5[0m
+[0;33m	ETA_R0 :30[0m
+[0;33m	ETA_DAMPING :1[0m
+[0;33m	ETA_DAMPING_EXP :1[0m
+[0;33m	BSSN_ETA_R0 :1.31[0m
+[0;33m	BSSN_ETA_POWER : (2 ,2 )[0m
+[0;33m	BSSN_LAMBDA : (1 ,1,11 )[0m
+[0;33m	BSSN_LAMBDA_F : (1 ,0 )[0m
+[0;33m	CHI_FLOOR :0.0001[0m
+[0;33m	BSSN_TRK0 :0[0m
+[0;33m	KO_DISS_SIGMA :0[0m
+[0;33m	BH1 MASS :0.4824[0m
+[0;33m	BH1 POSITION (x,y,z) : (4, 0, 0.00123 )[0m
+[0;33m	BH1 VELOCITY (x,y,z) : (0, 0.114, 0 )[0m
+[0;33m	BH1 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BH2 MASS :0.4824[0m
+[0;33m	BH2 POSITION (x,y,z) : (-4, 0, 0.00123 )[0m
+[0;33m	BH2 VELOCITY (x,y,z) : (0, -0.114, 0 )[0m
+[0;33m	BH2 SPIN (||,theta,phi): ( 0, 0, 0 )[0m
+[0;33m	BSSN_DIM :3[0m
+[0;33m	BSSN_MAXDEPTH :8[0m
+[0;33m	BSSN_NUM_REFINE_VARS :1[0m
+[0;33m	BSSN_REFINE_VARIABLE_INDICES :[1][0m
+[0;33m	BSSN_NUM_EVOL_VARS_VTU_OUTPUT :14[0m
+[0;33m	BSSN_VTU_OUTPUT_EVOL_INDICES :[0, 1, 2, 3, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22][0m
+[0;33m	BSSN_NUM_CONST_VARS_VTU_OUTPUT :6[0m
+[0;33m	BSSN_VTU_OUTPUT_CONST_INDICES :[0, 1, 2, 3, 4, 5][0m
+[0;33m	TPID_TARGET_M_PLUS :0.5[0m
+[0;33m	TPID_TARGET_M_MINUS :0.5[0m
+[0;33m	TPID_PAR_B :4[0m
+[0;33m	TPID_PAR_P_PLUS :0x782230[0m
+[0;33m	TPID_PAR_P_MINUS :0x782210[0m
+[0;33m	TPID_PAR_S_PLUS :0x7821f0[0m
+[0;33m	TPID_PAR_S_MINUS :0x7821d0[0m
+[0;33m	TPID_CENTER_OFFSET :0x7818a0[0m
+[0;33m	TPID_INITIAL_LAPSE_PSI_EXPONENT :-2[0m
+[0;33m	TPID_NPOINTS_A :30[0m
+[0;33m	TPID_NPOINTS_B :30[0m
+[0;33m	TPID_NPOINTS_PHI :16[0m
+[0;33m	TPID_GIVE_BARE_MASS :1[0m
+[0;33m	INITIAL_LAPSE :2[0m
+[0;33m	TPID_SOLVE_MOMENTUM_CONSTRAINT :0[0m
+[0;33m	TPID_GRID_SETUP_METHOD :0[0m
+[0;33m	TPID_VERBOSE :1[0m
+[0;33m	TPID_ADM_TOL :1e-10[0m
+[0;33m	TPID_NEWTON_TOL :1e-10[0m
+[0;33mUsing block adaptive mesh. AMR disabled [0m
+[0;32m function to octree max (s): 0.0109978[0m
+[0;32m function to octree # octants : 262144[0m
+[MPI_COMM_SWITCH]: 1
+[0;32mremove duplicates + octree construction (s): 0.0666619[0m
+[0;32m # const. octants: 262144[0m
+[0;32m 2:1 balancing max (s): 0.371502[0m
+[0;32m balanced # octants : 262144[0m
+ [MPI_COMM_SWITCH]: Selected comm.size: 1
+Seq: E2E mapping Ended
+E2N Mapping ended
+[0;32m # of CG nodes (vertices) : 16974593[0m
+[0;32mMesh generation time (max): 14.4782[0m
+	[0;32m e2e (min,mean,max): ( 0.894819	0.894819	0.894819 )[0m
+	[0;32m e2n (min,mean,max): ( 12.8797	12.8797	12.8797 )[0m
+	[0;32m sm (min,mean,max): ( 0	0	0 )[0m
+	[0;32m blk (min,mean,max): ( 0.661581	0.661581	0.661581 )[0m
+number of blocks : 1
+regGrid precentage: 100
++runtime(s)                   1254.41                       1254.41                       1254.41                       
+-comm(s)                      1.28699e-05                   1.28699e-05                   1.28699e-05                   
+-unzip(s)                     109.379                       109.379                       109.379                       
+-rhs(s)                       517.13                        517.13                        517.13                        

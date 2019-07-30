@@ -1,0 +1,278 @@
+\usepackage{amsfonts, amsmath, amsthm, amssymb} % For math fonts, symbols and environments
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{tikz,pgfplots}
+\usetikzlibrary{decorations,arrows,shapes,trees,positioning}
+%\usepackage[position=top,aboveskip=5pt,labelformat=empty]{subfig}
+\usepackage{soul}
+\usepackage{balance}
+\usepackage[most]{tcolorbox}
+\usepackage{amsmath}
+\usepackage{empheq}
+\usepackage{movie15}
+\usepackage{subcaption}
+\usepackage{minted}
+
+
+\protected\def\vvv#1{\leavevmode\bgroup\vbox\bgroup\xvvv#1\relax}
+
+\def\xvvv{\afterassignment\xxvvv\let\tmp= }
+
+\def\xxvvv{%
+	\ifx\tmp\@sptoken\egroup\ \vbox\bgroup\let\next\xvvv
+	\else\ifx\tmp\relax\egroup\egroup\let\next\relax
+	\else
+	%\hbox{\tmp}%original
+	\hbox to 1.1em{\hfill\tmp\hfill}% centred
+	\let\next\xvvv\fi\fi
+	\next}
+
+
+%\pgfplotsset{compat=1.13}
+
+\definecolor{cpu3}{HTML}{F44336}
+\definecolor{cpu4}{HTML}{2196F3}
+\definecolor{cpu1}{HTML}{4CAF50}
+\definecolor{cpu2}{HTML}{FFC107}
+\definecolor{gpu3}{HTML}{EF9A9A}
+\definecolor{gpu4}{HTML}{90CAF9}
+\definecolor{gpu1}{HTML}{A5D6A7}
+\definecolor{gpu2}{HTML}{FFE082}
+
+\definecolor{cpu5}{HTML}{9932CC}
+
+\definecolor{sq_b1}{RGB}{37,52,148}
+\definecolor{sq_b2}{RGB}{44,127,184}
+\definecolor{sq_b3}{RGB}{65,182,196}
+\definecolor{sq_b4}{RGB}{127,205,187}
+\definecolor{sq_b5}{RGB}{199,233,180}
+\definecolor{sq_b5}{RGB}{255,255,204}
+
+\definecolor{sq_r1}{RGB}{189,0,38}
+\definecolor{sq_r2}{RGB}{240,59,32}
+\definecolor{sq_r3}{RGB}{253,141,60}
+\definecolor{sq_r4}{RGB}{254,178,76}
+\definecolor{sq_r5}{RGB}{254,217,118}
+\definecolor{sq_r6}{RGB}{255,255,178}
+
+\definecolor{sq_g1}{RGB}{0,104,55}
+\definecolor{sq_g2}{RGB}{49,163,84}
+\definecolor{sq_g3}{RGB}{120,198,121}
+\definecolor{sq_g4}{RGB}{173,221,142}
+\definecolor{sq_g5}{RGB}{217,240,163}
+\definecolor{sq_g6}{RGB}{255,255,204}
+
+
+\definecolor{div_c1}{RGB}{230,171,2}
+\definecolor{div_c2}{RGB}{102,166,30}
+\definecolor{div_c3}{RGB}{231,41,138}
+\definecolor{div_c4}{RGB}{117,112,179}
+\definecolor{div_c5}{RGB}{217,95,2}
+\definecolor{div_c6}{RGB}{27,158,119}
+\definecolor{div_c7}{RGB}{215,48,39}
+
+\definecolor{lineclr}{RGB}{0,0,0}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+%% user command
+\newcommand{\mvec}{\textsc{matvec}}
+\newcommand{\tsort}{\textsc{TreeSort}}
+\newcommand{\ssort}{\textsc{SampleSort}}
+\newcommand{\fsort}{\textsc{FlexPart}}
+\newcommand{\dsort}{\textsc{OptiPart}}
+\newcommand{\dendroGR}{\textsc{Dendro-GR}}
+\newcommand{\fToO}{\textsc{functionToOctree}}
+\newcommand{\nlsm}{\textsc{NLSM}}
+\newcommand{\tsearch}{\textsc{TreeSearch}}
+\newcommand{\dendrogr}{\textsc{Dendro-GR}}
+\newcommand{\ET}{\textsc{ET}}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+%\newcommand{\note}[1]{\noindent\emph{\textcolor{purple}{#1}}}
+\algrenewcommand\algorithmicrequire{\textbf{Input:}}
+\algrenewcommand\algorithmicensure{\textbf{Output:}}
+\algrenewcommand\algorithmicforall{\textbf{parallel for}}
+\newcommand{\hilbertcurve}{\textsc{Hilbert }}
+\newcommand{\mortoncurve}{\textsc{Morton }}
+
+\newtheorem*{remark}{Remark}
+
+\newcommand{\Intel}{Intel\textsuperscript{\textregistered}\xspace}
+\newcommand{\snb}{Xeon\texttrademark\xspace}
+\newcommand{\xphi}{Xeon Phi\texttrademark\xspace}
+\newcommand{\Summit}{\href{https://www.olcf.ornl.gov/summit/}{Summit}}
+\newcommand{\Aurora}{\href{http://aurora.alcf.anl.gov/}{Aurora}}
+\newcommand{\Stampede}{\href{https://www.tacc.utexas.edu/stampede/}{Stampede}}
+\newcommand{\Titan}{\href{https://www.olcf.ornl.gov/titan/}{Titan}}
+\newcommand{\Cloudlab}{\href{https://cloudlab.us/}{CloudLab}}
+%%
+
+\providecommand{\inlinecode}[1]{\texttt{#1}}
+
+
+\theoremstyle{plain}
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem*{cor}{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{conj}{Conjecture}[section]
+\newtheorem{exmp}{Example}[section]
+
+\theoremstyle{remark}
+\newtheorem*{rem}{Remark}
+
+\newcommand{\tabitem}{~\llap{\textbullet}~}
+
+\newcommand{\mycbox}[1]{\tikz{\path[draw=#1,fill=#1] (0,0) rectangle (0.2cm,0.2cm);}}
+
+\newcommand\PlaceText[3]{%
+\begin{tikzpicture}[remember picture,overlay]
+\node[outer sep=0pt,inner sep=0pt,anchor=south west] 
+  at ([xshift=#1,yshift=-#2]current page.north west) {#3};
+\end{tikzpicture}%
+}
+
+\usepackage{tikz}
+\usepackage{ifthen}
+\usepackage{amsmath}
+\usetikzlibrary{arrows,calc,intersections}
+
+\tikzset{
+    invisible/.style={opacity=0},
+    visible on/.style={alt={#1{}{invisible}}},
+    alt/.code args={<#1>#2#3}{%
+      \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
+    },
+  }
+
+
+\tikzstyle{recNode} = [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=yellow!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+
+\makeatletter
+\newcommand\resetstackedplots{
+\makeatletter
+\pgfplots@stacked@isfirstplottrue
+\makeatother
+\addplot [forget plot,draw=none] coordinates{(16,0) (32,0) (64,0) (128,0) (256,0) (512,0) (1024,0) (2048,0) (4096,0) (8192,0) (16384,0) (32768,0) (65536,0) (131072,0) (262144,0)};
+}
+\makeatother
+
+\makeatletter
+\newcommand\resetstackedplotsOne{
+\makeatletter
+\pgfplots@stacked@isfirstplottrue
+\makeatother
+\addplot [forget plot,draw=none] coordinates{(16,0) (32,0) (64,0) (128,0) (256,0) (512,0) (1024,0) (2048,0) (4096,0)};
+}
+\makeatother
+
+\makeatletter
+\newcommand\resetstackedplotsTwo{
+\makeatletter
+\pgfplots@stacked@isfirstplottrue
+\makeatother
+\addplot [forget plot,draw=none] coordinates{(16,0) (32,0) (64,0) (128,0) (256,0) (512,0) (1024,0) (2048,0) (4096,0) (8192,0) (16384,0) (32768,0)};
+}
+\makeatother
+
+% Hilbert curve
+
+\newdimen\HilbertLastX
+\newdimen\HilbertLastY
+\newcounter{HilbertOrder}
+
+\def\DrawToNext#1#2{%
+	\advance \HilbertLastX by #1
+	\advance \HilbertLastY by #2
+	\pgfpathlineto{\pgfqpoint{\HilbertLastX}{\HilbertLastY}}
+	% Alternative implementation using plot streams:
+	% \pgfplotstreampoint{\pgfqpoint{\HilbertLastX}{\HilbertLastY}}
+}
+
+% \Hilbert[right_x,right_y,left_x,left_x,up_x,up_y,down_x,down_y]
+\def\Hilbert[#1,#2,#3,#4,#5,#6,#7,#8] {
+	\ifnum\value{HilbertOrder} > 0%
+	\addtocounter{HilbertOrder}{-1}
+	\Hilbert[#5,#6,#7,#8,#1,#2,#3,#4]
+	\DrawToNext {#1} {#2}
+	\Hilbert[#1,#2,#3,#4,#5,#6,#7,#8]
+	\DrawToNext {#5} {#6}
+	\Hilbert[#1,#2,#3,#4,#5,#6,#7,#8]
+	\DrawToNext {#3} {#4}
+	\Hilbert[#7,#8,#5,#6,#3,#4,#1,#2]
+	\addtocounter{HilbertOrder}{1}
+	\fi
+}
+
+% \hilbert((x,y),order)
+\def\hilbert((#1,#2),#3){%
+	\advance \HilbertLastX by #1
+	\advance \HilbertLastY by #2
+	\pgfpathmoveto{\pgfqpoint{\HilbertLastX}{\HilbertLastY}}
+	% Alternative implementation using plot streams:
+	% \pgfplothandlerlineto
+	% \pgfplotstreamstart
+	% \pgfplotstreampoint{\pgfqpoint{\HilbertLastX}{\HilbertLastY}}
+	\setcounter{HilbertOrder}{#3}
+	\Hilbert[1mm,0mm,-1mm,0mm,0mm,1mm,0mm,-1mm]
+	\pgfusepath{stroke}%
+}
+
+%%
+
+
+
+% Morton Curve
+
+\newdimen\MortonLastX
+\newdimen\MortonLastY
+\newcounter{MortonOrder}
+
+\def\DrawToNext#1#2{%
+	\advance \MortonLastX by #1
+	\advance \MortonLastY by #2
+	\pgfpathlineto{\pgfqpoint{\MortonLastX}{\MortonLastY}}
+	% Alternative implementation using plot streams:
+	% \pgfplotstreampoint{\pgfqpoint{\HilbertLastX}{\HilbertLastY}}
+}
+
+% \Hilbert[right_x,right_y,left_x,left_x,up_x,up_y,down_x,down_y]
+\def\Morton[#1,#2,#3,#4,#5,#6,#7,#8] {
+	\ifnum\value{MortonOrder} > 0%
+	\addtocounter{MortonOrder}{-1}
+	\Morton[#1,#2,#3,#4,#5,#6,#7,#8]
+	\DrawToNext {#1} {#2}
+	\Morton[#3,#4,#5,#6,#7,#8,#1,#2]
+	\DrawToNext {#3} {#4}
+	\Morton[#5,#6,-3mm,1mm,#1,#2,#3,#4]	
+	\DrawToNext {#5} {#6}
+	\Morton[#7,#8,#1,#2,#3,#4,#5,#6]
+	\addtocounter{MortonOrder}{1}
+	\fi
+}
+
+% \hilbert((x,y),order)
+\def\morton((#1,#2),#3){%
+	\advance \MortonLastX by #1
+	\advance \MortonLastY by #2
+	\pgfpathmoveto{\pgfqpoint{\MortonLastX}{\MortonLastY}}
+	% Alternative implementation using plot streams:
+	% \pgfplothandlerlineto
+	% \pgfplotstreamstart
+	% \pgfplotstreampoint{\pgfqpoint{\HilbertLastX}{\HilbertLastY}}
+	\setcounter{MortonOrder}{#3}
+	\Morton[1mm,0mm,-1mm,1mm,1mm,0mm,1mm,-1mm]
+	\pgfusepath{stroke}%
+}
+
+
+\newtcbox{\mymath}[1][]{%
+    nobeforeafter, math upper, tcbox raise base,
+    enhanced, colframe=blue!30!black,
+    colback=blue!30, boxrule=1pt,
+    #1}
+
