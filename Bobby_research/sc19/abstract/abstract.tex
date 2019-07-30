@@ -6,279 +6,153 @@
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{Common Subexpression Elimination with Subtree Isomporphisms}
+\title{Machine Specific Symbolic Code Generation for Computational Science Applications}
 
 
-\author{\IEEEauthorblockN{Robert King(student)\IEEEauthorrefmark{1}, Milinda Fernando(mentor)\IEEEauthorrefmark{2},
-Hari Sundar (mentor)\IEEEauthorrefmark{3}, }
+\author{\IEEEauthorblockN{Robert King(Student)\IEEEauthorrefmark{1} \ \ 
+Mentors: Hari Sundar \IEEEauthorrefmark{2}, Milinda Fernando,\IEEEauthorrefmark{3} }
 \IEEEauthorblockA{
 %School of Computing,~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Department of Physics,\\
 %University of Utah, ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Brigham Young University,\\
 %Salt Lake City, Utah, ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Provo, Utah\\
-\IEEEauthorrefmark{1}giskard.king@gmail.com,
-\IEEEauthorrefmark{2}milinda@cs.utah.edu,
-\IEEEauthorrefmark{3}hari@cs.utah.edu,
+\IEEEauthorrefmark{1}u1001542@utah.edu,
+\IEEEauthorrefmark{2}hari@cs.utah.edu,
+\IEEEauthorrefmark{3}milinda@cs.utah.edu,
 }}
 
-%\author{\IEEEauthorblockN{Milinda Fernando (student)}
-%\IEEEauthorblockA{School of Computing,\\
-% University of Utah\\
-% Salt Lake City, Utah\\
-% Email: milinda@cs.utah.edu}
-% \and
-% \IEEEauthorblockN{David Nielsen}
-% \IEEEauthorblockA{ Department of Physics, \\
-% Brigham Young University\\
-% Provo, Utah\\
-% Email: david.nielsen@byu.edu}
-% \and
-% \IEEEauthorblockN{Hari Sundar (advisor)}
-% \IEEEauthorblockA{School of Computing,\\
-% University of Utah\\
-% Salt Lake City, Utah\\
-% Email: hari@cs.utah.edu}
-% }
 
-% conference papers do not typically use \thanks and this command
-% is locked out in conference mode. If really needed, such as for
-% the acknowledgment of grants, issue a \IEEEoverridecommandlockouts
-% after \documentclass
-
-% for over three affiliations, or if they all won't fit within the width
-% of the page, use this alternative format:
-% 
-%\author{\IEEEauthorblockN{Michael Shell\IEEEauthorrefmark{1},
-%Homer Simpson\IEEEauthorrefmark{2},
-%James Kirk\IEEEauthorrefmark{3}, 
-%Montgomery Scott\IEEEauthorrefmark{3} and
-%Eldon Tyrell\IEEEauthorrefmark{4}}
-%\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Electrical and Computer Engineering\\
-%Georgia Institute of Technology,
-%Atlanta, Georgia 30332--0250\\ Email: see http://www.michaelshell.org/contact.html}
-%\IEEEauthorblockA{\IEEEauthorrefmark{2}Twentieth Century Fox, Springfield, USA\\
-%Email: homer@thesimpsons.com}
-%\IEEEauthorblockA{\IEEEauthorrefmark{3}Starfleet Academy, San Francisco, California 96678-2391\\
-%Telephone: (800) 555--1212, Fax: (888) 555--1212}
-%\IEEEauthorblockA{\IEEEauthorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
-% use for special paper notices
-%\IEEEspecialpapernotice{(Invited Paper)}
-% make the title area
 \maketitle
 
-
-%\begin{abstract}
-%We present a portable and highly-scalable algorithm and framework that
-%targets problems in the astrophysics and numerical relativity
-%communities. 
-%This framework combines 
-%together the parallel \dendro~ octree with wavelet adaptive 
-%multiresolution and a physics module to solve the Einstein equations of 
-%general relativity in the \BSSN~formulation.
-%%Wavelet adaptive multiresolution is used to provide local, 
-%%fine-grain adaptivity, based on the fast wavelet transform of interpolating
-%%wavelets.
-%The goal of this work is to perform advanced, massively parallel 
-%numerical simulations of Intermediate Mass Ratio Inspirals (IMRIs)
-%of binary black holes with mass ratios on the order of 100:1. These studies
-%will be used to 
-%generate waveforms for use in LIGO data analysis and to calibrate
-%semi-analytical approximate methods. This advanced framework is designed 
-%to easily accommodate many existing algorithms in astrophysics
-%for 
-%%compressible 
-%plasma dynamics and radiation hydrodynamics. 
-%We have designed novel algorithms to enable efficient simulations for such 
-%experiments and demonstrate 
-%excellent weak scalability up to $131K$ cores on ORNL's Titan for binary mergers for mass ratios up to $100$. 
-%
-%
-%\end{abstract}
-
-%\begin{IEEEkeywords}
-% Numerical Relativity; Einstein equations; Adaptive Mesh Refinement; Finite Differencing; Wavelet Adaptive Multiresolution
-%\end{IEEEkeywords}
-
-% For peer review papers, you can put extra information on the cover
-% page as needed:
-% \ifCLASSOPTIONpeerreview
-% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
-% \fi
-%
-% For peerreview papers, this IEEEtran command inserts a page break and
-% creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
 
 \section{Introduction}
-The purpose of this work is to improve the run time of the simulation of black hole collisions and their corresponding gravitational waves. Black hole collisions can be modeled using the BSSN equations. The BSSN equations consist of several complex partial differential equations and to model these equations the value of each variable is computed once per a time step in the model. The overall model is constructed by calculating millions of timesteps to see how black holes interact with each other. Each timestep must solve the partial differential equations. This process is automated using the python package SymPy. SymPy takes mathematical expressions and generates python code to solve each expression. However due to the complexity of the BSSN differential equations, the auto generated code consists of thousands of temporary variables. Due to the number of temporary variables, modern compilers are unable to effectively optimize the code causing the code to become incredibly inefficient. This thesis illustrates a technique to use Subtree Isomorphisms and Common Subexpression Elimination to improve the run time.
-The focus of this work is to use a bottom up approach to find an efficient way to solve for the values of the partial differential equations for each timestep. The strategy is to convert all temporary variable computations into expression trees. Once the expression trees are created, they are rebuilt to take advantage of caching for the targeted memory architecture. In addition to outlining an algorithm to improve calculation, this work proves a lower bound for the registers necessary to calculate each temporary variable using graph partitioning.
+New discoveries in science and engineering are primarily driven by numerical simulations of underlying governing equations specially when the physical experiments become infeasible. High performance computing (HPC) is widely used to perform these simulations efficiently. When moving towards exascale computing, HPC clusters are moving towards increased heterogeneity and frequent change in architectures. Ability to utilize modern and future HPC clusters effectively is highly depend on performance portability and adaptation to new architectures. Manually written codes to evaluate the main computational kernels lack portability, prone to human errors, ability to perform code optimizations due to the complexity of the underlying equations. In this work we present a symbolic code generation framework, which generates architecture optimized code for different platforms. As the driving application we primarily use computational relativity where computations of Einstein equations become complicated due to the presence of curvature in spacetime. But the algorithms presented in this work, is applicable to generate code for any underlying applications.
 
-
-\noindent The key \ul{contributions} of this work are:
+\noindent The key \ul{contributions} of this work include:
+\begin{itemize}
+	\item \textbf{Symbolic inferace} : The presented framework is based on \texttt{SymPy} with additional modules written to handle complicated partial differential equations (PDEs). 
+	\item \textbf{Equations $\rightarrow$ Graphs} : The symbolically written equations are converted to a computational graph, which enables to perform architecture (cache, register optimizations) and language specific (SIMD vectorization, CUDA) optimizations.
+	\item \textbf{Common Subexpression Elimination (CSE)}: By computing common subexpressions, we can reduce the number of compute operations needed, by storing them in temory variables. 
+\end{itemize}
 %\begin{enumerate}
 %    \item
 
-\vspace{0.1in}    
-%\item
-\noindent \textbf{Automatic symbolic code-generation}. Given the complexity of the Einstein equations, we have developed an automatic code generation framework for GR using \texttt{SymPy} that automatically generates architecture-optimized codes. This greatly improves code portability, use by domain scientists and the ability to add additional constraints and checks to validate the code.
-
+\section{Background \& Related Work}
+In this section, we present a brief introduction on the driving application, where the symbolic code generation is deployed. The recent discovery of gravitational waves (GWs) in 2015, has excited the computational relativity community. Numerically computed GWs are important to perform verification and matched filtering for the massive amount of data generated by GW detectors. Computational relativity is primaraly focused on evolving 3+1 (space + time) decomposition of 4 Einstein equations for a specified initial condition. In this work we use commonly used \bssn, formulation of Einstein equations.The Einstein equations are a set of non-linear, coupled, partial differential equations. On discretization, one can end up with 24 or more equations with thousands of terms. Writing, optimizing and maintaining  code for this is very challenging. Sustainability and keeping it relevant for new  architectural changes are additional difficulties. To address these issues, use our symbolic code generation framework, to generate architecture optimized codes to compute the BSSN equations (see Figure \ref{fig:symb}).  
 
 \section{Methodology}
-The Figure 3 on the poster presents an overview of our approach. 
-\vspace{-0.15in}
 
+The symbolic code generation framework is only the initial step towards connecting symbolic equations to architecture specific compute codes (see Figure \ref{fig:sym_framwork}). By representing the equations as directed acyclic graphs (DAG) enable to exploit computation to match the programming language (AVX, CUDA, OpenMp) and architecture (CPU, GPU) specifications which result in faster and efficient codes. These specifications are met by performing \textit{expression to expression} transformations such that transformations are mathematically equivalent. 
 
-%\subsection{Octree partitioning, construction \& 2:1 balancing }
-%In this work we use octree based adaptive grids, where the adaptivity is determined by wavelet coefficients of the solution represented. We use our previous work on Space Filling Curve(SFC) based flexible octree partitioning algorithm \tsort\cite{Fernando:2017} to perform parallel octree partitioning. We refer \emph{octree construction} as completion of an incomplete octree which is performed by top down traversal over the octant based on the SFC ordering specified. We impose 2:1 balancing constraint by using a similar approach to \cite{SundarSampathBiros08} which enforces that for any given octant in the octree, all its neighboring octant differ by refinement level $\leq 1$ . The 2:1 balancing constraint makes the subsequent steps such as mesh generation, \unzip~ \& \zip~ operations simpler. 
+\begin{figure}
+%\begin{textblock*}{3cm}(12cm,2.65cm)%
+%	Application% 
+%\end{textblock*}%
+%\begin{textblock*}{3cm}(12cm,3.65cm)%
+%	"DSL"% 
+%\end{textblock*}%
+%\begin{textblock*}{3cm}(12cm,4.65cm)%
+%	Transformations% 
+%\end{textblock*}%
+%\begin{textblock*}{3cm}(12cm,5.65cm)%
+%	Code generation% 
+%\end{textblock*}%
 
+%\begin{center}
+\begin{tikzpicture}[scale=1.0]%
 
-The research for this thesis consists of two main projects. The first is the subtree isomorphism problem that will focus on the common subexpression elimination and the second is a lower bound analysis for the number of temporary variables needed to solve the partial differential equations. The goal is to create an algorithm that will be able to analyze the different partial differential equations and reorder the temporary variable calculations to maximize cache effectiveness and variable reuse. 
-
-\subsection{Staging}
-	Staging is focused on finding variable reuse within the partial differential equations. The first problem is to create an expression tree from the partial differential equations generated from the SymPy auto generated code. 
-	Once the expression tree is created, subtree isomorphism analysis can begin. This will be a bottom up approach that considers the values used in each leaf node in addition to finding similar tree structure. Each node within the tree will keep track of all the leaf values that it depends on. Set similarity will be used as a precondition before calculating the more expensive tree isomorphism. By the end of the Staging Process the most common subexpressions will be identified. Each expression will be valued depending on the number of leaf node dependents, to mitigate the total number of temporary variables, and the number of times each expression appears, to maximize data reuse.
-	
-\subsection{Rebuilding}
-	The rebuilding phase takes the results from the staging process and rebuilds the expression tree. In order of importance the rebuilding phase must preserve the correct final answers, maximize cache effectiveness, and minimize the total number of temporary variables used. The current strategy is to use a dynamic programming approach. Dynamic programming will also allow for the rebuilding process to scale effectively. Once complete, these results will be measured experimentally. Once a proof of concept has been completed the rebuilding process will take in parameters such as memory architecture, and L1 cache size to optimize the calculations for each machine. Once the rebuilding process is completed a parser will be created to transform the original SymPy autogenerated code to reflect the updated expression tree.
-
-
-
-
-
-
-
-%\begin{algorithm}
-%	\caption{\small Overview of our approach}\label{alg:overview}
-%	\footnotesize
-%	\begin{algorithmic}[1]
-%		%\Require A list of points or regions $W$, the starting level $l_1$ and the ending level $l_2$, $K_{oct}$
-%		%\Ensure $\tau_c$ \- ordered complete octree based on $W$
-%		%\Function{TreeSort($W$, $l_1$, $l_2$)}{}
-%		\State $M \leftarrow$ initialize mesh \Comment{meshing}
-%		\State $u \leftarrow$ initialize variables $(M)$
-%		\While{$t < T$}
-%		\For{$r = 1:3$} \Comment{Runge-Kutta stages}
-%		\State $B, \hat{u} \leftarrow \text{Unzip}(M, u)$ \Comment{\S\ref{sec:unzip_and_zip}}
-%		\For{$ b \in B$} 
-%		\State Compute derivatives \Comment Machine generated code 
-%		\State Compute $\hat{u}_{rhs}(b)$ \Comment Machine generated code 
-%		\EndFor % blocks
-%		\State $u_{rhs} \leftarrow \text{Zip}(M, B, \hat{u}_{rhs})$ \Comment{\S\ref{sec:unzip_and_zip}}
-%		\State RK update
-%		\EndFor  % rk 
-%		\State $t\leftarrow t+dt$
-%		\If{need remesh $M$}  \Comment{remesh }
-%		\State $M' \leftarrow$ remesh($M$) 
-%		\State $u' \leftarrow$ Intergid\_Transfer$(M, M', u)$ \Comment{inter-grid transfer}
-%		\EndIf
-%		\EndWhile  % time
-%	\end{algorithmic}
-%\end{algorithm}
-
-
-\vspace{-0.15in}
-\section{Results}
-As a proof of concept, an initial algorithm was developed to parse the SymPy autogenerated code into an encompassing expression tree and reduce the tree using a user specified cache size. The greedy strategy aims to create expression that with the number of dependencies equivalent to the specified cache size. This process is applied recursively to calculate all the target variables from the SymPy autogenerated code.
-The preliminary results demonstrate that lower cache sizes cause parts of expressions tree to be duplicated. This similarity suggests there is an opportunity to effectively utilize memory locality to reduce run time. At larger cache sizes it is important to stage the expression tree to reduce the number of cache misses and improve performance.  
-
-\begin{figure}[tbh]
-	\centering
-	\includegraphics[width=2.0\columnwidth]{Staging_Results.png}
-	\caption{\small Preliminary Results	}
-	\vspace{-0.1in}
+\node[draw, prob,minimum width=9.5cm] at (0, 6) {Relativity, Electromagnetism, Fluid Dynamics};%
+\node[draw, feat,minimum width=3cm] at (-3.25, 5) {SymPy}; \node[draw, feat,minimum width=6cm] at (1.75,5) {Differential Geo. module};%
+\node[draw, parl,minimum width=9.5cm] at (0, 4) {expression to expresstion};%
+\node[draw, sse ,minimum width=9.5cm] at (0, 3) {C, C++, AVX, OpenMp, CUDA};%
+\end{tikzpicture}%
+	\caption{ put a caption \label{fig:sym_framwork}}
 \end{figure}
 
+\begin{figure*}[t]
+	\noindent\fbox{
+		\begin{minipage}[t]{.4\textwidth}
+			\small
+			\begin{eqnarray*}
+				\partial_t \alpha &=&  \mathcal{L}_\beta\alpha - 2 \alpha K, \\
+				\partial_t \beta^i &=& \lambda_2 \beta^j\,\partial_j\beta^i + \frac{3}{4} f(\alpha) B^i\\
+				\partial_t B^i  &=& \partial_t \tilde\Gamma^i  - \eta B^{i}   + \lambda_3 \beta^j\,\partial_j B^i -\lambda_4 \beta^j\,\partial_j \tilde\Gamma^i \\
+				\partial_t \tilde \gamma_{ij} &=&  \mathcal{L}_\beta\tilde{\gamma}_{ij} -2 \alpha \tilde A_{ij}, \\
+				\partial_t \chi &=& \mathcal{L}_\beta\chi + \frac{2}{3}\chi \left(\alpha K -  
+				\partial_a \beta^a\right)\\
+				\partial_t \tilde A_{ij} &=& \mathcal{L}_\beta\tilde{A}_{ij} + \chi \left(-D_i D_j \alpha +
+				\alpha R_{ij}\right)^{TF} +\nonumber \\
+				&\,&\alpha \left(K \tilde A_{ij} -
+				2 \tilde A_{ik} \tilde A^{k}_{\,j}\right), \label{eq:at_evol}\\
+				\partial_t K &=& \beta^k\partial_kK- D^i D_i \alpha + \\
+				&\,&\alpha \left(\tilde A_{ij}\tilde
+				A^{ij} +\frac{1}{3}K^2\right),\\
+				\partial_t \tilde \Gamma^i &=& \tilde \gamma^{jk} \partial_j
+				\partial_k \beta^i + \frac{1}{3} \tilde \gamma^{ij} \partial_j
+				\partial_k \beta^k + \beta^j \partial_j \tilde \Gamma^i - \nonumber \\
+				&\,&\tilde
+				\Gamma^j \partial_j \beta^i + 
+				\frac{2}{3}\tilde \Gamma^i \partial_j
+				\beta^j - 2 \tilde A^{i j}\partial_j \alpha + \nonumber \\
+				&\,& 2 \alpha \left(\tilde
+				{\Gamma^i}_{jk} \tilde A^{jk} + 6 \tilde A^{ij}\partial_j \phi -
+				\frac{2}{3} \tilde \gamma^{ij} \partial_j K\right) \\
+				% ~ &~ & ~\\
+			\end{eqnarray*}
+		\end{minipage}% This must go next to `\end{minipage}`
+	}
+	\begin{minipage}[t]{.52\textwidth}
+		\small
+\begin{minted}[frame=single,framesep=1pt]{python}
+from dendro_sym import *
+a_rhs = dendro.Lie(b, a) - 2*a*K
+		
+b_rhs = [3/4 * f(a) * B[i] + 
+l2*vec_j_del_j(b, b[i]) for i in e_i]
+		
+B_rhs = [Gt_rhs[i] - eta * B[i] + 
+	l3 * vec_j_del_j(b, B[i]) - 
+	l4 * vec_j_del_j(b, Gt[i]) 
+	for i in e_i]
+		
+gt_rhs =  dendro.Lie(b, gt) - 2*a*At
 
-%============ Conclusion ===============
-%\section{Conclusion}
+chi_rhs = dendro.Lie(b, chi) + 
+ 2/3*chi*(a*K - del_j(b)) 
+		
+At_rhs = dendro.Lie(b, At) + chi *
+ dendro.TF(-DiDj(a) + a*dendro.Ricci) +
+ a*(K*At -2*At_ikAtKj)
+		
+K_rhs = vec_k_del_k(K) - DIDi(a) +
+ a*(1/3*K*K + A_ij_A_IJ(At)) 
+		
+\end{minted}
+	\end{minipage}
+	\caption{\label{fig:symb} The left panel shows the \BSSN ~formulation of the 
+		Einstein equations. These are tensor equations, with indices $i,j,\ldots$
+		taking the values $1, 2, 3$. On the right we show the \texttt{{\dendro\_sym}}
+		code for these equations. \texttt{\dendro\_sym} uses \texttt{SymPy} and other tools
+		to generate optimized \texttt{C++} code to evaluate the equations. Note that $\mathcal{L}_\beta,\ D,\ \partial$ denote Lie derivative, covariant derivative and partial derivative respectively, and we have excluded $\partial_t\Gamma^i$ from \texttt{\dendro\_sym} to save space. (See \cite{Baumgarte:1998te,Alcubierre:1138167} for more information about the equations and the differential operators.)}
+	\label{fig:bssneqs}
+	\vspace{-0.15in}
+\end{figure*}
 
-%In the short time that LIGO and Virgo
-%have been searching for
-%gravitational waves, we have already learned exciting things about
-%neutron stars~\cite{Most:2018hfd,Shibata:2017xdx}, 
-%the production of heavy elements 
-%(such as gold)~\cite{0004-637X-855-2-99}, 
-%and the population of black holes in the 
-%universe~\cite{TheLIGOScientific:2016htt}. 
-%When gravitational wave observations are combined with observations of
-%electromagnetic radiation---from radio waves to gamma rays---there is
-%a multiplicative effect that magnifies the scientific impact. This is
-%the promise of multi-messenger astronomy.
-%
-%The full scientific
-%impact of multi-messenger astronomy is only realized when the
-%observations are informed by sophisticated computer models of the underlying
-%astrophysical phenomena. 
-%\dendro\ provides the ability to run these models in a scalable way, 
-%with local adaptivity criteria using WAMR.
-%While AMR codes with block-adaptivity typically lose performance as the number
-%of adaptive levels increases, \dendro\ achieves impressive scalability on a real 
-%application even with many levels of refinement. The combination of scalability
-%and adaptivity will allow us to study the gravitational radiation from
-%IMRIs without simplifying approximations in direct numerical simulations.
-%
-%The \dendro\ code reported on here, with 
-%a module for vacuum black hole spacetimes, is just our initial step in 
-%creating a highly adaptive computational platform for studying
-%relativistic astrophysics on the next-generation of supercomputers.
-%This work will be followed with additional modules for solving the
-%relativistic magnetohydrodynamics equations, 
-%nuclear equations of state, and radiation hydrodynamics.
-%For application developers, a key advantage of \dendro\ is the ability to use
-%conventional numerical methods for these modules.
-%
-%As LIGO and Virgo are joined by other gravitational wave detectors and
-%observatories around the world, we expect many more exciting 
-%discoveries to come.
+\subsection{Subtree isomorphism}
+
+\subsection{Staging computations}
+
+
+\section{Results}
+
+\section{Future Work}
 
 
 
 
-% conference papers do not normally have an appendix
-
-
-% use section* for acknowledgement
-%\section*{Acknowledgment}
-%The authors would like to thank...
-%more thanks here
-% trigger a \newpage just before the given reference
-% number - used to balance the columns on the last page
-% adjust value as needed - may need to be readjusted if
-% the document is modified later
-%\IEEEtriggeratref{8}
-% The "triggered" command can be changed if desired:
-%\IEEEtriggercmd{\enlargethispage{-5in}}
-
-% references section
-%\IEEEtriggeratref{70}
-% can use a bibliography generated by BibTeX as a .bbl file
-% BibTeX documentation can be easily obtained at:
-% http://www.ctan.org/tex-archive/biblio/bibtex/contrib/doc/
-% The IEEEtran BibTeX style support page is at:
-% http://www.michaelshell.org/tex/ieeetran/bibtex/
 \bibliographystyle{IEEEtran}
 \bibliography{bssn}
 
-
-%\newpage
-%\pagebreak
-%\setcounter{page}{1}
-%%\appendix
-%\appendices
-%
-%\section{Artifact Description}
-%\label{sec:AD}
-%\input{artifact_description}
-%
-%\newpage
-%\pagebreak
-%\setcounter{page}{1}
-%\section{Artifact Evaluation}
-%\label{sec:AE}
-%\input{artifact_evaluation}
-
-
-
-% that's all folks
 \end{document}
 
 
