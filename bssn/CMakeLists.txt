@@ -52,6 +52,7 @@ set(INC_FILES
 set(SRC_FILES
         src/derivs.cpp
         src/rhs.cpp
+        ../Bobby_research/rhs_staged.cpp
         src/bssn_profiler.cpp
         src/profile_param.cpp
         src/block.cpp
