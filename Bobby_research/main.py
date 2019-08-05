@@ -32,60 +32,60 @@ def main():
         print(cache)
         
         counter = 0
-        while cache <=95:
-                subtrees = tree.cacheAdaptTrees(cache)
-                
-                file = open("newCode"+str(cache)+".cpp", "w")
-                alloc_file = open("allocate"+str(cache)+".cpp", "w")
-                dealloc_file = open("deallocate"+str(cache)+".cpp", "w")
-                for subtree in subtrees:   
-                        #subtree.createGraphPicture('pictures/subT'+str(counter)) 
-                        #print(len(subtree.sources))            
-                        for source in subtree.sources: 
-                                if subtree.getNumLeafDependents(source) >=2 : 
+        #while cache <=95:
+        subtrees = tree.cacheAdaptTrees(cache)
+        
+        file = open("newCode"+str(cache)+".cpp", "w")
+        alloc_file = open("allocate"+str(cache)+".cpp", "w")
+        dealloc_file = open("deallocate"+str(cache)+".cpp", "w")
+        for subtree in subtrees:   
+                #subtree.createGraphPicture('pictures/subT'+str(counter)) 
+                #print(len(subtree.sources))            
+                for source in subtree.sources: 
+                        if subtree.getNumLeafDependents(source) >=2 : 
+                                
+                                output = ''
+                                var_end = ''
+                                end = ''
+                                
+                                if counter % passSize == 0:                                        
+                                        output = '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
+                                        output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
+                                        output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
+                                        output = output + '            x = pmin[0] + i*hx;\n'
+                                        output = output + '            r_coord = sqrt(x*x + y*y + z*z);\n'
+                                        output = output + '            eta=ETA_CONST;\n'
+                                        output = output + '            if (r_coord >= ETA_R0) {\n'
+                                        output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
+                                        output = output + '            }\n'
+                                        output = output + '            pp = i + nx*(j + ny*k);\n'
+                                if counter % cache == cache -1:
+                                        end = '        }\n'
+                                        end = end + '    }\n'
+                                        end = end + '}\n'
+
+                                if not source.endswith('[pp]'):
+                                        #output = 'double '
+                                        var_end = '[pp]'
+                                
+                                output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n' + end
+                                file.write(output)
+
+                                if source.startswith('_') or source.startswith("DENDRO"):
+                                        alloc_str = "double* " + source + "= (double*)malloc(sizeof(double)*n);\n"
+                                        alloc_file.write(alloc_str)
                                         
-                                        output = ''
-                                        var_end = ''
-                                        end = ''
-                                        
-                                        if counter % passSize == 0:                                        
-                                                output = '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
-                                                output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
-                                                output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
-                                                output = output + '            x = pmin[0] + i*hx;\n'
-                                                output = output + '            r_coord = sqrt(x*x + y*y + z*z);\n'
-                                                output = output + '            eta=ETA_CONST;\n'
-                                                output = output + '            if (r_coord >= ETA_R0) {\n'
-                                                output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
-                                                output = output + '            }\n'
-                                                output = output + '            pp = i + nx*(j + ny*k);\n'
-                                        if counter % cache == cache -1:
-                                                end = '        }\n'
-                                                end = end + '    }\n'
-                                                end = end + '}\n'
+                                        dealloc_str = 'free(' + source + ');\n'
+                                        dealloc_file.write(dealloc_str)
 
-                                        if not source.endswith('[pp]'):
-                                                #output = 'double '
-                                                var_end = '[pp]'
-                                        
-                                        output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n' + end
-                                        file.write(output)
+                                counter = counter + 1
 
-                                        if source.startswith('_') or source.startswith("DENDRO"):
-                                                alloc_str = "double* " + source + "= (double*)malloc(sizeof(double)*n);\n"
-                                                alloc_file.write(alloc_str)
-                                                
-                                                dealloc_str = 'free(' + source + ');\n'
-                                                dealloc_file.write(dealloc_str)
-
-                                        counter = counter + 1
-
-                        #counter = counter + 1
-                end = '        }\n'
-                end = end + '    }\n'
-                end = end + '}\n'
-                file.write(end)
-                cache = cache +5
+                #counter = counter + 1
+        end = '        }\n'
+        end = end + '    }\n'
+        end = end + '}\n'
+        file.write(end)
+                #cache = cache +5
 
 def calculate_rhs():
 
