@@ -233,47 +233,62 @@ int main(int argc, char **argv)
     }
     else if (mode == 1)
     {
-        bssn::timer::initialize();
-        //auto t1 = Time::now();
-	    auto t1 = Time::now();
+        double totalTime = 0.0;
+        double derivTime = 0.0;
+        double rhsTime = 0.0;
+        int numIter = 10; 
 
-        for (unsigned int blk = 0; blk < blkList.size(); blk++)
+        bssn::timer::initialize();
+        for(int iter = 0; iter<numIter; iter++)
         {
 
-            const unsigned int offset = blkList[blk].getOffset();
-            unsigned int sz[3];
-            double hx[3];
-            double ptmin[3];
-            double ptmax[3];
+            auto t1 = Time::now();
+            for (unsigned int blk = 0; blk < blkList.size(); blk++)
+            {
 
-            sz[0] = blkList[blk].getAllocationSzX();
-            sz[1] = blkList[blk].getAllocationSzY();
-            sz[2] = blkList[blk].getAllocationSzZ();
+                const unsigned int offset = blkList[blk].getOffset();
+                unsigned int sz[3];
+                double hx[3];
+                double ptmin[3];
+                double ptmax[3];
 
-            const unsigned int bflag = blkList[blk].getBlkNodeFlag();
+                sz[0] = blkList[blk].getAllocationSzX();
+                sz[1] = blkList[blk].getAllocationSzY();
+                sz[2] = blkList[blk].getAllocationSzZ();
 
-            hx[0] = blkList[blk].computeDx(pt_min, pt_max);
-            hx[1] = blkList[blk].computeDy(pt_min, pt_max);
-            hx[2] = blkList[blk].computeDz(pt_min, pt_max);
+                const unsigned int bflag = blkList[blk].getBlkNodeFlag();
 
-            ptmin[0] = GRIDX_TO_X(0) - 3 * hx[0];
-            ptmin[1] = GRIDY_TO_Y(0) - 3 * hx[1];
-            ptmin[2] = GRIDZ_TO_Z(0) - 3 * hx[2];
+                hx[0] = blkList[blk].computeDx(pt_min, pt_max);
+                hx[1] = blkList[blk].computeDy(pt_min, pt_max);
+                hx[2] = blkList[blk].computeDz(pt_min, pt_max);
 
-            ptmax[0] = GRIDX_TO_X((1u << m_uiMaxDepth)) + 3 * hx[0];
-            ptmax[1] = GRIDY_TO_Y((1u << m_uiMaxDepth)) + 3 * hx[1];
-            ptmax[2] = GRIDZ_TO_Z((1u << m_uiMaxDepth)) + 3 * hx[2];
+                ptmin[0] = GRIDX_TO_X(0) - 3 * hx[0];
+                ptmin[1] = GRIDY_TO_Y(0) - 3 * hx[1];
+                ptmin[2] = GRIDZ_TO_Z(0) - 3 * hx[2];
 
-            bssnrhs_sep(varUnzipOutCPU0, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
+                ptmax[0] = GRIDX_TO_X((1u << m_uiMaxDepth)) + 3 * hx[0];
+                ptmax[1] = GRIDY_TO_Y((1u << m_uiMaxDepth)) + 3 * hx[1];
+                ptmax[2] = GRIDZ_TO_Z((1u << m_uiMaxDepth)) + 3 * hx[2];
+
+                bssnrhs_autoGen(varUnzipOutCPU1, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
+            }
+            auto t2 = Time::now();
+            fsec fs = t2 - t1;
+            totalTime += fs.count();
+            derivTime += bssn::timer::t_deriv.seconds;
+            bssn::timer::t_deriv.seconds = 0.0;
+            rhsTime += bssn::timer::t_rhs.seconds;
+            bssn::timer::t_rhs.seconds = 0.0;
+            //std::cout<<"iteration "<<iter<<" " << derivTime<<" "<<rhsTime<<std::endl;
         }
 
-        auto t2=Time::now();
-	    fsec fs = t2 - t1;
-
-        bssn::timer::total_runtime.stop();
-        std::cout << "CPU compute staged time : " << fs.count() << std::endl;
-        std::cout << "Derivative  time : " << bssn::timer::t_deriv.seconds << std::endl;
-        std::cout << "RHS         time : " << bssn::timer::t_rhs.seconds << std::endl;
+        totalTime = totalTime/numIter;
+        derivTime = derivTime/numIter;
+        rhsTime = rhsTime/numIter;
+        
+        std::cout << "CPU compute auto staged time : " << totalTime << std::endl;
+        std::cout << "Derivative  time : " << derivTime << std::endl;
+        std::cout << "RHS         time : " << rhsTime << std::endl;
     }
     /*
     double l_inf;
