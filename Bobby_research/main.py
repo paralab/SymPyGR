@@ -28,6 +28,7 @@ def main():
         print('finish parsing file')
 
         cache = 95
+        passSize = 95
         
         counter = 0
         while cache <=95:
@@ -46,7 +47,7 @@ def main():
                                         var_end = ''
                                         end = ''
                                         
-                                        if counter % cache == 0:                                        
+                                        if counter % passSize == 0:                                        
                                                 output = '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
                                                 output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
                                                 output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
@@ -75,6 +76,7 @@ def main():
                                                 
                                                 dealloc_str = 'free(' + source + ');\n'
                                                 dealloc_file.write(dealloc_str)
+                                                
                                         counter = counter + 1
 
                         #counter = counter + 1
