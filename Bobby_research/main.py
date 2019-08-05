@@ -25,10 +25,11 @@ def main():
                         tree, junk = parse.createTree(tree)
                         id = parse.id
         #tree.createGraphPicture('pictures/basicAdd')
-        print('finish parsing file')
+        
+        cache = int(sys.argv[1])
+        passSize = cache
 
-        cache = 95
-        passSize = 95
+        print(cache)
         
         counter = 0
         while cache <=95:
@@ -76,7 +77,7 @@ def main():
                                                 
                                                 dealloc_str = 'free(' + source + ');\n'
                                                 dealloc_file.write(dealloc_str)
-                                                
+
                                         counter = counter + 1
 
                         #counter = counter + 1
