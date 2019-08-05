@@ -238,9 +238,10 @@ int main(int argc, char **argv)
         double rhsTime = 0.0;
         int numIter = 10; 
 
-        bssn::timer::initialize();
+        
         for(int iter = 0; iter<numIter; iter++)
         {
+            bssn::timer::initialize();
 
             auto t1 = Time::now();
             for (unsigned int blk = 0; blk < blkList.size(); blk++)
