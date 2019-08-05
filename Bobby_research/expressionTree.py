@@ -21,10 +21,11 @@ class expressionTree:
 
         if node['numChildren'] == 0:
             if not self.isOperator(node['value']):
-                output =  str(node['value'])
+                if node['value'].startswith("_") or node['value'].startswith("DENDRO"):
+                    output = node['value'] + "[pp]"
+                else:
+                    output =  str(node['value'])
             else:
-                #if node['nodeID'] == '-DENDRO_106':
-                    #print('found it')
                 output = node['nodeID']
         else:
             if node['numChildren'] != 2:

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6800 64-bit) (preloaded format=pdflatex 2018.9.11)  30 JUL 2019 10:55
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6800 64-bit) (preloaded format=pdflatex 2018.9.11)  30 JUL 2019 15:55
 entering extended mode
 **./abstract.tex
 (abstract.tex
@@ -1562,33 +1562,84 @@ Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 5.
 LaTeX Info: Redefining \pageref on input line 5.
 LaTeX Info: Redefining \nameref on input line 5.
-LaTeX Font Info:    Calculating math sizes for size <11> on input line 67.
-LaTeX Font Info:    Try loading font information for U+msa on input line 67.
+LaTeX Font Info:    Calculating math sizes for size <11> on input line 25.
+LaTeX Font Info:    Try loading font information for U+msa on input line 25.
 
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsa.fd"
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 67.
+LaTeX Font Info:    Try loading font information for U+msb on input line 25.
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsb.fd"
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Try loading font information for OT1+pcr on input line 122.
-
+LaTeX Font Info:    Try loading font information for OT1+pcr on input line 33.
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\psnfss\ot1pcr.fd"
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
-) [1{C:/Users/bobby/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}
+)
+! Undefined control sequence.
+l.41 ...n. In this work we use commonly used \bssn
+                                                  , formulation of Einstein ...
+
+? 
+
+LaTeX Warning: Reference `fig:symb' on page 1 undefined on input line 41.
 
 
-]
-<Staging_Results.png, id=21, 685.56125pt x 397.98688pt>
-File: Staging_Results.png Graphic file (type png)
-<use Staging_Results.png>
-Package pdftex.def Info: Staging_Results.png  used on input line 185.
-(pdftex.def)             Requested size: 504.0pt x 292.59274pt.
+LaTeX Warning: Reference `fig:sym_framwork' on page 1 undefined on input line 4
+5.
 
-Overfull \hbox (252.0pt too wide) in paragraph at lines 185--186
- [][] 
+
+! Package xcolor Error: Undefined color `utsecbrown'.
+
+See the xcolor package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.66 \node[draw, parl,minimum width=9.5cm]
+                                           at (0, 4) {expression to expresst...
+
+? 
+
+Overfull \hbox (18.70117pt too wide) in paragraph at lines 68--69
+[][] 
  []
+
+\openout4 = `abstract.pyg'.
+
+runsystem(pygmentize -S default -f latex -P commandprefix=PYG > _minted-abstrac
+t\default-pyg-prefix.pygstyle)...executed.
+
+(_minted-abstract/default-pyg-prefix.pygstyle)
+runsystem(pygmentize -S default -f latex -P commandprefix=PYGdefault > _minted-
+abstract\default.pygstyle)...executed.
+
+
+(_minted-abstract/default.pygstyle)
+runsystem(pygmentize -l python -f latex -P commandprefix=PYG -F tokenmerge -o _
+minted-abstract/B534DBF476644BE072052CB06116F40D2BEB9EAAE5F5F59B37E348A476C86F3
+D.pygtex abstract.pyg)...executed.
+
+
+(_minted-abstract/B534DBF476644BE072052CB06116F40D2BEB9EAAE5F5F59B37E348A476C86
+F3D.pygtex
+LaTeX Font Info:    Font shape `OT1/pcr/bx/n' in size <9> not available
+(Font)              Font shape `OT1/pcr/b/n' tried instead on input line 2.
+)
+
+LaTeX Warning: Citation `Baumgarte:1998te' on page 1 undefined on input line 13
+6.
+
+
+LaTeX Warning: Citation `Alcubierre:1138167' on page 1 undefined on input line 
+136.
+
+
+LaTeX Warning: Citation `Baumgarte:1998te' on page 1 undefined on input line 13
+6.
+
+
+LaTeX Warning: Citation `Alcubierre:1138167' on page 1 undefined on input line 
+136.
 
 No file abstract.bbl.
 
@@ -1602,33 +1653,59 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 282.
-[2
+[1{C:/Users/bobby/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map}
 
- <./Staging_Results.png>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 282.
- (abstract.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 282.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 282.
+
+]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 156.
+ [2]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 156.
+
+(abstract.aux)
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 156.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 156.
+
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+runsystem(del abstract.pyg)...executed.
+
  ) 
 Here is how much of TeX's memory you used:
- 37460 strings out of 492973
- 887187 string characters out of 3126692
- 1133418 words of memory out of 3000000
- 40661 multiletter control sequences out of 15000+200000
- 41958 words of font info for 98 fonts, out of 3000000 for 9000
+ 37761 strings out of 492973
+ 892715 string characters out of 3126692
+ 1152270 words of memory out of 3000000
+ 40940 multiletter control sequences out of 15000+200000
+ 43971 words of font info for 109 fonts, out of 3000000 for 9000
  1144 hyphenation exceptions out of 8191
- 64i,14n,103p,1143b,609s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 64i,14n,103p,1176b,849s stack positions out of 5000i,500n,10000p,200000b,50000s
 {C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/enc/dvips/base/8r.enc
 }<C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/
-cm/cmsy8.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/urw/
-courier/ucrr8a.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type
-1/urw/times/utmb8a.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/
-type1/urw/times/utmr8a.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fo
-nts/type1/urw/times/utmri8a.pfb>
-Output written on abstract.pdf (2 pages, 104740 bytes).
+cmextra/cmex9.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1
+/public/amsfonts/cm/cmmi10.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.
+9/fonts/type1/public/amsfonts/cm/cmmi6.pfb><C:/Users/bobby/AppData/Local/Progra
+ms/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/bobby/AppData/
+Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmmi9.pfb><C:/Users/bo
+bby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb>
+<C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/c
+m/cmr6.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public
+/amsfonts/cm/cmr9.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/t
+ype1/public/amsfonts/cm/cmsy10.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTe
+X 2.9/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/bobby/AppData/Local/Pr
+ograms/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy8.pfb><C:/Users/bobby/AppD
+ata/Local/Programs/MiKTeX 2.9/fonts/type1/public/amsfonts/cm/cmsy9.pfb><C:/User
+s/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/urw/courier/ucrb8a.pfb><C
+:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/urw/courier/ucrr8a.
+pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/urw/times/utm
+b8a.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/urw/times
+/utmr8a.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/urw/t
+imes/utmri8a.pfb>
+Output written on abstract.pdf (2 pages, 185438 bytes).
 PDF statistics:
- 48 PDF objects out of 1000 (max. 8388607)
- 9 named destinations out of 1000 (max. 500000)
- 18 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 106 PDF objects out of 1000 (max. 8388607)
+ 12 named destinations out of 1000 (max. 500000)
+ 37 words of extra memory for PDF output out of 10000 (max. 10000000)
 
