@@ -27,6 +27,7 @@ def main():
         #tree.createGraphPicture('pictures/basicAdd')
         
         cache = int(sys.argv[1])
+        #cache = 200
         passSize = cache
 
         print(cache)
@@ -35,14 +36,15 @@ def main():
         #while cache <=95:
         subtrees = tree.cacheAdaptTrees(cache)
         
-        file = open("newCode"+str(cache)+".cpp", "w")
-        alloc_file = open("allocate"+str(cache)+".cpp", "w")
-        dealloc_file = open("deallocate"+str(cache)+".cpp", "w")
+        file = open("staged_codes/" + "cache" + str(cache) + "/Code"+str(cache)+".cpp", "w")
+        alloc_file = open("staged_codes/" + "cache" + str(cache) + "/allocate"+str(cache)+".cpp", "w")
+        dealloc_file = open("staged_codes/" + "cache" + str(cache) + "/deallocate"+str(cache)+".cpp", "w")
         for subtree in subtrees:   
                 #subtree.createGraphPicture('pictures/subT'+str(counter)) 
-                #print(len(subtree.sources))            
+                #print(len(subtree.sources))       
                 for source in subtree.sources: 
                         if subtree.getNumLeafDependents(source) >=2 : 
+                                counter = counter + 1
                                 
                                 output = ''
                                 var_end = ''
@@ -72,19 +74,21 @@ def main():
                                 file.write(output)
 
                                 if source.startswith('_') or source.startswith("DENDRO"):
+                                        
                                         alloc_str = "double* " + source + "= (double*)malloc(sizeof(double)*n);\n"
                                         alloc_file.write(alloc_str)
                                         
                                         dealloc_str = 'free(' + source + ');\n'
                                         dealloc_file.write(dealloc_str)
 
-                                counter = counter + 1
+                                
 
                 #counter = counter + 1
         end = '        }\n'
         end = end + '    }\n'
         end = end + '}\n'
         file.write(end)
+        print('number stages ' + str(counter))
                 #cache = cache +5
 
 def calculate_rhs():
