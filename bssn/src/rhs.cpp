@@ -594,7 +594,7 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
                 ]]]*/
                 //[[[end]]]
 
-                #include "bssn.cpp"
+                //#include "bssn.cpp"
 
                 bssn::timer::t_rhs.stop();
 
