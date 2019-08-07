@@ -291,31 +291,152 @@ int main(int argc, char **argv)
         std::cout << "Derivative  time : " << derivTime << std::endl;
         std::cout << "RHS         time : " << rhsTime << std::endl;
     }
-    /*
-    double l_inf;
-    for (unsigned int var = 0; var < bssn::BSSN_NUM_VARS; var++)
-    {
-        l_inf = 0;
-        for (unsigned int blk = 0; blk < blkList.size(); blk++)
+    if(mode == 3)
+    {   
+        //control
+        double totalTime = 0.0;
+        double derivTime = 0.0;
+        double rhsTime = 0.0;
+        int numIter = 10; 
+
+        for(int iter = 0; iter<numIter; iter++)
         {
 
-            const unsigned int offset = blkList[blk].getOffset();
-            unsigned int sz[3];
+            bssn::timer::initialize();
 
-            sz[0] = blkList[blk].getAllocationSzX();
-            sz[1] = blkList[blk].getAllocationSzY();
-            sz[2] = blkList[blk].getAllocationSzZ();
+            auto t1 = Time::now();
 
-            for (unsigned int k = 3; k < sz[2] - 3; k++)
-                for (unsigned int j = 3; j < sz[1] - 3; j++)
-                    for (unsigned int i = 3; i < sz[0] - 3; i++)
-                        if (l_inf < fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]))
-                            l_inf = fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
+            for (unsigned int blk = 0; blk < blkList.size(); blk++)
+            {
+
+                const unsigned int offset = blkList[blk].getOffset();
+                unsigned int sz[3];
+                double hx[3];
+                double ptmin[3];
+                double ptmax[3];
+
+                sz[0] = blkList[blk].getAllocationSzX();
+                sz[1] = blkList[blk].getAllocationSzY();
+                sz[2] = blkList[blk].getAllocationSzZ();
+
+                const unsigned int bflag = blkList[blk].getBlkNodeFlag();
+
+                hx[0] = blkList[blk].computeDx(pt_min, pt_max);
+                hx[1] = blkList[blk].computeDy(pt_min, pt_max);
+                hx[2] = blkList[blk].computeDz(pt_min, pt_max);
+
+                ptmin[0] = GRIDX_TO_X(0) - 3 * hx[0];
+                ptmin[1] = GRIDY_TO_Y(0) - 3 * hx[1];
+                ptmin[2] = GRIDZ_TO_Z(0) - 3 * hx[2];
+
+                ptmax[0] = GRIDX_TO_X((1u << m_uiMaxDepth)) + 3 * hx[0];
+                ptmax[1] = GRIDY_TO_Y((1u << m_uiMaxDepth)) + 3 * hx[1];
+                ptmax[2] = GRIDZ_TO_Z((1u << m_uiMaxDepth)) + 3 * hx[2];
+
+                bssnrhs(varUnzipOutCPU1, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
+            }
+            auto t2 = Time::now();
+            fsec fs = t2 - t1;
+            totalTime += fs.count();
+            derivTime += bssn::timer::t_deriv.seconds;
+            bssn::timer::t_deriv.seconds = 0.0;
+            rhsTime += bssn::timer::t_rhs.seconds;
+            bssn::timer::t_rhs.seconds = 0.0;
+            //std::cout<<"iteration "<<iter<<" " << derivTime<<" "<<rhsTime<<std::endl;
         }
 
-        std::cout << "comparison for var: " << var << bssn::BSSN_VAR_NAMES[var] << " l_inf : " << l_inf << std::endl;
+        totalTime = totalTime/numIter;
+        derivTime = derivTime/numIter;
+        rhsTime = rhsTime/numIter;
+     
+        std::cout << "CPU compute unstaged time : " << totalTime << std::endl;
+        std::cout << "Derivative  time : " << derivTime << std::endl;
+        std::cout << "RHS         time : " << rhsTime << std::endl;
+
+        //staged version
+        double totalTimeStaged = 0.0;
+        double derivTimeStaged = 0.0;
+        double rhsTimeStaged = 0.0;
+        int numIterStaged = 10; 
+
+        
+        for(int iter = 0; iter<numIterStaged; iter++)
+        {
+            bssn::timer::initialize();
+
+            auto t1 = Time::now();
+            for (unsigned int blk = 0; blk < blkList.size(); blk++)
+            {
+
+                const unsigned int offset = blkList[blk].getOffset();
+                unsigned int sz[3];
+                double hx[3];
+                double ptmin[3];
+                double ptmax[3];
+
+                sz[0] = blkList[blk].getAllocationSzX();
+                sz[1] = blkList[blk].getAllocationSzY();
+                sz[2] = blkList[blk].getAllocationSzZ();
+
+                const unsigned int bflag = blkList[blk].getBlkNodeFlag();
+
+                hx[0] = blkList[blk].computeDx(pt_min, pt_max);
+                hx[1] = blkList[blk].computeDy(pt_min, pt_max);
+                hx[2] = blkList[blk].computeDz(pt_min, pt_max);
+
+                ptmin[0] = GRIDX_TO_X(0) - 3 * hx[0];
+                ptmin[1] = GRIDY_TO_Y(0) - 3 * hx[1];
+                ptmin[2] = GRIDZ_TO_Z(0) - 3 * hx[2];
+
+                ptmax[0] = GRIDX_TO_X((1u << m_uiMaxDepth)) + 3 * hx[0];
+                ptmax[1] = GRIDY_TO_Y((1u << m_uiMaxDepth)) + 3 * hx[1];
+                ptmax[2] = GRIDZ_TO_Z((1u << m_uiMaxDepth)) + 3 * hx[2];
+
+                bssnrhs_auto_sep(varUnzipOutCPU1, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
+            }
+            auto t2 = Time::now();
+            fsec fs = t2 - t1;
+            totalTimeStaged += fs.count();
+            derivTimeStaged += bssn::timer::t_deriv.seconds;
+            bssn::timer::t_deriv.seconds = 0.0;
+            rhsTimeStaged += bssn::timer::t_rhs.seconds;
+            bssn::timer::t_rhs.seconds = 0.0;
+            //std::cout<<"iteration "<<iter<<" " << derivTime<<" "<<rhsTime<<std::endl;
+        }
+
+        totalTimeStaged = totalTimeStaged/numIter;
+        derivTimeStaged = derivTimeStaged/numIter;
+        rhsTimeStaged = rhsTimeStaged/numIter;
+        
+        std::cout << "CPU compute auto staged time : " << totalTimeStaged << std::endl;
+        std::cout << "Derivative  time : " << derivTimeStaged << std::endl;
+        std::cout << "RHS         time : " << rhsTimeStaged << std::endl;
+
+        //check for equality
+        double l_inf;
+        for (unsigned int var = 0; var < bssn::BSSN_NUM_VARS; var++)
+        {
+            l_inf = 0;
+            for (unsigned int blk = 0; blk < blkList.size(); blk++)
+            {
+
+                const unsigned int offset = blkList[blk].getOffset();
+                unsigned int sz[3];
+
+                sz[0] = blkList[blk].getAllocationSzX();
+                sz[1] = blkList[blk].getAllocationSzY();
+                sz[2] = blkList[blk].getAllocationSzZ();
+
+                for (unsigned int k = 3; k < sz[2] - 3; k++)
+                    for (unsigned int j = 3; j < sz[1] - 3; j++)
+                        for (unsigned int i = 3; i < sz[0] - 3; i++)
+                            if (l_inf < fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]))
+                                l_inf = fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
+            }
+
+            std::cout << "comparison for var: " << var << bssn::BSSN_VAR_NAMES[var] << " l_inf : " << l_inf << std::endl;
+        }    
     }
-    */
 
     for (unsigned int var = 0; var < bssn::BSSN_NUM_VARS; var++)
     {
