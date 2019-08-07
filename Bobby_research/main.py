@@ -26,8 +26,8 @@ def main():
                         id = parse.id
         #tree.createGraphPicture('pictures/basicAdd')
         
-        cache = int(sys.argv[1])
-        #cache = 200
+        #cache = int(sys.argv[1])
+        cache = 100
         passSize = cache
 
         print(cache)
@@ -35,7 +35,39 @@ def main():
         counter = 0
         #while cache <=95:
         subtrees = tree.cacheAdaptTrees(cache)
+
+        sources = []
+        source_tree_map = {}
+        for subtree in subtrees:
+                for source in subtree.sources:
+                        if subtree.getNumLeafDependents(source) >=2 :
+                                source_tree_map[source] = subtree
+                                sources.append(source)
+                        
+
+        print("total sources: " + str(len(sources)))
+
+        for i in range(len(sources)):
+                left = sources[i]
+                left_dependecies = source_tree_map[left].getNumLeafDependents(left)
+                for j in range(i+1, len(sources)):
+                        right = sources[j]
+                        right_dependecies = source_tree_map[right].getNumLeafDependents(right)
+                        similarity_percent = source_tree_map[left].jaccard_similarity(left, source_tree_map[right], right)
+                        similarity_count = source_tree_map[left].jaccard_similiarity_count(left,  source_tree_map[right], right)
+
+                        print(str(left) + " " + str(right) + " subtree similarity analysis")
+                        print(str(left) + " dependents " + str(left_dependecies))
+                        print(str(right) + " dependents " + str(right_dependecies))
+                        print('similarity% ' + str(similarity_percent))
+                        print('similarity count ' + str(similarity_count))
         
+
+        
+        
+        '''
+        #to autogenerate code
+
         file = open("staged_codes/" + "cache" + str(cache) + "/Code"+str(cache)+".cpp", "w")
         alloc_file = open("staged_codes/" + "cache" + str(cache) + "/allocate"+str(cache)+".cpp", "w")
         dealloc_file = open("staged_codes/" + "cache" + str(cache) + "/deallocate"+str(cache)+".cpp", "w")
@@ -44,6 +76,8 @@ def main():
                 #print(len(subtree.sources))       
                 for source in subtree.sources: 
                         if subtree.getNumLeafDependents(source) >=2 : 
+                                
+                                #generate code
                                 counter = counter + 1
                                 
                                 output = ''
@@ -80,6 +114,7 @@ def main():
                                         
                                         dealloc_str = 'free(' + source + ');\n'
                                         dealloc_file.write(dealloc_str)
+                                
 
                                 
 
@@ -90,6 +125,7 @@ def main():
         file.write(end)
         print('number stages ' + str(counter))
                 #cache = cache +5
+        '''
 
 def calculate_rhs():
 

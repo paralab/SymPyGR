@@ -13,6 +13,25 @@ class expressionTree:
         self.sources = set()
         self.mult_sources = set()
 
+    def jaccard_similarity(self, nodeId, otherExpressionTree, otherId):
+        ''' similiarity based on the leaf dependecies using the jaccard similarity'''
+
+        count = self.jaccard_similiarity_count(nodeId, otherExpressionTree, otherId)
+        return count / (self.getNumLeafDependents(nodeId) + otherExpressionTree.getNumLeafDependents(otherId) - count)
+
+    def jaccard_similiarity_count(self, nodeId, otherExpressionTree, otherId):
+        ''' returns the number of leaf dependecies that are the same between two trees'''
+
+        leaf_values = self.getLeafDependents(nodeId)
+        other_leaf_values = otherExpressionTree.getLeafDependents(otherId)
+
+        count = 0
+        for leaf_value in leaf_values:
+            #only check for similarity of id is in both trees
+            if leaf_value in other_leaf_values:
+                    count = count + 1
+        return count        
+
     def createCodeOutput(self, nodeId):
         if(not self.hasNode(nodeId)):
             raise ValueError("the nodeId " + str(nodeId) + "is not in the graph")
@@ -946,7 +965,12 @@ class expressionTree:
         
         if(not self.hasNode(nodeId)):
             raise ValueError("the nodeId does not exist in the graph")
-        return len(self.getNode(nodeId)['leafDependecies'].keys())
+        return len(self.getLeafDependents(nodeId))
+
+    def getLeafDependents(self,nodeId):
+        if(not self.hasNode(nodeId)):
+            raise ValueError("the nodeId does not exist in the graph")
+        return self.getNode(nodeId)['leafDependecies'].keys()
 
     def addLeafDependecies(self, parentNode, childNode):
         "adds all leaf dependecies from the childNode to the parentNode"
