@@ -28,7 +28,7 @@ def main():
         
         cache = int(sys.argv[1])
         #cache = 100
-        passSize = cache
+        passSize = 1
 
         #print(cache)
 
