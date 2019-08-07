@@ -26,11 +26,11 @@ def main():
                         id = parse.id
         #tree.createGraphPicture('pictures/basicAdd')
         
-        #cache = int(sys.argv[1])
-        cache = 100
+        cache = int(sys.argv[1])
+        #cache = 100
         passSize = cache
 
-        print(cache)
+        #print(cache)
 
               
         counter = 0
