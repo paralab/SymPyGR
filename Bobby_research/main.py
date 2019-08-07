@@ -36,6 +36,10 @@ def main():
         #while cache <=95:
         subtrees = tree.cacheAdaptTrees(cache)
 
+        '''
+
+        # prints all the similarities between nodes
+
         sources = []
         source_tree_map = {}
         for subtree in subtrees:
@@ -61,11 +65,12 @@ def main():
                         print(str(right) + " dependents " + str(right_dependecies))
                         print('similarity% ' + str(similarity_percent))
                         print('similarity count ' + str(similarity_count))
+        '''
         
 
         
         
-        '''
+        
         #to autogenerate code
 
         file = open("staged_codes/" + "cache" + str(cache) + "/Code"+str(cache)+".cpp", "w")
@@ -125,7 +130,7 @@ def main():
         file.write(end)
         print('number stages ' + str(counter))
                 #cache = cache +5
-        '''
+        
 
 def calculate_rhs():
 

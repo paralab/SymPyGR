@@ -168,7 +168,7 @@ class expressionTree:
         subtrees = []
         parentTree = expressionTree()
         parentTree.addExpresionTree(self)
-
+            
         while parentTree.largestLeafDependecy() > cacheSize:
             reductionNodeId = parentTree.findReductionNode(cacheSize)
             subtrees.append(parentTree.createSubTree(reductionNodeId))
@@ -970,7 +970,17 @@ class expressionTree:
     def getLeafDependents(self,nodeId):
         if(not self.hasNode(nodeId)):
             raise ValueError("the nodeId does not exist in the graph")
-        return self.getNode(nodeId)['leafDependecies'].keys()
+
+        non_scalar_keys = []
+        #note testing cases where scalars are not treated as leaf dependecies
+        for key in self.getNode(nodeId)['leafDependecies'].keys():
+            try:
+                float(key)
+            except ValueError:
+                non_scalar_keys.append(key)
+        return non_scalar_keys
+
+        #return self.getNode(nodeId)['leafDependecies'].keys()
 
     def addLeafDependecies(self, parentNode, childNode):
         "adds all leaf dependecies from the childNode to the parentNode"
