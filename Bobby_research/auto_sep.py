@@ -58,14 +58,16 @@ def stage_trees(subtrees,cache=100):
         # compute code. 
         dep =0
         count =0
+        lb = False
         for subtree in subtrees:
                 for source in subtree.sources:
                         count = count + 1
-
                         if(subtree.getNumLeafDependents(source) >=2):
                                 if(dep == 0 ):
+
                                         print("bssn::timer::t_rhs.start();")
                                         print(loop_begin)
+                                        lb= True
 
                                 dep = dep + subtree.getNumLeafDependents(source)
 
@@ -84,6 +86,14 @@ def stage_trees(subtrees,cache=100):
                                         print(loop_end)
                                         print("bssn::timer::t_rhs.stop();")
                                         dep = 0
+                                        lb=False
+                                
+                        if(lb):
+                               print(loop_end)
+                               print("bssn::timer::t_rhs.stop();")
+                               dep = 0
+                               lb=False
+
         
                                 # dealloc block local vars. 
         for subtree in subtrees:
