@@ -271,7 +271,7 @@ int main(int argc, char **argv)
                 ptmax[1] = GRIDY_TO_Y((1u << m_uiMaxDepth)) + 3 * hx[1];
                 ptmax[2] = GRIDZ_TO_Z((1u << m_uiMaxDepth)) + 3 * hx[2];
 
-                bssnrhs_autoGen(varUnzipOutCPU1, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
+                bssnrhs_auto_sep(varUnzipOutCPU1, (const double **)varUnzipIn, offset, ptmin, ptmax, sz, bflag);
             }
             auto t2 = Time::now();
             fsec fs = t2 - t1;

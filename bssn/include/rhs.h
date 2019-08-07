@@ -33,17 +33,17 @@ void bssnrhs(double **uzipVarsRHS, const double **uZipVars,
              const unsigned int &bflag);
 
 
-void bssnrhs_autoGen(double **uzipVarsRHS, const double **uZipVars,
+void bssnrhs_auto_sep(double **uzipVarsRHS, const double **uZipVars,
              const unsigned int &offset,
              const double *ptmin, const double *ptmax, const unsigned int *sz,
              const unsigned int &bflag);
 
 
-
-void bssnrhs_sep(double **uzipVarsRHS, const double **uZipVars,
-             const unsigned int &offset,
-             const double *ptmin, const double *ptmax, const unsigned int *sz,
-             const unsigned int &bflag);
+/// manual staged removed. 
+// void bssnrhs_sep(double **uzipVarsRHS, const double **uZipVars,
+//              const unsigned int &offset,
+//              const double *ptmin, const double *ptmax, const unsigned int *sz,
+//              const unsigned int &bflag);
 
 
 void bssn_bcs(double *f_rhs, const double *f,
