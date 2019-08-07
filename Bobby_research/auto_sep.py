@@ -81,18 +81,23 @@ def stage_trees(subtrees,cache=100):
                                         print("                  // unique dep: "+ str(subtree.getNumLeafDependents(source)))
                                         code_str =  "            " + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n'
                                         print(code_str)
+                                nCount = count 
+                                while((nCount < len(num_dep)) and (num_dep[nCount] <2)):
+                                        nCount = nCount + 1
                                 
-                                if((count < len(num_dep)) and (num_dep[count] >=2) and (dep + num_dep[count] ) > cache   ): 
+                                if((nCount < len(num_dep)) and (num_dep[nCount] >=2) and (dep + num_dep[nCount] ) > cache   ): 
                                         print(loop_end)
+                                        print("                  // unique dep for stage : "+ str(dep))
                                         print("bssn::timer::t_rhs.stop();")
                                         dep = 0
                                         lb=False
                                 
-                        if(lb):
-                               print(loop_end)
-                               print("bssn::timer::t_rhs.stop();")
-                               dep = 0
-                               lb=False
+                if(lb):
+                        print(loop_end)
+                        print("                  // unique dep for stage : "+ str(dep))
+                        print("bssn::timer::t_rhs.stop();")
+                        dep = 0
+                        lb=False
 
         
                                 # dealloc block local vars. 
