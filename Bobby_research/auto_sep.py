@@ -59,12 +59,13 @@ def stage_trees(subtrees,cache=100):
         dep =0
         count =0
         lb = False
+        passes = 0
         for subtree in subtrees:
                 for source in subtree.sources:
                         count = count + 1
                         if(subtree.getNumLeafDependents(source) >=2):
                                 if(dep == 0 ):
-
+                                        passes = passes + 1
                                         print("bssn::timer::t_rhs.start();")
                                         print(loop_begin)
                                         lb= True
@@ -99,7 +100,7 @@ def stage_trees(subtrees,cache=100):
                         dep = 0
                         lb=False
 
-        
+        print("// total number of passes : "+str(passes))
                                 # dealloc block local vars. 
         for subtree in subtrees:
                 for source in subtree.sources:
