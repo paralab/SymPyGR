@@ -177,23 +177,30 @@ class expressionTree:
         return subtrees
 
     def findReductionNode(self, dependencyTarget):
-        "finds the node in the tree that must be reduced to hit the dependency target. Returns the node Id of the necessary target."
+        "finds the best node in the tree that must be reduced to hit the dependency target. Returns the node Id of the necessary target."
 
         closestLength = -1
         closestId = -1
 
-        cache = {}
-        
-        for sourceId in self.sources:
-            #targetId, targetLength = self.findClosestLeafDependecy(dependencyTarget, sourceId,cache)
-            targetId, targetLength = self.findClosestLeafDependecyGreedy(dependencyTarget)
+        best_id = None
+        best_distance = dependencyTarget
+        best_in_degree = -1
 
-            if(targetLength == 0):
-                return targetId
-            elif(closestLength == -1 or targetLength<closestLength):
-                closestLength = targetLength
-                closestId = targetId
-        return closestId
+        #cache = {}
+        #check over all source
+        for sourceId in self.sources:
+            target_id, target_distance, target_in_degree = self.findClosestLeafDependecy(dependencyTarget, sourceId)
+
+            if target_distance < best_distance:
+                best_id = target_id
+                best_distance = target_distance
+                best_in_degree = target_in_degree
+            elif target_distance == best_distance and target_in_degree > best_in_degree:
+                best_id = target_id
+                best_distance = target_distance
+                best_in_degree = target_in_degree
+
+        return best_id
 
     def findMaxInDegree(self, depedencyTarget, nodeId, cache ={}):
         "finds the node with the largets in degree that also fulfills the dependecy target"
@@ -274,31 +281,39 @@ class expressionTree:
         numLeafDependents = self.getNumLeafDependents(bestId)
         return bestId, target - numLeafDependents
 
-    def findClosestLeafDependecy(self, depedencyTarget, nodeId, cache = {}):
+    def findClosestLeafDependecy(self, depedencyTarget, nodeId):
         "finds the node with the closest Leaf Dependency. The search starts at nodeId. returns the nodeId of the node and how far off from the dependency target"
 
         if(not self.hasNode(nodeId)):
             raise ValueError("the nodeId is not in the graph")
 
-        if(nodeId in cache):
-            return cache[nodeId][0], cache[nodeId][1]
+        stack = []        
+        stack.append(nodeId)
 
-        node = self.getNode(nodeId)
-        numLeafDependents = self.getNumLeafDependents(nodeId)
+        
+        best_id = None
+        best_num_dependents = -1
+        best_in_degree = None
 
-        #leaf nodes will always be caught in the first case
-        if(numLeafDependents <= depedencyTarget):
-            cache[nodeId] = (nodeId, depedencyTarget - numLeafDependents)
-            return nodeId, depedencyTarget - numLeafDependents
-        else:
-            leftId, leftDistance = self.findClosestLeafDependecy(depedencyTarget, node['leftChild']["nodeID"],cache)
-            rightId, rightDistance = self.findClosestLeafDependecy(depedencyTarget, node['rightChild']["nodeID"],cache)
-            if(leftDistance < rightDistance):
-                cache[nodeId] = (leftId, leftDistance)
-                return leftId, leftDistance
-            else:
-                cache[nodeId] = (rightId, rightDistance)
-                return rightId, rightDistance
+        while len(stack) != 0:
+            challenger_id = stack.pop()
+            num_dependents = self.getNumLeafDependents(challenger_id)
+            in_degree = len(self.getParents(challenger_id))
+
+            if num_dependents > depedencyTarget:
+                node = self.getNode(challenger_id)
+                stack.append(node['leftChild']['nodeID'])
+                stack.append(node['rightChild']['nodeID'])
+            elif num_dependents > best_num_dependents:
+                best_id = challenger_id
+                best_num_dependents = num_dependents
+                best_in_degree = in_degree
+            elif num_dependents == best_num_dependents and in_degree > best_in_degree:
+                best_id = challenger_id
+                best_num_dependents = num_dependents
+                best_in_degree = in_degree
+
+        return best_id, depedencyTarget - best_num_dependents, best_in_degree
 
     def largestLeafDependecy(self):
         "finds the node with the largest leaf dependecies. Only considers the number of leaves and not the number of times each leaf is needed. Returns the largest number of leaf dependecies."

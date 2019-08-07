@@ -31,12 +31,13 @@ def main():
         passSize = cache
 
         print(cache)
-        
+
+              
         counter = 0
         #while cache <=95:
         subtrees = tree.cacheAdaptTrees(cache)
 
-        '''
+        
 
         # prints all the similarities between nodes
 
@@ -48,9 +49,12 @@ def main():
                                 source_tree_map[source] = subtree
                                 sources.append(source)
                         
-
+        '''
         print("total sources: " + str(len(sources)))
-
+        for source in sources:
+                print(source + " " +str(source_tree_map[source].getNumLeafDependents(source)))
+        '''
+        '''
         for i in range(len(sources)):
                 left = sources[i]
                 left_dependecies = source_tree_map[left].getNumLeafDependents(left)
@@ -67,12 +71,14 @@ def main():
                         print('similarity count ' + str(similarity_count))
         '''
         
+        
 
         
         
         
         #to autogenerate code
 
+        print("num subtrees " + str(len(subtrees)))
         file = open("staged_codes/" + "cache" + str(cache) + "/Code"+str(cache)+".cpp", "w")
         alloc_file = open("staged_codes/" + "cache" + str(cache) + "/allocate"+str(cache)+".cpp", "w")
         dealloc_file = open("staged_codes/" + "cache" + str(cache) + "/deallocate"+str(cache)+".cpp", "w")
@@ -82,8 +88,7 @@ def main():
                 for source in subtree.sources: 
                         if subtree.getNumLeafDependents(source) >=2 : 
                                 
-                                #generate code
-                                counter = counter + 1
+                                
                                 
                                 output = ''
                                 var_end = ''
@@ -119,6 +124,8 @@ def main():
                                         
                                         dealloc_str = 'free(' + source + ');\n'
                                         dealloc_file.write(dealloc_str)
+                                #generate code
+                                counter = counter + 1
                                 
 
                                 
@@ -130,6 +137,7 @@ def main():
         file.write(end)
         print('number stages ' + str(counter))
                 #cache = cache +5
+                
         
 
 def calculate_rhs():
