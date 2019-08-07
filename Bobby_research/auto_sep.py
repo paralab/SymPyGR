@@ -21,7 +21,7 @@ def cached_subtrees(fname,cache):
         
 
 
-def stage_trees(subtrees):
+def stage_trees(subtrees,cache=100):
 
         loop_begin ='\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
         loop_begin = loop_begin + '   const double z = pmin[0] + k*hz;\n'
@@ -48,30 +48,44 @@ def stage_trees(subtrees):
                                 print(alloc_str)
 
 
-        # compute code. 
+
+        num_dep = list()
         for subtree in subtrees:
                 for source in subtree.sources:
+                        num_dep.append(subtree.getNumLeafDependents(source))
+
+
+        # compute code. 
+        dep =0
+        count =0
+        for subtree in subtrees:
+                for source in subtree.sources:
+                        count = count + 1
+
                         if(subtree.getNumLeafDependents(source) >=2):
-                                if not source.endswith('[pp]'):
+                                if(dep == 0 ):
                                         print("bssn::timer::t_rhs.start();")
                                         print(loop_begin)
+
+                                dep = dep + subtree.getNumLeafDependents(source)
+
+                                if not source.endswith('[pp]'):
                                         var_end = '[pp]'
                                         print("                  // unique dep: "+ str(subtree.getNumLeafDependents(source)))
                                         code_str =  "            " + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n'
                                         print(code_str)
-                                        print(loop_end)
-                                        print("bssn::timer::t_rhs.stop();")
                                 else:
-                                        print("bssn::timer::t_rhs.start();")
-                                        print(loop_begin)
                                         var_end = ''
                                         print("                  // unique dep: "+ str(subtree.getNumLeafDependents(source)))
                                         code_str =  "            " + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n'
                                         print(code_str)
+                                
+                                if((count < len(num_dep)) and (num_dep[count] >=2) and (dep + num_dep[count] ) > cache   ): 
                                         print(loop_end)
                                         print("bssn::timer::t_rhs.stop();")
-
-        # dealloc block local vars. 
+                                        dep = 0
+        
+                                # dealloc block local vars. 
         for subtree in subtrees:
                 for source in subtree.sources:
                         if source.startswith('_') or source.startswith("DENDRO"):
@@ -111,7 +125,7 @@ def main():
         print("// dependency threshold : "+ str(cache))
 
         subtrees = cached_subtrees("bssn.cpp",cache)
-        stage_trees(subtrees)
+        stage_trees(subtrees,cache=cache)
 
         '''
         
