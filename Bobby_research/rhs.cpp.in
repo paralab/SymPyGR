@@ -270,7 +270,7 @@ void bssnrhs(double **unzipVarsRHS, const double **uZipVars,
     for (unsigned int k = 3; k < nz-3; k++) {
         for (unsigned int j = 3; j < ny-3; j++) {
             for (unsigned int i = 3; i < nx-3; i++) {
-                pp = i + nx*(j + ny*k);
+                const unsigned int pp = i + nx*(j + ny*k); 
 
                 a_rhs[pp]  += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
                 b_rhs0[pp] += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
@@ -548,7 +548,7 @@ void bssnrhs_auto_sep(double **unzipVarsRHS, const double **uZipVars,
     for (unsigned int k = 3; k < nz-3; k++) {
         for (unsigned int j = 3; j < ny-3; j++) {
             for (unsigned int i = 3; i < nx-3; i++) {
-                pp = i + nx*(j + ny*k);
+                const unsigned int pp = i + nx*(j + ny*k);
 
                 a_rhs[pp]  += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
                 b_rhs0[pp] += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);

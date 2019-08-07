@@ -52,7 +52,7 @@ set(INC_FILES
 set(SRC_FILES
         src/derivs.cpp
         src/rhs.cpp
-        ../Bobby_research/rhs_staged.cpp
+	#../Bobby_research/rhs_staged.cpp
         src/bssn_profiler.cpp
         src/profile_param.cpp
         src/block.cpp
@@ -133,18 +133,18 @@ if(WITH_CUDA)
 endif()
 
 
-set(SOURCE_FILES cuda_gr/include/gpuBSSNExample.h cuda_gr/src/gpuBSSNExample.cpp ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP} ${INC_FILES} ${SRC_FILES} )
-add_executable(cudaBSSN ${SOURCE_FILES})
-target_include_directories(cudaBSSN PRIVATE include)
-target_include_directories(cudaBSSN PRIVATE utils)
-target_include_directories(cudaBSSN PRIVATE cuda_gr/include)
-target_link_libraries(cudaBSSN bssnUtils m)
+#set(SOURCE_FILES cuda_gr/include/gpuBSSNExample.h cuda_gr/src/gpuBSSNExample.cpp ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP} ${INC_FILES} ${SRC_FILES} )
+#add_executable(cudaBSSN ${SOURCE_FILES})
+#target_include_directories(cudaBSSN PRIVATE include)
+#target_include_directories(cudaBSSN PRIVATE utils)
+#target_include_directories(cudaBSSN PRIVATE cuda_gr/include)
+#target_link_libraries(cudaBSSN bssnUtils m)
 
-if(WITH_CUDA)
-    target_include_directories(cudaBSSN PRIVATE ${CUDA_INCLUDE_DIRS})
-    target_link_libraries(cudaBSSN bssn_cuda m)
-    target_link_libraries(cudaBSSN ${CUDA_LIBRARIES})
-endif()
+#if(WITH_CUDA)
+#    target_include_directories(cudaBSSN PRIVATE ${CUDA_INCLUDE_DIRS})
+#    target_link_libraries(cudaBSSN bssn_cuda m)
+#    target_link_libraries(cudaBSSN ${CUDA_LIBRARIES})
+#endif()
 
 
 
