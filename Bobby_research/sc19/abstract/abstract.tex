@@ -89,7 +89,6 @@ The symbolic code generation framework is only the initial step towards connecti
 %\end{textblock*}%
 
 %\begin{center}
-<<<<<<< HEAD
 \begin{tikzpicture}[scale=1.0]%
 
 \node[draw, prob,minimum width=9.5cm] at (0, 6) {Relativity, Electromagnetism, Fluid Dynamics};%
@@ -208,8 +207,8 @@ The expression DAG contains the desired target variables that solve the Einstein
 Once the subgraph expressions are created the goal is to order the evaluation of the sub graphs to maintain correctness and maximize cache locality. Expression subgraphs are that are a dependency of another subgraph must be computed first. If several subgraphs have no dependencies, then the subgraphs are order such that graphs with the largest Jaccard Similarity are computed one after another. In doing so variables within the cache can increase usability.  
 
 \section{Results}
-The two areas of interest are reducing cache misses and the overall runtime of the expression graphs. Figure \ref{fig:cache_results} demonstrates how the staging size affects the cache efficiency. There is a sweet spot where the staging size is large enough to leverage the entire cache while small enough to not overflow. The results presented were run on the Kingspeak Cluster at the University of Utah. The machine consits of Intel Sandy Bridge processors with 64 KB per core L1 cache, 256 KB per core L2 cache and 20 MB shared L3 cache. On the Kingspeak machines the performance was most effective with cache size of 30. Notice how all staged versions of the code were more cache efficient than the original code. 
-Figure \ref{fig:runtime_results} shows the runtime analysis of the code. The runtimes were most effective when the cache utilization was the highest. However, none of the stage versions of the code were able to outperform the original code. It is hypothesized that some of the dependencies are being computed a multiple time and causing the staged code to decrease. This is a current of area of interest of improvement.
+The two areas of interest are reducing cache misses and the overall runtime of the expression graphs. Figure 3 demonstrates how the staging size affects the cache efficiency. There is a sweet spot where the staging size is large enough to leverage the entire cache while small enough to not overflow. The results presented were run on the Kingspeak Cluster at the University of Utah. The machine consits of Intel Sandy Bridge processors with 64 KB per core L1 cache, 256 KB per core L2 cache and 20 MB shared L3 cache. On the Kingspeak machines the performance was most effective with cache size of 30. Notice how all staged versions of the code were more cache efficient than the original code. 
+Figure 4 shows the runtime analysis of the code. The runtimes were most effective when the cache utilization was the highest. However, none of the stage versions of the code were able to outperform the original code. It is hypothesized that some of the dependencies are being computed a multiple time and causing the staged code to decrease. This is a current of area of interest of improvement.
 
 
 \section{Future Work}
