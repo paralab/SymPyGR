@@ -77,7 +77,7 @@
 
 
 \begin{textblock}{25}(0,1.2) %<<<
-	\Title{Common Subexpression Elimination with Subtree Isomporphisms }
+	\Title{Machine Specific Symbolic Code Generation}
 \end{textblock} %>>>
 
 
@@ -109,7 +109,7 @@
 			\item \textbf{Performance}. Developed a tree isomorphism algorithm for common subexpression elimination. The algorithm can be adapted to different architetures by specifying a cache size. The code is designed to be portability and easily add performance improvements to any code.
 			\item \textbf{Visualization}. 
 			Code is able to represent expression trees with Graphiz and visualize expression tree staging	
-			\parpic[r]{\includegraphics[scale=1.1]{cache_miss_plot.png}}		
+			%\parpic[r]{\includegraphics[scale=1.1]{cache_miss_plot.png}}		
 			\item \textbf{Proof of Concept} 
 			By providing the target size of the cache the code is able to generate high performance code that can utilize the cache effectively.
 			
@@ -122,6 +122,22 @@
 		%\end{wrapfigure}
 		
 		\end{itemize}
+		\begin{figure}
+		\centering
+		%    \includegraphics[width=\linewidth]{../cache_miss_plot.png}
+		\begin{tikzpicture}
+		\begin{axis}[legend style={at={(0.8,-0.35)}},anchor=south,xlabel={max. number of dependancies $\rightarrow$},
+		symbolic x coords={20,30,50,80,100,200,300},
+		xtick = data,
+		ylabel={$\%$ of cache misses $\rightarrow$},grid=major,width=20cm,height=8cm,legend columns=2]
+		\addplot [red,thick,solid,smooth]table [x={c_size},y = {cm_staged}]{abstract/dat/cache_fontera.dat};
+		\addplot [blue,thick,dashed]table [x={c_size},y = {cm_con}]{abstract/dat/cache_fontera.dat};
+		\legend{cache adapted, control}
+		\end{axis}
+		\end{tikzpicture}
+		\caption{Number of cache misses based on cache requests for cache adapted code (staged) code vs. the control (unstaged) version of the code in TACC's Fontera supercomputer node }
+		\label{fig:cache_results}
+		\end{figure}
 		
 	\end{textblock}
 	
@@ -293,7 +309,7 @@ The left panel shows the \BSSN ~formulation of the Einstein equations. These are
 
 For additional details please refer to {\bf Massively Parallel Simulations of Binary Black Hole Intermediate-Mass-Ratio Inspirals}, Milinda Fernando, Hari Sundar \url{https://arxiv.org/abs/1807.06128} and the Dendro project.
 
-	\includegraphics{../sc18/figs/dendro}}
+%	\includegraphics{../sc18/figs/dendro}}
 
 
 \end{textblock}
