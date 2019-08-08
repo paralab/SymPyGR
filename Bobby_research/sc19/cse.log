@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6800 64-bit) (preloaded format=pdflatex 2018.9.11)  7 AUG 2019 18:24
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (MiKTeX 2.9.6800 64-bit) (preloaded format=pdflatex 2018.9.11)  7 AUG 2019 20:24
 entering extended mode
 **./cse.tex
 (cse.tex
@@ -1798,50 +1798,60 @@ LaTeX Font Info:    Try loading font information for TS1+cmr on input line 108.
 ("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\base\ts1cmr.fd"
 File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
-<cache_miss_plot.png, id=9, 384.43625pt x 216.81pt>
-File: cache_miss_plot.png Graphic file (type png)
-<use cache_miss_plot.png>
-Package pdftex.def Info: cache_miss_plot.png  used on input line 112.
-(pdftex.def)             Requested size: 422.88116pt x 238.49173pt.
+<../sc18/figs/dendro.pdf, id=9, 178.38142pt x 98.54477pt>
+File: ../sc18/figs/dendro.pdf Graphic file (type pdf)
+<use ../sc18/figs/dendro.pdf>
+Package pdftex.def Info: ../sc18/figs/dendro.pdf  used on input line 113.
+(pdftex.def)             Requested size: 178.38098pt x 98.54451pt.
+LaTeX Font Info:    Try loading font information for U+msa on input line 116.
+
+("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsa.fd"
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Try loading font information for U+msb on input line 116.
+("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsb.fd"
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
 <tree1_initial.png, id=11, 331.73938pt x 166.6225pt>
 File: tree1_initial.png Graphic file (type png)
 <use tree1_initial.png>
-Package pdftex.def Info: tree1_initial.png  used on input line 178.
-(pdftex.def)             Requested size: 696.65298pt x 349.9074pt.
-
-
-Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 179.
-See the caption package documentation for explanation.
-
-<tree1_rebuild.png, id=12, 620.3175pt x 188.20313pt>
-File: tree1_rebuild.png Graphic file (type png)
-<use tree1_rebuild.png>
-Package pdftex.def Info: tree1_rebuild.png  used on input line 197.
-(pdftex.def)             Requested size: 868.4386pt x 263.48256pt.
+Package pdftex.def Info: tree1_initial.png  used on input line 139.
+(pdftex.def)             Requested size: 597.1304pt x 299.92026pt.
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 198.
+(caption)                particular \caption on input line 140.
 See the caption package documentation for explanation.
 
 <tree1_staged.png, id=13, 234.37563pt x 223.83624pt>
 File: tree1_staged.png Graphic file (type png)
 <use tree1_staged.png>
-Package pdftex.def Info: tree1_staged.png  used on input line 207.
-(pdftex.def)             Requested size: 445.31113pt x 425.28644pt.
+Package pdftex.def Info: tree1_staged.png  used on input line 148.
+(pdftex.def)             Requested size: 328.12361pt x 313.36859pt.
 
 Package caption Warning: The option `hypcap=true' will be ignored for this
-(caption)                particular \caption on input line 208.
+(caption)                particular \caption on input line 149.
 See the caption package documentation for explanation.
 
-LaTeX Font Info:    Try loading font information for U+msa on input line 233.
-("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsa.fd"
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Try loading font information for U+msb on input line 233.
-("C:\Users\bobby\AppData\Local\Programs\MiKTeX 2.9\tex\latex\amsfonts\umsb.fd"
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
+<tree1_rebuild.png, id=14, 620.3175pt x 188.20313pt>
+File: tree1_rebuild.png Graphic file (type png)
+<use tree1_rebuild.png>
+Package pdftex.def Info: tree1_rebuild.png  used on input line 158.
+(pdftex.def)             Requested size: 868.4386pt x 263.48256pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 159.
+See the caption package documentation for explanation.
+
+<cache_miss_plot.png, id=15, 384.43625pt x 216.81pt>
+File: cache_miss_plot.png Graphic file (type png)
+<use cache_miss_plot.png>
+Package pdftex.def Info: cache_miss_plot.png  used on input line 170.
+(pdftex.def)             Requested size: 961.08826pt x 542.02365pt.
+
+Package caption Warning: The option `hypcap=true' will be ignored for this
+(caption)                particular \caption on input line 171.
+See the caption package documentation for explanation.
+
 \openout5 = `cse.pyg'.
 
 (_minted-cse/default-pyg-prefix.pygstyle) (_minted-cse/default.pygstyle)
@@ -1849,20 +1859,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ygtex
 LaTeX Font Info:    Font shape `OT1/cmtt/bx/n' in size <20.74> not available
 (Font)              Font shape `OT1/cmtt/m/n' tried instead on input line 3.
-)
-<../sc18/figs/dendro.pdf, id=15, 178.38142pt x 98.54477pt>
-File: ../sc18/figs/dendro.pdf Graphic file (type pdf)
-<use ../sc18/figs/dendro.pdf>
-Package pdftex.def Info: ../sc18/figs/dendro.pdf  used on input line 296.
-(pdftex.def)             Requested size: 178.38098pt x 98.54451pt.
-
-! Extra }, or forgotten \endgroup.
-\TP@commonendtextblock ...oxrulesize }\fi \egroup 
-                                                  \TP@prevdepth =\prevdepth ...
-l.299 \end{textblock}
-                     
-? 
-[1
+) [1
 
 
 Non-PDF special ignored!
@@ -1871,22 +1868,22 @@ Non-PDF special ignored!
 <special> papersize=120cm,91.51cm
 {C:/Users/bobby/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map} <../sc18/fig
 s/TopLeft.png (PNG copy)> <../sc18/figs/BottomRight.png (PNG copy)> <../sc18/fi
-gs/Ulogo_cmyk.pdf> <./cache_miss_plot.png> <./tree1_initial.png> <./tree1_rebui
-ld.png> <./tree1_staged.png> <../sc18/figs/dendro.pdf>]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 380.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 380.
+gs/Ulogo_cmyk.pdf> <../sc18/figs/dendro.pdf> <./tree1_initial.png> <./tree1_sta
+ged.png> <./tree1_rebuild.png> <./cache_miss_plot.png>]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 279.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 279.
  (cse.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 380.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 380.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 279.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 279.
 runsystem(del cse.pyg)...executed.
 
  ) 
 Here is how much of TeX's memory you used:
  47705 strings out of 492973
- 1091294 string characters out of 3126692
- 1480262 words of memory out of 3000000
- 50854 multiletter control sequences out of 15000+200000
- 542458 words of font info for 62 fonts, out of 3000000 for 9000
+ 1091285 string characters out of 3126692
+ 1481262 words of memory out of 3000000
+ 50853 multiletter control sequences out of 15000+200000
+ 542159 words of font info for 61 fonts, out of 3000000 for 9000
  1144 hyphenation exceptions out of 8191
  64i,13n,103p,888b,619s stack positions out of 5000i,500n,10000p,200000b,50000s
  <C:\Users\bobby\AppData\Local\MiKTeX\2.9\fonts\pk\ljfour\jknappen\ec\dpi600\
@@ -1901,9 +1898,9 @@ sl12.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/type1/public/a
 msfonts/cm/cmsy10.pfb><C:/Users/bobby/AppData/Local/Programs/MiKTeX 2.9/fonts/t
 ype1/public/amsfonts/cm/cmtcsc10.pfb><C:/Users/bobby/AppData/Local/Programs/MiK
 TeX 2.9/fonts/type1/public/amsfonts/cm/cmtt12.pfb>
-Output written on cse.pdf (1 page, 406935 bytes).
+Output written on cse.pdf (1 page, 408208 bytes).
 PDF statistics:
- 77 PDF objects out of 1000 (max. 8388607)
- 5 named destinations out of 1000 (max. 500000)
+ 78 PDF objects out of 1000 (max. 8388607)
+ 6 named destinations out of 1000 (max. 500000)
  53 words of extra memory for PDF output out of 10000 (max. 10000000)
 
