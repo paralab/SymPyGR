@@ -30,7 +30,7 @@
 \def\Head#1{\noindent{\textbf{\LARGE\color{Red} #1}}\medskip}
 \def\LHead#1{\noindent{\Large\color{DarkBlue} #1}\bigskip}
 \def\Subhead#1{\noindent{\textbf{\Large\color{DarkBlue} #1}}\medskip}
-\def\Title#1{\noindent\textbf{{\VeryHuge\color{Red} #1}}}
+\def\Title#1{\noindent\textbf{{\Huge\color{Red} #1}}}
 
 \def\Subtitle#1{\noindent\textbf{{\Large\color{Red} #1}}}
 
@@ -77,7 +77,7 @@
 
 
 \begin{textblock}{25}(0,1.2) %<<<
-	\Title{Common Subexpression Elimination with Subtree Isomporphisms }
+	\Title{Machine Specific Symbolic Code Generation for Computational Science Applications}
 \end{textblock} %>>>
 
 
@@ -106,20 +106,15 @@
 		\vspace{-0.2in}
 		\begin{itemize}
 			\item \textbf{Automatic code-generation}. Given the complexity of the Einstein equations, we have developed an automatic code generation framework for GR using \texttt{SymPy} that automatically generates architecture-optimized codes which helps to improve code portability. 
-			\item \textbf{Performance}. Developed a tree isomorphism algorithm for common subexpression elimination. The algorithm can be adapted to different architetures by specifying a cache size. The code is designed to be portability and easily add performance improvements to any code.
+			\item \textbf{Performance}. Developed a tree isomorphism algorithm for common subexpression elimination. The algorithm aims to improve performance by maximizing the efficiency of the cache. This is done by reducing expression trees into smaller subtrees such the each subtree can be computed within the limits of the cache.
 			\item \textbf{Visualization}. 
 			Code is able to represent expression trees with Graphiz and visualize expression tree staging	
-			\parpic[r]{\includegraphics[scale=1.1]{cache_miss_plot.png}}		
-			\item \textbf{Proof of Concept} 
-			By providing the target size of the cache the code is able to generate high performance code that can utilize the cache effectively.
+			%\parpic[r]{\includegraphics[scale=1.5]{cache_miss_plot.png}}
+			\parpic[r]{\includegraphics{../sc18/figs/dendro}}		
+			\item \textbf{Flexibility}
+			Code provides flexibility for any type of expression tree. Code can also be staged for any type of cache architecture. This allows easy adaptability between CPU and GPU codes architectures.
+			By providing the target size of the cache the code is able to generate high performance code that can utilize the cache effectively. The results presented were applied to the \texttt{{\dendro\_sym}} project \url{https://arxiv.org/abs/1807.06128}.
 			
-			
-		%\begin{wrapfigure}{ht!}{0.5\textwidth}
-  		%	\begin{center}
-    	%		\includegraphics[scale=1.0]{Staging_Results.png}
-  		%	\end{center}
-  		%	\caption{Plot comparing the cache size specified and the simularity of }
-		%\end{wrapfigure}
 		
 		\end{itemize}
 		
@@ -127,88 +122,58 @@
 	
 % }}}
 
-\begin{textblock}{30}(0,22.5)
+\begin{textblock}{30}(0,19.5)
 	{\color{DarkBlue}\hrule}\medskip
 	\Head{Methods} %%===================================
 
 	\begin{textblock}{14}(0,0.2)
 	This research for consists of two main projects. The first is the subtree isomorphism problem that will focus on the common subexpression elimination and the second is a lower bound analysis for the number of temporary variables needed to solve the partial differential equations. The goal is to create an algorithm that will be able to analyze the different partial differential equations and reorder the temporary variable calculations to maximize cache effectiveness and variable reuse. 
-% \begin{itemize}
-% 	\item For accurate simulations, the spatial discretization $dx\leq min(m_1,m_2)/10$ where $m_1, m_2$ are the masses of the black holes.  
-% 	\item \textbf{Mass ratio Vs. Number of grid points} : $N \propto q^3$ where $q=m_1/m_2$. 
-% 	\item \textbf{Feasibility} For IMRIs to be feasible we need highly localized adaptive grids. (compared to structured adaptivity) 
-% \end{itemize}
-% A key reason to develop scalable codes is that
-% as the relative differences in masses becomes larger ($\sim 100\times$), the computational
-% requirements will grow significantly, potentially requiring exascale resources.
-%A simple calculation illustrates how spatial resolution requirements increase
-%with the mass ratio, $q$. 
-%A convenient measure for the size of a black hole is the radius of its event horizon, which is proportional to its mass.
 
-%In a black hole binary, the mass of the smallest black hole effectively sets the minimum length scale for the simulation. The total mass of the binary
-%$M = m_1 + m_2$ is a global scaling parameter and is typically fixed to  a constant value. 
-%Then the mass of the smaller black hole can be written $m_2 = M/(q+1)$, showing that the minimum resolution scale for the
-%binary is inversely proportional to the mass ratio. In $3d$ the number of points required to resolve the smallest black hole
-%grows as $q^3$.
-
-% This presents both a challenging problem in computational relativity
-% as well as a challenge for high-performance computing.
-% The successful scaling of our code is a first step in this direction.
-\end{textblock}
-%\vspace{-0.5in}
-
-
-
-\begin{textblock}{14}(14.5,5)
-	\Subhead{Rebuilding}% (ORNL's \Titan~ upto $131K$ cores)} 
-
-	\vspace{-0.25in}
-	Once the subgraph expressions are created the goal is to order the evaluation of the sub graphs to maintain correctness and maximize cache locality. Expression subgraphs are that are a dependency of another subgraph must be computed first. If several subgraphs have no dependencies, then the subgraphs are order such that graphs with the largest Jaccard Similarity are computed one after another. In doing so variables within the cache can increase usability. 
-	\begin{textblock}{12}(2,1)
-	%\begin{figure}
-	%	\centering
-	%	\resizebox{12\TPHorizModule}{!}{{\includegraphics{../sc18/plots/weak_r10}}}
-	%	\vspace{-0.2in}
-	%\end{figure}	
-	\end{textblock}	
 \end{textblock}
 
-\begin{textblock}{14}(17,-0.5)
+
+
+\begin{textblock}{14}(-3,12.5)
 	\begin{figure}
-				\includegraphics[scale = 2.1]{tree1_initial.png}
-				\caption{\large Initial Expression Tree}
+	\centering
+				\includegraphics[scale = 1.8]{tree1_initial.png}
+				\caption{Initial Expression Tree}
 	\end{figure}
 \end{textblock}
 
+\begin{textblock}{14}(5,12.5)
+	\begin{figure}
+		
+	\centering
+			\includegraphics[scale=1.4]{tree1_staged.png}
+			\caption{Staged Expression Tree}
+		\end{figure}
 
-%\begin{textblock}{8}(0,9.2)
-%\Subhead{Strong scaling results $\rightarrow$}
+	
+\end{textblock}
 
-%\vspace{-0.3in}
-%Strong scaling results in ORNL's \Titan~for a single RK step (averaged over 10 steps) 
-%with derivative computation (\texttt{deriv}), right hand side( {\texttt rhs}) computation, \texttt{unzip} cost and communication cost (\texttt{comm}) 
-%for a fixed problem size of $10.5B$ unknowns where the number of cores ranging from $4,096$ to $65,536$ cores on $4096$ nodes. %Note that for strong scaling %results re-meshing is disabled in order to keep the problem size fixed.
-%\end{textblock}
-
-
-\begin{textblock}{29}(7.0,10.5)
+\begin{textblock}{14}(15,13)
 	\begin{figure}	
 		\centering
 			\includegraphics[scale=1.4]{tree1_rebuild.png}
-			\caption{\large Rebuilt Expression Tree}
+			\caption{Rebuilt Expression Tree}
 			
 	\end{figure}
 \end{textblock}
 
-\begin{textblock}{14}(1.5,8.5)
-	\begin{figure}
-		
-	\centering
-			\includegraphics[scale=1.9]{tree1_staged.png}
-			\caption{\large Staged Expression Tree}
-		\end{figure}
 
-	
+
+\begin{textblock}{14}(14.5,0)
+	\Subhead{Results}
+	\begin{figure}	
+		\centering
+			\includegraphics[scale=2.5]{cache_miss_plot.png}
+			\caption{Cache Efficiency}
+			
+	\end{figure}
+
+	\vspace{-0.25in}
+	The main area of interest is reducing cache misses when computing the expression trees. Figure 4 demonstrates how the staging size affects the cache efficiency. There is a sweetspot where the staging size is large enough to leverage the entire cache while small enough to not overflow. The goal is adapt the expression trees to sit in the middle of the cache size sweetspot to improve performance. The results presented were run on the Kingspeak Cluster at the University of Utah. The machine consits of Intex Sandybridge processor with 64 KB per core L1 cache, 256 KB per core L2 cache and 20 MB shared L3 cache. On the Kingspeak chpc machines the performance was most effective with cache size of 30. Notice how all staged versions of the code were more cache efficient than the original code. 
 \end{textblock}
 
 
@@ -218,6 +183,13 @@
 	\vspace{-0.25in}
 	The expression DAG contains the desired target variables that solve the Einstein equations, the sources, their corresponding dependencies, the internal nodes, which are calculate from derivates and constants, the sinks. The targets have a significant number of dependecies, the BSSN equation have dependecies on the order of 100s, such that the cache misses occur while calculating the target at each grid point in the mesh. This approach mitigates cache misses by reducing the original expression DAG into smaller sub graphs such that the number of dependencies does not exceed the cache size of the specified machine. In order to maintain correctness some of the dependencies of the original expression graph must be duplicated into multiple subgraphs. Despite computing the expression tree multiple times, the goal is to reduce runtime through increased cache efficiency.
 	
+\end{textblock}
+
+\begin{textblock}{14}(0,9)
+	\Subhead{Rebuilding}% (ORNL's \Titan~ upto $131K$ cores)} 
+
+	\vspace{-0.25in}
+	Once the subgraph expressions are created the goal is to order the evaluation of the sub graphs to maintain correctness and maximize cache locality. Expression subgraphs are that are a dependency of another subgraph must be computed first. If several subgraphs have no dependencies, then the subgraphs are order such that graphs with the largest Jaccard Similarity are computed one after another. In doing so variables within the cache can increase usability. 
 \end{textblock}
 
 \end{textblock}
@@ -291,9 +263,9 @@
 \end{figure}
 The left panel shows the \BSSN ~formulation of the Einstein equations. These are tensor equations, with indices $i,j,\ldots$ taking the values $1, 2, 3$. On the right we show the \texttt{{\dendro\_sym}} code for these equations. \texttt{\dendro\_sym} uses \texttt{SymPy} and other tools to generate optimized C++ code to evaluate the equations. Note that $\mathcal{L}_\beta,\ D,\ \partial$ denote Lie derivative, covariant derivative and partial derivative respectively, and we have excluded $\partial_t\Gamma^i$ from \texttt{\dendro\_sym} to save space.
 
-For additional details please refer to {\bf Massively Parallel Simulations of Binary Black Hole Intermediate-Mass-Ratio Inspirals}, Milinda Fernando, Hari Sundar \url{https://arxiv.org/abs/1807.06128} and the Dendro project.
+%For additional details please refer to {\bf Massively Parallel Simulations of Binary Black Hole Intermediate-%Mass-Ratio Inspirals}, Milinda Fernando, Hari Sundar \url{https://arxiv.org/abs/1807.06128} and the Dendro %project.
 
-	\includegraphics{../sc18/figs/dendro}}
+	%\includegraphics{../sc18/figs/dendro}}
 
 
 \end{textblock}
@@ -302,80 +274,7 @@ For additional details please refer to {\bf Massively Parallel Simulations of Bi
 
 
 
-% %% === === === NLSM
-% \begin{textblock}{14}(14.5,5)
-% 	{\color{DarkBlue}\hrule}\medskip
-% 	\Subhead{Simple example: Non-linear sigma model}
-	
-% 		\begin{figure}
-% %		\noindent\fbox{
-% 			\begin{minipage}[t]{.48\textwidth}
-% %				\small
-% 				\begin{eqnarray*}
-% 				\partial_t\phi &=& \Delta \chi -\frac{\sin(2\chi)}{{\norm{x}_2}^2} \\
-% 				\partial_t\chi &=& \phi 
-% 				\end{eqnarray*}
-% 			\end{minipage}% This must go next to `\end{minipage}`
-% %		}
-% 		\begin{minipage}[t]{.5\textwidth}
-% 			\small
-% %frame=single,framesep=2pt,
-% \begin{minted}[frame=single,framesep=1pt,bgcolor=yellow!10]{python}
-%  from DENDRO_sym import *
-%  phi_rhs = sum(d2(i,i,chi)for i in dendro.e_i) 
-%  		- sin(2*chi)/r**2
-%  chi_rhs = phi
-% \end{minted}
-% 		\end{minipage}
-% 		%\caption{\label{fig:symb} \small The left panel shows the \BSSN ~formulation of the Einstein equations. These are tensor equations, with indices $i,j,\ldots$ taking the values $1, 2, 3$. On the right we show the \texttt{{\dendro\_sym}} code for these equations. \texttt{\dendro\_sym} uses \texttt{SymPy} and other tools to generate optimized C++ code to evaluate the equations. Note that $\mathcal{L}_\beta,\ D,\ \partial$ denote Lie derivative, covariant derivative and partial derivative respectively, and we have excluded $\partial_t\Gamma^i$ from \texttt{\dendro\_sym} to save space.}
-% 		%\label{fig:bssneqs}
-% 		\vspace{-0.15in}
-% 	\end{figure}
-% 	\vspace{0.7in}
-	
-% 	\begin{figure}
-% 		\begin{subfigure}{0.33\textwidth}
-% 			\includegraphics[width=0.9\textwidth]{../sc18/figs/nlsmB0.png}
-% 			\caption{step=0}			
-% 		\end{subfigure}
-% 		\begin{subfigure}{0.33\textwidth}
-% 			\includegraphics[width=0.9\textwidth]{../sc18/figs/nlsmB7.png}
-% 			\caption{step=7}			
-% 		\end{subfigure}
-% 		\begin{subfigure}{0.33\textwidth}
-% 			\includegraphics[width=0.9\textwidth]{../sc18/figs/nlsmB11.png}
-% 			\caption{step=11}
-% 		\end{subfigure}\hfil
-% 		\begin{subfigure}{0.33\textwidth}
-% 			\includegraphics[width=0.9\textwidth]{../sc18/figs/nlsmB16.png}
-% 			\caption{step=16}			
-% 		\end{subfigure}
-% 		\begin{subfigure}{0.33\textwidth}
-% 			\includegraphics[width=0.9\textwidth]{../sc18/figs/nlsmB23.png}
-% 			\caption{step=23}
-% 		\end{subfigure}
-% 		\begin{subfigure}{0.33\textwidth}
-% 			\includegraphics[width=0.9\textwidth]{../sc18/figs/nlsmB44.png}
-% 			\caption{step=44}
-% 		\end{subfigure}
-% 		\caption{Time step snapshots of a $z$ plane slice of $3D$ \NLSM~ with two initial Gaussian distributions with Runge-Kutta time stepping scheme. Note that how the mesh refines (based on the WAMR) as the waves 
-% 			propagate away from the origin.   \label{fig:nlsmB}}
-% 		\vspace{-0.2in}
-% 	\end{figure}
-	
-% \end{textblock}
 
-
-
-% % COLUMN 2 {{{
-% 	\begin{textblock}{14}(14.5,5)
-% 	{\color{DarkBlue}\hrule}\medskip
-% 	\Head{Motivation}
-% 	\end{textblock} 
-% % }}}
-
-
-%% =========================
 
 \end{document}
 
