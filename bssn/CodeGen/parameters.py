@@ -7,27 +7,38 @@ class Parameters:
 			paramDict = OrderedDict()
 		self.paramDict = paramDict
 		self.indent = "\t"
-	
+
+		# if set, will be used as the default category for any newly added parameters
+		self.category = None;
+
 	def add(self, id, value, description=None, category=None):
+
+		if category is None and self.category is not None:
+			category = self.setCategory
+
 		param = Parameter(id, value, description, category)
 		self.paramDict[param.id] = param
-		
-	def write(self, filepath):
+
+	# Clear category by calling with None
+	def setCategory(self, category):
+		self.category = category
+
+	def writeJson(self, filepath):
 		categories = OrderedDict()
 		for parameter in self.paramDict.values():
 			if parameter.category not in categories:
 				categories[parameter.category] = ""
 			categories[parameter.category] += parameter.toString(2)
-		
+
 		out = open(filepath, "w")
 		out.write("{\n")
-		
+
 		first = True
 		for key in categories:
 			if not first:
 				out.write(",\n")
 				first = False
-				
+
 			keyLength = len(key) if key is not None else 0
 			if keyLength > 0:
 				out.write('{0}"__comment__" : "{1} {2} {3}",\n'.format(self.indent, int(math.floor((50 - keyLength) / 2) - 1) * "=", key,
@@ -35,7 +46,7 @@ class Parameters:
 			out.write(categories[key])
 			if keyLength > 0:
 				out.write('{0}"__comment__" : "{1}"'.format(self.indent, "=" * 50))
-		
+
 		out.write("\n}")
 		out.close()
 
