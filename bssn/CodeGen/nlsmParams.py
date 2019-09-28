@@ -79,3 +79,4 @@ parameters.add("NLSM_GRID_MIN_Z", -200.0)
 parameters.add("NLSM_GRID_MAX_Z", 200.0)
 
 parameters.writeJson("nlsm.par.json")
+parameters.writeCpp("nlsmParams.h", "nlsmParams.cpp", "nlsm")
