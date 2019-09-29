@@ -22,17 +22,22 @@ class Parameters:
 								datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"),
 								os.path.basename(sys.argv[0]))
 
-	def add(self, id, value, description=None, category=None, cppType=None):
+	def add(self, id, value, description=None, category=None, cppType=None, arraySize = None):
 		#set default value if it makes sense
 		if category is None and self.category is not None:
 			category = self.category
 
-		param = Parameter(id, value, description, category, cppType)
+		param = Parameter(id, value, description, category, cppType, arraySize)
 		self.paramDict[param.id] = param
 
-	# Clear category by calling with None
 	def setCategory(self, category):
 		self.category = category
+
+	def clearCategory(self):
+		self.category = None
+
+	def getDictionary(self):
+		return self.paramDict
 
 	def writeCpp(self, hPath, cppPath, namespace):
 
@@ -99,12 +104,19 @@ class Parameters:
 		out.close()
 
 class Parameter:
-	def __init__(self, id, value, description=None, category=None, cppType=None):
+	def __init__(self, id, value, description=None, category=None, cppType=None, arraySize=None):
 		self.id = id
 		self.value = value
 		self.description = description
 		self.category = category
 		self.indent = "\t"
+		self.arraySize = arraySize
+
+		# if value is a list but array size isn't explicitly set, get it from values
+		if self.arraySize is None and isinstance(value, list) and len(value) > 0:
+			self.arraySize = len(value)
+			# set temp value to first element in list, so we can get the array type below
+			value = value[0]
 
 		if isinstance(cppType, CppType):
 			self.cppType = cppType
@@ -126,7 +138,7 @@ class Parameter:
 		if (self.description is not None):
 			output += '{0}"           " : "{1}",\n'.format(self.indent * indentCount, self.description)
 		output += '{0}"{1}" : {2},\n'.format(self.indent * indentCount, self.id,
-											 '"' + self.value + '"' if isinstance(self.value, str) else self.value)
+											 '"'+self.value +'"' if isinstance(self.value, str) else self.value)
 
 		return output
 	def toStringH(self, indentCount = 0):
@@ -134,7 +146,8 @@ class Parameter:
 		if self.description is not None:
 			output += "{0}//{1}\n".format(self.indent * indentCount, self.description)
 
-		output += "{0}extern {1} {2};\n\n".format("\t" * indentCount, self.cppType.value, self.id)
+		output += "{0}extern {1} {2}{3};\n\n".format("\t" * indentCount, self.cppType.value, self.id,
+											  "[" + str(self.arraySize) +"]" if self.arraySize is not None else "")
 		return output
 
 	def toStringCpp(self, indentCount = 0):
@@ -144,13 +157,13 @@ class Parameter:
 
 		# surround value with quotes if it's a string, otherwise nothing
 		valueQuote = '"' if self.cppType is CppType.string else ""
-		output += "{0}{1} {2}={4}{3}{4};\n\n".format(self.indent * indentCount, self.cppType.value, self.id, self.value, valueQuote)
+		if self.arraySize is None:
+			output += "{0}{1} {2}={4}{3}{4};\n\n".format(self.indent * indentCount, self.cppType.value, self.id, self.value, valueQuote)
+		else:
+			arrayValue = valueQuote + "{0},{0}".format(valueQuote).join(str(v) for v in self.value) + valueQuote
+			output += "{0}{1} {2}[{3}]={{{4}}};\n\n".format(self.indent * indentCount, self.cppType.value, self.id, self.arraySize, arrayValue)
+			
 		return output
- 
-class ArrayParameter(Parameter):
-	def __init__(self, id, value, size, description=None, category=None, cppType=None):
-		Parameter.__init__(self, id, value, description=None, category=None, cppType=None)
-		self.size = size
 
 class CppType(Enum):
 	unsignedInt = "unsigned int"
