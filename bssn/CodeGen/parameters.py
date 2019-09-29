@@ -63,7 +63,7 @@ class Parameters:
 		outCpp.write("namespace {0}\n{{\n\n".format(namespace))
 
 		for parameter in self.paramDict.values():
-			if parameter.id.startswith("__comment__", 0, 11):
+			if parameter.isComment():
 				continue
 			outH.write(parameter.toStringH(1))
 			outCpp.write(parameter.toStringCpp(1))
@@ -132,6 +132,9 @@ class Parameter:
 			#default to string if nothing else matches
 			else:
 				self.cppType = CppType.string
+
+	def isComment(self):
+		return self.id.startswith("__comment__", 0, 11)
 
 	def toStringJson(self, indentCount=0):
 		output = ""
