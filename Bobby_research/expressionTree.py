@@ -41,7 +41,7 @@ class expressionTree:
         if node['numChildren'] == 0:
             if not self.isOperator(node['value']):
                 if node['value'].startswith("_") or node['value'].startswith("DENDRO"):
-                    output = node['value'] + "[pp]"
+                    output = node['value']
                 else:
                     output =  str(node['value'])
             else:
@@ -162,6 +162,24 @@ class expressionTree:
                         node = mult_tree.getNode(nodeId)
                         self.addNonLeafNode(nodeId, node['value'], node['leftChild']['nodeID'], node['rightChild']['nodeID'])   
    
+    def registerAdaptTrees(self, registerSize):
+        "reduces a tree into smaller trees. Choosing nodes with the largest number of parent to extract first. This does change the tree"
+        subtrees = []
+
+        
+        for i in range(registerSize):
+            reductionNodeId = ''
+            reduction_node_indegree = 0
+
+            for source_id in self.sources:
+                best_id, best_in_degree = self.findMaxInDegree(source_id,cache={}, include_leaves=False)
+                if best_in_degree > reduction_node_indegree:
+                    reductionNodeId = best_id
+                    reduction_node_indegree = best_in_degree
+                    
+            subtrees.append(self.createSubTree(reductionNodeId))
+        return subtrees
+
     def cacheAdaptTrees(self, cacheSize):
         "reduces trees into smaller trees that are smaller than or equal to the cache Size. This algorithm return a list of trees in the order they should be evaluated. Does not change current tree"
 
@@ -202,7 +220,7 @@ class expressionTree:
 
         return best_id
 
-    def findMaxInDegree(self, depedencyTarget, nodeId, cache ={}):
+    def findMaxInDegree(self, nodeId, cache ={}, include_leaves = True):
         "finds the node with the largets in degree that also fulfills the dependecy target"
 
         if(not self.hasNode(nodeId)):
@@ -217,32 +235,23 @@ class expressionTree:
         
 
         node = self.getNode(nodeId)
-        numLeafDependents = self.getNumLeafDependents(nodeId)
 
-        currentBestInDegree = -1
-        bestNodeId = -1
+        if not include_leaves and node['numChildren'] == 0:
+            cache[nodeId] = nodeId
+            return nodeId, -1
 
-        
 
-        if self.getNode(nodeId)['numChildren'] !=0:
-            bestNodeId = nodeId
-            currentBestInDegree = -1
-        elif numLeafDependents <= depedencyTarget:
-            if nodeId in self.sources:
-                currentBestInDegree = 1000
-                bestNodeId = nodeId
-            elif len(self.getParents(nodeId)) > currentBestInDegree:
-                currentBestInDegree = len(self.getParents(nodeId))
-                bestNodeId = nodeId
+        currentBestInDegree = len(self.getParents(nodeId))
+        bestNodeId = nodeId        
 
         if node['leftChild'] != None:
-            leftId, leftDegree = self.findMaxInDegree(depedencyTarget, node['leftChild']["nodeID"])
+            leftId, leftDegree = self.findMaxInDegree(node['leftChild']["nodeID"], cache, include_leaves)
             if leftDegree > currentBestInDegree:
                     currentBestInDegree = leftDegree
                     bestNodeId = leftId
 
         if node['rightChild'] != None:
-            rightId, rightDegree = self.findMaxInDegree(depedencyTarget, node['rightChild']["nodeID"])
+            rightId, rightDegree = self.findMaxInDegree(node['rightChild']["nodeID"], cache, include_leaves)
             if rightDegree > currentBestInDegree:
                     currentBestInDegree = rightDegree
                     bestNodeId = rightId

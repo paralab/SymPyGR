@@ -26,8 +26,10 @@ def main():
                         id = parse.id
         #tree.createGraphPicture('pictures/basicAdd')
         
-        cache = int(sys.argv[1])
-        #cache = 100
+        #cache = int(sys.argv[1])
+        #registers = int(sys.argv[2])
+        cache = 95
+        registers = 10
         passSize = 1
 
         #print(cache)
@@ -114,6 +116,13 @@ def main():
                                         #output = 'double '
                                         var_end = '[pp]'
                                 
+                                if len(subtree.sources) == 1 and registers > 1:
+                                        
+                                        register_trees = subtree.registerAdaptTrees(registers)
+                                        for register_subtree in register_trees:
+                                                for register_source in register_subtree.sources: 
+                                                        output = output + '            ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source)+ ';\n'
+
                                 output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n' + end
                                 file.write(output)
 
