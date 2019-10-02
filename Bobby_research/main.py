@@ -121,7 +121,7 @@ def main():
                                         register_trees = subtree.registerAdaptTrees(registers)
                                         for register_subtree in register_trees:
                                                 for register_source in register_subtree.sources: 
-                                                        output = output + '            ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source)+ ';\n'
+                                                        output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source)+ ';\n'
 
                                 output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n' + end
                                 file.write(output)
