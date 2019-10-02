@@ -111,7 +111,7 @@ def main():
                                 output = output + '            if (r_coord >= ETA_R0) {\n'
                                 output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
                                 output = output + '            }\n'
-                                output = output + '            double pp = i + nx*(j + ny*k);\n'
+                                output = output + '            int pp = i + nx*(j + ny*k);\n'
 
 
                                 if not source.endswith('[pp]'):
