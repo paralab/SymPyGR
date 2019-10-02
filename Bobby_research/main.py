@@ -29,7 +29,7 @@ def main():
         #cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
         cache = 100
-        registers = 10
+        registers = 0
         passSize = 1
 
         #print(cache)
