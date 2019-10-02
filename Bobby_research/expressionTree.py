@@ -32,7 +32,7 @@ class expressionTree:
                     count = count + 1
         return count        
 
-    def createCodeOutput(self, nodeId):
+    def createCodeOutput(self, nodeId, globals=set()):
         if(not self.hasNode(nodeId)):
             raise ValueError("the nodeId " + str(nodeId) + "is not in the graph")
 
@@ -42,6 +42,8 @@ class expressionTree:
             if not self.isOperator(node['value']):
                 if node['value'].startswith("_") or node['value'].startswith("DENDRO"):
                     output = node['value']
+                    if nodeId in globals:
+                        output = output + '[pp]'
                 else:
                     output =  str(node['value'])
             else:
@@ -51,18 +53,18 @@ class expressionTree:
                 raise ValueError("Node has a a number of children that is not 2")
             else:
                 if node['value'] == 'sqrt':
-                    output = self.sqrtCode(nodeId)
+                    output = self.sqrtCode(nodeId, globals)
                 elif node['value'] == 'pow':
-                    output = self.powCode(nodeId)
+                    output = self.powCode(nodeId, globals)
                 elif node['value'] == '+' or node['value'] == '-':
-                    output = self.addSubCode(nodeId)
+                    output = self.addSubCode(nodeId, globals)
                 elif node['value'] == '*' or node['value'] == '/':
-                    output = self.multDivCode(nodeId)
+                    output = self.multDivCode(nodeId, globals)
                 else:
                     raise ValueError('unRecognized value: ' + node['value'])
         return output
 
-    def addSubCode(self, nodeId):
+    def addSubCode(self, nodeId, globals):
 
         node = self.getNode(nodeId)
         if node['leftChild']['value'] == 'Negate':
@@ -70,22 +72,22 @@ class expressionTree:
         if node['rightChild']['value'] == 'Negate':
             raise ValueError('cant have negate in addition or subtraction')
 
-        return self.createCodeOutput(node['leftChild']['nodeID']) + node['value'] + self.createCodeOutput(node['rightChild']['nodeID'])
+        return self.createCodeOutput(node['leftChild']['nodeID'], globals) + node['value'] + self.createCodeOutput(node['rightChild']['nodeID'], globals)
     
-    def multDivCode(self, nodeId):
+    def multDivCode(self, nodeId, globals):
 
         node = self.getNode(nodeId)
         if node['leftChild']['value'] == 'Negate' and node['rightChild']['value'] == 'Negate':   
             raise ValueError('cannot have double negate')
         elif node['leftChild']['value'] == 'Negate':
-            return '-(' + self.createCodeOutput(node['rightChild']['nodeID']) + ')'
+            return '-(' + self.createCodeOutput(node['rightChild']['nodeID'], globals) + ')'
         elif node['rightChild']['value'] == 'Negate':
-            return '-(' + self.createCodeOutput(node['leftChild']['nodeID']) + ')'
+            return '-(' + self.createCodeOutput(node['leftChild']['nodeID'], globals) + ')'
         else:
-            left = self.createCodeOutput(node['leftChild']['nodeID'])
+            left = self.createCodeOutput(node['leftChild']['nodeID'], globals)
             if node['leftChild']['value'] == '+' or node['leftChild']['value'] == '-':
                 left = '(' + left + ')'
-            right = self.createCodeOutput(node['rightChild']['nodeID'])
+            right = self.createCodeOutput(node['rightChild']['nodeID'], globals)
             if node['rightChild']['value'] == '+' or node['rightChild']['value'] == '-':
                 right = '(' + right + ')'
             if node['value'] == '*':
@@ -93,18 +95,18 @@ class expressionTree:
             else:
                 return '(' + left + node['value'] + right + ')'
     
-    def powCode(self, nodeId):
+    def powCode(self, nodeId, globals):
 
         node = self.getNode(nodeId)
-        leftCode = self.createCodeOutput(node['leftChild']['nodeID'])
-        rightCode = self.createCodeOutput(node['rightChild']['nodeID'])
+        leftCode = self.createCodeOutput(node['leftChild']['nodeID'], globals)
+        rightCode = self.createCodeOutput(node['rightChild']['nodeID'], globals)
 
         return 'pow('+leftCode + ',' + rightCode + ')'
 
-    def sqrtCode(self, nodeId):
+    def sqrtCode(self, nodeId, globals):
 
         node = self.getNode(nodeId)
-        return 'sqrt(' + self.createCodeOutput(node['leftChild']['nodeID']) + ')'
+        return 'sqrt(' + self.createCodeOutput(node['leftChild']['nodeID'], globals) + ')'
 
     def nonUniformStaging(self, disjoint_set = None):
         "stages a tree comprised of both multiplication and addition nodes."

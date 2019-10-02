@@ -29,7 +29,7 @@ def main():
         #cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
         cache = 100
-        registers = 0
+        registers = 10
         passSize = 1
 
         #print(cache)
@@ -84,6 +84,7 @@ def main():
         file = open("staged_codes/" + "cache" + str(cache) + "/Code"+str(cache)+".cpp", "w")
         alloc_file = open("staged_codes/" + "cache" + str(cache) + "/allocate"+str(cache)+".cpp", "w")
         dealloc_file = open("staged_codes/" + "cache" + str(cache) + "/deallocate"+str(cache)+".cpp", "w")
+        subtree_sources=set()
         for subtree in subtrees:   
                 #subtree.createGraphPicture('pictures/subT'+str(counter)) 
                 #print(len(subtree.sources))       
@@ -117,6 +118,7 @@ def main():
 
 
                                 if not source.endswith('[pp]'):
+                                        subtree_sources.add(source)
                                         #output = 'double '
                                         var_end = '[pp]'
                                 
@@ -125,9 +127,9 @@ def main():
                                         register_trees = subtree.registerAdaptTrees(registers)
                                         for register_subtree in register_trees:
                                                 for register_source in register_subtree.sources: 
-                                                        output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source)+ ';\n'
+                                                        output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
 
-                                output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source)+ ';\n' + end
+                                output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source, globals=subtree_sources)+ ';\n' + end
                                 file.write(output)
 
                                 if source.startswith('_') or source.startswith("DENDRO"):
