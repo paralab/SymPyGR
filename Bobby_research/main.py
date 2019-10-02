@@ -142,7 +142,6 @@ def main():
                                 
 
                 #counter = counter + 1
-        file.write(end)
         print('number stages ' + str(counter))
                 #cache = cache +5
                 
