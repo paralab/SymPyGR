@@ -433,8 +433,8 @@ int main(int argc, char **argv)
                             if (l_inf < fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i])){
                                 printf("\n");
                                 printf(var);
-                                printf(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
-                                printf(varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
+                                printf("%d",varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
+                                printf("%d", varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
                                 printf("\n");
                                 l_inf = fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
                             }
