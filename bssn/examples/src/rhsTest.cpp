@@ -432,7 +432,7 @@ int main(int argc, char **argv)
                         for (unsigned int i = 3; i < sz[0] - 3; i++)
                             if (l_inf < fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i])){
                                 printf("\n");
-                                printf(var);
+                                printf(bssn::BSSN_VAR_NAMES[var] );
                                 printf("%d",varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
                                 printf("%d", varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
                                 printf("\n");
