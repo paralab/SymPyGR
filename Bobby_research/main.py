@@ -36,7 +36,7 @@ def main():
         
         #cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
-        cache = 1000000000
+        cache = 100
         registers = 0
         passSize = 1
 
@@ -115,14 +115,14 @@ def main():
                                 output = output + '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
                                 output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
                                 output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
-                                #output = output + '            double x = pmin[0] + i*hx;\n'
-                                #output = output + '            double y = pmin[1] + j*hy;\n'
-                                #output = output + '            double z = pmin[2] + k*hz;\n'
-                                #output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
-                                #output = output + '            double eta=ETA_CONST;\n'
-                                #output = output + '            if (r_coord >= ETA_R0) {\n'
-                                #output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
-                                #output = output + '            }\n'
+                                output = output + '            double x = pmin[0] + i*hx;\n'
+                                output = output + '            double y = pmin[1] + j*hy;\n'
+                                output = output + '            double z = pmin[2] + k*hz;\n'
+                                output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
+                                output = output + '            double eta=ETA_CONST;\n'
+                                output = output + '            if (r_coord >= ETA_R0) {\n'
+                                output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
+                                output = output + '            }\n'
                                 output = output + '            int pp = i + nx*(j + ny*k);\n'
 
 
