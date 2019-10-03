@@ -6,6 +6,7 @@ import sys
 
 
 def main():
+        #new main file
 
         '''
         line =  fP.expressionLine("double DENDRO_972 = BSSN_ETA_R0*sqrt(DENDRO_41*(DENDRO_106*DENDRO_971 - DENDRO_274*DENDRO_55 - DENDRO_278*DENDRO_35 - DENDRO_280*DENDRO_49 - DENDRO_357*DENDRO_971 + 2*DENDRO_60*DENDRO_85))*pow(-pow(chi[pp], BSSN_ETA_POWER[0]) + 1, -BSSN_ETA_POWER[1]);")
@@ -14,8 +15,14 @@ def main():
         '''
 
 
-
-        
+        tree1 = createTree1()
+        tree1.createGraphPicture('original_tree')
+        subtrees_1 = tree1.cacheAdaptTrees(4)
+        count = 0
+        for subtree in subtrees_1:
+                subtree.createGraphPicture('subtree' + str(count))
+                count = count + 1
+        '''
         tree = eTree.expressionTree()
         id =0
         for line in open('bssn.cpp'):
@@ -38,11 +45,12 @@ def main():
         counter = 0
         #while cache <=95:
         subtrees = tree.cacheAdaptTrees(cache)
+        '''
 
         
 
         # prints all the similarities between nodes
-
+        '''
         sources = []
         source_tree_map = {}
         for subtree in subtrees:
@@ -50,7 +58,7 @@ def main():
                         if subtree.getNumLeafDependents(source) >=2 :
                                 source_tree_map[source] = subtree
                                 sources.append(source)
-                        
+        '''           
         '''
         print("total sources: " + str(len(sources)))
         for source in sources:
@@ -79,7 +87,7 @@ def main():
         
         
         #to autogenerate code
-
+        '''
         print("num subtrees " + str(len(subtrees)))
         file = open("staged_codes/" + "cache" + str(cache) + "/Code"+str(cache)+".cpp", "w")
         alloc_file = open("staged_codes/" + "cache" + str(cache) + "/allocate"+str(cache)+".cpp", "w")
@@ -122,13 +130,17 @@ def main():
                                         #output = 'double '
                                         var_end = '[pp]'
                                 
+                                '''
+        '''
                                 if len(subtree.sources) == 1 and registers > 1:
                                         
                                         register_trees = subtree.registerAdaptTrees(registers)
                                         for register_subtree in register_trees:
                                                 for register_source in register_subtree.sources: 
                                                         output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
+                                '''
 
+        '''
                                 output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source, globals=subtree_sources)+ ';\n' + end
                                 file.write(output)
 
@@ -148,7 +160,7 @@ def main():
                 #counter = counter + 1
         print('number stages ' + str(counter))
                 #cache = cache +5
-                
+        '''              
         
 
 def calculate_rhs():
@@ -367,6 +379,7 @@ def disjoint_set():
     print(dj.find(7))
     print(dj.find(6))
     print(dj.find(5))
+
 
 if __name__ == '__main__':
     main()
