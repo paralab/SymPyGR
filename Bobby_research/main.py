@@ -14,7 +14,7 @@ def main():
         tree.createGraphPicture('pictures/pow')
         '''
 
-
+        '''
         tree1 = createTree1()
         tree1.createGraphPicture('original_tree')
         subtrees_1 = tree1.cacheAdaptTrees(4)
@@ -23,6 +23,7 @@ def main():
                 subtree.createGraphPicture('subtree' + str(count))
                 count = count + 1
         '''
+        
         tree = eTree.expressionTree()
         id =0
         for line in open('bssn.cpp'):
@@ -35,7 +36,7 @@ def main():
         
         #cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
-        cache = 100
+        cache = 1000000000
         registers = 0
         passSize = 1
 
@@ -45,7 +46,7 @@ def main():
         counter = 0
         #while cache <=95:
         subtrees = tree.cacheAdaptTrees(cache)
-        '''
+        
 
         
 
@@ -87,7 +88,7 @@ def main():
         
         
         #to autogenerate code
-        '''
+        
         print("num subtrees " + str(len(subtrees)))
         file = open("staged_codes/" + "cache" + str(cache) + "/Code"+str(cache)+".cpp", "w")
         alloc_file = open("staged_codes/" + "cache" + str(cache) + "/allocate"+str(cache)+".cpp", "w")
@@ -114,14 +115,14 @@ def main():
                                 output = output + '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
                                 output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
                                 output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
-                                output = output + '            double x = pmin[0] + i*hx;\n'
-                                output = output + '            double y = pmin[1] + j*hy;\n'
-                                output = output + '            double z = pmin[2] + k*hz;\n'
-                                output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
-                                output = output + '            double eta=ETA_CONST;\n'
-                                output = output + '            if (r_coord >= ETA_R0) {\n'
-                                output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
-                                output = output + '            }\n'
+                                #output = output + '            double x = pmin[0] + i*hx;\n'
+                                #output = output + '            double y = pmin[1] + j*hy;\n'
+                                #output = output + '            double z = pmin[2] + k*hz;\n'
+                                #output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
+                                #output = output + '            double eta=ETA_CONST;\n'
+                                #output = output + '            if (r_coord >= ETA_R0) {\n'
+                                #output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
+                                #output = output + '            }\n'
                                 output = output + '            int pp = i + nx*(j + ny*k);\n'
 
 
@@ -130,8 +131,8 @@ def main():
                                         #output = 'double '
                                         var_end = '[pp]'
                                 
+                                
                                 '''
-        '''
                                 if len(subtree.sources) == 1 and registers > 1:
                                         
                                         register_trees = subtree.registerAdaptTrees(registers)
@@ -140,7 +141,7 @@ def main():
                                                         output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
                                 '''
 
-        '''
+        
                                 output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source, globals=subtree_sources)+ ';\n' + end
                                 file.write(output)
 
@@ -160,7 +161,7 @@ def main():
                 #counter = counter + 1
         print('number stages ' + str(counter))
                 #cache = cache +5
-        '''              
+                   
         
 
 def calculate_rhs():

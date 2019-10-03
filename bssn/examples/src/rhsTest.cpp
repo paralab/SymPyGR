@@ -430,8 +430,14 @@ int main(int argc, char **argv)
                 for (unsigned int k = 3; k < sz[2] - 3; k++)
                     for (unsigned int j = 3; j < sz[1] - 3; j++)
                         for (unsigned int i = 3; i < sz[0] - 3; i++)
-                            if (l_inf < fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]))
+                            if (l_inf < fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i])){
+                                printf("\n");
+                                printf(var);
+                                printf(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
+                                printf(varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
+                                printf("\n");
                                 l_inf = fabs(varUnzipOutCPU0[var][offset + k * sz[0] * sz[1] + j * sz[0] + i] - varUnzipOutCPU1[var][offset + k * sz[0] * sz[1] + j * sz[0] + i]);
+                            }
             }
 
             std::cout << "comparison for var: " << var << bssn::BSSN_VAR_NAMES[var] << " l_inf : " << l_inf << std::endl;
