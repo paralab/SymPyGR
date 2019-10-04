@@ -1,8 +1,21 @@
 import expressionTree as eTree
 import disjoint_set as djs
 import fileParser as fP
-
+import sympy as sympy
+import sympy.parsing.sympy_parser as sympy_parser
 import sys
+
+def main1():
+        x = sympy.symbols('BSSN_ETA_R0[pp]')
+        print(x)
+        local_dictionary = {}
+        local_dictionary ['BSSN_ETA_R0[pp]'] = x
+        #pow(-pow(chi[pp], BSSN_ETA_POWER[0]) + 1, -BSSN_ETA_POWER[1])
+        line = "BSSN_ETA_R0[pp]*sqrt(DENDRO_41*(DENDRO_106*DENDRO_971 - DENDRO_274*DENDRO_55 - DENDRO_278*DENDRO_35 - DENDRO_280*DENDRO_49 - DENDRO_357*DENDRO_971 + 2*DENDRO_60*DENDRO_85))*chi**BSSN_ETA_POWER"
+        expression = sympy.parsing.sympy_parser.parse_expr(line, local_dict = local_dictionary, evaluate=False)
+        answer = sympy.cse(expression)
+        print(answer)
+        #print(answer[0][0][0])
 
 
 def main():
@@ -37,7 +50,7 @@ def main():
         #cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
         cache = 100
-        registers = 0
+        registers = 5
         passSize = 1
 
         #print(cache)
@@ -132,14 +145,14 @@ def main():
                                         var_end = '[pp]'
                                 
                                 
-                                '''
-                                if len(subtree.sources) == 1 and registers > 1:
+                                
+                                if registers > 1:
                                         
                                         register_trees = subtree.registerAdaptTrees(registers)
                                         for register_subtree in register_trees:
                                                 for register_source in register_subtree.sources: 
                                                         output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
-                                '''
+                                
 
         
                                 output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source, globals=subtree_sources)+ ';\n' + end
