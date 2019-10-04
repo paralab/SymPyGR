@@ -50,7 +50,7 @@ def main():
         #cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
         cache = 100
-        registers = 5
+        registers = 100
         passSize = 1
 
         #print(cache)
@@ -108,35 +108,42 @@ def main():
         dealloc_file = open("staged_codes/" + "cache" + str(cache) + "/deallocate"+str(cache)+".cpp", "w")
         subtree_sources=set()
         for subtree in subtrees:   
+                output = ''
+                var_end = ''
+                end = ''
+                end = '        }\n'
+                end = end + '    }\n'
+                end = end + '}\n'
+                end = end + "bssn::timer::t_rhs.stop();"
+                
+
+                output = "\n\nbssn::timer::t_rhs.start();"                                     
+                output = output + '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
+                output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
+                output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
+                output = output + '            double x = pmin[0] + i*hx;\n'
+                output = output + '            double y = pmin[1] + j*hy;\n'
+                output = output + '            double z = pmin[2] + k*hz;\n'
+                output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
+                output = output + '            double eta=ETA_CONST;\n'
+                output = output + '            if (r_coord >= ETA_R0) {\n'
+                output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
+                output = output + '            }\n'
+                output = output + '            int pp = i + nx*(j + ny*k);\n'
                 #subtree.createGraphPicture('pictures/subT'+str(counter)) 
-                #print(len(subtree.sources))       
+                #print(len(subtree.sources))   
+                if registers > 1:                                        
+                        register_trees = subtree.registerAdaptTrees(registers)
+                        for register_subtree in register_trees:
+                                for register_source in register_subtree.sources: 
+                                        output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
+                        
                 for source in subtree.sources: 
                         if subtree.getNumLeafDependents(source) >=2 : 
                                 
                                 
                                 
-                                output = ''
-                                var_end = ''
-                                end = ''
-                                end = '        }\n'
-                                end = end + '    }\n'
-                                end = end + '}\n'
-                                end = end + "bssn::timer::t_rhs.stop();"
                                 
- 
-                                output = "\n\nbssn::timer::t_rhs.start();"                                     
-                                output = output + '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
-                                output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
-                                output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
-                                output = output + '            double x = pmin[0] + i*hx;\n'
-                                output = output + '            double y = pmin[1] + j*hy;\n'
-                                output = output + '            double z = pmin[2] + k*hz;\n'
-                                output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
-                                output = output + '            double eta=ETA_CONST;\n'
-                                output = output + '            if (r_coord >= ETA_R0) {\n'
-                                output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
-                                output = output + '            }\n'
-                                output = output + '            int pp = i + nx*(j + ny*k);\n'
 
 
                                 if not source.endswith('[pp]'):
@@ -146,17 +153,11 @@ def main():
                                 
                                 
                                 
-                                if registers > 1:
-                                        
-                                        register_trees = subtree.registerAdaptTrees(registers)
-                                        for register_subtree in register_trees:
-                                                for register_source in register_subtree.sources: 
-                                                        output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
                                 
 
         
-                                output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source, globals=subtree_sources)+ ';\n' + end
-                                file.write(output)
+                                output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source, globals=subtree_sources)+ ';\n' 
+                                
 
                                 if source.startswith('_') or source.startswith("DENDRO"):
                                         
@@ -170,7 +171,8 @@ def main():
                                 
 
                                 
-
+                output = output + end
+                file.write(output)
                 #counter = counter + 1
         print('number stages ' + str(counter))
                 #cache = cache +5
