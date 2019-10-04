@@ -6,23 +6,57 @@ import sympy.parsing.sympy_parser as sympy_parser
 import sys
 
 def main1():
-        x = sympy.symbols('BSSN_ETA_R0[pp]')
-        print(x)
-        local_dictionary = {}
-        local_dictionary ['BSSN_ETA_R0[pp]'] = x
         #pow(-pow(chi[pp], BSSN_ETA_POWER[0]) + 1, -BSSN_ETA_POWER[1])
-        line = "BSSN_ETA_R0[pp]*sqrt(DENDRO_41*(DENDRO_106*DENDRO_971 - DENDRO_274*DENDRO_55 - DENDRO_278*DENDRO_35 - DENDRO_280*DENDRO_49 - DENDRO_357*DENDRO_971 + 2*DENDRO_60*DENDRO_85))*chi**BSSN_ETA_POWER"
-        expression = sympy.parsing.sympy_parser.parse_expr(line, local_dict = local_dictionary, evaluate=False)
-        answer = sympy.cse(expression)
-        print(answer)
-        #print(answer[0][0][0])
+        
+        id =0
+        global_vars_dictionary ={}
+        for line in open('bssn.cpp'):
+                if not line.startswith('//') and line != '\n':
+                        tree = eTree.expressionTree()
+                        parse = fP.expressionLine(line,id)
+                        
+                        updated_tokens = parse.replace_pp_tokens()
+                        global_vars_dictionary = merge_dictionaries(global_vars_dictionary, updated_tokens)
+                        #print(parse.tokens)
+                        tree, junk = parse.createTree(tree)
+                        id = parse.id
+
+                        for source in tree.sources:
+                                print(source)
+                                line = tree.createCodeOutput(source)
+
+                                generated_code = tree.createCodeOutput(source, doubleStar=True)
+                                expression = sympy.parsing.sympy_parser.parse_expr(generated_code, evaluate=False)
+                                answer = sympy.cse(expression)
+                                #print(ccode(Assignment(' DENDRO_972', answer[1])))
+                                code = sympy.printing.ccode(answer[1])
+                                code = code[1:len(code) -1]
+                                print(code)
+                                updated_code = replace_tokens(code, updated_tokens)
+                                
+                                print(updated_code)
+                                #print(answer[0][0][0])
+
+def replace_tokens(string, tokens):
+        for key in tokens.keys():
+                string = string.replace(key, tokens[key])
+        return string
+
+def merge_dictionaries(d1, d2):
+        for key in d2.keys():
+                if key in d1:
+                        if d1[key] != d2[key]:
+                                raise ValueError('key mismatch')
+                else:
+                        d1[key] = d2[key]
+        return d1
 
 
 def main():
         #new main file
 
         '''
-        line =  fP.expressionLine("double DENDRO_972 = BSSN_ETA_R0*sqrt(DENDRO_41*(DENDRO_106*DENDRO_971 - DENDRO_274*DENDRO_55 - DENDRO_278*DENDRO_35 - DENDRO_280*DENDRO_49 - DENDRO_357*DENDRO_971 + 2*DENDRO_60*DENDRO_85))*pow(-pow(chi[pp], BSSN_ETA_POWER[0]) + 1, -BSSN_ETA_POWER[1]);")
+        line =  fP.expressionLine("double DENDRO_972 = BSSN_ETA_R0*sqrt(DENDRO_41*(DENDRO_106*DENDRO_971 - DENDRO_274*DENDRO_55 - DENDRO_278*DENDRO_35 - DENDRO_274*DENDRO_55 - DENDRO_357*DENDRO_971 + 2*DENDRO_274*DENDRO_55))*pow(-pow(chi[pp], BSSN_ETA_POWER[0]) + 1, -BSSN_ETA_POWER[1]);")
         tree, id = line.createTree()
         tree.createGraphPicture('pictures/pow')
         '''
@@ -39,9 +73,12 @@ def main():
         
         tree = eTree.expressionTree()
         id =0
+        global_vars_dictionary ={}
         for line in open('bssn.cpp'):
                 if not line.startswith('//') and line != '\n':
                         parse = fP.expressionLine(line,id)
+                        updated_tokens = parse.replace_pp_tokens()
+                        global_vars_dictionary = merge_dictionaries(global_vars_dictionary, updated_tokens)
                         #print(parse.tokens)
                         tree, junk = parse.createTree(tree)
                         id = parse.id
@@ -50,7 +87,7 @@ def main():
         #cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
         cache = 100
-        registers = 100
+        #registers = 100
         passSize = 1
 
         #print(cache)
@@ -93,6 +130,16 @@ def main():
                         print(str(right) + " dependents " + str(right_dependecies))
                         print('similarity% ' + str(similarity_percent))
                         print('similarity count ' + str(similarity_count))
+
+                #subtree.createGraphPicture('pictures/subT'+str(counter)) 
+                #print(len(subtree.sources))  
+                 
+                if registers > 1:                                        
+                        register_trees = subtree.registerAdaptTrees(registers)
+                        for register_subtree in register_trees:
+                                for register_source in register_subtree.sources: 
+                                        output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
+                        
         '''
         
         
@@ -108,57 +155,58 @@ def main():
         dealloc_file = open("staged_codes/" + "cache" + str(cache) + "/deallocate"+str(cache)+".cpp", "w")
         subtree_sources=set()
         for subtree in subtrees:   
-                output = ''
-                var_end = ''
-                end = ''
-                end = '        }\n'
-                end = end + '    }\n'
-                end = end + '}\n'
-                end = end + "bssn::timer::t_rhs.stop();"
-                
-
-                output = "\n\nbssn::timer::t_rhs.start();"                                     
-                output = output + '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
-                output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
-                output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
-                output = output + '            double x = pmin[0] + i*hx;\n'
-                output = output + '            double y = pmin[1] + j*hy;\n'
-                output = output + '            double z = pmin[2] + k*hz;\n'
-                output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
-                output = output + '            double eta=ETA_CONST;\n'
-                output = output + '            if (r_coord >= ETA_R0) {\n'
-                output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
-                output = output + '            }\n'
-                output = output + '            int pp = i + nx*(j + ny*k);\n'
-                #subtree.createGraphPicture('pictures/subT'+str(counter)) 
-                #print(len(subtree.sources))   
-                if registers > 1:                                        
-                        register_trees = subtree.registerAdaptTrees(registers)
-                        for register_subtree in register_trees:
-                                for register_source in register_subtree.sources: 
-                                        output = output + '            ' + 'double ' + register_source + ' = ' + register_subtree.createCodeOutput(register_source, globals=subtree_sources)+ ';\n'
-                        
                 for source in subtree.sources: 
                         if subtree.getNumLeafDependents(source) >=2 : 
                                 
-                                
-                                
-                                
-
-
+                                output = ''
+                                var_end = ''
+                                end = ''
                                 if not source.endswith('[pp]'):
-                                        subtree_sources.add(source)
+                                        #subtree_sources.add(source)
                                         #output = 'double '
-                                        var_end = '[pp]'
+                                        var_end = '[pp]'     
+
                                 
-                                
-                                
+                                end = '        }\n'
+                                end = end + '    }\n'
+                                end = end + '}\n'
+                                end = end + "bssn::timer::t_rhs.stop();"
                                 
 
-        
-                                output = output + '            ' + source+ var_end + ' = ' + subtree.createCodeOutput(source, globals=subtree_sources)+ ';\n' 
-                                
+                                output = "\n\nbssn::timer::t_rhs.start();"                                     
+                                output = output + '\nfor (unsigned int k = 3; k < nz-3; k++) {\n'
+                                output = output + '    for (unsigned int j = 3; j < ny-3; j++) {\n'
+                                output = output + '        for (unsigned int i = 3; i < nx-3; i++) {\n'
+                                output = output + '            double x = pmin[0] + i*hx;\n'
+                                output = output + '            double y = pmin[1] + j*hy;\n'
+                                output = output + '            double z = pmin[2] + k*hz;\n'
+                                output = output + '            double r_coord = sqrt(x*x + y*y + z*z);\n'
+                                output = output + '            double eta=ETA_CONST;\n'
+                                output = output + '            if (r_coord >= ETA_R0) {\n'
+                                output = output + '                eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n'
+                                output = output + '            }\n'
+                                output = output + '            int pp = i + nx*(j + ny*k);\n'                     
+                                                              
+                                generated_code = tree.createCodeOutput(source, doubleStar=True)
+                                expression = sympy.parsing.sympy_parser.parse_expr(generated_code, evaluate=False)
+                                answer = sympy.cse(expression)
+                                #print(ccode(Assignment(' DENDRO_972', answer[1])))
 
+                                print(len(answer[0]))
+                                for temp_var in answer[0]:
+                                        name = str(temp_var[0])
+                                        expression = temp_var[1]
+                                        expression = sympy.printing.ccode(temp_var[1])
+                                        #expression = expression[1:len(expression) -1]
+                                        expression = replace_tokens(expression, global_vars_dictionary)
+                                        output = output + '            double ' + name + ' = ' + str(expression)+ ';\n'
+                                print('finish temps')
+
+                                code = sympy.printing.ccode(answer[1])
+                                code = code[1:len(code) -1]
+                                updated_code = replace_tokens(code, global_vars_dictionary)
+
+                                output = output + '            ' + source + var_end + ' = ' + updated_code + ';\n' 
                                 if source.startswith('_') or source.startswith("DENDRO"):
                                         
                                         alloc_str = "double* " + source + "= (double*)malloc(sizeof(double)*n);\n"

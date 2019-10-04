@@ -8,6 +8,20 @@ class expressionLine:
         self.name = self.collectName()
         #print('name ' + self.name)
     
+    def replace_pp_tokens(self):
+
+        replaced_tokens = {}
+        for i in range(len(self.tokens)):
+            token = self.tokens[i]
+            if token.endswith(']'):
+                new_token = token[0:token.find('[')] +  '_' + token[token.find('[')+1:token.find(']')]
+                self.tokens[i] = new_token
+                replaced_tokens[new_token] = token
+            if token.endswith('L'):
+                self.tokens[i] = token[0: len(token)-1]
+        return replaced_tokens
+
+
     def tokenize(self):
 
         tokens =[]

@@ -1,0 +1,10 @@
+double* _2692= (double*)malloc(sizeof(double)*n);
+double* _1947= (double*)malloc(sizeof(double)*n);
+double* _1853= (double*)malloc(sizeof(double)*n);
+double* _1620= (double*)malloc(sizeof(double)*n);
+double* _1521= (double*)malloc(sizeof(double)*n);
+double* _1393= (double*)malloc(sizeof(double)*n);
+double* _1296= (double*)malloc(sizeof(double)*n);
+double* _3937= (double*)malloc(sizeof(double)*n);
+double* _2517= (double*)malloc(sizeof(double)*n);
+double* _2614= (double*)malloc(sizeof(double)*n);
