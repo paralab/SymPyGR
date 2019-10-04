@@ -84,9 +84,9 @@ def main():
                         id = parse.id
         #tree.createGraphPicture('pictures/basicAdd')
         
-        #cache = int(sys.argv[1])
+        cache = int(sys.argv[1])
         #registers = int(sys.argv[2])
-        cache = 100
+        #cache = 100
         #registers = 100
         passSize = 1
 
