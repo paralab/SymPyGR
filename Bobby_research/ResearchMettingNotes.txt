@@ -54,3 +54,97 @@ Talk About Results:
     Staging is extremely accurate
     Timing is not as good as I though and need to discuss why
         Could be sum computational overlap
+
+
+num subtrees 7
+source: _4165
+455
+finish temps
+source: _3144
+451
+finish temps
+source: _3748
+459
+finish temps
+source: _3564
+461
+finish temps
+source: _3365
+461
+finish temps
+source: _3985
+473
+finish temps
+source: At_rhs22[pp]
+455
+finish temps
+source: At_rhs02[pp]
+463
+finish temps
+source: gt_rhs22[pp]
+1
+finish temps
+source: Gt_rhs1[pp]
+70
+finish temps
+source: B_rhs0[pp]
+66
+finish temps
+source: gt_rhs12[pp]
+1
+finish temps
+source: At_rhs00[pp]
+451
+finish temps
+source: gt_rhs11[pp]
+1
+finish temps
+source: Gt_rhs2[pp]
+65
+finish temps
+source: At_rhs01[pp]
+463
+finish temps
+source: At_rhs12[pp]
+475
+finish temps
+source: B_rhs2[pp]
+66
+finish temps
+source: b_rhs1[pp]
+0
+finish temps
+source: gt_rhs00[pp]
+1
+finish temps
+source: gt_rhs01[pp]
+1
+finish temps
+source: b_rhs2[pp]
+0
+finish temps
+source: a_rhs[pp]
+0
+finish temps
+source: b_rhs0[pp]
+0
+finish temps
+source: At_rhs11[pp]
+459
+finish temps
+source: chi_rhs[pp]
+0
+finish temps
+source: K_rhs[pp]
+62
+finish temps
+source: Gt_rhs0[pp]
+65
+finish temps
+source: B_rhs1[pp]
+64
+finish temps
+source: gt_rhs02[pp]
+1
+finish temps
+number stages 30

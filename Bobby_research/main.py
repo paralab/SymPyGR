@@ -156,6 +156,7 @@ def main():
         subtree_sources=set()
         for subtree in subtrees:   
                 for source in subtree.sources: 
+                        print('source: ' + str(source))
                         if subtree.getNumLeafDependents(source) >=2 : 
                                 
                                 output = ''
@@ -216,11 +217,12 @@ def main():
                                         dealloc_file.write(dealloc_str)
                                 #generate code
                                 counter = counter + 1
+                                output = output + end
+                                file.write(output)
                                 
 
                                 
-                output = output + end
-                file.write(output)
+                
                 #counter = counter + 1
         print('number stages ' + str(counter))
                 #cache = cache +5
