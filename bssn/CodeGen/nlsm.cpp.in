@@ -56,7 +56,7 @@ int main (int argc, char** argv)
 		import cog
 		import nlsmParams as nlsmParams
 
-		for param in nlsmParams.parameters.getDictionary().values():
+		for param in nlsmParams.parameters.values():
 			if param.isComment():
 				continue
 

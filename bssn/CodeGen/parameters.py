@@ -9,6 +9,7 @@ import ntpath
 
 from collections import OrderedDict
 
+#holds dict of parameters, contains mostly output functions
 class Parameters:
 	def __init__(self, paramDict=None):
 		if paramDict is None:
@@ -22,13 +23,26 @@ class Parameters:
 								datetime.datetime.now().strftime("%I:%M%p on %B %d, %Y"),
 								os.path.basename(sys.argv[0]))
 
+	def __getitem__(self, key):
+		return self.paramDict[key]
+
+	#add is probably the simpler thing to use generally. But this gives direct access
+	def __setitem__(self, key, value):
+		self.paramDict[key] = value
+
 	def add(self, id, value, description=None, category=None, cppType=None, arraySize = None):
 		#set default value if it makes sense
 		if category is None and self.category is not None:
 			category = self.category
 
-		param = Parameter(id, value, description, category, cppType, arraySize)
-		self.paramDict[param.id] = param
+		if isinstance(id, PresetParam):
+			param = id.value
+			param.value = value
+			#note the dict key will be the PresetParam enum, not a string
+			self.paramDict[id] = param
+		else:
+			param = Parameter(id, value, description, category, cppType, arraySize)
+			self.paramDict[param.id] = param
 
 	def setCategory(self, category):
 		self.category = category
@@ -36,8 +50,8 @@ class Parameters:
 	def clearCategory(self):
 		self.category = None
 
-	def getDictionary(self):
-		return self.paramDict
+	def values(self):
+		return self.paramDict.values()
 
 	def writeCpp(self, hPath, cppPath, namespace):
 
@@ -172,3 +186,7 @@ class CppType(Enum):
 	unsignedInt = "unsigned int"
 	double = "double"
 	string = "std::string"
+
+class PresetParam(Enum):
+	#note values start out undefined, will be filled in before added to paramDict
+	ASYNC_COMM_K = Parameter("ASYNC_COMM_K", None, "variable group size for the asynchronous unzip operation", cppType = CppType.unsignedInt)

@@ -20,7 +20,7 @@ parameters.add("NLSM_VTU_OUTPUT_EVOL_INDICES", [0, 1], "evolution variable ids")
 
 parameters.setCategory("LOAD BALANCING & MESH")
 parameters.add("NLSM_DENDRO_GRAIN_SZ", 100, "grain size N/p , Where N number of total octants, p number of active cores")
-parameters.add("NLSM_ASYNC_COMM_K", 2, "variable group size for the asynchronous unzip operation")
+parameters.add(PresetParam.ASYNC_COMM_K, 2)
 parameters.add("NLSM_DENDRO_AMR_FAC", 1.0, "dendro coarsening factor, corsent if computed wavelet tol < NLSM_DENDRO_AMR_FAC*NLSM_WAVELET_TOL ")
 parameters.add("NLSM_LOAD_IMB_TOL", .1, "dendro load imbalance tolerance for flexible partitioning")
 parameters.add("NLSM_DIM", 3, "dimentionality of the octree, (meshing is supported only for 3D)")
@@ -78,5 +78,4 @@ parameters.add("NLSM_GRID_MAX_Y", 200.0)
 parameters.add("NLSM_GRID_MIN_Z", -200.0)
 parameters.add("NLSM_GRID_MAX_Z", 200.0)
 
-parameters.writeJson("nlsm.par.json")
-parameters.writeCpp("nlsmParams.h", "nlsmParams.cpp", "nlsm")
+namespace = "nlsm"
