@@ -36,8 +36,9 @@ class Parameters:
 			category = self.category
 
 		if isinstance(id, PresetParam):
+			#get pre-made parameter object from enum value
 			param = id.value
-			param.value = value
+			param.setValue(value, cppType, arraySize)
 			#note the dict key will be the PresetParam enum, not a string
 			self.paramDict[id] = param
 		else:
@@ -120,17 +121,24 @@ class Parameters:
 class Parameter:
 	def __init__(self, id, value, description=None, category=None, cppType=None, arraySize=None):
 		self.id = id
-		self.value = value
 		self.description = description
 		self.category = category
 		self.indent = "\t"
-		self.arraySize = arraySize
+		self.setValue(value, cppType, arraySize)
 
+	#cppType and arraySize may need to be inferred from the value, so handle that all in one function
+	def setValue(self, value, cppType=None, arraySize=None):
+		self.value = value
+
+		if isinstance(arraySize, int):
+			self.arraySize=arraySize
 		# if value is a list but array size isn't explicitly set, get it from values
-		if self.arraySize is None and isinstance(value, list) and len(value) > 0:
+		elif isinstance(value, list) and len(value) > 0:
 			self.arraySize = len(value)
 			# set temp value to first element in list, so we can get the array type below
 			value = value[0]
+		else:
+			self.arraySize = None
 
 		if isinstance(cppType, CppType):
 			self.cppType = cppType
@@ -188,5 +196,30 @@ class CppType(Enum):
 	string = "std::string"
 
 class PresetParam(Enum):
-	#note values start out undefined, will be filled in before added to paramDict
+	#note values start out None, will be filled in before added to paramDict
+	NUM_VARS = Parameter("NUM_VARS", None, cppType = CppType.unsignedInt)
+	DIM = Parameter("DIM", None, description="dimentionality of the octree, (meshing is supported only for 3D)", cppType = CppType.unsignedInt)
+	MAXDEPTH = Parameter("MAXDEPTH", None, description="maximum level of refinement of the mesh", cppType = CppType.unsignedInt)	
 	ASYNC_COMM_K = Parameter("ASYNC_COMM_K", None, "variable group size for the asynchronous unzip operation", cppType = CppType.unsignedInt)
+	CFL_FACTOR = Parameter("CFL_FACTOR", None, description="CFL Factor", cppType = CppType.double)
+	GRID_MIN_X = Parameter("GRID_MIN_X", None, cppType = CppType.double)
+	GRID_MIN_Y = Parameter("GRID_MIN_Y", None, cppType = CppType.double)
+	GRID_MIN_Z = Parameter("GRID_MIN_Z", None, cppType = CppType.double)
+	GRID_MAX_X = Parameter("GRID_MAX_X", None, cppType = CppType.double)
+	GRID_MAX_Y = Parameter("GRID_MAX_Y", None, cppType = CppType.double)
+	GRID_MAX_Z = Parameter("GRID_MAX_Z", None, cppType = CppType.double)
+	COMPD_MIN = Parameter("COMPD_MIN", None, description="Should be an array defined from values of GRID_MIN", cppType = CppType.double)
+	COMPD_MAX = Parameter("COMPD_MAX", None, description="Should be an array defined from values of GRID_MAX", cppType = CppType.double)
+	RK45_TIME_STEP_SIZE = Parameter("RK45_TIME_STEP_SIZE", None, description="value should be calculated using the CFL Factor", cppType = CppType.double)
+	ENABLE_BLOCK_ADAPTIVITY = Parameter("ENABLE_BLOCK_ADAPTIVITY", None, description="Set to 1 disable AMR and use block adaptivity (not recomended).", cppType = CppType.unsignedInt)
+	BLK_MIN_X = Parameter("BLK_MIN_X", None, cppType = CppType.double)
+	BLK_MIN_Y = Parameter("BLK_MIN_Y", None, cppType = CppType.double)
+	BLK_MIN_Z = Parameter("BLK_MIN_Z", None, cppType = CppType.double)
+	BLK_MAX_X = Parameter("BLK_MAX_X", None, cppType = CppType.double)
+	BLK_MAX_Y = Parameter("BLK_MAX_Y", None, cppType = CppType.double)
+	BLK_MAX_Z = Parameter("BLK_MAX_Z", None, cppType = CppType.double)
+	NUM_REFINE_VARS = Parameter("NUM_REFINE_VARS", None, description="number of refinement variables", cppType = CppType.unsignedInt)
+	REFINE_VARIABLE_INDICES = Parameter("REFINE_VARIABLE_INDICES", None, description="refinement variable IDs", cppType = CppType.unsignedInt)
+	WAVELET_TOL = Parameter("WAVELET_TOL", None, description="wavelet tolerance", cppType = CppType.double)
+	ELE_ORDER = Parameter("ELE_ORDER", None, description="element order", cppType = CppType.unsignedInt)
+

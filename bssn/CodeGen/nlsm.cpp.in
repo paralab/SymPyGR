@@ -75,16 +75,22 @@ int main (int argc, char** argv)
 		//[[[end]]]
     }
 
-    _InitializeHcurve(nlsm::NLSM_DIM);
-    m_uiMaxDepth=nlsm::NLSM_MAXDEPTH;
+	/*[[[cog
+	import cog
+	import nlsmParams as nlsmParams
 
-    if(nlsm::NLSM_NUM_VARS%nlsm::NLSM_ASYNC_COMM_K!=0)
-    {
-        if(!rank) std::cout<<"[overlap communication error]: total NLSM_NUM_VARS: "<<nlsm::NLSM_NUM_VARS<<" is not divisable by NLSM_ASYNC_COMM_K: "<<nlsm::NLSM_ASYNC_COMM_K<<std::endl;
-        exit(0);
-    }
+	cog.outl("_InitializeHcurve({0}::DIM);".format(nlsmParams.namespace))
+	cog.outl("m_uiMaxDepth={0}::MAXDEPTH;".format(nlsmParams.namespace))
 
-    nlsm::NLSM_RK45_TIME_STEP_SIZE=nlsm::NLSM_CFL_FACTOR*(nlsm::NLSM_COMPD_MAX[0]-nlsm::NLSM_COMPD_MIN[0])*(1.0/(double)(1u<<nlsm::NLSM_MAXDEPTH));
+	cog.outl("if({0}::NUM_VARS%{0}::ASYNC_COMM_K!=0)".format(nlsmParams.namespace))
+	cog.outl("{")
+	cog.outl("\t if(!rank)")
+	cog.outl("\t\t std::cout<<\"[overlap communication error]: total NUM_VARS: \"<<{0}::NUM_VARS<<\" is not divisable by ASYNC_COMM_K: \"<<{0}::ASYNC_COMM_K<<std::endl;".format(nlsmParams.namespace))
+	cog.outl("\t exit(0);")
+	cog.outl("}")
+
+	]]]*/
+	//[[[end]]]
 
     //2. generate the initial grid.
     std::vector<ot::TreeNode> tmpNodes;
@@ -92,11 +98,37 @@ int main (int argc, char** argv)
     std::function<void(double,double,double,double,double*)> u_x_t=[](double x,double y,double z,double t,double*var){nlsm::analyticalSol(x,y,z,t,var);};
     //std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){nlsm::KerrSchildData(x,y,z,var);};
 
-    const unsigned int interpVars=nlsm::NLSM_NUM_VARS;
-    unsigned int varIndex[interpVars];
-    for(unsigned int i=0;i<nlsm::NLSM_NUM_VARS;i++)
-        varIndex[i]=i;
+	/*[[[cog
+	import cog
+	import nlsmParams as nlsmParams
 
+	cog.outl("const unsigned int interpVars={0}::NUM_VARS;".format(nlsmParams.namespace))
+	cog.outl("unsigned int varIndex[interpVars];")
+	cog.outl("for(unsigned int i=0;i<{0}::NUM_VARS;i++)".format(nlsmParams.namespace))
+	cog.outl("\t varIndex[i]=i;")
+
+	cog.outl("DendroIntL localSz,globalSz;")
+	cog.outl("double t_stat;")
+	cog.outl("double t_stat_g[3];")
+	cog.outl("{0}::timer::t_f2o.start();".format(nlsmParams.namespace))
+	cog.outl("if({0}::ENABLE_BLOCK_ADAPTIVITY)".format(nlsmParams.namespace))
+	cog.outl("{")
+	cog.outl("\t if(!rank) std::cout<<YLW<<\"Using block adaptive mesh. AMR disabled \"<<NRM<<std::endl;")
+	cog.outl("\t const Point pt_min({0}::BLK_MIN_X,{0}::BLK_MIN_Y,{0}::BLK_MIN_Z);".format(nlsmParams.namespace))
+	cog.outl("\t const Point pt_max({0}::BLK_MAX_X,{0}::BLK_MAX_Y,{0}::BLK_MAX_Z);".format(nlsmParams.namespace))
+
+	cog.outl("\t {0}::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);".format(nlsmParams.namespace))
+	cog.outl("}")
+	cog.outl("else")
+	cog.outl("{")
+	cog.outl("\t if(!rank) std::cout<<YLW<<\"Using function2Octree. AMR enabled \"<<NRM<<std::endl;")
+	cog.outl("\t function2Octree(f_init,{0}::NUM_VARS,{0}::REFINE_VARIABLE_INDICES,{0}::NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,{0}::WAVELET_TOL,{0}::ELE_ORDER,comm);".format(nlsmParams.namespace))
+	cog.outl("\t std::cout<<\"f2o else end\"<<std::endl;")
+
+	cog.outl("}")
+	cog.outl("{0}::timer::t_f2o.stop();".format(nlsmParams.namespace))
+	]]]*/
+	//[[[end]]]
 
     DendroIntL localSz,globalSz;
     double t_stat;
