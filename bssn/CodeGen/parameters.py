@@ -222,4 +222,11 @@ class PresetParam(Enum):
 	REFINE_VARIABLE_INDICES = Parameter("REFINE_VARIABLE_INDICES", None, description="refinement variable IDs", cppType = CppType.unsignedInt)
 	WAVELET_TOL = Parameter("WAVELET_TOL", None, description="wavelet tolerance", cppType = CppType.double)
 	ELE_ORDER = Parameter("ELE_ORDER", None, description="element order", cppType = CppType.unsignedInt)
+	DENDRO_GRAIN_SZ = Parameter("DENDRO_GRAIN_SZ", None, description="grain size N/p , Where N number of total octants, p number of active cores", cppType = CppType.unsignedInt)
+	LOAD_IMB_TOL = Parameter("LOAD_IMB_TOL", None, description="dendro load imbalance tolerance for flexible partitioning", cppType = CppType.double)
+	SPLIT_FIX = Parameter("SPLIT_FIX", None, description="Splitter fix value", cppType = CppType.unsignedInt)
+	RK45_TIME_BEGIN = Parameter("RK45_TIME_BEGIN", None, description="simulation time begin", cppType = CppType.double)
+	RK45_TIME_END = Parameter("RK45_TIME_END", None, description="simulation time end", cppType = CppType.double)
+	RESTORE_SOLVER = Parameter("RESTORE_SOLVER", None, description="Set to 1 to restore solver from a checkpoint. 0 otherwise", cppType = CppType.unsignedInt)
+	CHKPT_FILE_PREFIX = Parameter("CHKPT_FILE_PREFIX", None, description="file prefix for the checkpoint files", cppType = CppType.string)
 
