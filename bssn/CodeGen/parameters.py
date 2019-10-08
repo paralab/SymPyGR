@@ -61,7 +61,7 @@ class Parameters:
 
 		# Initialize output and first lines for .h file
 		outH = open(hPath, "w")
-		outH.write("//" + self.generationNote)
+		outH.write("//" + self.generationNote + "\n")
 		outH.write("#ifndef SFCSORTBENCH_PARAMETERS_H\n")
 		outH.write("#define SFCSORTBENCH_PARAMETERS_H\n\n")
 

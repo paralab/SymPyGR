@@ -71,6 +71,70 @@ int main (int argc, char** argv)
 				cog.outl("std::cout<<YLW<<\"\\t{0} :\"<<{1}::{0}<<NRM<<std::endl;".format(param.id, nlsmParams.namespace))
 
 		]]]*/
+		std::cout<<YLW<<"\tDENDRO_VERSION :"<<nlsm::DENDRO_VERSION<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNUM_VARS :"<<nlsm::NUM_VARS<<NRM<<std::endl;
+		std::cout<<YLW<<"\tELE_ORDER :"<<nlsm::ELE_ORDER<<NRM<<std::endl;
+		std::cout<<YLW<<"\tRESTORE_SOLVER :"<<nlsm::RESTORE_SOLVER<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_IO_OUTPUT_FREQ :"<<nlsm::NLSM_IO_OUTPUT_FREQ<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_REMESH_TEST_FREQ :"<<nlsm::NLSM_REMESH_TEST_FREQ<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_CHECKPT_FREQ :"<<nlsm::NLSM_CHECKPT_FREQ<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_IO_OUTPUT_GAP :"<<nlsm::NLSM_IO_OUTPUT_GAP<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_VTU_FILE_PREFIX :"<<nlsm::NLSM_VTU_FILE_PREFIX<<NRM<<std::endl;
+		std::cout<<YLW<<"\tCHKPT_FILE_PREFIX :"<<nlsm::CHKPT_FILE_PREFIX<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_PROFILE_FILE_PREFIX :"<<nlsm::NLSM_PROFILE_FILE_PREFIX<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_NUM_EVOL_VARS_VTU_OUTPUT :"<<nlsm::NLSM_NUM_EVOL_VARS_VTU_OUTPUT<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_VTU_OUTPUT_EVOL_INDICES : ("<<nlsm::NLSM_VTU_OUTPUT_EVOL_INDICES[0]<<", "<<nlsm::NLSM_VTU_OUTPUT_EVOL_INDICES[1]<<" )"<<NRM<<std::endl;
+		std::cout<<YLW<<"\tDENDRO_GRAIN_SZ :"<<nlsm::DENDRO_GRAIN_SZ<<NRM<<std::endl;
+		std::cout<<YLW<<"\tASYNC_COMM_K :"<<nlsm::ASYNC_COMM_K<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_DENDRO_AMR_FAC :"<<nlsm::NLSM_DENDRO_AMR_FAC<<NRM<<std::endl;
+		std::cout<<YLW<<"\tLOAD_IMB_TOL :"<<nlsm::LOAD_IMB_TOL<<NRM<<std::endl;
+		std::cout<<YLW<<"\tDIM :"<<nlsm::DIM<<NRM<<std::endl;
+		std::cout<<YLW<<"\tMAXDEPTH :"<<nlsm::MAXDEPTH<<NRM<<std::endl;
+		std::cout<<YLW<<"\tSPLIT_FIX :"<<nlsm::SPLIT_FIX<<NRM<<std::endl;
+		std::cout<<YLW<<"\tWAVELET_TOL :"<<nlsm::WAVELET_TOL<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNUM_REFINE_VARS :"<<nlsm::NUM_REFINE_VARS<<NRM<<std::endl;
+		std::cout<<YLW<<"\tREFINE_VARIABLE_INDICES : ("<<nlsm::REFINE_VARIABLE_INDICES[0]<<", "<<nlsm::REFINE_VARIABLE_INDICES[1]<<" )"<<NRM<<std::endl;
+		std::cout<<YLW<<"\tGRID_MIN_X :"<<nlsm::GRID_MIN_X<<NRM<<std::endl;
+		std::cout<<YLW<<"\tGRID_MAX_X :"<<nlsm::GRID_MAX_X<<NRM<<std::endl;
+		std::cout<<YLW<<"\tGRID_MIN_Y :"<<nlsm::GRID_MIN_Y<<NRM<<std::endl;
+		std::cout<<YLW<<"\tGRID_MAX_Y :"<<nlsm::GRID_MAX_Y<<NRM<<std::endl;
+		std::cout<<YLW<<"\tGRID_MIN_Z :"<<nlsm::GRID_MIN_Z<<NRM<<std::endl;
+		std::cout<<YLW<<"\tGRID_MAX_Z :"<<nlsm::GRID_MAX_Z<<NRM<<std::endl;
+		std::cout<<YLW<<"\tRK45_TIME_BEGIN :"<<nlsm::RK45_TIME_BEGIN<<NRM<<std::endl;
+		std::cout<<YLW<<"\tRK45_TIME_END :"<<nlsm::RK45_TIME_END<<NRM<<std::endl;
+		std::cout<<YLW<<"\tCFL_FACTOR :"<<nlsm::CFL_FACTOR<<NRM<<std::endl;
+		std::cout<<YLW<<"\tCOMPD_MIN : ("<<nlsm::COMPD_MIN[0]<<", "<<nlsm::COMPD_MIN[1]<<", "<<nlsm::COMPD_MIN[2]<<" )"<<NRM<<std::endl;
+		std::cout<<YLW<<"\tCOMPD_MAX : ("<<nlsm::COMPD_MAX[0]<<", "<<nlsm::COMPD_MAX[1]<<", "<<nlsm::COMPD_MAX[2]<<" )"<<NRM<<std::endl;
+		std::cout<<YLW<<"\tRK45_TIME_STEP_SIZE :"<<nlsm::RK45_TIME_STEP_SIZE<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_RK45_DESIRED_TOL :"<<nlsm::NLSM_RK45_DESIRED_TOL<<NRM<<std::endl;
+		std::cout<<YLW<<"\tKO_DISS_SIGMA :"<<nlsm::KO_DISS_SIGMA<<NRM<<std::endl;
+		std::cout<<YLW<<"\tENABLE_BLOCK_ADAPTIVITY :"<<nlsm::ENABLE_BLOCK_ADAPTIVITY<<NRM<<std::endl;
+		std::cout<<YLW<<"\tBLK_MIN_X :"<<nlsm::BLK_MIN_X<<NRM<<std::endl;
+		std::cout<<YLW<<"\tBLK_MIN_Y :"<<nlsm::BLK_MIN_Y<<NRM<<std::endl;
+		std::cout<<YLW<<"\tBLK_MIN_Z :"<<nlsm::BLK_MIN_Z<<NRM<<std::endl;
+		std::cout<<YLW<<"\tBLK_MAX_X :"<<nlsm::BLK_MAX_X<<NRM<<std::endl;
+		std::cout<<YLW<<"\tBLK_MAX_Y :"<<nlsm::BLK_MAX_Y<<NRM<<std::endl;
+		std::cout<<YLW<<"\tBLK_MAX_Z :"<<nlsm::BLK_MAX_Z<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_TYPE :"<<nlsm::NLSM_ID_TYPE<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_AMP1 :"<<nlsm::NLSM_ID_AMP1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_R1 :"<<nlsm::NLSM_ID_R1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_DELTA1 :"<<nlsm::NLSM_ID_DELTA1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_XC1 :"<<nlsm::NLSM_ID_XC1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_YC1 :"<<nlsm::NLSM_ID_YC1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_ZC1 :"<<nlsm::NLSM_ID_ZC1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_EPSX1 :"<<nlsm::NLSM_ID_EPSX1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_EPSY1 :"<<nlsm::NLSM_ID_EPSY1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_NU1 :"<<nlsm::NLSM_ID_NU1<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_OMEGA :"<<nlsm::NLSM_ID_OMEGA<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_AMP2 :"<<nlsm::NLSM_ID_AMP2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_R2 :"<<nlsm::NLSM_ID_R2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_DELTA2 :"<<nlsm::NLSM_ID_DELTA2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_XC2 :"<<nlsm::NLSM_ID_XC2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_YC2 :"<<nlsm::NLSM_ID_YC2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_ZC2 :"<<nlsm::NLSM_ID_ZC2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_EPSX2 :"<<nlsm::NLSM_ID_EPSX2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_EPSY2 :"<<nlsm::NLSM_ID_EPSY2<<NRM<<std::endl;
+		std::cout<<YLW<<"\tNLSM_ID_NU2 :"<<nlsm::NLSM_ID_NU2<<NRM<<std::endl;
 		//[[[end]]]
     }
 
@@ -89,6 +153,14 @@ int main (int argc, char** argv)
 	cog.outl("}")
 
 	]]]*/
+	_InitializeHcurve(nlsm::DIM);
+	m_uiMaxDepth=nlsm::MAXDEPTH;
+	if(nlsm::NUM_VARS%nlsm::ASYNC_COMM_K!=0)
+	{
+		if(!rank)
+			std::cout<<"[overlap communication error]: total NUM_VARS: "<<nlsm::NUM_VARS<<" is not divisable by ASYNC_COMM_K: "<<nlsm::ASYNC_COMM_K<<std::endl;
+		exit(0);
+	}
 	//[[[end]]]
 
     //2. generate the initial grid.
@@ -135,6 +207,31 @@ int main (int argc, char** argv)
 	cog.outl("}")
 	cog.outl("{0}::timer::t_f2o.stop();".format(nlsmParams.namespace))
 	]]]*/
+	const unsigned int interpVars=nlsm::NUM_VARS;
+	unsigned int varIndex[interpVars];
+	for(unsigned int i=0;i<nlsm::NUM_VARS;i++)
+		varIndex[i]=i;
+
+	DendroIntL localSz,globalSz;
+	double t_stat;
+	double t_stat_g[3];
+	nlsm::timer::t_f2o.start();
+	if(nlsm::ENABLE_BLOCK_ADAPTIVITY)
+	{
+		if(!rank) std::cout<<YLW<<"Using block adaptive mesh. AMR disabled "<<NRM<<std::endl;
+
+		const Point pt_min(nlsm::BLK_MIN_X,nlsm::BLK_MIN_Y,nlsm::BLK_MIN_Z);
+		const Point pt_max(nlsm::BLK_MAX_X,nlsm::BLK_MAX_Y,nlsm::BLK_MAX_Z);
+		nlsm::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);
+	}
+	else
+	{
+		if(!rank) std::cout<<YLW<<"Using function2Octree. AMR enabled "<<NRM<<std::endl;
+
+		function2Octree(f_init,nlsm::NUM_VARS,nlsm::REFINE_VARIABLE_INDICES,nlsm::NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,nlsm::WAVELET_TOL,nlsm::ELE_ORDER,comm);
+		std::cout<<"f2o else end"<<std::endl;
+	}
+	nlsm::timer::t_f2o.stop();
 	//[[[end]]]
 
     t_stat=nlsm::timer::t_f2o.seconds;
@@ -158,6 +255,7 @@ int main (int argc, char** argv)
 	cog.outl("const unsigned int grainSz={0}::DENDRO_GRAIN_SZ;".format(nlsmParams.namespace))
 
 	]]]*/
+	const unsigned int grainSz=nlsm::DENDRO_GRAIN_SZ;
 	//[[[end]]]
 
     bool isActive;
@@ -193,6 +291,7 @@ int main (int argc, char** argv)
 	cog.outl("shrinkOrExpandOctree(tmpNodes,{0}::LOAD_IMB_TOL,DENDRO_DEFAULT_SF_K,isActive,commActive,comm);".format(nlsmParams.namespace))
 
 	]]]*/
+	shrinkOrExpandOctree(tmpNodes,nlsm::LOAD_IMB_TOL,DENDRO_DEFAULT_SF_K,isActive,commActive,comm);
 	//[[[end]]]
 
     if(!isActive)
@@ -229,6 +328,17 @@ int main (int argc, char** argv)
 		cog.outl("tmpVec.clear();")
 
 		]]]*/
+		ot::TreeNode root(nlsm::DIM,nlsm::MAXDEPTH);
+		std::vector<ot::TreeNode> tmpVec;
+		nlsm::timer::t_cons.start();
+
+		SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,nlsm::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_REMOVE_DUPLICATES,nlsm::SPLIT_FIX,commActive);
+		std::swap(tmpNodes,tmpVec);
+		tmpVec.clear();
+
+		SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,nlsm::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_CONSTRUCT_OCTREE,nlsm::SPLIT_FIX,commActive);
+		std::swap(tmpNodes,tmpVec);
+		tmpVec.clear();
 		//[[[end]]]
 
         nlsm::timer::t_cons.stop();
@@ -259,6 +369,13 @@ int main (int argc, char** argv)
 		cog.outl("t_stat={0}::timer::t_bal.seconds;".format(nlsmParams.namespace))
 
 		]]]*/
+		nlsm::timer::t_bal.start();
+
+		SFC::parSort::SFC_treeSort(tmpNodes,balOct,balOct,balOct,nlsm::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_BALANCE_OCTREE,nlsm::SPLIT_FIX,commActive);
+		tmpNodes.clear();
+
+		nlsm::timer::t_bal.stop();
+		t_stat=nlsm::timer::t_bal.seconds;
 		//[[[end]]]
 
         par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,commActive);
@@ -289,6 +406,12 @@ int main (int argc, char** argv)
 	cog.outl("t_stat={0}::timer::t_mesh.seconds;".format(nlsmParams.namespace))
 
 	]]]*/
+	nlsm::timer::t_mesh.start();
+
+	ot::Mesh * mesh=new ot::Mesh(balOct,1,nlsm::ELE_ORDER,comm,true,ot::SM_TYPE::FDM,nlsm::DENDRO_GRAIN_SZ,nlsm::LOAD_IMB_TOL,nlsm::SPLIT_FIX);
+
+	nlsm::timer::t_mesh.stop();
+	t_stat=nlsm::timer::t_mesh.seconds;
 	//[[[end]]]
 
     par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,comm);
@@ -325,6 +448,14 @@ int main (int argc, char** argv)
 	cog.outl("{0}::timer::total_runtime.stop();".format(nlsmParams.namespace))
 
 	]]]*/
+	ode::solver::RK4_NLSM rk_nlsm(mesh,nlsm::RK45_TIME_BEGIN,nlsm::RK45_TIME_END,nlsm::RK45_TIME_STEP_SIZE);
+	if(nlsm::RESTORE_SOLVER==1)
+		rk_nlsm.restoreCheckPoint(nlsmParams.namespace::NLSM_CHKPT_FILE_PREFIX.c_str(),comm);
+
+	nlsm::timer::t_rkSolve.start();
+	rk_nlsm.rkSolve();
+	nlsm::timer::t_rkSolve.stop()
+	nlsm::timer::total_runtime.stop();
 	//[[[end]]]
 
     rk_nlsm.freeMesh();

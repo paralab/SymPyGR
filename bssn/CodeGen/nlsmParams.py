@@ -24,7 +24,7 @@ parameters.add("NLSM_NUM_EVOL_VARS_VTU_OUTPUT", 2, "number of variables (evoluti
 parameters.add("NLSM_VTU_OUTPUT_EVOL_INDICES", [0, 1], "evolution variable ids")
 
 parameters.setCategory("LOAD BALANCING & MESH")
-parameters.add(PresetParams.DENDRO_GRAIN_SZ, 100)
+parameters.add(PresetParam.DENDRO_GRAIN_SZ, 100)
 parameters.add(PresetParam.ASYNC_COMM_K, 2)
 parameters.add("NLSM_DENDRO_AMR_FAC", 1.0, "dendro coarsening factor, corsent if computed wavelet tol < NLSM_DENDRO_AMR_FAC*NLSM_WAVELET_TOL ")
 parameters.add(PresetParam.LOAD_IMB_TOL, .1)
