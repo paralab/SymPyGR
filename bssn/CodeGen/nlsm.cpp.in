@@ -1,10 +1,11 @@
 //
-// Created by milinda on 7/25/17.
+// Based on file originally Created by milinda on 7/25/17.
 /**
 *@author Milinda Fernando
 *School of Computing, University of Utah
 *@brief Header file for the GR simulation.
 */
+
 //Run: 'cog -o output/nlsmTest.cpp nlsm.cpp.in' to generate cpp file
 //
 
@@ -17,17 +18,17 @@
 #include <iostream>
 #include "rk4nlsm.h"
 #include "octUtils.h"
-
+//TODO: once output is runnable, try 'using namespace nlsm' and delete a bunch of cog sections 
 int main (int argc, char** argv)
 {
     if(argc<2)
         std::cout<<"Usage: "<<argv[0]<<" paramFile"<<std::endl;
 
 	/*[[[cog
-	import nlsmParams as nlsmParams
+	import nlsmParams as p
 
-	nlsmParams.parameters.writeJson("output/nlsm.par.json")
-	nlsmParams.parameters.writeCpp("output/nlsmParams.h", "output/nlsmParams.cpp", nlsmParams.namespace)
+	p.parameters.writeJson("output/nlsm.par.json")
+	p.parameters.writeCpp("output/nlsmParams.h", "output/nlsmParams.cpp", p.namespace)
 
 	]]]*/
 	//[[[end]]]
@@ -53,9 +54,9 @@ int main (int argc, char** argv)
 
 		/*[[[cog
 		import cog
-		import nlsmParams as nlsmParams
+		import nlsmParams as p
 
-		for param in nlsmParams.parameters.values():
+		for param in p.parameters.values():
 			if param.isComment():
 				continue
 
@@ -65,10 +66,10 @@ int main (int argc, char** argv)
 				for i in range(len(param.value)):
 					if i > 0:
 						cog.out("<<\", \"<<")
-					cog.out("{0}::{1}[{2}]".format(nlsmParams.namespace, param.id, i))
+					cog.out("{0}::{1}[{2}]".format(p.namespace, param.id, i))
 				cog.outl("<<\" )\"<<NRM<<std::endl;")
 			else:
-				cog.outl("std::cout<<YLW<<\"\\t{0} :\"<<{1}::{0}<<NRM<<std::endl;".format(param.id, nlsmParams.namespace))
+				cog.outl("std::cout<<YLW<<\"\\t{0} :\"<<{1}::{0}<<NRM<<std::endl;".format(param.id, p.namespace))
 
 		]]]*/
 		//[[[end]]]
@@ -76,15 +77,15 @@ int main (int argc, char** argv)
 
 	/*[[[cog
 	import cog
-	import nlsmParams as nlsmParams
+	from nlsmParams import namespace
 
-	cog.outl("_InitializeHcurve({0}::DIM);".format(nlsmParams.namespace))
-	cog.outl("m_uiMaxDepth={0}::MAXDEPTH;".format(nlsmParams.namespace))
+	cog.outl("_InitializeHcurve({0}::DIM);".format(namespace))
+	cog.outl("m_uiMaxDepth={0}::MAXDEPTH;".format(namespace))
 
-	cog.outl("if({0}::NUM_VARS%{0}::ASYNC_COMM_K!=0)".format(nlsmParams.namespace))
+	cog.outl("if({0}::NUM_VARS%{0}::ASYNC_COMM_K!=0)".format(namespace))
 	cog.outl("{")
 	cog.outl("\tif(!rank)")
-	cog.outl("\t\tstd::cout<<\"[overlap communication error]: total NUM_VARS: \"<<{0}::NUM_VARS<<\" is not divisable by ASYNC_COMM_K: \"<<{0}::ASYNC_COMM_K<<std::endl;".format(nlsmParams.namespace))
+	cog.outl("\t\tstd::cout<<\"[overlap communication error]: total NUM_VARS: \"<<{0}::NUM_VARS<<\" is not divisable by ASYNC_COMM_K: \"<<{0}::ASYNC_COMM_K<<std::endl;".format(namespace))
 	cog.outl("\texit(0);")
 	cog.outl("}")
 
@@ -99,11 +100,11 @@ int main (int argc, char** argv)
 
 	/*[[[cog
 	import cog
-	import nlsmParams as nlsmParams
+	from nlsmParams import namespace
 
-	cog.outl("const unsigned int interpVars={0}::NUM_VARS;".format(nlsmParams.namespace))
+	cog.outl("const unsigned int interpVars={0}::NUM_VARS;".format(namespace))
 	cog.outl("unsigned int varIndex[interpVars];")
-	cog.outl("for(unsigned int i=0;i<{0}::NUM_VARS;i++)".format(nlsmParams.namespace))
+	cog.outl("for(unsigned int i=0;i<{0}::NUM_VARS;i++)".format(namespace))
 	cog.outl("\tvarIndex[i]=i;")
 
 	cog.outl("")
@@ -111,17 +112,17 @@ int main (int argc, char** argv)
 	cog.outl("DendroIntL localSz,globalSz;")
 	cog.outl("double t_stat;")
 	cog.outl("double t_stat_g[3];")
-	cog.outl("{0}::timer::t_f2o.start();".format(nlsmParams.namespace))
-	cog.outl("if({0}::ENABLE_BLOCK_ADAPTIVITY)".format(nlsmParams.namespace))
+	cog.outl("{0}::timer::t_f2o.start();".format(namespace))
+	cog.outl("if({0}::ENABLE_BLOCK_ADAPTIVITY)".format(namespace))
 	cog.outl("{")
 
 	cog.outl("\tif(!rank) std::cout<<YLW<<\"Using block adaptive mesh. AMR disabled \"<<NRM<<std::endl;")
 	cog.outl("")
 
-	cog.outl("\tconst Point pt_min({0}::BLK_MIN_X,{0}::BLK_MIN_Y,{0}::BLK_MIN_Z);".format(nlsmParams.namespace))
-	cog.outl("\tconst Point pt_max({0}::BLK_MAX_X,{0}::BLK_MAX_Y,{0}::BLK_MAX_Z);".format(nlsmParams.namespace))
+	cog.outl("\tconst Point pt_min({0}::BLK_MIN_X,{0}::BLK_MIN_Y,{0}::BLK_MIN_Z);".format(namespace))
+	cog.outl("\tconst Point pt_max({0}::BLK_MAX_X,{0}::BLK_MAX_Y,{0}::BLK_MAX_Z);".format(namespace))
 
-	cog.outl("\t{0}::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);".format(nlsmParams.namespace))
+	cog.outl("\t{0}::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);".format(namespace))
 	cog.outl("}")
 	cog.outl("else")
 	cog.outl("{")
@@ -129,11 +130,11 @@ int main (int argc, char** argv)
 	cog.outl("\tif(!rank) std::cout<<YLW<<\"Using function2Octree. AMR enabled \"<<NRM<<std::endl;")
 	cog.outl("")
 
-	cog.outl("\tfunction2Octree(f_init,{0}::NUM_VARS,{0}::REFINE_VARIABLE_INDICES,{0}::NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,{0}::WAVELET_TOL,{0}::ELE_ORDER,comm);".format(nlsmParams.namespace))
+	cog.outl("\tfunction2Octree(f_init,{0}::NUM_VARS,{0}::REFINE_VARIABLE_INDICES,{0}::NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,{0}::WAVELET_TOL,{0}::ELE_ORDER,comm);".format(namespace))
 	cog.outl("\tstd::cout<<\"f2o else end\"<<std::endl;")
 
 	cog.outl("}")
-	cog.outl("{0}::timer::t_f2o.stop();".format(nlsmParams.namespace))
+	cog.outl("{0}::timer::t_f2o.stop();".format(namespace))
 	]]]*/
 	//[[[end]]]
 
@@ -153,9 +154,9 @@ int main (int argc, char** argv)
 
 	/*[[[cog
 	import cog
-	import nlsmParams as nlsmParams
+	from nlsmParams import namespace
 
-	cog.outl("const unsigned int grainSz={0}::DENDRO_GRAIN_SZ;".format(nlsmParams.namespace))
+	cog.outl("const unsigned int grainSz={0}::DENDRO_GRAIN_SZ;".format(namespace))
 
 	]]]*/
 	//[[[end]]]
@@ -188,9 +189,9 @@ int main (int argc, char** argv)
 
 	/*[[[cog
 	import cog
-	import nlsmParams as nlsmParams
+	from nlsmParams import namespace
 
-	cog.outl("shrinkOrExpandOctree(tmpNodes,{0}::LOAD_IMB_TOL,DENDRO_DEFAULT_SF_K,isActive,commActive,comm);".format(nlsmParams.namespace))
+	cog.outl("shrinkOrExpandOctree(tmpNodes,{0}::LOAD_IMB_TOL,DENDRO_DEFAULT_SF_K,isActive,commActive,comm);".format(namespace))
 
 	]]]*/
 	//[[[end]]]
@@ -212,19 +213,19 @@ int main (int argc, char** argv)
 
 		/*[[[cog
 		import cog
-		import nlsmParams as nlsmParams
+		from nlsmParams import namespace
 
-		cog.outl("ot::TreeNode root({0}::DIM,{0}::MAXDEPTH);".format(nlsmParams.namespace))
+		cog.outl("ot::TreeNode root({0}::DIM,{0}::MAXDEPTH);".format(namespace))
 		cog.outl("std::vector<ot::TreeNode> tmpVec;")
-		cog.outl("{0}::timer::t_cons.start();".format(nlsmParams.namespace))
+		cog.outl("{0}::timer::t_cons.start();".format(namespace))
 		cog.outl("")
 
-		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_REMOVE_DUPLICATES,{0}::SPLIT_FIX,commActive);".format(nlsmParams.namespace))
+		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_REMOVE_DUPLICATES,{0}::SPLIT_FIX,commActive);".format(namespace))
 		cog.outl("std::swap(tmpNodes,tmpVec);")
 		cog.outl("tmpVec.clear();")
 		cog.outl("")
 
-		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_CONSTRUCT_OCTREE,{0}::SPLIT_FIX,commActive);".format(nlsmParams.namespace))
+		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_CONSTRUCT_OCTREE,{0}::SPLIT_FIX,commActive);".format(namespace))
 		cog.outl("std::swap(tmpNodes,tmpVec);")
 		cog.outl("tmpVec.clear();")
 
@@ -247,16 +248,16 @@ int main (int argc, char** argv)
 
 		/*[[[cog
 		import cog
-		import nlsmParams as nlsmParams
+		from nlsmParams import namespace
 
-		cog.outl("{0}::timer::t_bal.start();".format(nlsmParams.namespace))
+		cog.outl("{0}::timer::t_bal.start();".format(namespace))
 		cog.outl("")
-		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,balOct,balOct,balOct,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_BALANCE_OCTREE,{0}::SPLIT_FIX,commActive);".format(nlsmParams.namespace))
+		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,balOct,balOct,balOct,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_BALANCE_OCTREE,{0}::SPLIT_FIX,commActive);".format(namespace))
 		cog.outl("tmpNodes.clear();")
 
 		cog.outl("")
-		cog.outl("{0}::timer::t_bal.stop();".format(nlsmParams.namespace))
-		cog.outl("t_stat={0}::timer::t_bal.seconds;".format(nlsmParams.namespace))
+		cog.outl("{0}::timer::t_bal.stop();".format(namespace))
+		cog.outl("t_stat={0}::timer::t_bal.seconds;".format(namespace))
 
 		]]]*/
 		//[[[end]]]
@@ -277,16 +278,16 @@ int main (int argc, char** argv)
 
 	/*[[[cog
 	import cog
-	import nlsmParams as nlsmParams
+	from nlsmParams import namespace
 
-	cog.outl("{0}::timer::t_mesh.start();".format(nlsmParams.namespace))
+	cog.outl("{0}::timer::t_mesh.start();".format(namespace))
 	cog.outl("")
 
-	cog.outl("ot::Mesh * mesh=new ot::Mesh(balOct,1,{0}::ELE_ORDER,comm,true,ot::SM_TYPE::FDM,{0}::DENDRO_GRAIN_SZ,{0}::LOAD_IMB_TOL,{0}::SPLIT_FIX);".format(nlsmParams.namespace))
+	cog.outl("ot::Mesh * mesh=new ot::Mesh(balOct,1,{0}::ELE_ORDER,comm,true,ot::SM_TYPE::FDM,{0}::DENDRO_GRAIN_SZ,{0}::LOAD_IMB_TOL,{0}::SPLIT_FIX);".format(namespace))
 
 	cog.outl("")
-	cog.outl("{0}::timer::t_mesh.stop();".format(nlsmParams.namespace))
-	cog.outl("t_stat={0}::timer::t_mesh.seconds;".format(nlsmParams.namespace))
+	cog.outl("{0}::timer::t_mesh.stop();".format(namespace))
+	cog.outl("t_stat={0}::timer::t_mesh.seconds;".format(namespace))
 
 	]]]*/
 	//[[[end]]]
@@ -310,19 +311,19 @@ int main (int argc, char** argv)
 
 	/*[[[cog
 	import cog
-	import nlsmParams as nlsmParams
+	from nlsmParams import namespace
 
-	cog.outl("ode::solver::RK4_NLSM rk_nlsm(mesh,{0}::RK45_TIME_BEGIN,{0}::RK45_TIME_END,{0}::RK45_TIME_STEP_SIZE);".format(nlsmParams.namespace))
+	cog.outl("ode::solver::RK4_NLSM rk_nlsm(mesh,{0}::RK45_TIME_BEGIN,{0}::RK45_TIME_END,{0}::RK45_TIME_STEP_SIZE);".format(namespace))
 	######ode::solver::RK3_NLSM rk_nlsm(mesh,nlsm::NLSM_RK45_TIME_BEGIN,nlsm::NLSM_RK45_TIME_END,nlsm::NLSM_RK45_TIME_STEP_SIZE);
 
-	cog.outl("if({0}::RESTORE_SOLVER==1)".format(nlsmParams.namespace))
-	cog.outl("\trk_nlsm.restoreCheckPoint({0}::NLSM_CHKPT_FILE_PREFIX.c_str(),comm);".format("nlsmParams.namespace"))
+	cog.outl("if({0}::RESTORE_SOLVER==1)".format(namespace))
+	cog.outl("\trk_nlsm.restoreCheckPoint({0}::NLSM_CHKPT_FILE_PREFIX.c_str(),comm);".format(namespace))
 	cog.outl("")
 
-	cog.outl("{0}::timer::t_rkSolve.start();".format(nlsmParams.namespace))
+	cog.outl("{0}::timer::t_rkSolve.start();".format(namespace))
 	cog.outl("rk_nlsm.rkSolve();")
-	cog.outl("{0}::timer::t_rkSolve.stop()".format(nlsmParams.namespace))
-	cog.outl("{0}::timer::total_runtime.stop();".format(nlsmParams.namespace))
+	cog.outl("{0}::timer::t_rkSolve.stop()".format(namespace))
+	cog.outl("{0}::timer::total_runtime.stop();".format(namespace))
 
 	]]]*/
 	//[[[end]]]
