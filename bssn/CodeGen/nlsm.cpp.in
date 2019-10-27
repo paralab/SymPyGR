@@ -308,12 +308,12 @@ int main (int argc, char** argv)
 	######ode::solver::RK3_NLSM rk_nlsm(mesh,nlsm::NLSM_RK45_TIME_BEGIN,nlsm::NLSM_RK45_TIME_END,nlsm::NLSM_RK45_TIME_STEP_SIZE);
 
 	cog.outl("if({0}::RESTORE_SOLVER==1)".format(namespace))
-	cog.outl("\trk_nlsm.restoreCheckPoint({0}::NLSM_CHKPT_FILE_PREFIX.c_str(),comm);".format(namespace))
+	cog.outl("\trk_nlsm.restoreCheckPoint({0}::CHKPT_FILE_PREFIX.c_str(),comm);".format(namespace))
 	cog.outl("")
 
 	cog.outl("{0}::timer::t_rkSolve.start();".format(namespace))
 	cog.outl("rk_nlsm.rkSolve();")
-	cog.outl("{0}::timer::t_rkSolve.stop()".format(namespace))
+	cog.outl("{0}::timer::t_rkSolve.stop();".format(namespace))
 	cog.outl("{0}::timer::total_runtime.stop();".format(namespace))
 
 	]]]*/
