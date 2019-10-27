@@ -60,6 +60,7 @@ class Parameters:
 		cppName = ntpath.basename(cppPath)
 
 		# Initialize output and first lines for .h file
+		os.makedirs(os.path.dirname(hPath), exist_ok=True)
 		outH = open(hPath, "w")
 		outH.write("//" + self.generationNote + "\n")
 		outH.write("#ifndef SFCSORTBENCH_PARAMETERS_H\n")
@@ -71,6 +72,7 @@ class Parameters:
 		outH.write("namespace {0}\n{{\n\n".format(namespace))
 
 		# Initialize output and first lines for .cpp file.
+		os.makedirs(os.path.dirname(cppPath), exist_ok=True)
 		outCpp = open(cppPath, "w")
 		outCpp.write("//" + self.generationNote + "\n")
 
@@ -97,6 +99,8 @@ class Parameters:
 				categories[parameter.category] = ""
 			categories[parameter.category] += parameter.toStringJson(2)
 
+		os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
 		out = open(filepath, "w")
 		out.write("{\n")
 		out.write('"__comment__" : "{0}",\n'.format(self.generationNote))
@@ -117,6 +121,10 @@ class Parameters:
 
 		out.write("\n}")
 		out.close()
+
+	def writeCMakeLists(self, filepath, projectName):
+		out = open(filepath, "w")
+
 
 class Parameter:
 	def __init__(self, id, value, description=None, category=None, cppType=None, arraySize=None):

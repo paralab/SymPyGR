@@ -24,15 +24,6 @@ int main (int argc, char** argv)
     if(argc<2)
         std::cout<<"Usage: "<<argv[0]<<" paramFile"<<std::endl;
 
-	/*[[[cog
-	import nlsmParams as p
-
-	p.parameters.writeJson("output/nlsm.par.json")
-	p.parameters.writeCpp("output/nlsmParams.h", "output/nlsmParams.cpp", p.namespace)
-
-	]]]*/
-	//[[[end]]]
-
     MPI_Init(&argc,&argv);
     MPI_Comm comm=MPI_COMM_WORLD;
 

@@ -47,9 +47,9 @@ cog.outl(namespace)
 					continue
 
 				if param.arraySize is not None:
-					cog.outl("for(int i=0;i<{0}::{1};i++)".format(p.namespace, param.namespace))
-					cog.outl("\t{0}::{1}[i]=parFile["{1}"][i];".format(p.namespace, param.id))
-				elif(param.cppType is CppType.string):
+					cog.outl("for(int i=0;i<{0};i++)".format(param.arraySize))
+					cog.outl("\t{0}::{1}[i]=parFile[\"{1}\"][i];".format(p.namespace, param.id))
+				elif(param.cppType is p.CppType.string):
 					#TODO: Confirm it is necessary totreat strings differently
 					cog.outl("{0}::{1}=parFile[\"{1}\"].get<std::string>();".format(p.namespace, param.id))
 				else:
@@ -436,16 +436,12 @@ cog.outl(namespace)
         std::cout<<" y min: "<<yRange_b<<" y_max: "<<yRange_e<<std::endl;
         std::cout<<" z min: "<<zRange_b<<" z_max: "<<zRange_e<<std::endl;*/
 
-
         for(unsigned int x=xRange_b;x<xRange_e;x+=stepSz)
             for(unsigned int y=yRange_b;y<yRange_e;y+=stepSz)
               for(unsigned int z=zRange_b;z<zRange_e;z+=stepSz)
                   tmpNodes.push_back(ot::TreeNode(x,y,z,regLev,m_uiDim,maxDepth));
 
-
         return ;
-
-
     }
 
     double computeWTol(double x,double y,double z,double tolMin)
