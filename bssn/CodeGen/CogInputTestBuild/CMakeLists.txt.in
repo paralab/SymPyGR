@@ -1,8 +1,17 @@
 cmake_minimum_required(VERSION 2.8)
 project(NLSM)
 
-set(DENDRO_PATH ${CMAKE_SOURCE_DIR}/../Dendro-5.01)
-set(APP_NAME test_nlsm)
+
+##[[[cog
+##import sys
+####TODO: reorganize things so this isn't necessary
+##sys.path.append("/mnt/c/Users/ljmoy/OneDrive/Documents/GitHub/SymPyGR/bssn/CodeGen/")
+##from projectPaths import dendroPath
+##from nlsmParams import namespace
+##cog.outl("set(DENDRO_PATH ${{CMAKE_SOURCE_DIR}}/{0})".format(dendroPath))
+##cog.outl("set(APP_NAME {0})".format(namespace))
+##]]]
+##[[[end]]]
 
 # options for nlsm
 option(NLSM_NONLINEAR "enable nonlinear version" OFF)

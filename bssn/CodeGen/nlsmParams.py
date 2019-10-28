@@ -93,5 +93,3 @@ parameters.add("NLSM_ID_EPSY2", 1.0)
 parameters.add("NLSM_ID_NU2", 0.0)
 
 namespace = "nlsm"
-parameters.writeJson("./output/par/nlsm.par.json")
-parameters.writeCpp("./output/include/parameters.h", "./output/src/parameters.cpp", namespace)
