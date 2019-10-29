@@ -1,7 +1,7 @@
 import sys
 import nlsmParams
 from cogapp import Cog
-from projectPaths import inputPath, outputPath, dendroPath
+from projectPaths import inputPath, outputPath, dendroRootPath, dendroLibPath
 
 args = ["cog","-o",outputPath + "CMakeLists.txt", inputPath + "CMakeLists.txt.in"]
 ret = Cog().main(args)

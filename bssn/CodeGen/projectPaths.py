@@ -7,4 +7,6 @@ inputPath = "./SymPyGR/bssn/CodeGen/CogInputTestBuild/"
 outputPath = "./output/" 
 
 #should be relative to the outputPath
-dendroPath = "../Dendro-5.01"
+dendroRootPath = "../Dendro-5.01"
+#dendro build folder containing libdendro5.a
+dendroLibPath = "../Dendro-5.01/build"
