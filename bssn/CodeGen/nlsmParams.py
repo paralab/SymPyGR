@@ -1,5 +1,6 @@
 from parameters import *
 from decimal import Decimal
+from sympy import *
 
 parameters = Parameters()
 
@@ -70,26 +71,26 @@ parameters.add(PresetParam.BLK_MAX_X, 6.0)
 parameters.add(PresetParam.BLK_MAX_Y, 6.0)
 parameters.add(PresetParam.BLK_MAX_Z, 6.0)
 
-parameters.setCategory("Select Initial Data")
-parameters.add("NLSM_ID_TYPE", 0, "0-test data")
-parameters.add("NLSM_ID_AMP1", 1.3)
-parameters.add("NLSM_ID_R1", 8.0)
-parameters.add("NLSM_ID_DELTA1", 3.0)
-parameters.add("NLSM_ID_XC1", 0.0)
-parameters.add("NLSM_ID_YC1", 0.0)
-parameters.add("NLSM_ID_ZC1", 0.0)
-parameters.add("NLSM_ID_EPSX1", 0.5)
-parameters.add("NLSM_ID_EPSY1", 1.0)
-parameters.add("NLSM_ID_NU1", 0.0)
-parameters.add("NLSM_ID_OMEGA", 0.4)
-parameters.add("NLSM_ID_AMP2", 0.0)
-parameters.add("NLSM_ID_R2", 0.0)
-parameters.add("NLSM_ID_DELTA2", 3.0)
-parameters.add("NLSM_ID_XC2", 0.0)
-parameters.add("NLSM_ID_YC2", 0.0)
-parameters.add("NLSM_ID_ZC2", 0.0)
-parameters.add("NLSM_ID_EPSX2", 2.0)
-parameters.add("NLSM_ID_EPSY2", 1.0)
-parameters.add("NLSM_ID_NU2", 0.0)
-
 namespace = "nlsm"
+
+x = symbols("x")
+y = symbols("y")
+z = symbols("z")
+
+amp = parameters.addInitialData("AMP", 1.3)
+R = parameters.addInitialData("R", 8.0)
+delta = parameters.addInitialData("DELTA", 3.0)
+xc = parameters.addInitialData("XC", 0.0)
+yc = parameters.addInitialData("YC", 0.0)
+zc = parameters.addInitialData("ZC", 0.0)
+epsx = parameters.addInitialData("EPSX", 1.0)
+epsy = parameters.addInitialData("EPSY", 1.0)
+epsz = parameters.addInitialData("EPSZ", 1.0)
+nu = parameters.addInitialData("NU", 0.0)
+
+radiusExpr = sqrt( epsx*(x-xc)**2 + epsy*(y-yc)**2 + epsz*(z-zc)**2 )
+radius = parameters.addInitialData("radius", radiusExpr)
+
+chiExpr = amp * exp(-(radius-R)**2/(delta**2))
+parameters.addVar("chi", chiExpr)
+parameters.addVar("phi", 0.0)

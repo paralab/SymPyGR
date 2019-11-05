@@ -6,15 +6,25 @@ import sys
 import os
 import datetime
 import ntpath
+from sympy import *
 
 from collections import OrderedDict
 
 #holds dict of parameters, contains mostly output functions
 class Parameters:
-	def __init__(self, paramDict=None):
+	def __init__(self, paramDict=None, initialData=None, varsDict = None):
 		if paramDict is None:
 			paramDict = OrderedDict()
 		self.paramDict = paramDict
+
+		if initialData is None:
+			initialData = OrderedDict()
+		self.initialData = initialData
+
+		if varsDict is None:
+			varsDict = OrderedDict()
+		self.varsDict = varsDict
+
 		self.indent = "\t"
 
 		# if set, will be used as the default category for any newly added parameters
@@ -45,6 +55,30 @@ class Parameters:
 			param = Parameter(id, value, description, category, cppType, arraySize)
 			self.paramDict[param.id] = param
 
+	def addInitialData(self, id, expression):
+		if isinstance(expression, Expr):
+
+			evalExpression = expression
+			for initialData in self.initialData.values():
+				evalExpression = expression.subs(initialData.symbol,initialData.value)
+			
+			self.initialData[id] = InitialData(id,evalExpression.evalf(), expression)
+		else:
+			self.initialData[id] = InitialData(id,expression)
+
+		return self.initialData[id].symbol
+	def addVar(self, id, expression):
+		if isinstance(expression, Expr):
+
+			evalExpression = expression
+			for var in self.varsDict.values() + self.initialData.values():
+				evalExpression = expression.subs(var.symbol,var.value)
+			
+			self.varsDict[id] = InitialData(id, evalExpression.evalf(), expression)
+		else:
+			self.varsDict[id] = InitialData(id, expression)
+
+		return self.varsDict[id].symbol
 	def setCategory(self, category):
 		self.category = category
 
@@ -197,6 +231,12 @@ class Parameter:
 			output += "{0}{1} {2}[{3}]={{{4}}};\n\n".format(self.indent * indentCount, self.cppType.value, self.id, self.arraySize, arrayValue)
 			
 		return output
+
+class InitialData(Parameter):
+	def __init__(self, id, value, expression=None):
+		Parameter.__init__(self, id, value)
+		self.symbol = symbols(id)
+		self.expression = expression
 
 class CppType(Enum):
 	unsignedInt = "unsigned int"
