@@ -13,7 +13,14 @@
 #include "profiler.h"
 
 
-namespace nlsm
+/*[[[cog
+import cog
+from nlsmParams import namespace
+
+cog.outl("namespace {0}".format(namespace))
+
+]]]*/
+//[[[end]]]
 {
     namespace timer
     {
