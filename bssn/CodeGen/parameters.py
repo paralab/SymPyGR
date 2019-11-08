@@ -7,6 +7,7 @@ import os
 import datetime
 import ntpath
 from sympy import *
+from sympy.printing.cxxcode import cxxcode
 
 from collections import OrderedDict
 
@@ -71,7 +72,7 @@ class Parameters:
 		if isinstance(expression, Expr):
 
 			evalExpression = expression
-			for var in self.varsDict.values() + self.initialData.values():
+			for var in list(self.varsDict.values()) + list(self.initialData.values()):
 				evalExpression = expression.subs(var.symbol,var.value)
 			
 			self.varsDict[id] = InitialData(id, evalExpression.evalf(), expression)
@@ -87,6 +88,10 @@ class Parameters:
 
 	def values(self):
 		return self.paramDict.values()
+	def initialDataValues(self):
+		return self.initialData.values()
+	def varsValues(self):
+		return self.varsDict.values()
 
 	def writeCpp(self, hPath, cppPath, namespace):
 
@@ -191,7 +196,7 @@ class Parameter:
 			# infer data type if not set
 			if isinstance(value, int):
 				self.cppType = CppType.unsignedInt
-			elif isinstance(value, float):
+			elif isinstance(value, float) or isinstance(value, Expr):
 				self.cppType = CppType.double
 			#default to string if nothing else matches
 			else:
@@ -208,6 +213,11 @@ class Parameter:
 											 '"'+self.value +'"' if isinstance(self.value, str) else self.value)
 
 		return output
+
+	def getCppValue(self):
+		valueQuote = '"' if self.cppType is CppType.string else ""
+		return "{0}{1}{0}".format(valueQuote,self.value)
+
 	def toStringH(self, indentCount = 0):
 		output = ""
 		if self.description is not None:
@@ -222,11 +232,11 @@ class Parameter:
 		if self.description is not None:
 			output += "{0}//{1}\n".format(self.indent * indentCount, self.description)
 
-		# surround value with quotes if it's a string, otherwise nothing
-		valueQuote = '"' if self.cppType is CppType.string else ""
 		if self.arraySize is None:
-			output += "{0}{1} {2}={4}{3}{4};\n\n".format(self.indent * indentCount, self.cppType.value, self.id, self.value, valueQuote)
+			output += "{0}{1} {2}={3};\n\n".format(self.indent * indentCount, self.cppType.value, self.id, self.getCppValue())
 		else:
+			# surround value with quotes if it's a string, otherwise nothing
+			valueQuote = '"' if self.cppType is CppType.string else ""
 			arrayValue = valueQuote + "{0},{0}".format(valueQuote).join(str(v) for v in self.value) + valueQuote
 			output += "{0}{1} {2}[{3}]={{{4}}};\n\n".format(self.indent * indentCount, self.cppType.value, self.id, self.arraySize, arrayValue)
 			
@@ -237,7 +247,8 @@ class InitialData(Parameter):
 		Parameter.__init__(self, id, value)
 		self.symbol = symbols(id)
 		self.expression = expression
-
+	def getCppExpression(self):
+		return cxxcode(self.expression, standard="C++11")
 class CppType(Enum):
 	unsignedInt = "unsigned int"
 	double = "double"

@@ -193,124 +193,28 @@ cog.outl(namespace)
         const double y=GRIDY_TO_Y(yy1);
         const double z=GRIDZ_TO_Z(zz1);
 
-        const double amp1 = nlsm::NLSM_ID_AMP1;
-        const double amp2 = nlsm::NLSM_ID_AMP2;
-        const double delta1 = nlsm::NLSM_ID_DELTA1;
-        const double delta2 = nlsm::NLSM_ID_DELTA2;
-        const double xc1 = nlsm::NLSM_ID_XC1;
-        const double yc1 = nlsm::NLSM_ID_YC1;
-        const double zc1 = nlsm::NLSM_ID_ZC1;
-        const double xc2 = nlsm::NLSM_ID_XC2;
-        const double yc2 = nlsm::NLSM_ID_YC2;
-        const double zc2 = nlsm::NLSM_ID_ZC2;
-        const double epsx1 = nlsm::NLSM_ID_EPSX1;
-        const double epsy1 = nlsm::NLSM_ID_EPSY1;
-        const double epsx2 = nlsm::NLSM_ID_EPSX2;
-        const double epsy2 = nlsm::NLSM_ID_EPSY2;
-        const double R1 = nlsm::NLSM_ID_R1;
-        const double R2 = nlsm::NLSM_ID_R2;
-        const double nu1 = nlsm::NLSM_ID_NU1;
-        const double nu2 = nlsm::NLSM_ID_NU2;
-        const double Omega = nlsm::NLSM_ID_OMEGA;
+		/*[[[cog
+		import cog
+		import nlsmParams as p
+		from sympy.printing.cxxcode import cxxcode
 
-        double chi, phi;
+		for param in p.parameters.initialDataValues():
+			#TODO add support for arrays
+			if param.expression is not None:
+				cog.outl("const {0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression()))
+			else:
+				cog.outl("const {0} {1}={2}::{1};".format(param.cppType.value, param.id, p.namespace))
 
-        //std::cout<<"initData: "<<x<<", "<<y<<", "<<z<<std::endl;
+		for param in p.parameters.varsValues():
+			#TODO add support for arrays
+			if param.expression is not None:
+				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression()))
+			else:
+				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppValue()))
 
-#ifdef NLSM_NONLINEAR
-       /* regularity requires that chi=0 at the origin for all times. */
-        double rsq =  x*x + y*y + z*z;
-        if (rsq < 1.0e-13) {
-          chi = 0.0;
-          phi = 0.0;
-          return;
-        }
-#endif
-
-       /* if we are not at the origin, then specify a particular ID family */
-        
-        if (nlsm::NLSM_ID_TYPE == 0) {
-         /* this is the original test data */
-          const double amp = 1.0;
-          const double delta = 3.0;
-          const double xc = 0.0;
-          const double yc = 0.0;
-          const double zc = 0.0;
-          const double epsx = 1.0;
-          const double epsy = 1.0;
-          const double epsz = 1.0;
-          const double R = 0.0;
-	      double rt = sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
-          chi = amp * exp(-(rt-R)*(rt-R)/(delta*delta));
-          phi = 0.0; 
-
-        } else if (nlsm::NLSM_ID_TYPE == 1) {
-
-         /* this is family (a) from Liebling, arXiv:gr-qc/0202093 */
-
-          double rt1 = sqrt( epsx1*(x-xc1)*(x-xc1) + epsy1*(y-yc1)*(y-yc1) + (z-zc1)*(z-zc1) );
-          rt1 += 1.0e-14;
-          chi = amp1 * exp(-(rt1-R1)*(rt1-R1)/(delta1*delta1));
-          double dGdr = amp1 * exp( -(rt1-R1)*(rt1-R1)/(delta1*delta1) ) 
-                      * ( -2.0*(rt1-R1)/(delta1*delta1) );
-          double dGdx = -2.0*chi*(rt1-R1)/(delta1*delta1)*epsx1*(x-xc1)/rt1;
-          double dGdy = -2.0*chi*(rt1-R1)/(delta1*delta1)*epsy1*(y-yc1)/rt1;
-          phi = nu1*dGdr + Omega*(y*dGdx - x*dGdy); 
-           
-        } else if (nlsm::NLSM_ID_TYPE == 2) {
-
-         /* this is family (b) from Liebling, arXiv:gr-qc/0202093 */
-
-          double rt1 = sqrt( epsx1*(x-xc1)*(x-xc1) + epsy1*(y-yc1)*(y-yc1) + (z-zc1)*(z-zc1) );
-          rt1 += 1.0e-14;
-          double chi1 = amp1 * exp(-(rt1-R1)*(rt1-R1)/(delta1*delta1));
-
-          double rt2 = sqrt( epsx2*(x-xc2)*(x-xc2) + epsy2*(y-yc2)*(y-yc2) + (z-zc2)*(z-zc2) );
-          rt2 += 1.0e-14;
-          double chi2 = amp2 * exp(-(rt2-R2)*(rt2-R2)/(delta2*delta2));
-          double dGdx1 = -2.0*chi1*(rt1-R1)/(delta1*delta1)*epsx1*(x-xc1)/rt1;
-          double dGdx2 = -2.0*chi2*(rt2-R2)/(delta2*delta2)*epsx2*(x-xc2)/rt2;
-          chi = chi1 + chi2;
-          phi = nu1*dGdx1 + nu2*dGdx2;
-
-        } else if (nlsm::NLSM_ID_TYPE == 3) {
-
-        // simplistic initial data to make the comparison with analytical solution easier
-
-          const double amp = 1.0e-2;
-          const double delta = 1.0;
-          const double xc = 0.0;
-          const double yc = 0.0;
-          const double zc = 0.0;
-          const double epsx = 1.0;
-          const double epsy = 1.0;
-          const double epsz = 1.0;
-          const double R = 0.0;
-	      double rt = epsx*(x-xc)+epsy*(y-yc)+epsz*(z-zc);//sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
-          chi = amp * exp(-(rt-R)/(delta*delta));
-          phi =-sqrt(3)*amp * exp(-(rt-R)/(delta*delta));//0.0; 
-
-        } else if (nlsm::NLSM_ID_TYPE == 4) {
-
-          double rt1 = sqrt( (x-xc1)*(x-xc1) + (y-yc1)*(y-yc1) + (z-zc1)*(z-zc1) );
-
-          if (rt1 < 1.0e-7) {
-            chi = 0.0;
-            phi = 0.0;
-          }
-          else {
-            chi = amp1 * exp(-(rt1-R1)*(rt1-R1)/(delta1*delta1)) / rt1;
-            phi = chi * ( 2.0*(rt1-R1)/(delta1*delta1) );
-          }
-          //printf("x=%g, y=%g, z=%g, chi=%g phi=%g\n",x,y,z,chi,phi);
-
-        } else {
-          chi = 0.0;
-          phi = 0.0;
-        }
-
-        var[VAR::U_CHI] = chi;
-        var[VAR::U_PHI] = phi;
+			cog.outl("var[VAR::{0}] = {0};".format(param.id))
+		]]]*/
+		//[[[end]]]
 
     }
 
