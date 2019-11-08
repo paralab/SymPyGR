@@ -38,7 +38,37 @@
 
 
 using json = nlohmann::json;
-namespace nlsm
+/*[[[cog
+import cog
+import nlsmParams as p
+
+cog.outl("namespace {0}".format(p.namespace))
+cog.outl("{")
+
+cog.out("enum VAR {")
+i = 0
+for param in p.parameters.varsValues():
+	if i > 0:
+		cog.out(", ")
+	else:
+		i+=1
+	cog.out(param.id)
+
+cog.out("};\n")
+
+cog.out("static const char * VAR_NAMES[] = {")
+i = 0
+for param in p.parameters.varsValues():
+	if i > 0:
+		cog.out(", ")
+	else:
+		i+=1
+	cog.out("\"" + param.id + "\"")
+
+cog.out("};\n")
+
+]]]*/
+//[[[end]]]
 {
 /**
  * @brief These variable indexes are based on the variables defined in rkNLSM.h
@@ -92,7 +122,14 @@ static const char * NLSM_VAR_NAMES[]={"U_CHI","U_PHI"};
 
 
 
-namespace nlsm
+/*[[[cog
+import cog
+from nlsmParams import namespace
+
+cog.outl("namespace {0}".format(namespace))
+
+]]]*/
+//[[[end]]]
 {
 
     namespace timer
