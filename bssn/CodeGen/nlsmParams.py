@@ -77,6 +77,7 @@ x = symbols("x")
 y = symbols("y")
 z = symbols("z")
 
+parameters.clearCategory()
 amp = parameters.addInitialData("AMP", 1.3)
 R = parameters.addInitialData("R", 8.0)
 delta = parameters.addInitialData("DELTA", 3.0)
@@ -88,9 +89,14 @@ epsy = parameters.addInitialData("EPSY", 1.0)
 epsz = parameters.addInitialData("EPSZ", 1.0)
 nu = parameters.addInitialData("NU", 0.0)
 
+waveSpeedX = parameters.addInitialData("WAVE_SPEED_X", 1.0)
+waveSpeedY = parameters.addInitialData("WAVE_SPEED_Y", 0.0)
+waveSpeedZ = parameters.addInitialData("WAVE_SPEED_Z", 0.0)
+
 radiusExpr = sqrt( epsx*(x-xc)**2 + epsy*(y-yc)**2 + epsz*(z-zc)**2 )
 radius = parameters.addInitialData("radius", radiusExpr)
 
-chiExpr = amp * exp(-(radius-R)**2/(delta**2))
-parameters.addVar("chi", chiExpr)
+chiInitialData = amp * exp(-(radius-R)**2/(delta**2))
+#chiRHS = WAVE_SPEED_X*grad2_0_0_chi[pp] + WAVE_SPEED_Y*grad2_1_1_chi[pp] + WAVE_SPEED_Z*grad2_2_2_chi[pp]; 
+parameters.addVar("chi", chiInitialData)
 parameters.addVar("phi", 0.0)

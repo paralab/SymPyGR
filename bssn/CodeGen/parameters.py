@@ -49,6 +49,7 @@ class Parameters:
 		if isinstance(id, PresetParam):
 			#get pre-made parameter object from enum value
 			param = id.value
+			param.category = category
 			param.setValue(value, cppType, arraySize)
 			#note the dict key will be the PresetParam enum, not a string
 			self.paramDict[id] = param
@@ -56,16 +57,21 @@ class Parameters:
 			param = Parameter(id, value, description, category, cppType, arraySize)
 			self.paramDict[param.id] = param
 
-	def addInitialData(self, id, expression):
+	def addInitialData(self, id, expression, category = None):
+		if category is None:
+			category = self.category
+		if category is None:
+			category = "Initial Data"
+
 		if isinstance(expression, Expr):
 
 			evalExpression = expression
 			for initialData in self.initialData.values():
 				evalExpression = expression.subs(initialData.symbol,initialData.value)
 			
-			self.initialData[id] = InitialData(id,evalExpression.evalf(), expression)
+			self.initialData[id] = ExpressionParameter(id,evalExpression.evalf(), expression, category)
 		else:
-			self.initialData[id] = InitialData(id,expression)
+			self.initialData[id] = ExpressionParameter(id,expression, category=category)
 
 		return self.initialData[id].symbol
 	def addVar(self, id, expression):
@@ -75,9 +81,9 @@ class Parameters:
 			for var in list(self.varsDict.values()) + list(self.initialData.values()):
 				evalExpression = expression.subs(var.symbol,var.value)
 			
-			self.varsDict[id] = InitialData(id, evalExpression.evalf(), expression)
+			self.varsDict[id] = ExpressionParameter(id, evalExpression.evalf(), expression)
 		else:
-			self.varsDict[id] = InitialData(id, expression)
+			self.varsDict[id] = ExpressionParameter(id, expression)
 
 		return self.varsDict[id].symbol
 	def setCategory(self, category):
@@ -93,6 +99,7 @@ class Parameters:
 	def varsValues(self):
 		return self.varsDict.values()
 
+	#generate parameters.cpp and parameters.h equivalent files
 	def writeCpp(self, hPath, cppPath, namespace):
 
 		hName = ntpath.basename(hPath)
@@ -118,7 +125,7 @@ class Parameters:
 		outCpp.write("#include \"{0}\"\n".format(hName))
 		outCpp.write("namespace {0}\n{{\n\n".format(namespace))
 
-		for parameter in self.paramDict.values():
+		for parameter in list(self.paramDict.values()) + list(self.initialData.values()):
 			if parameter.isComment():
 				continue
 			outH.write(parameter.toStringH(1))
@@ -133,7 +140,7 @@ class Parameters:
 
 	def writeJson(self, filepath):
 		categories = OrderedDict()
-		for parameter in self.paramDict.values():
+		for parameter in list(self.paramDict.values()) + list(self.initialData.values()):
 			if parameter.category not in categories:
 				categories[parameter.category] = ""
 			categories[parameter.category] += parameter.toStringJson(2)
@@ -214,10 +221,12 @@ class Parameter:
 
 		return output
 
+	#get the value of the parameter, enclosed in quotes if necessary, for use in c++
 	def getCppValue(self):
 		valueQuote = '"' if self.cppType is CppType.string else ""
 		return "{0}{1}{0}".format(valueQuote,self.value)
 
+	#get the c++ string definition for this parameter to be used in parameters.h equivalent
 	def toStringH(self, indentCount = 0):
 		output = ""
 		if self.description is not None:
@@ -227,6 +236,7 @@ class Parameter:
 											  "[" + str(self.arraySize) +"]" if self.arraySize is not None else "")
 		return output
 
+	#get the c++ string definition for this parameter to be used in parameters.cpp equivalent
 	def toStringCpp(self, indentCount = 0):
 		output = ""
 		if self.description is not None:
@@ -242,13 +252,33 @@ class Parameter:
 			
 		return output
 
-class InitialData(Parameter):
-	def __init__(self, id, value, expression=None):
-		Parameter.__init__(self, id, value)
+#parameter capable of handling sympy expression as its value
+class ExpressionParameter(Parameter):
+	def __init__(self, id, value, expression=None, category = None):
+		Parameter.__init__(self, id, value, category=category)
 		self.symbol = symbols(id)
 		self.expression = expression
+
 	def getCppExpression(self):
 		return cxxcode(self.expression, standard="C++11")
+
+	def toStringJson(self, indentCount=0):
+		#params defined with an expression will have their value calculated
+		#in the cpp directly. Do not want to include them in json
+		if self.expression is not None:
+			return ""
+		return Parameter.toStringJson(self, indentCount)
+
+	def toStringCpp(self, indentCount=0):
+		if self.expression is not None:
+			return ""
+		return Parameter.toStringCpp(self, indentCount)
+
+	def toStringH(self, indentCount=0):
+		if self.expression is not None:
+			return ""
+		return Parameter.toStringH(self, indentCount)
+
 class CppType(Enum):
 	unsignedInt = "unsigned int"
 	double = "double"
