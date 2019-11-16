@@ -69,13 +69,6 @@ cog.out("};\n")
 
 ]]]*/
 //[[[end]]]
-{
-/**
- * @brief These variable indexes are based on the variables defined in rkNLSM.h
- * */
-enum VAR {U_CHI=0,U_PHI};
-
-static const char * NLSM_VAR_NAMES[]={"U_CHI","U_PHI"};
 
 /**
  * @brief internal variables needed for rk update.

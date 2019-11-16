@@ -1,6 +1,7 @@
 from parameters import *
 from decimal import Decimal
 from sympy import *
+from sympy.codegen.ast import String
 
 parameters = Parameters()
 
@@ -21,7 +22,7 @@ parameters.add(PresetParam.VTU_FILE_PREFIX, "nlsm_gr")
 parameters.add(PresetParam.CHKPT_FILE_PREFIX, "nlsm_cp")
 parameters.add(PresetParam.PROFILE_FILE_PREFIX, "nlsm_prof")
 parameters.add(PresetParam.NUM_EVOL_VARS_VTU_OUTPUT, 2)
-parameters.add(PresetParam.VTU_OUTPUT_EVOL_INDICES, [0, 1], "evolution variable ids")
+parameters.add(PresetParam.VTU_OUTPUT_EVOL_INDICES, [0, 1])
 
 parameters.setCategory("LOAD BALANCING & MESH")
 parameters.add(PresetParam.DENDRO_GRAIN_SZ, 100)
@@ -73,9 +74,9 @@ parameters.add(PresetParam.BLK_MAX_Z, 6.0)
 
 namespace = "nlsm"
 
-x = symbols("x")
-y = symbols("y")
-z = symbols("z")
+x = Symbol("x")
+y = Symbol("y")
+z = Symbol("z")
 
 parameters.clearCategory()
 amp = parameters.addInitialData("AMP", 1.3)
@@ -97,6 +98,12 @@ radiusExpr = sqrt( epsx*(x-xc)**2 + epsy*(y-yc)**2 + epsz*(z-zc)**2 )
 radius = parameters.addInitialData("radius", radiusExpr)
 
 chiInitialData = amp * exp(-(radius-R)**2/(delta**2))
-#chiRHS = WAVE_SPEED_X*grad2_0_0_chi[pp] + WAVE_SPEED_Y*grad2_1_1_chi[pp] + WAVE_SPEED_Z*grad2_2_2_chi[pp]; 
-parameters.addVar("chi", chiInitialData)
-parameters.addVar("phi", 0.0)
+chiRHS = Symbol("phi")
+chi = parameters.addVar("chi", chiInitialData, chiRHS)
+
+grad2_0_0_chi = parameters.addRhsPrecompute(PrecomputeFunc.deriv_xx, chi)
+grad2_1_1_chi = parameters.addRhsPrecompute(PrecomputeFunc.deriv_yy, chi)
+grad2_2_2_chi = parameters.addRhsPrecompute(PrecomputeFunc.deriv_zz, chi)
+
+phiRHS = waveSpeedX*grad2_0_0_chi + waveSpeedY*grad2_1_1_chi + waveSpeedZ*grad2_2_2_chi;
+parameters.addVar("phi", 0.0, phiRHS)

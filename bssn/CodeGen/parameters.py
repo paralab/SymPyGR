@@ -8,22 +8,15 @@ import datetime
 import ntpath
 from sympy import *
 from sympy.printing.cxxcode import cxxcode
+from sympy.codegen.ast import String
 
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 #holds dict of parameters, contains mostly output functions
 class Parameters:
-	def __init__(self, paramDict=None, initialData=None, varsDict = None):
-		if paramDict is None:
-			paramDict = OrderedDict()
+	def __init__(self, paramDict=OrderedDict(), initialData=OrderedDict(), varsDict = OrderedDict()):
 		self.paramDict = paramDict
-
-		if initialData is None:
-			initialData = OrderedDict()
 		self.initialData = initialData
-
-		if varsDict is None:
-			varsDict = OrderedDict()
 		self.varsDict = varsDict
 
 		self.indent = "\t"
@@ -67,25 +60,34 @@ class Parameters:
 
 			evalExpression = expression
 			for initialData in self.initialData.values():
-				evalExpression = expression.subs(initialData.symbol,initialData.value)
+				evalExpression = evalExpression.subs(initialData.symbol,initialData.value)
 			
 			self.initialData[id] = ExpressionParameter(id,evalExpression.evalf(), expression, category)
 		else:
 			self.initialData[id] = ExpressionParameter(id,expression, category=category)
 
 		return self.initialData[id].symbol
-	def addVar(self, id, expression):
-		if isinstance(expression, Expr):
+	def addVar(self, id, initialValue, rhsExpression):
+		if isinstance(initialValue, Expr):
 
-			evalExpression = expression
+			evalExpression = initialValue
 			for var in list(self.varsDict.values()) + list(self.initialData.values()):
-				evalExpression = expression.subs(var.symbol,var.value)
+				evalExpression = evalExpression.subs(var.symbol,var.value)
 			
-			self.varsDict[id] = ExpressionParameter(id, evalExpression.evalf(), expression)
+			self.varsDict[id] = Var(id, evalExpression.evalf(), valueExpression=initialValue, rhsExpression=rhsExpression)
 		else:
-			self.varsDict[id] = ExpressionParameter(id, expression)
+			self.varsDict[id] = Var(id, initialValue, rhsExpression = rhsExpression)
 
 		return self.varsDict[id].symbol
+
+	#func is a PrecomputeFunc enum
+	#varSymbol is sympy Symbol object associated with a var, returned by addVar
+	#in c++, an array will be created and computed ahead of time, so it can then be used to compute var rhs
+	def addRhsPrecompute(self, func, varSymbol):
+		self.varsDict[varSymbol.name].addPrecompute(func)
+		#returned string can be used in sympy expressions for RHS
+		return String(func.getArrayName(self.varsDict[varSymbol.name]) + "[pp]")
+
 	def setCategory(self, category):
 		self.category = category
 
@@ -259,8 +261,8 @@ class ExpressionParameter(Parameter):
 		self.symbol = symbols(id)
 		self.expression = expression
 
-	def getCppExpression(self):
-		return cxxcode(self.expression, standard="C++11")
+	def getCppExpression(self, expression):
+		return cxxcode(expression, standard="C++11")
 
 	def toStringJson(self, indentCount=0):
 		#params defined with an expression will have their value calculated
@@ -279,10 +281,41 @@ class ExpressionParameter(Parameter):
 			return ""
 		return Parameter.toStringH(self, indentCount)
 
+class Var(ExpressionParameter):
+	def __init__(self, id, value, valueExpression=None, rhsExpression=None, category = None):
+		Parameter.__init__(self, id, value, category=category)
+		self.symbol = symbols(id)
+		self.expression = valueExpression
+		self.rhs = rhsExpression
+		self.precomputeDict = OrderedDict()
+
+	#func should be a PrecomputeFunc enum
+	def addPrecompute(self, func):
+		#treating this like an ordered set, so just going to use the keys and ignore values
+		self.precomputeDict[func] = None
+
 class CppType(Enum):
 	unsignedInt = "unsigned int"
 	double = "double"
 	string = "std::string"
+
+class PrecomputeFunc(Enum):
+	deriv_xx = "deriv_xx"
+	deriv_yy = "deriv_yy"
+	deriv_zz = "deriv_zz"
+	def getArrayName(self, var):
+		return self.value + "_" + var.id
+
+	def getFunctionCallString(self, var):
+		if self is PrecomputeFunc.deriv_xx:
+			return "{0}({1}, {2}, hx, sz, bflag);".format(self.value, self.getArrayName(var), var.id)
+		elif self is PrecomputeFunc.deriv_yy:
+			return "{0}({1}, {2}, hy, sz, bflag);".format(self.value, self.getArrayName(var), var.id)
+		elif self is PrecomputeFunc.deriv_zz:
+			return "{0}({1}, {2}, hz, sz, bflag);".format(self.value, self.getArrayName(var), var.id)
+		else:
+			return ""
+
 
 class PresetParam(Enum):
 	#note values start out None, will be filled in before added to paramDict

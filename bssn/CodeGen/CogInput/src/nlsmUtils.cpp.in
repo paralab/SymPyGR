@@ -201,14 +201,14 @@ cog.outl(namespace)
 		for param in p.parameters.initialDataValues():
 			#TODO add support for arrays
 			if param.expression is not None:
-				cog.outl("const {0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression()))
+				cog.outl("const {0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression(param.expression)))
 			else:
 				cog.outl("const {0} {1}={2}::{1};".format(param.cppType.value, param.id, p.namespace))
 
 		for param in p.parameters.varsValues():
 			#TODO add support for arrays
 			if param.expression is not None:
-				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression()))
+				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression(param.expression)))
 			else:
 				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppValue()))
 

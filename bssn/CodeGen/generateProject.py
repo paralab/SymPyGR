@@ -3,8 +3,8 @@ import nlsmParams
 from cogapp import Cog
 from projectPaths import inputPath, outputPath, dendroRootPath, dendroLibPath
 
-args = ["cog","-o",outputPath + "CMakeLists.txt", inputPath + "CMakeLists.txt.in"]
-ret = Cog().main(args)
+#args = ["cog","-o",outputPath + "CMakeLists.txt", inputPath + "CMakeLists.txt.in"]
+#ret = Cog().main(args)
 
 srcFiles = ["derivs.cpp.in",
 			"nlsm.cpp.in",
@@ -32,17 +32,17 @@ for file in includeFiles:
 #TODO: replace this section with the next few lines when src files are all properly cogged and input is switched to CogInput folder
 ########################################
 ########################################
-#nlsmParams.parameters.writeJson(outputPath + "par/nlsm.par.json")
-#nlsmParams.parameters.writeCpp(outputPath + "include/parameters.h", outputPath + "src/parameters.cpp", nlsmParams.namespace)
+nlsmParams.parameters.writeJson(outputPath + "par/nlsm.par.json")
+nlsmParams.parameters.writeCpp(outputPath + "include/parameters.h", outputPath + "src/parameters.cpp", nlsmParams.namespace)
 ########################################
 ########################################
-args = ["cog","-o",outputPath + "src/parameters.cpp", inputPath+"src/parameters.cpp"]
-ret = Cog().main(args)
+#args = ["cog","-o",outputPath + "src/parameters.cpp", inputPath+"src/parameters.cpp"]
+#ret = Cog().main(args)
 
-args = ["cog","-o",outputPath + "include/parameters.h", inputPath+"include/parameters.h"]
-ret = Cog().main(args)
+#args = ["cog","-o",outputPath + "include/parameters.h", inputPath+"include/parameters.h"]
+#ret = Cog().main(args)
 
-args = ["cog","-o",outputPath + "par/nlsm.par.json", inputPath+"par/nlsm.par.json"]
-ret = Cog().main(args)
+#args = ["cog","-o",outputPath + "par/nlsm.par.json", inputPath+"par/nlsm.par.json"]
+#ret = Cog().main(args)
 ########################################
 ########################################
