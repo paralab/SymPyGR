@@ -350,7 +350,14 @@ cog.outl(namespace)
 
     double computeWTol(double x,double y,double z,double tolMin)
     {
-       return nlsm::NLSM_WAVELET_TOL;
+		/*[[[cog
+		import cog
+		from nlsmParams import namespace
+
+		cog.outl("return {0}::WAVELET_TOL;".format(namespace))
+
+		]]]*/
+		//[[[end]]]
     }
 
 
@@ -359,8 +366,14 @@ cog.outl(namespace)
 
 
 
+/*[[[cog
+import cog
+from nlsmParams import namespace
 
-namespace nlsm
+cog.outl("namespace {0}".format(namespace))
+
+]]]*/
+//[[[end]]]
 {
 
     namespace timer
