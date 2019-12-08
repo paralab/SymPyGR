@@ -348,13 +348,14 @@ cog.outl(namespace)
         return ;
     }
 
-    double computeWTol(double x,double y,double z,double tolMin)
+	//TODO: set up so it can take an user defined expression of values from python, rather than single param
+    double computeTol(double x,double y,double z,double tolMin)
     {
 		/*[[[cog
 		import cog
 		from nlsmParams import namespace
 
-		cog.outl("return {0}::WAVELET_TOL;".format(namespace))
+		cog.outl("return {0}::RK_MIN_TOL;".format(namespace))
 
 		]]]*/
 		//[[[end]]]

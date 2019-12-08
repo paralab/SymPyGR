@@ -33,7 +33,6 @@ parameters.add(PresetParam.MAXDEPTH, 6)
 parameters.add(PresetParam.SPLIT_FIX, 2)
 
 parameters.setCategory("WAVELET REFINEMENT")
-parameters.add(PresetParam.WAVELET_TOL, 1e-4)
 parameters.add(PresetParam.NUM_REFINE_VARS, 2)
 parameters.add(PresetParam.REFINE_VARIABLE_INDICES, [0,1])
 
@@ -61,6 +60,7 @@ timestep = parameters[PresetParam.CFL_FACTOR].value * (parameters[PresetParam.CO
 parameters.add(PresetParam.RK45_TIME_STEP_SIZE, timestep)
 parameters.add(PresetParam.RK45_DESIRED_TOL, 1e-3)
 parameters.add(PresetParam.KO_DISS_SIGMA, 1e-1)
+parameters.add(PresetParam.RK_MIN_TOL, 1e-4)
 
 parameters.setCategory("BLOCK Adaptivity (Not Recommended use AMR)")
 parameters.add(PresetParam.ENABLE_BLOCK_ADAPTIVITY, 0)

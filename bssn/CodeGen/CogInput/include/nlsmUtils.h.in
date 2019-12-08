@@ -50,9 +50,9 @@ i = 0
 for param in p.parameters.varsValues():
 	if i > 0:
 		cog.out(", ")
-	else:
-		i+=1
+
 	cog.out(param.id)
+	i+=1
 
 cog.out("};\n")
 
@@ -61,9 +61,9 @@ i = 0
 for param in p.parameters.varsValues():
 	if i > 0:
 		cog.out(", ")
-	else:
-		i+=1
+
 	cog.out("\"" + param.id + "\"")
+	i+=1
 
 cog.out("};\n")
 
@@ -107,9 +107,9 @@ cog.out("};\n")
   void blockAdaptiveOctree(std::vector<ot::TreeNode>& tmpNodes,const Point& pt_min,const Point & pt_max,const unsigned int regLev,const unsigned int maxDepth,MPI_Comm comm);
 
   /**
-   * @brief wavelet tolerance as a function of space.
+   * @brief tolerance as a function of space.
    * */
-  double computeWTol(double x,double y,double z,double tol_min);
+  double computeTol(double x,double y,double z,double minTol);
 
 }// end of namespace nlsm
 

@@ -133,10 +133,32 @@ class Parameters:
 			outH.write(parameter.toStringH(1))
 			outCpp.write(parameter.toStringCpp(1))
 
-		outH.write("static const unsigned int NUM_VARS={0};\n".format(len(self.varsDict)))
-		outH.write("static const unsigned int RK3_STAGES=3;\n")
-		outH.write("static const unsigned int RK4_STAGES=4;\n")
-		outH.write("static const unsigned int RK45_STAGES=6;\n")
+		outH.write("\tstatic const unsigned int NUM_VARS={0};\n".format(len(self.varsDict)))
+
+		outH.write("\tenum VAR {")
+		i = 0
+		for var in self.varsValues():
+			if i > 0:
+				outH.write(", ")
+			outH.write("{0}={1}".format(var.id, i))
+			i+=1
+
+		outH.write("};\n")
+
+		outH.write("\tstatic const char * VAR_NAMES[] = {")
+		i = 0
+		for var in self.varsValues():
+			if i > 0:
+				outH.write(", ")
+					
+			outH.write("\"" + var.id + "\"")
+			i+=1
+
+		outH.write("};\n")
+
+		outH.write("\tstatic const unsigned int RK3_STAGES=3;\n")
+		outH.write("\tstatic const unsigned int RK4_STAGES=4;\n")
+		outH.write("\tstatic const unsigned int RK45_STAGES=6;\n")
 
 		outH.write("}\n")
 		outH.write("#endif //SFCSORTBENCH_PARAMETERS_H")
@@ -348,7 +370,7 @@ class PresetParam(Enum):
 	BLK_MAX_Z = Parameter("BLK_MAX_Z", None, cppType = CppType.double)
 	NUM_REFINE_VARS = Parameter("NUM_REFINE_VARS", None, description="number of refinement variables", cppType = CppType.unsignedInt)
 	REFINE_VARIABLE_INDICES = Parameter("REFINE_VARIABLE_INDICES", None, description="refinement variable IDs", cppType = CppType.unsignedInt)
-	WAVELET_TOL = Parameter("WAVELET_TOL", None, description="wavelet tolerance", cppType = CppType.double)
+	RK_MIN_TOL = Parameter("RK_MIN_TOL", None, description="RK solver tolerance", cppType = CppType.double)
 	ELE_ORDER = Parameter("ELE_ORDER", None, description="element order", cppType = CppType.unsignedInt)
 	DENDRO_GRAIN_SZ = Parameter("DENDRO_GRAIN_SZ", None, description="grain size N/p , Where N number of total octants, p number of active cores", cppType = CppType.unsignedInt)
 	LOAD_IMB_TOL = Parameter("LOAD_IMB_TOL", None, description="dendro load imbalance tolerance for flexible partitioning", cppType = CppType.double)
