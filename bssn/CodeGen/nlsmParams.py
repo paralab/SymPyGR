@@ -9,7 +9,6 @@ parameters.add("__comment__(Evolution variable indices )", "U_CHI=0,U_PHI=1")
 parameters.add("DENDRO_VERSION", 5.0)
 
 parameters.setCategory("CONSTANTS")
-parameters.add(PresetParam.NUM_VARS, 2)
 parameters.add(PresetParam.ELE_ORDER, 4)
 
 parameters.setCategory("IO")

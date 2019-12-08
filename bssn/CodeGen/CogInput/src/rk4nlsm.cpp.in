@@ -17,63 +17,74 @@ namespace ode
         RK4_NLSM::RK4_NLSM(ot::Mesh *pMesh, double pTBegin, double pTEnd,double pTh): RK(pMesh,pTBegin,pTEnd,pTh)
         {
 
-            // allocate memory for the variables.
-            m_uiVar=new double*[nlsm::NLSM_NUM_VARS];
-            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                m_uiVar[index]=m_uiMesh->createVector<double>();
+			/*[[[cog
+			import cog
+			from nlsmParams import namespace
 
-            m_uiPrevVar=new double*[nlsm::NLSM_NUM_VARS];
-            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                m_uiPrevVar[index]=m_uiMesh->createVector<double>();
+			cog.outl("//allocate memory for variables")
+			cog.outl("m_uiVar=new double*[{0}::NUM_VARS];".format(namespace))
+			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++){{".format(namespace))
+			cog.outl("\tm_uiVar[index]=m_uiMesh->createVector<double>();")
+			cog.outl("}\n")
 
-            m_uiVarIm=new double*[nlsm::NLSM_NUM_VARS];
-            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                m_uiVarIm[index]=m_uiMesh->createVector<double>();
+			cog.outl("m_uiPrevVar=new double*[{0}::NUM_VARS];".format(namespace))
+			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
+			cog.outl("\tm_uiPrevVar[index]=m_uiMesh->createVector<double>();")
+			cog.outl("}\n")
 
+			cog.outl("m_uiVarIm=new double*[{0}::NUM_VARS];".format(namespace))
+			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
+			cog.outl("m_uiVarIm[index]=m_uiMesh->createVector<double>();")
+			cog.outl("}\n")
 
-            m_uiStage=new double**[nlsm::NLSM_RK4_STAGES];
-            for(unsigned int stage=0;stage<nlsm::NLSM_RK4_STAGES;stage++)
-            {
-                m_uiStage[stage]=new double*[nlsm::NLSM_NUM_VARS];
-                for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                    m_uiStage[stage][index]=m_uiMesh->createVector<double>();
-            }
+			cog.outl("m_uiStage=new double**[{0}::RK4_STAGES];".format(namespace))
+			cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
+			cog.outl("\tm_uiStage[stage]=new double*[{0}::NUM_VARS];".format(namespace))
+			cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n\t{{".format(namespace))
+			cog.outl("\t\tm_uiStage[stage][index]=m_uiMesh->createVector<double>();")
+			cog.outl("\t}\n}\n")
 
-            m_uiUnzipVar=new double*[nlsm::NLSM_NUM_VARS];
-            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                m_uiUnzipVar[index]=m_uiMesh->createUnZippedVector<double>();
+			cog.outl("m_uiUnzipVar=new double*[{0}::NUM_VARS];".format(namespace))
+			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
+			cog.outl("\tm_uiUnzipVar[index]=m_uiMesh->createUnZippedVector<double>();")
+			cog.outl("}\n")
 
+			cog.outl("m_uiUnzipVarRHS=new double*[{0}::NUM_VARS];".format(namespace))
+			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
+			cog.outl("\tm_uiUnzipVarRHS[index]=m_uiMesh->createUnZippedVector<double>();")
+			cog.outl("}\n")
 
-            m_uiUnzipVarRHS=new double*[nlsm::NLSM_NUM_VARS];
-            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                m_uiUnzipVarRHS[index]=m_uiMesh->createUnZippedVector<double>();
+			cog.outl("//mpi communication")
+			cog.outl("m_uiSendNodeBuf=new double*[{0}::ASYNC_COMM_K];".format(namespace))
+			cog.outl("m_uiRecvNodeBuf=new double*[{0}::ASYNC_COMM_K];".format(namespace))
+			cog.outl("m_uiSendReqs=new MPI_Request*[{0}::ASYNC_COMM_K];".format(namespace))
+			cog.outl("m_uiRecvReqs=new MPI_Request*[{0}::ASYNC_COMM_K];".format(namespace))
+			cog.outl("m_uiSendSts=new MPI_Status*[{0}::ASYNC_COMM_K];".format(namespace))
+			cog.outl("m_uiRecvSts=new MPI_Status*[{0}::ASYNC_COMM_K];\n".format(namespace))
 
+			cog.outl("for(unsigned int index=0;index<{0}::ASYNC_COMM_K;index++)\n{{".format(namespace))
+			cog.outl("\tm_uiSendNodeBuf[index]=NULL;")
+			cog.outl("\tm_uiRecvNodeBuf[index]=NULL;")
+			cog.outl("\tm_uiSendReqs[index]=NULL;")
+			cog.outl("\tm_uiRecvReqs[index]=NULL;")
+			cog.outl("\tm_uiSendSts[index]=NULL;")
+			cog.outl("\tm_uiRecvSts[index]=NULL;")
+			cog.outl("}\n")
 
-
-            // mpi communication
-            m_uiSendNodeBuf=new double*[nlsm::NLSM_ASYNC_COMM_K];
-            m_uiRecvNodeBuf=new double*[nlsm::NLSM_ASYNC_COMM_K];
-
-            m_uiSendReqs=new MPI_Request*[nlsm::NLSM_ASYNC_COMM_K];
-            m_uiRecvReqs=new MPI_Request*[nlsm::NLSM_ASYNC_COMM_K];
-            m_uiSendSts=new MPI_Status*[nlsm::NLSM_ASYNC_COMM_K];
-            m_uiRecvSts=new MPI_Status*[nlsm::NLSM_ASYNC_COMM_K];
-
-            for(unsigned int index=0;index<nlsm::NLSM_ASYNC_COMM_K;index++)
-            {
-                m_uiSendNodeBuf[index]=NULL;
-                m_uiRecvNodeBuf[index]=NULL;
-
-                m_uiSendReqs[index]=NULL;
-                m_uiRecvReqs[index]=NULL;
-                m_uiSendSts[index]=NULL;
-                m_uiRecvSts[index]=NULL;
-            }
+			]]]*/
+			//[[[end]]]
 
             if(m_uiMesh->isActive())
             {
                 // allocate mpi comm. reqs and status
-                for(unsigned int index=0;index<nlsm::NLSM_ASYNC_COMM_K;index++)
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("for(unsigned int index=0;index<{0}::ASYNC_COMM_K;index++)".format(namespace))
+
+				]]]*/
+				//[[[end]]]
                 {
                     if(m_uiMesh->getGhostExcgTotalSendNodeCount()!=0) m_uiSendNodeBuf[index]=new double[m_uiMesh->getGhostExcgTotalSendNodeCount()];
                     if(m_uiMesh->getGhostExcgTotalRecvNodeCount()!=0) m_uiRecvNodeBuf[index]=new double[m_uiMesh->getGhostExcgTotalRecvNodeCount()];
@@ -89,28 +100,27 @@ namespace ode
                         m_uiRecvReqs[index]=new MPI_Request[m_uiMesh->getRecvProcListSize()];
                         m_uiRecvSts[index]=new MPI_Status[m_uiMesh->getRecvProcListSize()];
                     }
-
-
                 }
-
             }
-
-
         }
 
         RK4_NLSM::~RK4_NLSM()
         {
-            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
+			/*[[[cog
+			import cog
+			from nlsmParams import namespace
+
+			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
+
+			]]]*/
+			//[[[end]]]
             {
                 delete [] m_uiVar[index];
                 delete [] m_uiPrevVar[index];
                 delete [] m_uiVarIm[index];
                 delete [] m_uiUnzipVar[index];
                 delete [] m_uiUnzipVarRHS[index];
-
-
             }
-
 
             delete [] m_uiVar;
             delete [] m_uiPrevVar;
@@ -118,18 +128,24 @@ namespace ode
             delete [] m_uiUnzipVar;
             delete [] m_uiUnzipVarRHS;
 
-            for(unsigned int stage=0;stage<nlsm::NLSM_RK4_STAGES;stage++)
-                for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                    delete [] m_uiStage[stage][index];
+			/*[[[cog
+			import cog
+			from nlsmParams import namespace
 
-            for(unsigned int stage=0;stage<nlsm::NLSM_RK4_STAGES;stage++)
-                delete [] m_uiStage[stage];
+			cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
+			cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n\t{{".format(namespace))
+			cog.outl("\t\tdelete [] m_uiStage[stage][index];")
+			cog.outl("\t}\n}\n")
 
-            delete [] m_uiStage;
+			cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
+			cog.outl("\tdelete [] m_uiStage[stage];")
+			cog.outl("}\n")
+			cog.outl("delete [] m_uiStage;\n")
 
-
-            // mpi communication
-            for(unsigned int index=0;index<nlsm::NLSM_ASYNC_COMM_K;index++)
+			cog.outl("// mpi communications")
+			cog.outl("for(unsigned int index=0;index<{0}::ASYNC_COMM_K;index++)".format(namespace))
+			]]]*/
+			//[[[end]]]
             {
                 delete [] m_uiSendNodeBuf[index];
                 delete [] m_uiRecvNodeBuf[index];
@@ -149,9 +165,6 @@ namespace ode
             delete [] m_uiSendSts;
             delete [] m_uiRecvReqs;
             delete [] m_uiRecvSts;
-
-
-
         }
 
         void RK4_NLSM::applyInitialConditions(double** zipIn)

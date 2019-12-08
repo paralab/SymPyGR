@@ -133,6 +133,11 @@ class Parameters:
 			outH.write(parameter.toStringH(1))
 			outCpp.write(parameter.toStringCpp(1))
 
+		outH.write("static const unsigned int NUM_VARS={0};\n".format(len(self.varsDict)))
+		outH.write("static const unsigned int RK3_STAGES=3;\n")
+		outH.write("static const unsigned int RK4_STAGES=4;\n")
+		outH.write("static const unsigned int RK45_STAGES=6;\n")
+
 		outH.write("}\n")
 		outH.write("#endif //SFCSORTBENCH_PARAMETERS_H")
 		outH.close()
@@ -319,7 +324,6 @@ class PrecomputeFunc(Enum):
 
 class PresetParam(Enum):
 	#note values start out None, will be filled in before added to paramDict
-	NUM_VARS = Parameter("NUM_VARS", None, cppType = CppType.unsignedInt)
 	DIM = Parameter("DIM", None, description="dimentionality of the octree, (meshing is supported only for 3D)", cppType = CppType.unsignedInt)
 	MAXDEPTH = Parameter("MAXDEPTH", None, description="maximum level of refinement of the mesh", cppType = CppType.unsignedInt)	
 	ASYNC_COMM_K = Parameter("ASYNC_COMM_K", None, "variable group size for the asynchronous unzip operation", cppType = CppType.unsignedInt)
