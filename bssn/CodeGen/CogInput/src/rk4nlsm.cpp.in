@@ -252,8 +252,16 @@ namespace ode
 			cog.outl("double minTol={0}::RK_MIN_TOL;".format(namespace))
 			]]]*/
 			//[[[end]]]    
-            std::function<double(double,double,double)> tolFunc =[minTol](double x,double y, double z){ 
-				return nlsm::computeTol(x,y,z,minTol);
+            std::function<double(double,double,double)> tolFunc =[minTol](double x,double y, double z)
+			{ 
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("return {0}::computeTol(x,y,z,minTol);".format(namespace))
+
+				]]]*/
+				//[[[end]]]
 			};
             unsigned int iterCount=1;
             do
@@ -336,7 +344,7 @@ namespace ode
 					from nlsmParams import namespace
 
 					cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
-					cog.outl("\tfor(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)\n\t{{".format(namespace))
+					cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n\t{{".format(namespace))
 					cog.outl("\t\tdelete [] m_uiStage[stage][index];")
 					cog.outl("\t\tm_uiStage[stage][index]=NULL;")
 					cog.outl("\t\tm_uiStage[stage][index]=newMesh->createVector<double>();")
@@ -537,41 +545,46 @@ namespace ode
 
         void RK4_NLSM::unzipVars_async(double ** zipIn , double **uzipOut)
         {
-            nlsm::timer::t_unzip_async.start();
 
-            for(unsigned int var=0;var<nlsm::NLSM_NUM_VARS;var+=nlsm::NLSM_ASYNC_COMM_K){
+			/*[[[cog
+			import cog
+			from nlsmParams import namespace
 
-                for(unsigned int i=0;(i<nlsm::NLSM_ASYNC_COMM_K);i++)
-                    m_uiMesh->ghostExchangeStart(zipIn[var+i],m_uiSendNodeBuf[i],m_uiRecvNodeBuf[i],m_uiSendReqs[i],m_uiRecvReqs[i]);
+			cog.outl("{0}::timer::t_unzip_async.start();".format(namespace))
+			cog.outl("for(unsigned int var=0;var<{0}::NUM_VARS;var+=nlsm::NLSM_ASYNC_COMM_K)\n{{".format(namespace))
+			cog.outl("\tfor(unsigned int i=0;(i<{0}::ASYNC_COMM_K);i++)\n\t{{".format(namespace))
+			cog.outl("\t\tm_uiMesh->ghostExchangeStart(zipIn[var+i],m_uiSendNodeBuf[i],m_uiRecvNodeBuf[i],m_uiSendReqs[i],m_uiRecvReqs[i]);")
+			cog.outl("\t}\n")
 
-                for(unsigned int i=0;(i<nlsm::NLSM_ASYNC_COMM_K);i++)
-                {
-                    m_uiMesh->ghostExchangeRecvSync(zipIn[var + i], m_uiRecvNodeBuf[i],m_uiRecvReqs[i], m_uiRecvSts[i]);
-                    m_uiMesh->unzip(zipIn[var+i],uzipOut[var+i]);
-                }
+			cog.outl("\tfor(unsigned int i=0;(i<{0}::ASYNC_COMM_K);i++)\n\t{{".format(namespace))
+			cog.outl("\t\tm_uiMesh->ghostExchangeRecvSync(zipIn[var + i], m_uiRecvNodeBuf[i],m_uiRecvReqs[i], m_uiRecvSts[i]);")
+			cog.outl("\t\tm_uiMesh->unzip(zipIn[var+i],uzipOut[var+i]);")
+			cog.outl("\t}\n")
 
-                for(unsigned int i=0;(i<nlsm::NLSM_ASYNC_COMM_K);i++)
-                    m_uiMesh->ghostExchangeSendSync(m_uiSendReqs[i], m_uiSendSts[i]);
+			cog.outl("\tfor(unsigned int i=0;(i<{0}::ASYNC_COMM_K);i++)\n\t{{".format(namespace))
+			cog.outl("\t\tm_uiMesh->ghostExchangeSendSync(m_uiSendReqs[i], m_uiSendSts[i]);")
+			cog.outl("\t}\n}")
 
-            }
-
-            nlsm::timer::t_unzip_async.stop();
-
-
+			cog.outl("{0}::timer::t_unzip_async.stop();".format(namespace))
+			]]]*/
+			//[[[end]]]
         }
-
 
         void RK4_NLSM::zipVars(double** uzipIn , double** zipOut)
         {
-            nlsm::timer::t_zip.start();
+			/*[[[cog
+			import cog
+			from nlsmParams import namespace
 
-            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                m_uiMesh->zip(uzipIn[index],zipOut[index]);
+			cog.outl("{0}::timer::t_zip.start();".format(namespace))
+			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
+			cog.outl("\tm_uiMesh->zip(uzipIn[index],zipOut[index]);")
+			cog.outl("}\n")
 
-            nlsm::timer::t_zip.stop();
-
+			cog.outl("{0}::timer::t_zip.stop();".format(namespace))
+			]]]*/
+			//[[[end]]]
         }
-
 
         void RK4_NLSM::applyBoundaryConditions()
         {
@@ -580,14 +593,12 @@ namespace ode
 
         void RK4_NLSM::performSingleIteration()
         {
-
             bool repeatStep;
             double n_inf_max=0.0;
             double n_inf_max_g=0;
 
             do
             {
-
                 repeatStep=false;
                 n_inf_max=0;
                 n_inf_max_g=0;
@@ -606,11 +617,7 @@ namespace ode
                                         unzipVars(m_uiPrevVar,m_uiUnzipVar);
                     #endif
 
-
-
                     int rank =m_uiMesh->getMPIRank();
-
-
 
                     const unsigned int nodeLocalBegin=m_uiMesh->getNodeLocalBegin();
                     const unsigned int nodeLocalEnd=m_uiMesh->getNodeLocalEnd();
@@ -622,13 +629,18 @@ namespace ode
                     unsigned int sz[3];
                     unsigned int bflag;
                     double dx,dy,dz;
-                    const Point pt_min(nlsm::NLSM_COMPD_MIN[0],nlsm::NLSM_COMPD_MIN[1],nlsm::NLSM_COMPD_MIN[2]);
-                    const Point pt_max(nlsm::NLSM_COMPD_MAX[0],nlsm::NLSM_COMPD_MAX[1],nlsm::NLSM_COMPD_MAX[2]);
 
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
 
-                    for(unsigned int stage=0;stage<(nlsm::NLSM_RK4_STAGES-1);stage++)
+					cog.outl("const Point pt_min({0}::COMPD_MIN[0],{0}::COMPD_MIN[1],{0}::COMPD_MIN[2]);".format(namespace))
+					cog.outl("const Point pt_max({0}::COMPD_MAX[0],{0}::COMPD_MAX[1],{0}::COMPD_MAX[2]);".format(namespace))
+
+					cog.outl("for(unsigned int stage=0;stage<({0}::RK4_STAGES-1);stage++)".format(namespace))
+					]]]*/
+					//[[[end]]]
                     {
-
 
                     #ifdef DEBUG_RK_SOLVER
                                             if(!rank)std::cout<<" stage: "<<stage<<" begin: "<<std::endl;
@@ -657,10 +669,7 @@ namespace ode
                             ptmax[1]=GRIDY_TO_Y(blkList[blk].getBlockNode().maxY())+3*dy;
                             ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
-
                             nlsmRhs(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-
-
                         }
 
                         #ifdef DEBUG_RK_SOLVER
@@ -669,10 +678,7 @@ namespace ode
                                                 ot::test::isUnzipInternalNaN(m_uiMesh,m_uiUnzipVarRHS[index]);
                         #endif
 
-
-
                         zipVars(m_uiUnzipVarRHS,m_uiStage[stage]);
-
 
                         #ifdef DEBUG_RK_SOLVER
                                                 for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
@@ -688,10 +694,16 @@ namespace ode
 
                         for(unsigned int node=nodeLocalBegin;node<nodeLocalEnd;node++)
                         {
-                            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
+							/*[[[cog
+							import cog
+							from nlsmParams import namespace
+
+							cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
+
+							]]]*/
+							//[[[end]]]
                             {
                                 m_uiVarIm[index][node]=m_uiPrevVar[index][node];
-                                //if(!rank && index==0 && node==0) std::cout<<"rk stage: "<<stage<<" im coef: "<<stage<<" value: "<<RK4_U[stage+1]<<std::endl;
                                 m_uiVarIm[index][node] += (RK4_U[stage + 1] * m_uiT_h * m_uiStage[stage][index][node]);
 
                             }
@@ -722,7 +734,6 @@ namespace ode
 
                     for(unsigned int blk=0;blk<blkList.size();blk++)
                     {
-
                         offset=blkList[blk].getOffset();
                         sz[0]=blkList[blk].getAllocationSzX();
                         sz[1]=blkList[blk].getAllocationSzY();
@@ -742,10 +753,7 @@ namespace ode
                         ptmax[1]=GRIDY_TO_Y(blkList[blk].getBlockNode().maxY())+3*dy;
                         ptmax[2]=GRIDZ_TO_Z(blkList[blk].getBlockNode().maxZ())+3*dz;
 
-
                         nlsmRhs(m_uiUnzipVarRHS, (const double **)m_uiUnzipVar, offset, ptmin, ptmax, sz, bflag);
-
-
                     }
 
                     #ifdef DEBUG_RK_SOLVER
@@ -754,50 +762,43 @@ namespace ode
                                             ot::test::isUnzipInternalNaN(m_uiMesh,m_uiUnzipVarRHS[index]);
                     #endif
 
-                    zipVars(m_uiUnzipVarRHS,m_uiStage[(nlsm::NLSM_RK4_STAGES-1)]);
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
 
-                    /*for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                        for(unsigned int node=nodeLocalBegin;node<nodeLocalEnd;node++)
-                            m_uiStage[(nlsm::NLSM_RK4_STAGES-1)][index][node]*=m_uiT_h;*/
+					cog.outl("zipVars(m_uiUnzipVarRHS,m_uiStage[({0}::RK4_STAGES-1)]);".format(namespace))
 
-
+					]]]*/
+					//[[[end]]]
 
                     for(unsigned int node=nodeLocalBegin;node<nodeLocalEnd;node++)
                     {
+						/*[[[cog
+						import cog
+						from nlsmParams import namespace
 
-                        for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                        {
-                            m_uiVar[index][node]=m_uiPrevVar[index][node];
-                            for(unsigned int s=0;s<(nlsm::NLSM_RK4_STAGES);s++)
-                            {
-                                m_uiVar[index][node]+=(RK4_C[s]*m_uiT_h*m_uiStage[s][index][node]);
-                            }
+						cog.outl("zipVars(m_uiUnzipVarRHS,m_uiStage[({0}::RK4_STAGES-1)]);".format(namespace))
 
-
-                        }
-
+						cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
+						cog.outl("\tm_uiVar[index][node]=m_uiPrevVar[index][node];")
+						cog.outl("\tfor(unsigned int s=0;s<(nlsm::NLSM_RK4_STAGES);s++)\n{{".format(namespace))
+						cog.outl("\t\tm_uiVar[index][node]+=(RK4_C[s]*m_uiT_h*m_uiStage[s][index][node]);")
+						cog.outl("\t}\n}")
+						]]]*/
+						//[[[end]]]
                     }
-
-
-
                 }
 
                 m_uiMesh->waitAll();
 
-
             }while(repeatStep);
-
 
             m_uiCurrentStep++;
             m_uiCurrentTime+=m_uiT_h;
-
-
         }
-
 
         void RK4_NLSM::rkSolve()
         {
-
             if(m_uiCurrentStep==0)
             {
                 applyInitialConditions(m_uiPrevVar);
@@ -808,27 +809,52 @@ namespace ode
             unsigned int oldElements,oldElements_g;
             unsigned int newElements,newElements_g;
 
-            // refine based on all the variables
-            const unsigned int refineNumVars=nlsm::NLSM_NUM_REFINE_VARS;
-            unsigned int refineVarIds[refineNumVars];
-            for(unsigned int vIndex=0;vIndex<refineNumVars;vIndex++)
-                refineVarIds[vIndex]=nlsm::NLSM_REFINE_VARIABLE_INDICES[vIndex];
+			/*[[[cog
+			import cog
+			from nlsmParams import namespace
 
-            double wTol=nlsm::NLSM_WAVELET_TOL;
-            std::function<double(double,double,double)> waveletTolFunc =[wTol](double x,double y, double z){ return nlsm::computeWTol(x,y,z,wTol);};
+			cog.outl("const unsigned int refineNumVars={0}::NUM_REFINE_VARS;".format(namespace))
+			cog.outl("unsigned int refineVarIds[refineNumVars];")
+			cog.outl("for(unsigned int vIndex=0;vIndex<refineNumVars;vIndex++)\n{")
+			cog.outl("\trefineVarIds[vIndex]={0}::REFINE_VARIABLE_INDICES[vIndex];".format(namespace))
+			cog.outl("}\n")
 
+			cog.outl("double minTol={0}::RK_MIN_TOL;".format(namespace))
+			]]]*/
+			//[[[end]]]
+
+            std::function<double(double,double,double)> tolFunc =[minTol](double x,double y, double z)
+			{ 
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("return {0}::computeTol(x,y,z,minTol);".format(namespace))
+
+				]]]*/
+				//[[[end]]]
+			};
 
             double l_min,l_max;
             for(double t=m_uiCurrentTime;t<m_uiTimeEnd;t=t+m_uiT_h)
             {
 
-                // checkpoint the previous solution value before going to the next step.
-                nlsm::timer::t_ioCheckPoint.start();
-                if((m_uiMesh->isActive()) && (m_uiCurrentStep%nlsm::NLSM_CHECKPT_FREQ)==0)
-                    storeCheckPoint(nlsm::NLSM_CHKPT_FILE_PREFIX.c_str());
-                nlsm::timer::t_ioCheckPoint.stop();
-                // write sol to vtu.
-                if((m_uiMesh->isActive()) && (m_uiCurrentStep%nlsm::NLSM_TIME_STEP_OUTPUT_FREQ)==0)
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("// checkpoint the previous solution value before going to the next step.")
+				cog.outl("{0}::timer::t_ioCheckPoint.start();".format(namespace))
+				cog.outl("if((m_uiMesh->isActive()) && (m_uiCurrentStep%{0}::CHECKPT_FREQ)==0)\n{{".format(namespace))
+				cog.outl("\tstoreCheckPoint({0}::CHKPT_FILE_PREFIX.c_str());".format(namespace))
+				cog.outl("}\n")
+				cog.outl("{0}::timer::t_ioCheckPoint.stop();".format(namespace))
+				
+				cog.outl("// write sol to vtu.")
+				cog.outl("if((m_uiMesh->isActive()) && (m_uiCurrentStep%{0}::TIME_STEP_OUTPUT_FREQ)==0)".format(namespace))
+
+				]]]*/
+				//[[[end]]]
                 {
 
                     l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
@@ -838,28 +864,37 @@ namespace ode
                         std::cout << "\t ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
                     }
 
-                    nlsm::timer::profileInfoIntermediate(nlsm::NLSM_PROFILE_FILE_PREFIX.c_str(),m_uiMesh,m_uiCurrentStep);
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
 
+					cog.outl("{0}::timer::profileInfoIntermediate({0}::PROFILE_FILE_PREFIX.c_str(),m_uiMesh,m_uiCurrentStep);".format(namespace))
+
+					]]]*/
+					//[[[end]]]
                 }
 
-                if((m_uiCurrentStep%nlsm::NLSM_TIME_STEP_OUTPUT_FREQ)==0)
-                    nlsm::timer::resetSnapshot();
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
 
-                if((m_uiCurrentStep%nlsm::NLSM_REMESH_TEST_FREQ)==0)
+				cog.outl("if((m_uiCurrentStep%{0}::TIME_STEP_OUTPUT_FREQ)==0)\n{{".format(namespace))
+				cog.outl("\t{0}::timer::resetSnapshot();".format(namespace))
+				cog.outl("}\n")
+
+				cog.outl("if((m_uiCurrentStep%{0}::REMESH_TEST_FREQ)==0)".format(namespace))
+
+				]]]*/
+				//[[[end]]]
                 {
 
                     #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
                                         unzipVars_async(m_uiPrevVar,m_uiUnzipVar);
                     #else
                                         performGhostExchangeVars(m_uiPrevVar);
-                                        //isRefine=m_uiMesh->isReMesh((const double **)m_uiPrevVar,refineVarIds,refineNumVars,nlsm::NLSM_WAVELET_TOL);
                                         unzipVars(m_uiPrevVar,m_uiUnzipVar);
                     #endif
                     
-                    //                     char fPrefix[256];
-                    //                     sprintf(fPrefix,"%s_wavelets_%d",nlsm::NLSM_VTU_FILE_PREFIX.c_str(),m_uiCurrentStep);
-                    //                     io::vtk::waveletsToVTU(m_uiMesh,(const double **)m_uiPrevVar,(const double**)m_uiUnzipVar,refineVarIds,refineNumVars,(const char*)fPrefix);
-
                     #ifdef DEBUG_RK_SOLVER
                                         if(m_uiMesh->isActive())
                                         {
@@ -869,17 +904,24 @@ namespace ode
 
                                         }
                     #endif
-                    nlsm::timer::t_isReMesh.start();
-                    if(nlsm::NLSM_ENABLE_BLOCK_ADAPTIVITY)
-                        isRefine=false;
-                    else
-                        isRefine=m_uiMesh->isReMeshUnzip((const double **)m_uiUnzipVar,refineVarIds,refineNumVars,waveletTolFunc,nlsm::NLSM_DENDRO_AMR_FAC);
-                    nlsm::timer::t_isReMesh.stop();
+
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
+
+					cog.outl("{0}::timer::t_isReMesh.start();".format(namespace))
+					cog.outl("if({0}::ENABLE_BLOCK_ADAPTIVITY)\n{{".format(namespace))
+					cog.outl("\tisRefine=false;")
+					cog.outl("}\nelse\n{")
+					cog.outl("\tisRefine=m_uiMesh->isReMeshUnzip((const double **)m_uiUnzipVar,refineVarIds,refineNumVars,tolFunc,{0}::DENDRO_AMR_FAC);".format(namespace))
+					cog.outl("}\n")
+					
+					cog.outl("{0}::timer::t_isReMesh.stop();".format(namespace))
+					]]]*/
+					//[[[end]]]
 
                     if(isRefine)
                     {
-
-
                         #ifdef DEBUG_IS_REMESH
                             unsigned int rank=m_uiMesh->getMPIRankGlobal();
                             MPI_Comm globalComm=m_uiMesh->getMPIGlobalCommunicator();
@@ -942,9 +984,17 @@ namespace ode
                             io::vtk::oct2vtu(&(*(localBlocks.begin())),localBlocks.size(),fN4,globalComm);
 
                         #endif
-                        nlsm::timer::t_mesh.start();
-                        ot::Mesh* newMesh=m_uiMesh->ReMesh(nlsm::NLSM_DENDRO_GRAIN_SZ,nlsm::NLSM_LOAD_IMB_TOL,nlsm::NLSM_SPLIT_FIX);
-                        nlsm::timer::t_mesh.stop();
+
+						/*[[[cog
+						import cog
+						from nlsmParams import namespace
+
+						cog.outl("{0}::timer::t_mesh.start();".format(namespace))
+						cog.outl("ot::Mesh* newMesh=m_uiMesh->ReMesh({0}::DENDRO_GRAIN_SZ,{0}::LOAD_IMB_TOL,{0}::SPLIT_FIX);".format(namespace))
+						cog.outl("{0}::timer::t_mesh.stop();\n".format(namespace))
+
+						]]]*/
+						//[[[end]]]
 
                         oldElements=m_uiMesh->getNumLocalMeshElements();
                         newElements=newMesh->getNumLocalMeshElements();
@@ -958,7 +1008,14 @@ namespace ode
                         // performs the inter-grid transfer
                         intergridTransferVars(m_uiPrevVar,newMesh);
 
-                        for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
+						/*[[[cog
+						import cog
+						from nlsmParams import namespace
+
+						cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
+
+						]]]*/
+						//[[[end]]]
                         {
                             delete [] m_uiVar[index];
                             delete [] m_uiVarIm[index];
@@ -978,15 +1035,18 @@ namespace ode
 
                         }
 
-                        for(unsigned int stage=0;stage<nlsm::NLSM_RK4_STAGES;stage++)
-                            for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                            {
-                                delete [] m_uiStage[stage][index];
-                                m_uiStage[stage][index]=NULL;
-                                m_uiStage[stage][index]=newMesh->createVector<double>();
-                            }
+						/*[[[cog
+						import cog
+						from nlsmParams import namespace
 
-
+						cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
+						cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
+						cog.outl("\t\tdelete[] m_uiStage[stage][index];")
+						cog.outl("\t\tm_uiStage[stage][index] = NULL;")
+						cog.outl("\t\tm_uiStage[stage][index] = newMesh->createVector<double>();")
+						cog.outl("\t}\n}\n")
+						]]]*/
+						//[[[end]]]
 
                         std::swap(newMesh,m_uiMesh);
                         delete newMesh;
@@ -1003,17 +1063,18 @@ namespace ode
                             if(!(m_uiMesh->getMPIRank())) {
                                 std::cout << "transfer completed:    ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
                             }
-
                         }
-
-
-
                     }
-
                 }
 
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
 
-                if((m_uiCurrentStep%nlsm::NLSM_IO_OUTPUT_FREQ)==0)
+				cog.outl("if((m_uiCurrentStep%{0}::IO_OUTPUT_FREQ)==0)".format(namespace))
+
+				]]]*/
+				//[[[end]]]
                 {
 
                     #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
@@ -1023,37 +1084,45 @@ namespace ode
                     unzipVars(m_uiPrevVar,m_uiUnzipVar);
                     #endif
 
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
 
+					cog.outl("writeToVTU(m_uiPrevVar,m_uiConstraintVars,{0}::NUM_EVOL_VARS_VTU_OUTPUT,0,{0}::VTU_OUTPUT_EVOL_INDICES,NULL);".format(namespace))
 
-                    //#ifdef NLSM_ENABLE_VTU_OUTPUT
-                    writeToVTU(m_uiPrevVar,m_uiConstraintVars,nlsm::NLSM_NUM_EVOL_VARS_VTU_OUTPUT,0,nlsm::NLSM_VTU_OUTPUT_EVOL_INDICES,NULL);
-                    //#endif
-
+					]]]*/
+					//[[[end]]]
                 }
 
-                nlsm::timer::t_rkStep.start();
-                performSingleIteration();
-                nlsm::timer::t_rkStep.stop();
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
 
+				cog.outl("{0}::timer::t_rkStep.start();".format(namespace))
+				cog.outl("performSingleIteration();")
+				cog.outl("{0}::timer::t_rkStep.stop();".format(namespace))
+
+				]]]*/
+				//[[[end]]]
 
                 std::swap(m_uiVar,m_uiPrevVar);
-
-                //if(m_uiCurrentStep==1) break;
-
             }
-
-
         }
-
 
         void RK4_NLSM::storeCheckPoint(const char * fNamePrefix)
         {
-
-
             if(m_uiMesh->isActive())
             {
                 unsigned int cpIndex;
-                (m_uiCurrentStep%(2*nlsm::NLSM_CHECKPT_FREQ)==0) ? cpIndex=0 : cpIndex=1; // to support alternate file writing.
+
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("(m_uiCurrentStep%(2*{0}::CHECKPT_FREQ)==0) ? cpIndex=0 : cpIndex=1;".format(namespace))
+
+				]]]*/
+				//[[[end]]]
                 unsigned int rank=m_uiMesh->getMPIRank();
                 unsigned int npes=m_uiMesh->getMPICommSize();
 
@@ -1062,23 +1131,20 @@ namespace ode
                 sprintf(fName,"%s_octree_%d_%d.oct",fNamePrefix,cpIndex,rank);
                 io::checkpoint::writeOctToFile(fName,pNodes,m_uiMesh->getNumLocalMeshElements());
 
-                unsigned int numVars=nlsm::NLSM_NUM_VARS;
-                const char ** varNames=nlsm::NLSM_VAR_NAMES;
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
 
-                /*for(unsigned int i=0;i<numVars;i++)
-                {
-                    sprintf(fName,"%s_%s_%d_%d.var",fNamePrefix,varNames[i],cpIndex,rank);
-                    io::checkpoint::writeVecToFile(fName,m_uiMesh,m_uiPrevVar[i]);
-                }*/
-
-                sprintf(fName,"%s_%d_%d.var",fNamePrefix,cpIndex,rank);
-                io::checkpoint::writeVecToFile(fName,m_uiMesh,(const double **)m_uiPrevVar,nlsm::NLSM_NUM_VARS);
-
+				cog.outl("unsigned int numVars={0}::NUM_VARS;".format(namespace))
+				cog.outl("const char ** varNames={0}::VAR_NAMES;".format(namespace))
+				cog.outl("sprintf(fName,\"%s_%d_%d.var\",fNamePrefix,cpIndex,rank);")
+				cog.outl("io::checkpoint::writeVecToFile(fName,m_uiMesh,(const double **)m_uiPrevVar,{0}::NUM_VARS);".format(namespace))
+				]]]*/
+				//[[[end]]]
 
                 if(!rank)
                 {
                     sprintf(fName,"%s_step_%d.cp",fNamePrefix,cpIndex);
-                    //std::cout<<"writing : "<<fName<<std::endl;
                     std::ofstream outfile(fName);
                     if(!outfile) {std::cout<<fName<<" file open failed "<<std::endl; return ;}
 
@@ -1099,16 +1165,9 @@ namespace ode
 
                     outfile<<std::setw(4)<<checkPoint<<std::endl;
                     outfile.close();
-
                 }
-
-
             }
-
-
-
         }
-
 
         void RK4_NLSM::restoreCheckPoint(const char * fNamePrefix,MPI_Comm comm)
         {
@@ -1153,15 +1212,20 @@ namespace ode
                         m_uiCurrentTime=checkPoint["DENDRO_RK45_TIME_CURRENT"];
                         m_uiCurrentStep=checkPoint["DENDRO_RK45_STEP_CURRENT"];
                         m_uiT_h=checkPoint["DENDRO_RK45_TIME_STEP_SIZE"];
+			
+						/*[[[cog
+						import cog
+						from nlsmParams import namespace
 
+						####TODO: Check if OK to change this checkpoint id
+						cog.outl("{0}::RK_MIN_TOL=checkPoint[\"DENDRO_RK45_WAVELET_TOLERANCE\"];".format(namespace))
+						cog.outl("{0}::LOAD_IMB_TOL=checkPoint[\"DENDRO_RK45_LOAD_IMB_TOLERANCE\"];".format(namespace))
 
-                        nlsm::NLSM_WAVELET_TOL=checkPoint["DENDRO_RK45_WAVELET_TOLERANCE"];
-                        nlsm::NLSM_LOAD_IMB_TOL=checkPoint["DENDRO_RK45_LOAD_IMB_TOLERANCE"];
+						]]]*/
+						//[[[end]]]
                         numVars=checkPoint["DENDRO_RK45_NUM_VARS"];
                         activeCommSz=checkPoint["DENDRO_RK45_ACTIVE_COMM_SZ"];
                     }
-
-
                 }
 
                 par::Mpi_Allreduce(&restoreStatus,&restoreStatusGlobal,1,MPI_MAX,m_uiComm);
@@ -1175,9 +1239,15 @@ namespace ode
 
                 par::Mpi_Bcast(&m_uiT_h,1,0,comm);
 
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
 
-                par::Mpi_Bcast(& nlsm::NLSM_WAVELET_TOL,1,0,comm);
-                par::Mpi_Bcast(&nlsm::NLSM_LOAD_IMB_TOL,1,0,comm);
+				cog.outl("par::Mpi_Bcast(&{0}::RK_MIN_TOL,1,0,comm);".format(namespace))
+				cog.outl("par::Mpi_Bcast(&{0}::LOAD_IMB_TOL,1,0,comm);".format(namespace))
+
+				]]]*/
+				//[[[end]]]
 
                 par::Mpi_Bcast(&numVars,1,0,comm);
                 par::Mpi_Bcast(&m_uiOrder,1,0,comm);
@@ -1190,8 +1260,6 @@ namespace ode
                     if(!rank)std::cout<<" [Error] : checkpoint file written from  a larger communicator than the current global comm. (i.e. communicator shrinking not allowed in the restore step. )"<<std::endl;
                     exit(0);
                 }
-
-
 
                 bool isActive=(rank<activeCommSz);
 
@@ -1222,7 +1290,14 @@ namespace ode
 
                 newMesh=new ot::Mesh(octree,1,m_uiOrder,activeCommSz,m_uiComm);
 
-                for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
+
+				]]]*/
+				//[[[end]]]
                 {
                     delete [] m_uiPrevVar[index];
                     delete [] m_uiVar[index];
@@ -1235,18 +1310,20 @@ namespace ode
                     m_uiVarIm[index]=newMesh->createVector<double>();
                     m_uiUnzipVar[index]=newMesh->createUnZippedVector<double>();
                     m_uiUnzipVarRHS[index]=newMesh->createUnZippedVector<double>();
-
                 }
 
-                for(unsigned int stage=0;stage<nlsm::NLSM_RK4_STAGES;stage++)
-                    for(unsigned int index=0;index<nlsm::NLSM_NUM_VARS;index++)
-                    {
-                        delete [] m_uiStage[stage][index];
-                        m_uiStage[stage][index]=newMesh->createVector<double>();
-                    }
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
 
-                const char ** varNames=nlsm::NLSM_VAR_NAMES;
-
+				cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
+				cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n\t{{".format(namespace))
+				cog.outl("\t\tdelete [] m_uiStage[stage][index];")
+				cog.outl("\t\tm_uiStage[stage][index]=newMesh->createVector<double>();")
+				cog.outl("\t}\n}")
+				cog.outl("const char ** varNames={0}::VAR_NAMES;".format(namespace))
+				]]]*/
+				//[[[end]]]
 
                 if(isActive) {
 
@@ -1257,16 +1334,16 @@ namespace ode
                     MPI_Comm_size(newComm, &activeNpes);
                     assert(activeNpes == activeCommSz);
 
-                    /*for(unsigned int i=0;i<numVars;i++)
-                    {
-                        sprintf(fName,"%s_%s_%d_%d.var",fNamePrefix,varNames[i],cpIndex,activeRank);
-                        restoreStatus=io::checkpoint::readVecFromFile(fName,newMesh,m_uiPrevVar[i]);
-                        if(restoreStatus==1) break;
-
-                    }*/
                     sprintf(fName,"%s_%d_%d.var",fNamePrefix,cpIndex,activeRank);
-                    restoreStatus=io::checkpoint::readVecFromFile(fName,newMesh,m_uiPrevVar,nlsm::NLSM_NUM_VARS);
 
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
+
+					cog.outl("restoreStatus=io::checkpoint::readVecFromFile(fName,newMesh,m_uiPrevVar,{0}::NUM_VARS);".format(namespace))
+
+					]]]*/
+					//[[[end]]]
                 }
                 MPI_Comm_free(&newComm);
                 par::Mpi_Allreduce(&restoreStatus,&restoreStatusGlobal,1,MPI_MAX,m_uiComm);
@@ -1295,10 +1372,6 @@ namespace ode
 
             if(!rank) std::cout<<" checkpoint at step : "<<m_uiCurrentStep<<"active Comm. sz: "<<activeCommSz<<" restore successful: "<<" restored mesh size: "<<totalElems<<std::endl;
             return;
-
-
         }
-
-
     }// end of namespace solver
 } // end of namespace ode
