@@ -360,15 +360,15 @@ namespace ode
                                         reallocateMPIResources();
                     #endif
 
-                    if(m_uiMesh->isActive())
-                    {
-                        double l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                        double l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                        if(!(m_uiMesh->getMPIRank())) {
-                            std::cout << "transfer completed:    ||VAR::U_ALPHA|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
-                        }
-
-                    }
+					//TODO: What is this?
+                    //if(m_uiMesh->isActive())
+                    //{
+                    //    double l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
+                    //    double l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
+                    //    if(!(m_uiMesh->getMPIRank())) {
+                    //        std::cout << "transfer completed:    ||VAR::U_ALPHA|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
+                    //    }
+                    //}
 
                     iterCount+=1;
                 }
@@ -551,7 +551,7 @@ namespace ode
 			from nlsmParams import namespace
 
 			cog.outl("{0}::timer::t_unzip_async.start();".format(namespace))
-			cog.outl("for(unsigned int var=0;var<{0}::NUM_VARS;var+=nlsm::NLSM_ASYNC_COMM_K)\n{{".format(namespace))
+			cog.outl("for(unsigned int var=0;var<{0}::NUM_VARS;var+={0}::ASYNC_COMM_K)\n{{".format(namespace))
 			cog.outl("\tfor(unsigned int i=0;(i<{0}::ASYNC_COMM_K);i++)\n\t{{".format(namespace))
 			cog.outl("\t\tm_uiMesh->ghostExchangeStart(zipIn[var+i],m_uiSendNodeBuf[i],m_uiRecvNodeBuf[i],m_uiSendReqs[i],m_uiRecvReqs[i]);")
 			cog.outl("\t}\n")
@@ -721,8 +721,14 @@ namespace ode
 
                     }
 
-                    current_t_adv=current_t+RK4_T[(nlsm::NLSM_RK4_STAGES-1)]*m_uiT_h;
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
 
+					cog.outl("current_t_adv=current_t+RK4_T[({0}::RK4_STAGES-1)]*m_uiT_h;".format(namespace))
+
+					]]]*/
+					//[[[end]]]
 
                     #ifdef DEBUG_RK_SOLVER
                                         if(!rank)std::cout<<" stage: "<<(nlsm::NLSM_RK4_STAGES-1)<<" begin: "<<std::endl;
@@ -781,7 +787,7 @@ namespace ode
 
 						cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
 						cog.outl("\tm_uiVar[index][node]=m_uiPrevVar[index][node];")
-						cog.outl("\tfor(unsigned int s=0;s<(nlsm::NLSM_RK4_STAGES);s++)\n{{".format(namespace))
+						cog.outl("\tfor(unsigned int s=0;s<({0}::RK4_STAGES);s++)\n{{".format(namespace))
 						cog.outl("\t\tm_uiVar[index][node]+=(RK4_C[s]*m_uiT_h*m_uiStage[s][index][node]);")
 						cog.outl("\t}\n}")
 						]]]*/
@@ -857,12 +863,13 @@ namespace ode
 				//[[[end]]]
                 {
 
-                    l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                    l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                    if(!m_uiMesh->getMPIRank()) {
-                        std::cout << "executing step: " << m_uiCurrentStep << " dt: " << m_uiT_h << " rk_time : "<< m_uiCurrentTime << std::endl;
-                        std::cout << "\t ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
-                    }
+					//TODO: Is this necessary?
+                    //l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
+                    //l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
+                    //if(!m_uiMesh->getMPIRank()) {
+                    //    std::cout << "executing step: " << m_uiCurrentStep << " dt: " << m_uiT_h << " rk_time : "<< m_uiCurrentTime << std::endl;
+                    //    std::cout << "\t ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
+                    //}
 
 					/*[[[cog
 					import cog
@@ -1056,14 +1063,15 @@ namespace ode
                             reallocateMPIResources();
                         #endif
 
-                        if(m_uiMesh->isActive())
-                        {
-                            l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                            l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                            if(!(m_uiMesh->getMPIRank())) {
-                                std::cout << "transfer completed:    ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
-                            }
-                        }
+						//TODO: is this necessary?
+                        //if(m_uiMesh->isActive())
+                        //{
+                        //    l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
+                        //    l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
+                        //    if(!(m_uiMesh->getMPIRank())) {
+                        //        std::cout << "transfer completed:    ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
+                        //    }
+                        //}
                     }
                 }
 
@@ -1158,8 +1166,16 @@ namespace ode
                     checkPoint["DENDRO_RK45_TIME_STEP_SIZE"]=m_uiT_h;
                     checkPoint["DENDRO_RK45_LAST_IO_TIME"]=m_uiCurrentTime;
 
-                    checkPoint["DENDRO_RK45_WAVELET_TOLERANCE"]=nlsm::NLSM_WAVELET_TOL;
-                    checkPoint["DENDRO_RK45_LOAD_IMB_TOLERANCE"]=nlsm::NLSM_LOAD_IMB_TOL;
+					/*[[[cog
+					import cog
+					from nlsmParams import namespace
+
+					####TODO: safe to change checkpoint names?
+					cog.outl("checkPoint[\"DENDRO_RK45_WAVELET_TOLERANCE\"]={0}::RK_MIN_TOL;".format(namespace))
+					cog.outl("checkPoint[\"DENDRO_RK45_LOAD_IMB_TOLERANCE\"]={0}::LOAD_IMB_TOL;".format(namespace))
+
+					]]]*/
+					//[[[end]]]
                     checkPoint["DENDRO_RK45_NUM_VARS"]=numVars; // number of variables to restore.
                     checkPoint["DENDRO_RK45_ACTIVE_COMM_SZ"]=m_uiMesh->getMPICommSize(); // (note that rank 0 is always active).
 

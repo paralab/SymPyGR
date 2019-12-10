@@ -85,9 +85,9 @@ int main (int argc, char** argv)
 
     //2. generate the initial grid.
     std::vector<ot::TreeNode> tmpNodes;
-    std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){nlsm::initData(x,y,z,var);};
-    std::function<void(double,double,double,double,double*)> u_x_t=[](double x,double y,double z,double t,double*var){nlsm::analyticalSol(x,y,z,t,var);};
-    //std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){nlsm::KerrSchildData(x,y,z,var);};
+    std::function<void(double,double,double,double*)> f_init=[](double x,double y,double z,double*var){
+		nlsm::initData(x,y,z,var);
+	};
 
 	/*[[[cog
 	import cog
@@ -121,7 +121,7 @@ int main (int argc, char** argv)
 	cog.outl("\tif(!rank) std::cout<<YLW<<\"Using function2Octree. AMR enabled \"<<NRM<<std::endl;")
 	cog.outl("")
 
-	cog.outl("\tfunction2Octree(f_init,{0}::NUM_VARS,{0}::REFINE_VARIABLE_INDICES,{0}::NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,{0}::WAVELET_TOL,{0}::ELE_ORDER,comm);".format(namespace))
+	cog.outl("\tfunction2Octree(f_init,{0}::NUM_VARS,{0}::REFINE_VARIABLE_INDICES,{0}::NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,{0}::RK_MIN_TOL,{0}::ELE_ORDER,comm);".format(namespace))
 	cog.outl("\tstd::cout<<\"f2o else end\"<<std::endl;")
 
 	cog.outl("}")

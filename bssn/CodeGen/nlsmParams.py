@@ -13,7 +13,8 @@ parameters.add(PresetParam.ELE_ORDER, 4)
 
 parameters.setCategory("IO")
 parameters.add(PresetParam.RESTORE_SOLVER, 0)
-parameters.add(PresetParam.IO_OUTPUT_FREQ, 400)
+parameters.add(PresetParam.IO_OUTPUT_FREQ, 10)
+parameters.add(PresetParam.TIME_STEP_OUTPUT_FREQ,10)
 parameters.add(PresetParam.REMESH_TEST_FREQ, 10)
 parameters.add(PresetParam.CHECKPT_FREQ, 10000)
 parameters.add(PresetParam.IO_OUTPUT_GAP, 1)
@@ -55,6 +56,13 @@ parameters.add(PresetParam.COMPD_MIN, compd_min)
 
 compd_max = [parameters[PresetParam.GRID_MAX_X].value, parameters[PresetParam.GRID_MAX_Y].value, parameters[PresetParam.GRID_MAX_Z].value]
 parameters.add(PresetParam.COMPD_MAX, compd_max)
+
+octree_min = [0.0,0.0,0.0]
+parameters.add(PresetParam.OCTREE_MIN, octree_min)
+
+maxdepth = 1<<parameters[PresetParam.MAXDEPTH].value
+octree_max = [maxdepth,maxdepth,maxdepth]
+parameters.add(PresetParam.OCTREE_MAX, octree_max)
 
 timestep = parameters[PresetParam.CFL_FACTOR].value * (parameters[PresetParam.COMPD_MAX].value[0] - parameters[PresetParam.COMPD_MIN].value[0]) / (1 << parameters[PresetParam.MAXDEPTH].value)
 parameters.add(PresetParam.RK45_TIME_STEP_SIZE, timestep)

@@ -19,53 +19,30 @@
 #include "dendroProfileParams.h"
 #include "profile_params.h"
 
-
-#define Rx (nlsm::NLSM_COMPD_MAX[0]-nlsm::NLSM_COMPD_MIN[0])
-#define Ry (nlsm::NLSM_COMPD_MAX[1]-nlsm::NLSM_COMPD_MIN[1])
-#define Rz (nlsm::NLSM_COMPD_MAX[2]-nlsm::NLSM_COMPD_MIN[2])
-
-#define RgX (nlsm::NLSM_OCTREE_MAX[0]-nlsm::NLSM_OCTREE_MIN[0])
-#define RgY (nlsm::NLSM_OCTREE_MAX[1]-nlsm::NLSM_OCTREE_MIN[1])
-#define RgZ (nlsm::NLSM_OCTREE_MAX[2]-nlsm::NLSM_OCTREE_MIN[2])
-
-#define GRIDX_TO_X(xg) (((Rx/RgX)*(xg-nlsm::NLSM_OCTREE_MIN[0]))+nlsm::NLSM_COMPD_MIN[0])
-#define GRIDY_TO_Y(yg) (((Ry/RgY)*(yg-nlsm::NLSM_OCTREE_MIN[1]))+nlsm::NLSM_COMPD_MIN[1])
-#define GRIDZ_TO_Z(zg) (((Rz/RgZ)*(zg-nlsm::NLSM_OCTREE_MIN[2]))+nlsm::NLSM_COMPD_MIN[2])
-
-#define X_TO_GRIDX(xc) (((RgX/Rx)*(xc-nlsm::NLSM_COMPD_MIN[0]))+nlsm::NLSM_OCTREE_MIN[0])
-#define Y_TO_GRIDY(yc) (((RgY/Ry)*(yc-nlsm::NLSM_COMPD_MIN[1]))+nlsm::NLSM_OCTREE_MIN[1])
-#define Z_TO_GRIDZ(zc) (((RgZ/Rz)*(zc-nlsm::NLSM_COMPD_MIN[2]))+nlsm::NLSM_OCTREE_MIN[2])
-
-
-using json = nlohmann::json;
 /*[[[cog
 import cog
-import nlsmParams as p
+from nlsmParams import namespace
 
-cog.outl("namespace {0}".format(p.namespace))
+cog.outl("#define Rx ({0}::COMPD_MAX[0]-{0}::COMPD_MIN[0])".format(namespace))
+cog.outl("#define Ry ({0}::COMPD_MAX[1]-{0}::COMPD_MIN[1])".format(namespace))
+cog.outl("#define Rz ({0}::COMPD_MAX[2]-{0}::COMPD_MIN[2])\n".format(namespace))
+
+cog.outl("#define RgX ({0}::OCTREE_MAX[0]-{0}::OCTREE_MIN[0])".format(namespace))
+cog.outl("#define RgY ({0}::OCTREE_MAX[1]-{0}::OCTREE_MIN[1])".format(namespace))
+cog.outl("#define RgZ ({0}::OCTREE_MAX[2]-{0}::OCTREE_MIN[2])\n".format(namespace))
+
+cog.outl("#define GRIDX_TO_X(xg) (((Rx/RgX)*(xg-{0}::OCTREE_MIN[0]))+{0}::COMPD_MIN[0])".format(namespace))
+cog.outl("#define GRIDY_TO_Y(yg) (((Ry/RgY)*(yg-{0}::OCTREE_MIN[1]))+{0}::COMPD_MIN[1])".format(namespace))
+cog.outl("#define GRIDZ_TO_Z(zg) (((Rz/RgZ)*(zg-{0}::OCTREE_MIN[2]))+{0}::COMPD_MIN[2])\n".format(namespace))
+
+cog.outl("#define X_TO_GRIDX(xc) (((RgX/Rx)*(xc-{0}::COMPD_MIN[0]))+{0}::OCTREE_MIN[0])".format(namespace))
+cog.outl("#define Y_TO_GRIDY(yc) (((RgY/Ry)*(yc-{0}::COMPD_MIN[1]))+{0}::OCTREE_MIN[1])".format(namespace))
+cog.outl("#define Z_TO_GRIDZ(zc) (((RgZ/Rz)*(zc-{0}::COMPD_MIN[2]))+{0}::OCTREE_MIN[2])\n".format(namespace))
+
+cog.outl("using json = nlohmann::json;")
+
+cog.outl("namespace {0}".format(namespace))
 cog.outl("{")
-
-cog.out("enum VAR {")
-i = 0
-for param in p.parameters.varsValues():
-	if i > 0:
-		cog.out(", ")
-
-	cog.out(param.id)
-	i+=1
-
-cog.out("};\n")
-
-cog.out("static const char * VAR_NAMES[] = {")
-i = 0
-for param in p.parameters.varsValues():
-	if i > 0:
-		cog.out(", ")
-
-	cog.out("\"" + param.id + "\"")
-	i+=1
-
-cog.out("};\n")
 
 ]]]*/
 //[[[end]]]
@@ -92,12 +69,6 @@ cog.out("};\n")
 
  // Initial data
  void initData(const double xx1,const double yy1,const double zz1, double *var);
-
- /**
-  * analytical solution based on the d'Alembert's formular.
-  *
-  * */
- void analyticalSol(const double xx1,const double yy1,const double zz1,const double t, double *var);
 
  /**
   * @brief: Generates block adaptive octree for the given binary blockhole problem.

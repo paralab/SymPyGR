@@ -13,7 +13,7 @@
 import cog
 from nlsmParams import namespace
 
-cog.outl(namespace)
+cog.outl("namespace {0}".format(namespace))
 
 ]]]*/
 //[[[end]]]
@@ -112,7 +112,7 @@ cog.outl(namespace)
         par::Mpi_Bcast(&RESTORE_SOLVER,1,0,comm);
         par::Mpi_Bcast(&ENABLE_BLOCK_ADAPTIVITY,1,0,comm);
 
-        par::Mpi_Bcast(&WAVELET_TOL,1,0,comm);
+        par::Mpi_Bcast(&RK_MIN_TOL,1,0,comm);
 
         par::Mpi_Bcast(&LOAD_IMB_TOL,1,0,comm);
         par::Mpi_Bcast(&RK45_TIME_BEGIN,1,0,comm);
@@ -122,26 +122,18 @@ cog.outl(namespace)
         par::Mpi_Bcast(&DIM,1,0,comm);
         par::Mpi_Bcast(&MAXDEPTH,1,0,comm);
 
-        par::Mpi_Bcast(&NLSM_ID_TYPE,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_AMP1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_AMP2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_DELTA1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_DELTA2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_XC1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_YC1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_ZC1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_XC2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_YC2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_ZC2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_EPSX1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_EPSY1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_EPSX2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_EPSY2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_R1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_R2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_NU1,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_NU2,1,0,comm);
-        par::Mpi_Bcast(&NLSM_ID_OMEGA,1,0,comm);
+		/*[[[cog
+		import cog
+		import nlsmParams as p
+		from sympy.printing.cxxcode import cxxcode
+
+		for param in p.parameters.initialDataValues():
+			###Ignore data defined with an expression, because they won't be define din parameters.cpp/parameters.h
+			###TODO: Rewrite param class so this is more obvious to keep track of
+			if param.expression is None:
+				cog.outl("par::Mpi_Bcast(&{0},1,0,comm);".format(param.id))
+		]]]*/
+		//[[[end]]]
 
         par::Mpi_Bcast(&GRID_MIN_X,1,0,comm);
         par::Mpi_Bcast(&GRID_MAX_X,1,0,comm);
@@ -158,18 +150,18 @@ cog.outl(namespace)
         par::Mpi_Bcast(&BLK_MAX_Y,1,0,comm);
         par::Mpi_Bcast(&BLK_MAX_Z,1,0,comm);
 
-        NLSM_OCTREE_MAX[0]=(double )(1u<<nlsm::NLSM_MAXDEPTH);
-        NLSM_OCTREE_MAX[1]=(double )(1u<<nlsm::NLSM_MAXDEPTH);
-        NLSM_OCTREE_MAX[2]=(double )(1u<<nlsm::NLSM_MAXDEPTH);
+		//TODO: Confirm shouldn't be overwriting param file here
+        //OCTREE_MAX[0]=(double )(1u<<nlsm::MAXDEPTH);
+        //OCTREE_MAX[1]=(double )(1u<<nlsm::MAXDEPTH);
+        //OCTREE_MAX[2]=(double )(1u<<nlsm::MAXDEPTH);
 
-        COMPD_MIN[0]=GRID_MIN_X;
-        COMPD_MIN[1]=GRID_MIN_Y;
-        COMPD_MIN[2]=GRID_MIN_Z;
+        //COMPD_MIN[0]=GRID_MIN_X;
+        //COMPD_MIN[1]=GRID_MIN_Y;
+        //COMPD_MIN[2]=GRID_MIN_Z;
 
-        COMPD_MAX[0]=GRID_MAX_X;
-        COMPD_MAX[1]=GRID_MAX_Y;
-        COMPD_MAX[2]=GRID_MAX_Z;
-
+        //COMPD_MAX[0]=GRID_MAX_X;
+        //COMPD_MAX[1]=GRID_MAX_Y;
+        //COMPD_MAX[2]=GRID_MAX_Z;
 
         par::Mpi_Bcast(&KO_DISS_SIGMA, 1, 0, comm);
 
@@ -215,89 +207,6 @@ cog.outl(namespace)
 			cog.outl("var[VAR::{0}] = {0};".format(param.id))
 		]]]*/
 		//[[[end]]]
-
-    }
-
-
-    void analyticalSol(const double xx1,const double yy1,const double zz1,const double t, double *var)
-    {
-        const double x=GRIDX_TO_X(xx1);
-        const double y=GRIDY_TO_Y(yy1);
-        const double z=GRIDZ_TO_Z(zz1);
-
-        const double amp1 = nlsm::NLSM_ID_AMP1;
-        const double amp2 = nlsm::NLSM_ID_AMP2;
-        const double delta1 = nlsm::NLSM_ID_DELTA1;
-        const double delta2 = nlsm::NLSM_ID_DELTA2;
-        const double xc1 = nlsm::NLSM_ID_XC1;
-        const double yc1 = nlsm::NLSM_ID_YC1;
-        const double zc1 = nlsm::NLSM_ID_ZC1;
-        const double xc2 = nlsm::NLSM_ID_XC2;
-        const double yc2 = nlsm::NLSM_ID_YC2;
-        const double zc2 = nlsm::NLSM_ID_ZC2;
-        const double epsx1 = nlsm::NLSM_ID_EPSX1;
-        const double epsy1 = nlsm::NLSM_ID_EPSY1;
-        const double epsx2 = nlsm::NLSM_ID_EPSX2;
-        const double epsy2 = nlsm::NLSM_ID_EPSY2;
-        const double R1 = nlsm::NLSM_ID_R1;
-        const double R2 = nlsm::NLSM_ID_R2;
-        const double nu1 = nlsm::NLSM_ID_NU1;
-        const double nu2 = nlsm::NLSM_ID_NU2;
-        const double Omega = nlsm::NLSM_ID_OMEGA;
-
-        double chi=0.0, phi=0.0;
-
-        if (nlsm::NLSM_ID_TYPE == 0) {
-         /* this is the original test data */
-          const double amp = 1.0;
-          const double delta = 3.0;
-          const double xc = 0.0;
-          const double yc = 0.0;
-          const double zc = 0.0;
-          const double epsx = 1.0;
-          const double epsy = 1.0;
-          const double epsz = 1.0;
-          const double R = 0.0;
-	      double rt = sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
-          double rt_pt = rt + t;
-          double rt_mt = rt - t;
-          chi = 0.5*amp *(exp(-(rt_pt-R)*(rt_pt-R)/(delta*delta)) + exp(-(rt_mt-R)*(rt_mt-R)/(delta*delta))); 
-          phi = 0.0; 
-
-        }else if (nlsm::NLSM_ID_TYPE == 3) {
-            /* this is the original test data */
-            const double amp = 1.0e-2;
-            const double delta = 1.0;
-            const double xc = 0.0;
-            const double yc = 0.0;
-            const double zc = 0.0;
-            const double epsx = 1.0;
-            const double epsy = 1.0;
-            const double epsz = 1.0;
-            const double R = 0.0;
-            double rt = sqrt( epsx*(x-xc)*(x-xc) + epsy*(y-yc)*(y-yc) + epsz*(z-zc)*(z-zc) );
-            double rt_plus_t  = ( epsx*(x-xc) + epsy*(y-yc) + epsz*(z-zc) +sqrt(3)*t );
-            double rt_minus_t = ( epsx*(x-xc) + epsy*(y-yc) + epsz*(z-zc) -sqrt(3)*t );
-            chi = amp *exp(-(rt_plus_t-R)/(delta*delta));
-            //chi = 0.5*amp *(exp(-(rt_plus_t-R)/(delta*delta))+ exp(-(rt_minus_t-R)/(delta*delta)));
-            phi = 0.0;
-            
-        } else if (nlsm::NLSM_ID_TYPE == 4) {
-            double rt1 = sqrt( (x-xc1)*(x-xc1) + (y-yc1)*(y-yc1) + (z-zc1)*(z-zc1) );
-
-          if (rt1 < 1.0e-7) {
-            chi = 0.0;
-            phi = 0.0;
-          }
-          else {
-            chi = amp1 * exp(-(rt1-R1-t)*(rt1-R1-t)/(delta1*delta1)) / rt1;
-            phi = chi * ( 2.0*(rt1-R1-t)/(delta1*delta1) );
-          }
-
-        }
-
-        var[VAR::U_CHI] = chi;
-        var[VAR::U_PHI] = phi;
 
     }
 
@@ -526,10 +435,16 @@ cog.outl("namespace {0}".format(namespace))
 
                 outfile<<"active npes : "<<activeNpes<<std::endl;
                 outfile<<"global npes : "<<globalNpes<<std::endl;
-                outfile<<"partition tol : "<<nlsm::NLSM_LOAD_IMB_TOL<<std::endl;
-                outfile<<"wavelet tol : "<<nlsm::NLSM_WAVELET_TOL<<std::endl;
-                outfile<<"maxdepth : "<<nlsm::NLSM_MAXDEPTH<<std::endl;
 
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("outfile<<\"partition tol : \"<<{0}::LOAD_IMB_TOL<<std::endl;".format(namespace))
+				cog.outl("outfile<<\"RK tol : \"<<{0}::RK_MIN_TOL<<std::endl;".format(namespace))
+				cog.outl("outfile<<\"maxdepth : \"<<{0}::MAXDEPTH<<std::endl;".format(namespace))
+				]]]*/
+				//[[[end]]]
             }
 
             MPI_Comm comm=commActive;
@@ -763,10 +678,16 @@ cog.outl("namespace {0}".format(namespace))
                 outfile<<"active npes : "<<activeNpes<<std::endl;
                 outfile<<"global npes : "<<globalNpes<<std::endl;
                 outfile<<"current step : "<<currentStep<<std::endl;
-                outfile<<"partition tol : "<<nlsm::NLSM_LOAD_IMB_TOL<<std::endl;
-                outfile<<"wavelet tol : "<<nlsm::NLSM_WAVELET_TOL<<std::endl;
-                outfile<<"maxdepth : "<<nlsm::NLSM_MAXDEPTH<<std::endl;
 
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("outfile<<\"partition tol : \"<<{0}::LOAD_IMB_TOL<<std::endl;".format(namespace))
+				cog.outl("outfile<<\"RK tol : \"<<{0}::RK_MIN_TOL<<std::endl;".format(namespace))
+				cog.outl("outfile<<\"maxdepth : \"<<{0}::MAXDEPTH<<std::endl;".format(namespace))
+				]]]*/
+				//[[[end]]]
             }
 
             MPI_Comm comm=commActive;
@@ -1230,12 +1151,23 @@ cog.outl("namespace {0}".format(namespace))
             MPI_Comm comm=commActive;
             unsigned int rank =activeRank;
 
-            if(!rank) outfile<<currentStep<<"\t ";
-            if(!rank) outfile<<activeNpes<<"\t ";
-            if(!rank) outfile<<globalNpes<<"\t ";
-            if(!rank) outfile<<nlsm::NLSM_LOAD_IMB_TOL<<"\t ";
-            if(!rank) outfile<<nlsm::NLSM_WAVELET_TOL<<"\t ";
-            if(!rank) outfile<<nlsm::NLSM_MAXDEPTH<<"\t ";
+			if (!rank) 
+			{
+				outfile << currentStep << "\t ";
+				outfile << activeNpes << "\t ";
+				outfile << globalNpes << "\t ";
+
+				/*[[[cog
+				import cog
+				from nlsmParams import namespace
+
+				cog.outl("outfile<<{0}::LOAD_IMB_TOL<<\"\t \";".format(namespace))
+				cog.outl("outfile<<{0}::RK_MIN_TOL<<\"\t \";".format(namespace))
+				cog.outl("outfile<<{0}::MAXDEPTH<<\"\t \";".format(namespace))
+
+				]]]*/
+				//[[[end]]]
+			}
 
             localSz=pMesh->getNumLocalMeshElements();
             par::Mpi_Reduce(&localSz,&globalSz,1,MPI_SUM,0,comm);

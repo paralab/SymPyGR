@@ -3,8 +3,8 @@ import nlsmParams
 from cogapp import Cog
 from projectPaths import inputPath, outputPath, dendroRootPath, dendroLibPath
 
-#args = ["cog","-o",outputPath + "CMakeLists.txt", inputPath + "CMakeLists.txt.in"]
-#ret = Cog().main(args)
+args = ["cog","-o",outputPath + "CMakeLists.txt", inputPath + "CMakeLists.txt.in"]
+ret = Cog().main(args)
 
 srcFiles = ["derivs.cpp.in",
 			"nlsm.cpp.in",
