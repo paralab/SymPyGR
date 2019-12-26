@@ -32,6 +32,18 @@ if(MPI_LINK_FLAGS)
     set(LINK_FLAGS "${LINK_FLAGS} ${MPI_LINK_FLAGS}")
 endif()
 
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+set(LAPACK_LINKER_FLAGS -llapacke -llapack -lblas -lgfortran -lquadmath)
+set(LAPACKE_DIR $ENV{LAPACK}/LAPACKE)
+set(LINK_FLAGS "${LINK_FLAGS} ${LAPACK_LINKER_FLAGS}")
+find_library(LAPACKE_LIB
+		NAMES lapacke lapackelib liblapacke
+		HINTS "/usr/lib/"
+		)
+set(LAPACK_LIBRARIES ${LAPACK_LIBRARIES} ${LAPACKE_LIB})
+message(STATUS ${LAPACK_LIBRARIES})
+
 find_library(DENDRO_LIB NAMES dendro5 PATHS ${DENDRO_LIB_PATH})
 
 set(INC include/parameters.h

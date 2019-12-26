@@ -183,16 +183,16 @@ class Parameters:
 		first = True
 		for key in categories:
 			if not first:
-				out.write(",\n")
-				first = False
+				out.write(",\n\n")
 
 			keyLength = len(key) if key is not None else 0
 			if keyLength > 0:
+				first = False
 				out.write('{0}"__comment__" : "{1} {2} {3}",\n'.format(self.indent, int(math.floor((50 - keyLength) / 2) - 1) * "=", key,
 																	int(math.ceil((50 - keyLength) / 2) - 1) * "="))
 			out.write(categories[key])
 			if keyLength > 0:
-				out.write('{0}"__comment__" : "{1}"\n\n'.format(self.indent, "=" * 50))
+				out.write('{0}"__comment__" : "{1}"'.format(self.indent, "=" * 50))
 
 		out.write("\n}")
 		out.close()
