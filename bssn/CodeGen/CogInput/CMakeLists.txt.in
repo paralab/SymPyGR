@@ -44,6 +44,89 @@ find_library(LAPACKE_LIB
 set(LAPACK_LIBRARIES ${LAPACK_LIBRARIES} ${LAPACKE_LIB})
 message(STATUS ${LAPACK_LIBRARIES})
 
+option(USE_64BIT_INDICES "Use 64-Bit indices. Reverts to 32-bit if turned off" ON)
+option(HILBERT_ORDERING "Use Hilbert ordering instead of Morton" ON)
+option(RUN_WEAK_SCALING "Run Entire Weak Scaling" ON)
+option(ALLTOALLV_FIX "Use K-way all to all v" OFF)
+option(SPLITTER_SELECTION_FIX "Turn on Splitter Selection fix" ON)
+option(DIM_2 "use the two dimentional sorting" OFF)
+option(PROFILE_TREE_SORT "Profile the tree sort code, construction and balancing. " OFF)
+option(WITH_BLAS_LAPACK "build using BLAS and LAPACk" ON)
+option(MANUAL_BLAS_LAPACK "configure BLAS and LAPACK Manually" OFF)
+option(DENDRO_VTK_BINARY "write vtk/vtu files in binary mode " ON)
+option(DENDRO_VTK_ZLIB_COMPRES "write vtk/vtu files in binary mode with zlib compression (only compatible with binary mode) " OFF)
+option(ALLTOALL_SPARSE "uses isend irecv for ghost exchange (for some mpi implementations this might be efficient)" OFF)
+option(ENABLE_DENDRO_PROFILE_COUNTERS " enables dendro internal profile counters. " OFF)
+option(RK_SOLVER_OVERLAP_COMM_AND_COMP " enables RK solver comm. & comp. overlap. (might be good in large scale runs) " ON)
+option(WITH_CUDA " build dendro with cuda " OFF)
+option(BUILD_WITH_PETSC " build dendro with PETSC " OFF)
+option(USE_FD_INTERP_FOR_UNZIP "use FD style interpolation for unzip" OFF)
+
+if(DIM_2)
+    add_definitions(-DDIM_2)
+endif()
+
+if(PROFILE_TREE_SORT)
+    add_definitions(-DPROFILE_TREE_SORT)
+endif()
+
+if(USE_64BIT_INDICES)
+    add_definitions(-DUSE_64BIT_INDICES)
+    #message('Configuring 64BIT indices')
+endif()
+
+if(HILBERT_ORDERING)
+    add_definitions(-DHILBERT_ORDERING)
+    #message (Configuring with HIlbert)
+endif()
+
+if(RUN_WEAK_SCALING)
+    add_definitions(-DRUN_WEAK_SCALING)
+    #message('Configuring with Weak Scaling')
+endif()
+
+if(ALLTOALLV_FIX)
+    add_definitions(-DALLTOALLV_FIX)
+    add_definitions(-DKWAY=${KWAY})
+endif()
+
+if(SPLITTER_SELECTION_FIX)
+    add_definitions(-DSPLITTER_SELECTION_FIX)
+    add_definitions(-DNUM_NPES_THRESHOLD=${NUM_NPES_THRESHOLD})
+endif()
+
+if(ALLTOALL_SPARSE)
+    add_definitions(-DALLTOALL_SPARSE)
+endif()
+
+if(ENABLE_DENDRO_PROFILE_COUNTERS)
+    add_definitions(-DENABLE_DENDRO_PROFILE_COUNTERS)
+endif()
+
+if(RK_SOLVER_OVERLAP_COMM_AND_COMP)
+    add_definitions(-DRK_SOLVER_OVERLAP_COMM_AND_COMP)
+endif()
+
+if(DENDRO_VTK_BINARY)
+else()
+    set(DENDRO_VTK_ZLIB_COMPRES OFF)
+endif()
+
+if(DENDRO_VTK_BINARY)
+    add_definitions(-DDENDRO_VTU_BINARY)
+    if(DENDRO_VTK_ZLIB_COMPRES)
+        add_definitions(-DDENDRO_VTU_ZLIB)
+    endif()
+else()
+    add_definitions(-DDENDRO_VTU_ASCII)
+endif()
+
+
+if(USE_FD_INTERP_FOR_UNZIP)
+    add_definitions(-DUSE_FD_INTERP_FOR_UNZIP)
+endif()
+
+
 find_library(DENDRO_LIB NAMES dendro5 PATHS ${DENDRO_LIB_PATH})
 
 set(INC include/parameters.h
