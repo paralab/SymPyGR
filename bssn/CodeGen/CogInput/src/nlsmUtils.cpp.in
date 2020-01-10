@@ -128,9 +128,8 @@ cog.outl("namespace {0}".format(namespace))
 		from sympy.printing.cxxcode import cxxcode
 
 		for param in p.parameters.initialDataValues():
-			###Ignore data defined with an expression, because they won't be define din parameters.cpp/parameters.h
-			###TODO: Rewrite param class so this is more obvious to keep track of
-			if param.expression is None:
+			###Ignore data defined with an expression, because they won't be defined in parameters.cpp/parameters.h
+			if param.valueExpression is None:
 				cog.outl("par::Mpi_Bcast(&{0},1,0,comm);".format(param.id))
 		]]]*/
 		//[[[end]]]
@@ -192,15 +191,15 @@ cog.outl("namespace {0}".format(namespace))
 
 		for param in p.parameters.initialDataValues():
 			#TODO add support for arrays
-			if param.expression is not None:
-				cog.outl("const {0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression(param.expression)))
+			if param.valueExpression is not None:
+				cog.outl("const {0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression(param.valueExpression)))
 			else:
 				cog.outl("const {0} {1}={2}::{1};".format(param.cppType.value, param.id, p.namespace))
 
 		for param in p.parameters.varsValues():
 			#TODO add support for arrays
-			if param.expression is not None:
-				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression(param.expression)))
+			if param.valueExpression is not None:
+				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppExpression(param.valueExpression)))
 			else:
 				cog.outl("{0} {1}={2};".format(param.cppType.value, param.id, param.getCppValue()))
 

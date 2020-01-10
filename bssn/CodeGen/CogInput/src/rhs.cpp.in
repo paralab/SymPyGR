@@ -80,11 +80,11 @@ cog.outl("{0}::timer::t_deriv.stop();".format(p.namespace))
 		from sympy import *
 
 		for var in p.parameters.varsValues():
-			rhsExpr = var.rhs
+			rhs = var.rhsExpression
 			#if the expr contains other vars, need to index them to get valid c++
 			for rhsVar in p.parameters.varsValues():
-				rhsExpr = rhsExpr.subs(rhsVar.symbol, Symbol(rhsVar.id + "[pp]"))
-			cog.outl("{0}_rhs[pp] = {1};".format(var.id, var.getCppExpression(rhsExpr)))
+				rhs = rhs.subs(rhsVar.symbol, Symbol(rhsVar.id + "[pp]"))
+			cog.outl("{0}_rhs[pp] = {1};".format(var.id, var.getCppExpression(rhs)))
 		]]]*/
 		//[[[end]]]
       }
