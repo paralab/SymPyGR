@@ -47,8 +47,8 @@ int main (int argc, char** argv)
 		import cog
 		import nlsmParams as p
 
-		for param in p.parameters.values():
-			if param.isComment():
+		for param in list(p.parameters.values()) + list(p.parameters.initialDataValues()):
+			if param.isComment() or param.valueExpression is not None:
 				continue
 
 			if param.arraySize is not None:

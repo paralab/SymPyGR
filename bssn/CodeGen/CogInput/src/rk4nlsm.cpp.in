@@ -360,15 +360,23 @@ namespace ode
                                         reallocateMPIResources();
                     #endif
 
-					//TODO: What is this?
-                    //if(m_uiMesh->isActive())
-                    //{
-                    //    double l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                    //    double l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                    //    if(!(m_uiMesh->getMPIRank())) {
-                    //        std::cout << "transfer completed:    ||VAR::U_ALPHA|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
-                    //    }
-                    //}
+                    if(m_uiMesh->isActive())
+                    {
+                        /*[[[cog
+                        import cog
+                        import nlsmParams as p
+
+                        for var in p.parameters.varsValues():
+                            cog.outl("double l_min_{1}=vecMin(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
+                            cog.outl("double l_max_{1}=vecMax(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
+                        
+                        cog.outl("if(!(m_uiMesh->getMPIRank()))\n{")
+                        for var in p.parameters.varsValues():
+                            cog.outl("\tstd::cout << \"transfer completed:    ||VAR::{0}|| (min, max) : (\"<<l_min_{0}<<\", \"<<l_max_{0}<<\" ) \"<<std::endl;".format(var.id))
+                        cog.outl("}")
+                        ]]]*/
+                        //[[[end]]]
+                    }
 
                     iterCount+=1;
                 }
@@ -783,8 +791,6 @@ namespace ode
 						import cog
 						from nlsmParams import namespace
 
-						cog.outl("zipVars(m_uiUnzipVarRHS,m_uiStage[({0}::RK4_STAGES-1)]);".format(namespace))
-
 						cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
 						cog.outl("\tm_uiVar[index][node]=m_uiPrevVar[index][node];")
 						cog.outl("\tfor(unsigned int s=0;s<({0}::RK4_STAGES);s++)\n{{".format(namespace))
@@ -841,58 +847,51 @@ namespace ode
 				//[[[end]]]
 			};
 
-            double l_min,l_max;
-            for(double t=m_uiCurrentTime;t<m_uiTimeEnd;t=t+m_uiT_h)
-            {
+            /*[[[cog
+            import cog
+            import nlsmParams as p
 
-				/*[[[cog
-				import cog
-				from nlsmParams import namespace
+            cog.out("double ")
+            first = True
+            for var in p.parameters.varsValues():
+                if not first:
+                    cog.out(", ")
+                first = False
 
-				cog.outl("// checkpoint the previous solution value before going to the next step.")
-				cog.outl("{0}::timer::t_ioCheckPoint.start();".format(namespace))
-				cog.outl("if((m_uiMesh->isActive()) && (m_uiCurrentStep%{0}::CHECKPT_FREQ)==0)\n{{".format(namespace))
-				cog.outl("\tstoreCheckPoint({0}::CHKPT_FILE_PREFIX.c_str());".format(namespace))
-				cog.outl("}\n")
-				cog.outl("{0}::timer::t_ioCheckPoint.stop();".format(namespace))
+                cog.out("l_min_{0}, l_max_{0}".format(var.id))
+            cog.outl(";")
+            cog.outl("for(double t=m_uiCurrentTime;t<m_uiTimeEnd;t=t+m_uiT_h)\n{")
+
+            cog.outl("\t// checkpoint the previous solution value before going to the next step.")
+            cog.outl("\t{0}::timer::t_ioCheckPoint.start();".format(p.namespace))
+            cog.outl("\tif((m_uiMesh->isActive()) && (m_uiCurrentStep%{0}::CHECKPT_FREQ)==0)\n\t{{".format(p.namespace))
+            cog.outl("\t\tstoreCheckPoint({0}::CHKPT_FILE_PREFIX.c_str());".format(p.namespace))
+            cog.outl("\t}\n")
+            cog.outl("\t{0}::timer::t_ioCheckPoint.stop();".format(p.namespace))
 				
-				cog.outl("// write sol to vtu.")
-				cog.outl("if((m_uiMesh->isActive()) && (m_uiCurrentStep%{0}::TIME_STEP_OUTPUT_FREQ)==0)".format(namespace))
+            cog.outl("\t// write sol to vtu.")
+            cog.outl("\tif((m_uiMesh->isActive()) && (m_uiCurrentStep%{0}::TIME_STEP_OUTPUT_FREQ)==0)\n\t{{".format(p.namespace))
 
-				]]]*/
-				//[[[end]]]
-                {
+            for var in p.parameters.varsValues():
+                cog.outl("\t\tl_min_{1}=vecMin(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
+                cog.outl("\t\tl_max_{1}=vecMax(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
 
-					//TODO: Is this necessary?
-                    //l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                    //l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                    //if(!m_uiMesh->getMPIRank()) {
-                    //    std::cout << "executing step: " << m_uiCurrentStep << " dt: " << m_uiT_h << " rk_time : "<< m_uiCurrentTime << std::endl;
-                    //    std::cout << "\t ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
-                    //}
+            cog.outl("\n\t\tif(!(m_uiMesh->getMPIRank()))\n\t\t{")
+            cog.outl("\t\t\tstd::cout << \"executing step: \" << m_uiCurrentStep << \" dt: \" << m_uiT_h << \" rk_time : \"<< m_uiCurrentTime << std::endl;")
+            for var in p.parameters.varsValues():
+                cog.outl("\t\t\tstd::cout << \"\\t ||VAR::{0}|| (min, max) : (\"<<l_min_{0}<<\", \"<<l_max_{0}<<\" ) \"<<std::endl;".format(var.id))
+            cog.outl("\t\t}")
 
-					/*[[[cog
-					import cog
-					from nlsmParams import namespace
+            cog.outl("\t\t{0}::timer::profileInfoIntermediate({0}::PROFILE_FILE_PREFIX.c_str(),m_uiMesh,m_uiCurrentStep);".format(p.namespace))
+            cog.outl("\t}\n")
 
-					cog.outl("{0}::timer::profileInfoIntermediate({0}::PROFILE_FILE_PREFIX.c_str(),m_uiMesh,m_uiCurrentStep);".format(namespace))
+            cog.outl("\tif((m_uiCurrentStep%{0}::TIME_STEP_OUTPUT_FREQ)==0)\n\t{{".format(p.namespace))
+            cog.outl("\t\t{0}::timer::resetSnapshot();".format(p.namespace))
+            cog.outl("\t}\n")
 
-					]]]*/
-					//[[[end]]]
-                }
-
-				/*[[[cog
-				import cog
-				from nlsmParams import namespace
-
-				cog.outl("if((m_uiCurrentStep%{0}::TIME_STEP_OUTPUT_FREQ)==0)\n{{".format(namespace))
-				cog.outl("\t{0}::timer::resetSnapshot();".format(namespace))
-				cog.outl("}\n")
-
-				cog.outl("if((m_uiCurrentStep%{0}::REMESH_TEST_FREQ)==0)".format(namespace))
-
-				]]]*/
-				//[[[end]]]
+            cog.outl("\tif((m_uiCurrentStep%{0}::REMESH_TEST_FREQ)==0)".format(p.namespace))
+            ]]]*/
+            //[[[end]]]
                 {
 
                     #ifdef RK_SOLVER_OVERLAP_COMM_AND_COMP
@@ -1063,15 +1062,23 @@ namespace ode
                             reallocateMPIResources();
                         #endif
 
-						//TODO: is this necessary?
-                        //if(m_uiMesh->isActive())
-                        //{
-                        //    l_min=vecMin(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                        //    l_max=vecMax(m_uiPrevVar[nlsm::VAR::U_CHI]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());
-                        //    if(!(m_uiMesh->getMPIRank())) {
-                        //        std::cout << "transfer completed:    ||VAR::U_CHI|| (min, max) : ("<<l_min<<", "<<l_max<<" ) "<<std::endl;
-                        //    }
-                        //}
+                        if(m_uiMesh->isActive())
+                        {
+                            /*[[[cog
+                            import cog
+                            import nlsmParams as p
+
+                            for var in p.parameters.varsValues():
+                                cog.outl("l_min_{1}=vecMin(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
+                                cog.outl("l_max_{1}=vecMax(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
+
+                            cog.outl("if(!(m_uiMesh->getMPIRank()))\n{")
+                            for var in p.parameters.varsValues():
+                                cog.outl("\tstd::cout << \"transfer completed:    ||VAR::{0}|| (min, max) : (\"<<l_min_{0}<<\", \"<<l_max_{0}<<\" ) \"<<std::endl;".format(var.id))
+                            cog.outl("}")
+                            ]]]*/
+                            //[[[end]]]
+                        }
                     }
                 }
 

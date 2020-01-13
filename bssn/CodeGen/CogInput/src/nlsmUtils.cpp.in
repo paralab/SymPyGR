@@ -37,13 +37,12 @@ cog.outl("namespace {0}".format(namespace))
             std::ifstream infile(fName);
             if(!infile) {std::cout<<fName<<" parameter file open failed "<<std::endl;}
             infile>>parFile;
-
 			/*[[[cog
 			import cog
 			import nlsmParams as p
 
-			for param in p.parameters.values():
-				if param.isComment():
+			for param in list(p.parameters.values()) + list(p.parameters.initialDataValues()):
+				if param.isComment() or param.valueExpression is not None:
 					continue
 
 				if param.arraySize is not None:
@@ -148,19 +147,6 @@ cog.outl("namespace {0}".format(namespace))
         par::Mpi_Bcast(&BLK_MAX_X,1,0,comm);
         par::Mpi_Bcast(&BLK_MAX_Y,1,0,comm);
         par::Mpi_Bcast(&BLK_MAX_Z,1,0,comm);
-
-		//TODO: Confirm shouldn't be overwriting param file here
-        //OCTREE_MAX[0]=(double )(1u<<nlsm::MAXDEPTH);
-        //OCTREE_MAX[1]=(double )(1u<<nlsm::MAXDEPTH);
-        //OCTREE_MAX[2]=(double )(1u<<nlsm::MAXDEPTH);
-
-        //COMPD_MIN[0]=GRID_MIN_X;
-        //COMPD_MIN[1]=GRID_MIN_Y;
-        //COMPD_MIN[2]=GRID_MIN_Z;
-
-        //COMPD_MAX[0]=GRID_MAX_X;
-        //COMPD_MAX[1]=GRID_MAX_Y;
-        //COMPD_MAX[2]=GRID_MAX_Z;
 
         par::Mpi_Bcast(&KO_DISS_SIGMA, 1, 0, comm);
 
