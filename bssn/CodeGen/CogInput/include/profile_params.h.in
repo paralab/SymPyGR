@@ -15,7 +15,7 @@
 
 /*[[[cog
 import cog
-from nlsmParams import namespace
+from paramDef import namespace
 
 cog.outl("namespace {0}".format(namespace))
 

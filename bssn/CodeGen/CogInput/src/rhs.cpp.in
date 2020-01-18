@@ -3,7 +3,7 @@
 using namespace std;
 /*[[[cog
 import cog
-from nlsmParams import namespace
+from paramDef import namespace
 
 cog.outl("using namespace {0};".format(namespace))
 
@@ -34,7 +34,7 @@ void nlsmRhs(double **unzipVarsRHS, const double **uZipVars,
 
 /*[[[cog
 import cog
-import nlsmParams as p
+import paramDef as p
 
 cog.outl("{0}::timer::t_deriv.start();".format(p.namespace))
 
@@ -76,7 +76,7 @@ cog.outl("{0}::timer::t_deriv.stop();".format(p.namespace))
 
 		/*[[[cog
 		import cog
-		import nlsmParams as p
+		import paramDef as p
 		from sympy import *
 
 		for var in p.parameters.varsValues():
@@ -93,7 +93,7 @@ cog.outl("{0}::timer::t_deriv.stop();".format(p.namespace))
 
 /*[[[cog
 import cog
-import nlsmParams as p
+import paramDef as p
 
 cog.outl("{0}::timer::t_deriv.start();".format(p.namespace))
 

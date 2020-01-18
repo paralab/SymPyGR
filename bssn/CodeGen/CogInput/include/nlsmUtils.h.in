@@ -21,7 +21,7 @@
 
 /*[[[cog
 import cog
-from nlsmParams import namespace
+from paramDef import namespace
 
 cog.outl("#define Rx ({0}::COMPD_MAX[0]-{0}::COMPD_MIN[0])".format(namespace))
 cog.outl("#define Ry ({0}::COMPD_MAX[1]-{0}::COMPD_MIN[1])".format(namespace))
@@ -88,7 +88,7 @@ cog.outl("{")
 
 /*[[[cog
 import cog
-from nlsmParams import namespace
+from paramDef import namespace
 
 cog.outl("namespace {0}".format(namespace))
 

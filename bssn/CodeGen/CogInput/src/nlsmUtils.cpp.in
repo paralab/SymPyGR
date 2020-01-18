@@ -11,7 +11,7 @@
 
 /*[[[cog
 import cog
-from nlsmParams import namespace
+from paramDef import namespace
 
 cog.outl("namespace {0}".format(namespace))
 
@@ -39,7 +39,7 @@ cog.outl("namespace {0}".format(namespace))
             infile>>parFile;
 			/*[[[cog
 			import cog
-			import nlsmParams as p
+			import paramDef as p
 
 			for param in list(p.parameters.values()) + list(p.parameters.initialDataValues()):
 				if param.isComment() or param.valueExpression is not None:
@@ -123,7 +123,7 @@ cog.outl("namespace {0}".format(namespace))
 
 		/*[[[cog
 		import cog
-		import nlsmParams as p
+		import paramDef as p
 		from sympy.printing.cxxcode import cxxcode
 
 		for param in p.parameters.initialDataValues():
@@ -172,7 +172,7 @@ cog.outl("namespace {0}".format(namespace))
 
 		/*[[[cog
 		import cog
-		import nlsmParams as p
+		import paramDef as p
 		from sympy.printing.cxxcode import cxxcode
 
 		for param in p.parameters.initialDataValues():
@@ -247,7 +247,7 @@ cog.outl("namespace {0}".format(namespace))
     {
 		/*[[[cog
 		import cog
-		from nlsmParams import namespace
+		from paramDef import namespace
 
 		cog.outl("return {0}::RK_MIN_TOL;".format(namespace))
 
@@ -263,7 +263,7 @@ cog.outl("namespace {0}".format(namespace))
 
 /*[[[cog
 import cog
-from nlsmParams import namespace
+from paramDef import namespace
 
 cog.outl("namespace {0}".format(namespace))
 

@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ##[[[cog
 ##import sys
 ##from projectPaths import dendroRootPath, dendroLibPath
-##from nlsmParams import namespace
+##from paramDef import namespace
 ##cog.outl("set(DENDRO_ROOT_PATH ${{CMAKE_SOURCE_DIR}}/{0})".format(dendroRootPath))
 ##cog.outl("set(DENDRO_LIB_PATH ${{CMAKE_SOURCE_DIR}}/{0})".format(dendroLibPath))
 ##cog.outl("set(APP_NAME {0})".format(namespace))

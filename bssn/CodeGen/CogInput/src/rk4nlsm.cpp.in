@@ -19,7 +19,7 @@ namespace ode
 
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("//allocate memory for variables")
 			cog.outl("m_uiVar=new double*[{0}::NUM_VARS];".format(namespace))
@@ -79,7 +79,7 @@ namespace ode
                 // allocate mpi comm. reqs and status
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("for(unsigned int index=0;index<{0}::ASYNC_COMM_K;index++)".format(namespace))
 
@@ -108,7 +108,7 @@ namespace ode
         {
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
 
@@ -130,7 +130,7 @@ namespace ode
 
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
 			cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n\t{{".format(namespace))
@@ -183,7 +183,7 @@ namespace ode
 
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("double* var=new double[{0}::NUM_VARS];".format(namespace))
 
@@ -212,7 +212,7 @@ namespace ode
 								assert(len % eleOrder == 0);
 								/*[[[cog
 								import cog
-								from nlsmParams import namespace
+								from paramDef import namespace
 
 								cog.outl("{0}::initData((double)x,(double)y,(double)z,var);".format(namespace))
 								cog.outl("for (unsigned int v = 0; v < {0}::NUM_VARS; v++)\n{{".format(namespace))
@@ -240,7 +240,7 @@ namespace ode
             // refine based on all the variables
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("const unsigned int refineNumVars={0}::NUM_REFINE_VARS;".format(namespace))
 			cog.outl("unsigned int refineVarIds[refineNumVars];")
@@ -256,7 +256,7 @@ namespace ode
 			{ 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("return {0}::computeTol(x,y,z,minTol);".format(namespace))
 
@@ -276,7 +276,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("if({0}::ENABLE_BLOCK_ADAPTIVITY)\n{{".format(namespace))
 				cog.outl("\tisRefine=false;")
@@ -292,7 +292,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("ot::Mesh* newMesh=m_uiMesh->ReMesh({0}::DENDRO_GRAIN_SZ,{0}::LOAD_IMB_TOL,{0}::SPLIT_FIX);".format(namespace))
 
@@ -314,7 +314,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
 
@@ -341,7 +341,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
 					cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n\t{{".format(namespace))
@@ -364,7 +364,7 @@ namespace ode
                     {
                         /*[[[cog
                         import cog
-                        import nlsmParams as p
+                        import paramDef as p
 
                         for var in p.parameters.varsValues():
                             cog.outl("double l_min_{1}=vecMin(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
@@ -389,7 +389,7 @@ namespace ode
         {
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("for(unsigned int index=0;index<{0}::ASYNC_COMM_K;index++)".format(namespace))
 
@@ -409,7 +409,7 @@ namespace ode
 
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("for(unsigned int index=0;index<{0}::ASYNC_COMM_K;index++)".format(namespace))
 
@@ -430,7 +430,7 @@ namespace ode
                 // allocate mpi comm. reqs and status
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("for(unsigned int index=0;index<{0}::ASYNC_COMM_K;index++)".format(namespace))
 
@@ -459,7 +459,7 @@ namespace ode
         {
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("{0}::timer::t_ioVtu.start();".format(namespace))
 
@@ -473,7 +473,7 @@ namespace ode
             {
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("pDataNames.push_back(std::string({0}::VAR_NAMES[evolVarIndices[i]]));".format(namespace))
 
@@ -494,7 +494,7 @@ namespace ode
             char fPrefix[256];
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("sprintf(fPrefix,\"%s_%d\",{0}::VTU_FILE_PREFIX.c_str(),m_uiCurrentStep);".format(namespace))
 			cog.outl("io::vtk::mesh2vtuFine(m_uiMesh,fPrefix,2,fDataNames,fData,(numEvolVars+numConstVars),(const char **)&pDataNames_char[0],(const double **)pData);")
@@ -507,7 +507,7 @@ namespace ode
         {
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("{0}::timer::t_ghostEx_sync.start();".format(namespace))
 			cog.outl("for(unsigned int v=0;v<{0}::NUM_VARS;v++)\n{{".format(namespace))
@@ -523,7 +523,7 @@ namespace ode
         {
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("{0}::timer::t_gridTransfer.start();".format(namespace))
 			cog.outl("for(unsigned int v=0;v<{0}::NUM_VARS;v++)\n{{".format(namespace))
@@ -539,7 +539,7 @@ namespace ode
         {
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("{0}::timer::t_unzip_sync.start();".format(namespace))
 			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
@@ -556,7 +556,7 @@ namespace ode
 
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("{0}::timer::t_unzip_async.start();".format(namespace))
 			cog.outl("for(unsigned int var=0;var<{0}::NUM_VARS;var+={0}::ASYNC_COMM_K)\n{{".format(namespace))
@@ -582,7 +582,7 @@ namespace ode
         {
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("{0}::timer::t_zip.start();".format(namespace))
 			cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
@@ -640,7 +640,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("const Point pt_min({0}::COMPD_MIN[0],{0}::COMPD_MIN[1],{0}::COMPD_MIN[2]);".format(namespace))
 					cog.outl("const Point pt_max({0}::COMPD_MAX[0],{0}::COMPD_MAX[1],{0}::COMPD_MAX[2]);".format(namespace))
@@ -704,7 +704,7 @@ namespace ode
                         {
 							/*[[[cog
 							import cog
-							from nlsmParams import namespace
+							from paramDef import namespace
 
 							cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
 
@@ -731,7 +731,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("current_t_adv=current_t+RK4_T[({0}::RK4_STAGES-1)]*m_uiT_h;".format(namespace))
 
@@ -778,7 +778,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("zipVars(m_uiUnzipVarRHS,m_uiStage[({0}::RK4_STAGES-1)]);".format(namespace))
 
@@ -789,7 +789,7 @@ namespace ode
                     {
 						/*[[[cog
 						import cog
-						from nlsmParams import namespace
+						from paramDef import namespace
 
 						cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
 						cog.outl("\tm_uiVar[index][node]=m_uiPrevVar[index][node];")
@@ -823,7 +823,7 @@ namespace ode
 
 			/*[[[cog
 			import cog
-			from nlsmParams import namespace
+			from paramDef import namespace
 
 			cog.outl("const unsigned int refineNumVars={0}::NUM_REFINE_VARS;".format(namespace))
 			cog.outl("unsigned int refineVarIds[refineNumVars];")
@@ -839,7 +839,7 @@ namespace ode
 			{ 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("return {0}::computeTol(x,y,z,minTol);".format(namespace))
 
@@ -849,7 +849,7 @@ namespace ode
 
             /*[[[cog
             import cog
-            import nlsmParams as p
+            import paramDef as p
 
             cog.out("double ")
             first = True
@@ -913,7 +913,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("{0}::timer::t_isReMesh.start();".format(namespace))
 					cog.outl("if({0}::ENABLE_BLOCK_ADAPTIVITY)\n{{".format(namespace))
@@ -993,7 +993,7 @@ namespace ode
 
 						/*[[[cog
 						import cog
-						from nlsmParams import namespace
+						from paramDef import namespace
 
 						cog.outl("{0}::timer::t_mesh.start();".format(namespace))
 						cog.outl("ot::Mesh* newMesh=m_uiMesh->ReMesh({0}::DENDRO_GRAIN_SZ,{0}::LOAD_IMB_TOL,{0}::SPLIT_FIX);".format(namespace))
@@ -1016,7 +1016,7 @@ namespace ode
 
 						/*[[[cog
 						import cog
-						from nlsmParams import namespace
+						from paramDef import namespace
 
 						cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
 
@@ -1043,7 +1043,7 @@ namespace ode
 
 						/*[[[cog
 						import cog
-						from nlsmParams import namespace
+						from paramDef import namespace
 
 						cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
 						cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n{{".format(namespace))
@@ -1066,7 +1066,7 @@ namespace ode
                         {
                             /*[[[cog
                             import cog
-                            import nlsmParams as p
+                            import paramDef as p
 
                             for var in p.parameters.varsValues():
                                 cog.outl("l_min_{1}=vecMin(m_uiPrevVar[{0}::VAR::{1}]+m_uiMesh->getNodeLocalBegin(),(m_uiMesh->getNumLocalMeshNodes()),m_uiMesh->getMPICommunicator());".format(p.namespace, var.id))
@@ -1084,7 +1084,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("if((m_uiCurrentStep%{0}::IO_OUTPUT_FREQ)==0)".format(namespace))
 
@@ -1101,7 +1101,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("writeToVTU(m_uiPrevVar,m_uiConstraintVars,{0}::NUM_EVOL_VARS_VTU_OUTPUT,0,{0}::VTU_OUTPUT_EVOL_INDICES,NULL);".format(namespace))
 
@@ -1111,7 +1111,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("{0}::timer::t_rkStep.start();".format(namespace))
 				cog.outl("performSingleIteration();")
@@ -1132,7 +1132,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("(m_uiCurrentStep%(2*{0}::CHECKPT_FREQ)==0) ? cpIndex=0 : cpIndex=1;".format(namespace))
 
@@ -1148,7 +1148,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("unsigned int numVars={0}::NUM_VARS;".format(namespace))
 				cog.outl("const char ** varNames={0}::VAR_NAMES;".format(namespace))
@@ -1175,7 +1175,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					####TODO: safe to change checkpoint names?
 					cog.outl("checkPoint[\"DENDRO_RK45_WAVELET_TOLERANCE\"]={0}::RK_MIN_TOL;".format(namespace))
@@ -1238,7 +1238,7 @@ namespace ode
 			
 						/*[[[cog
 						import cog
-						from nlsmParams import namespace
+						from paramDef import namespace
 
 						####TODO: Check if OK to change this checkpoint id
 						cog.outl("{0}::RK_MIN_TOL=checkPoint[\"DENDRO_RK45_WAVELET_TOLERANCE\"];".format(namespace))
@@ -1264,7 +1264,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("par::Mpi_Bcast(&{0}::RK_MIN_TOL,1,0,comm);".format(namespace))
 				cog.outl("par::Mpi_Bcast(&{0}::LOAD_IMB_TOL,1,0,comm);".format(namespace))
@@ -1315,7 +1315,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("for(unsigned int index=0;index<{0}::NUM_VARS;index++)".format(namespace))
 
@@ -1337,7 +1337,7 @@ namespace ode
 
 				/*[[[cog
 				import cog
-				from nlsmParams import namespace
+				from paramDef import namespace
 
 				cog.outl("for(unsigned int stage=0;stage<{0}::RK4_STAGES;stage++)\n{{".format(namespace))
 				cog.outl("\tfor(unsigned int index=0;index<{0}::NUM_VARS;index++)\n\t{{".format(namespace))
@@ -1361,7 +1361,7 @@ namespace ode
 
 					/*[[[cog
 					import cog
-					from nlsmParams import namespace
+					from paramDef import namespace
 
 					cog.outl("restoreStatus=io::checkpoint::readVecFromFile(fName,newMesh,m_uiPrevVar,{0}::NUM_VARS);".format(namespace))
 
