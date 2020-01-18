@@ -101,7 +101,7 @@ class Parameters:
 	def varsValues(self):
 		return self.varsDict.values()
 
-	#generate parameters.cpp and parameters.h equivalent files
+	#generate parameters.cpp and parameters.h files
 	def writeCpp(self, hPath, cppPath, namespace):
 
 		hName = ntpath.basename(hPath)
@@ -160,10 +160,16 @@ class Parameters:
 		outH.write("\tstatic const unsigned int RK4_STAGES=4;\n")
 		outH.write("\tstatic const unsigned int RK45_STAGES=6;\n")
 
+		outH.write("\textern double OCTREE_MIN[3];")
+		outH.write("\textern double OCTREE_MAX[3];")
+
 		outH.write("}\n")
 		outH.write("#endif //SFCSORTBENCH_PARAMETERS_H")
 		outH.close()
 
+		#octree should always be based on the maxdepth, so hardcoded it to avoid invalid values
+		outCpp.write("\tdouble OCTREE_MIN[3]={0.0,0.0,0.0};\n")
+		outCpp.write("\tdouble OCTREE_MAX[3]={(double)(1u<<MAXDEPTH),(double)(1u<<MAXDEPTH),(double)(1u<<MAXDEPTH)};\n")
 		outCpp.write("}")
 		outCpp.close()
 
@@ -382,9 +388,7 @@ class RequiredParameter(Enum):
 	RK45_DESIRED_TOL = Parameter("RK45_DESIRED_TOL", None, description="used in adaptive time stepping (not currently used)", cppType = CppType.double)
 	CFL_FACTOR = Parameter("CFL_FACTOR", None, description="CFL Factor", cppType = CppType.double)
 	COMPD_MIN = Parameter("COMPD_MIN", None, description="Should be an array defined from values of GRID_MIN", cppType = CppType.double)
-	COMPD_MAX = Parameter("COMPD_MAX", None, description="Should be an array defined from values of GRID_MAX", cppType = CppType.double)	
-	OCTREE_MIN = Parameter("OCTREE_MIN", None, description="", cppType = CppType.double)
-	OCTREE_MAX = Parameter("OCTREE_MAX", None, description="", cppType = CppType.double)
+	COMPD_MAX = Parameter("COMPD_MAX", None, description="Should be an array defined from values of GRID_MAX", cppType = CppType.double)
 	KO_DISS_SIGMA = Parameter("KO_DISS_SIGMA", None, description="Kreiss-Oliger dissipation", cppType = CppType.double)
 	RK_MIN_TOL = Parameter("RK_MIN_TOL", None, description="RK solver tolerance", cppType = CppType.double)	
 	

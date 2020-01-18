@@ -62,13 +62,6 @@ parameters.add(RequiredParameter.COMPD_MIN, compd_min)
 compd_max = [parameters[RequiredParameter.GRID_MAX_X].value, parameters[RequiredParameter.GRID_MAX_Y].value, parameters[RequiredParameter.GRID_MAX_Z].value]
 parameters.add(RequiredParameter.COMPD_MAX, compd_max)
 
-octree_min = [0.0,0.0,0.0]
-parameters.add(RequiredParameter.OCTREE_MIN, octree_min)
-
-maxdepth = 1<<parameters[RequiredParameter.MAXDEPTH].value
-octree_max = [maxdepth,maxdepth,maxdepth]
-parameters.add(RequiredParameter.OCTREE_MAX, octree_max)
-
 timestep = parameters[RequiredParameter.CFL_FACTOR].value * (parameters[RequiredParameter.COMPD_MAX].value[0] - parameters[RequiredParameter.COMPD_MIN].value[0]) / (1 << parameters[RequiredParameter.MAXDEPTH].value)
 parameters.add(RequiredParameter.RK45_TIME_STEP_SIZE, timestep)
 parameters.add(RequiredParameter.RK45_DESIRED_TOL, 1e-3)
