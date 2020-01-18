@@ -6,7 +6,6 @@
 *@brief Header file for the GR simulation.
 */
 
-//Run: 'cog -o output/nlsmTest.cpp nlsm.cpp.in' to generate cpp file
 //
 
 #include "nlsm.h"
@@ -18,7 +17,16 @@
 #include <iostream>
 #include "rk4nlsm.h"
 #include "octUtils.h"
-//TODO: once output is runnable, try 'using namespace nlsm' and delete a bunch of cog sections 
+
+/*[[[cog
+import cog
+from nlsmParams import namespace
+
+cog.outl("using namespace {0};".format(namespace))
+
+]]]*/
+//[[[end]]]
+
 int main (int argc, char** argv)
 {
     if(argc<2)
@@ -57,31 +65,23 @@ int main (int argc, char** argv)
 				for i in range(len(param.value)):
 					if i > 0:
 						cog.out("<<\", \"<<")
-					cog.out("{0}::{1}[{2}]".format(p.namespace, param.id, i))
+					cog.out("{0}[{1}]".format(param.id, i))
 				cog.outl("<<\" )\"<<NRM<<std::endl;")
 			else:
-				cog.outl("std::cout<<YLW<<\"\\t{0} :\"<<{1}::{0}<<NRM<<std::endl;".format(param.id, p.namespace))
+				cog.outl("std::cout<<YLW<<\"\\t{0} :\"<<{0}<<NRM<<std::endl;".format(param.id))
 
 		]]]*/
 		//[[[end]]]
     }
 
-	/*[[[cog
-	import cog
-	from nlsmParams import namespace
-
-	cog.outl("_InitializeHcurve({0}::DIM);".format(namespace))
-	cog.outl("m_uiMaxDepth={0}::MAXDEPTH;".format(namespace))
-
-	cog.outl("if({0}::NUM_VARS%{0}::ASYNC_COMM_K!=0)".format(namespace))
-	cog.outl("{")
-	cog.outl("\tif(!rank)")
-	cog.outl("\t\tstd::cout<<\"[overlap communication error]: total NUM_VARS: \"<<{0}::NUM_VARS<<\" is not divisable by ASYNC_COMM_K: \"<<{0}::ASYNC_COMM_K<<std::endl;".format(namespace))
-	cog.outl("\texit(0);")
-	cog.outl("}")
-
-	]]]*/
-	//[[[end]]]
+	_InitializeHcurve(DIM);
+	m_uiMaxDepth = MAXDEPTH;
+	if (NUM_VARS % ASYNC_COMM_K != 0)
+	{
+		if (!rank)
+			std::cout << "[overlap communication error]: total NUM_VARS: " << NUM_VARS << " is not divisable by ASYNC_COMM_K: " << ASYNC_COMM_K << std::endl;
+		exit(0);
+	}
 
     //2. generate the initial grid.
     std::vector<ot::TreeNode> tmpNodes;
@@ -89,45 +89,31 @@ int main (int argc, char** argv)
 		nlsm::initData(x,y,z,var);
 	};
 
-	/*[[[cog
-	import cog
-	from nlsmParams import namespace
+	const unsigned int interpVars = NUM_VARS;
+	unsigned int varIndex[interpVars];
+	for (unsigned int i = 0; i < NUM_VARS; i++)
+		varIndex[i] = i;
 
-	cog.outl("const unsigned int interpVars={0}::NUM_VARS;".format(namespace))
-	cog.outl("unsigned int varIndex[interpVars];")
-	cog.outl("for(unsigned int i=0;i<{0}::NUM_VARS;i++)".format(namespace))
-	cog.outl("\tvarIndex[i]=i;")
+	DendroIntL localSz, globalSz;
+	double t_stat;
+	double t_stat_g[3];
+	timer::t_f2o.start();
+	if (ENABLE_BLOCK_ADAPTIVITY)
+	{
+		if (!rank) std::cout << YLW << "Using block adaptive mesh. AMR disabled " << NRM << std::endl;
 
-	cog.outl("")
+		const Point pt_min(BLK_MIN_X, BLK_MIN_Y, BLK_MIN_Z);
+		const Point pt_max(BLK_MAX_X, BLK_MAX_Y, BLK_MAX_Z);
+		blockAdaptiveOctree(tmpNodes, pt_min, pt_max, m_uiMaxDepth - 2, m_uiMaxDepth, comm);
+	}
+	else
+	{
+		if (!rank) std::cout << YLW << "Using function2Octree. AMR enabled " << NRM << std::endl;
 
-	cog.outl("DendroIntL localSz,globalSz;")
-	cog.outl("double t_stat;")
-	cog.outl("double t_stat_g[3];")
-	cog.outl("{0}::timer::t_f2o.start();".format(namespace))
-	cog.outl("if({0}::ENABLE_BLOCK_ADAPTIVITY)".format(namespace))
-	cog.outl("{")
-
-	cog.outl("\tif(!rank) std::cout<<YLW<<\"Using block adaptive mesh. AMR disabled \"<<NRM<<std::endl;")
-	cog.outl("")
-
-	cog.outl("\tconst Point pt_min({0}::BLK_MIN_X,{0}::BLK_MIN_Y,{0}::BLK_MIN_Z);".format(namespace))
-	cog.outl("\tconst Point pt_max({0}::BLK_MAX_X,{0}::BLK_MAX_Y,{0}::BLK_MAX_Z);".format(namespace))
-
-	cog.outl("\t{0}::blockAdaptiveOctree(tmpNodes,pt_min,pt_max,m_uiMaxDepth-2,m_uiMaxDepth,comm);".format(namespace))
-	cog.outl("}")
-	cog.outl("else")
-	cog.outl("{")
-
-	cog.outl("\tif(!rank) std::cout<<YLW<<\"Using function2Octree. AMR enabled \"<<NRM<<std::endl;")
-	cog.outl("")
-
-	cog.outl("\tfunction2Octree(f_init,{0}::NUM_VARS,{0}::REFINE_VARIABLE_INDICES,{0}::NUM_REFINE_VARS,tmpNodes,m_uiMaxDepth,{0}::RK_MIN_TOL,{0}::ELE_ORDER,comm);".format(namespace))
-	cog.outl("\tstd::cout<<\"f2o else end\"<<std::endl;")
-
-	cog.outl("}")
-	cog.outl("{0}::timer::t_f2o.stop();".format(namespace))
-	]]]*/
-	//[[[end]]]
+		function2Octree(f_init, NUM_VARS, REFINE_VARIABLE_INDICES, NUM_REFINE_VARS, tmpNodes, m_uiMaxDepth, RK_MIN_TOL, ELE_ORDER, comm);
+		std::cout << "f2o else end" << std::endl;
+	}
+	timer::t_f2o.stop();
 
     t_stat=nlsm::timer::t_f2o.seconds;
     par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,comm);
@@ -143,14 +129,7 @@ int main (int argc, char** argv)
 
     par::Mpi_Bcast(&globalSz,1,0,comm);
 
-	/*[[[cog
-	import cog
-	from nlsmParams import namespace
-
-	cog.outl("const unsigned int grainSz={0}::DENDRO_GRAIN_SZ;".format(namespace))
-
-	]]]*/
-	//[[[end]]]
+	const unsigned int grainSz = DENDRO_GRAIN_SZ;
 
     bool isActive;
     MPI_Comm commActive;
@@ -178,14 +157,7 @@ int main (int argc, char** argv)
 
     }
 
-	/*[[[cog
-	import cog
-	from nlsmParams import namespace
-
-	cog.outl("shrinkOrExpandOctree(tmpNodes,{0}::LOAD_IMB_TOL,DENDRO_DEFAULT_SF_K,isActive,commActive,comm);".format(namespace))
-
-	]]]*/
-	//[[[end]]]
+	shrinkOrExpandOctree(tmpNodes, LOAD_IMB_TOL, DENDRO_DEFAULT_SF_K, isActive, commActive, comm);
 
     if(!isActive)
         if(tmpNodes.size()!=0)
@@ -202,29 +174,20 @@ int main (int argc, char** argv)
 
         if(!rank_active) std::cout<<"[MPI_COMM_SWITCH]: "<<npes_active<<std::endl;
 
-		/*[[[cog
-		import cog
-		from nlsmParams import namespace
+		ot::TreeNode root(DIM, MAXDEPTH);
+		std::vector<ot::TreeNode> tmpVec;
+		timer::t_cons.start();
 
-		cog.outl("ot::TreeNode root({0}::DIM,{0}::MAXDEPTH);".format(namespace))
-		cog.outl("std::vector<ot::TreeNode> tmpVec;")
-		cog.outl("{0}::timer::t_cons.start();".format(namespace))
-		cog.outl("")
+		SFC::parSort::SFC_treeSort(tmpNodes, tmpVec, tmpVec, tmpVec, LOAD_IMB_TOL, m_uiMaxDepth, root, ROOT_ROTATION, 1, TS_REMOVE_DUPLICATES, SPLIT_FIX, commActive);
+		std::swap(tmpNodes, tmpVec);
+		tmpVec.clear();
 
-		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_REMOVE_DUPLICATES,{0}::SPLIT_FIX,commActive);".format(namespace))
-		cog.outl("std::swap(tmpNodes,tmpVec);")
-		cog.outl("tmpVec.clear();")
-		cog.outl("")
+		SFC::parSort::SFC_treeSort(tmpNodes, tmpVec, tmpVec, tmpVec, LOAD_IMB_TOL, m_uiMaxDepth, root, ROOT_ROTATION, 1, TS_CONSTRUCT_OCTREE, SPLIT_FIX, commActive);
+		std::swap(tmpNodes, tmpVec);
+		tmpVec.clear();
 
-		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,tmpVec,tmpVec,tmpVec,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_CONSTRUCT_OCTREE,{0}::SPLIT_FIX,commActive);".format(namespace))
-		cog.outl("std::swap(tmpNodes,tmpVec);")
-		cog.outl("tmpVec.clear();")
-
-		]]]*/
-		//[[[end]]]
-
-        nlsm::timer::t_cons.stop();
-        t_stat=nlsm::timer::t_cons.seconds;
+        timer::t_cons.stop();
+        t_stat=timer::t_cons.seconds;
 
         par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,commActive);
         par::Mpi_Reduce(&t_stat,t_stat_g+1,1,MPI_SUM,0,commActive);
@@ -237,21 +200,13 @@ int main (int argc, char** argv)
         if(!rank_active) std::cout<<GRN<<"remove duplicates + octree construction (s): "<<t_stat_g[2]<<NRM<<std::endl;
         if(!rank_active) std::cout<<GRN<<" # const. octants: "<<globalSz<<NRM<<std::endl;
 
-		/*[[[cog
-		import cog
-		from nlsmParams import namespace
+		timer::t_bal.start();
 
-		cog.outl("{0}::timer::t_bal.start();".format(namespace))
-		cog.outl("")
-		cog.outl("SFC::parSort::SFC_treeSort(tmpNodes,balOct,balOct,balOct,{0}::LOAD_IMB_TOL,m_uiMaxDepth,root,ROOT_ROTATION,1,TS_BALANCE_OCTREE,{0}::SPLIT_FIX,commActive);".format(namespace))
-		cog.outl("tmpNodes.clear();")
+		SFC::parSort::SFC_treeSort(tmpNodes, balOct, balOct, balOct, LOAD_IMB_TOL, m_uiMaxDepth, root, ROOT_ROTATION, 1, TS_BALANCE_OCTREE, SPLIT_FIX, commActive);
+		tmpNodes.clear();
 
-		cog.outl("")
-		cog.outl("{0}::timer::t_bal.stop();".format(namespace))
-		cog.outl("t_stat={0}::timer::t_bal.seconds;".format(namespace))
-
-		]]]*/
-		//[[[end]]]
+		timer::t_bal.stop();
+		t_stat = timer::t_bal.seconds;
 
         par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,commActive);
         par::Mpi_Reduce(&t_stat,t_stat_g+1,1,MPI_SUM,0,commActive);
@@ -267,21 +222,12 @@ int main (int argc, char** argv)
     par::Mpi_Allreduce(&localSz,&globalSz,1,MPI_SUM,comm);
     if(!rank) std::cout<<GRN<<" balanced # octants : "<<globalSz<<NRM<<std::endl;
 
-	/*[[[cog
-	import cog
-	from nlsmParams import namespace
+    timer::t_mesh.start();
 
-	cog.outl("{0}::timer::t_mesh.start();".format(namespace))
-	cog.outl("")
+    ot::Mesh* mesh = new ot::Mesh(balOct, 1, ELE_ORDER, comm, true, ot::SM_TYPE::FDM, DENDRO_GRAIN_SZ, LOAD_IMB_TOL, SPLIT_FIX);
 
-	cog.outl("ot::Mesh * mesh=new ot::Mesh(balOct,1,{0}::ELE_ORDER,comm,true,ot::SM_TYPE::FDM,{0}::DENDRO_GRAIN_SZ,{0}::LOAD_IMB_TOL,{0}::SPLIT_FIX);".format(namespace))
-
-	cog.outl("")
-	cog.outl("{0}::timer::t_mesh.stop();".format(namespace))
-	cog.outl("t_stat={0}::timer::t_mesh.seconds;".format(namespace))
-
-	]]]*/
-	//[[[end]]]
+    timer::t_mesh.stop();
+    t_stat = timer::t_mesh.seconds;
 
     par::Mpi_Reduce(&t_stat,t_stat_g,1,MPI_MIN,0,comm);
     par::Mpi_Reduce(&t_stat,t_stat_g+1,1,MPI_SUM,0,comm);
@@ -300,24 +246,14 @@ int main (int argc, char** argv)
         std::cout<<"\t"<<GRN<<" blk (min,mean,max): "<<"( "<<t_blk_g[0]<<"\t"<<t_blk_g[1]<<"\t"<<t_blk_g[2]<<" )"<<NRM<<std::endl;
     }
 
-	/*[[[cog
-	import cog
-	from nlsmParams import namespace
+    ode::solver::RK4_NLSM rk_nlsm(mesh, RK45_TIME_BEGIN, RK45_TIME_END, RK45_TIME_STEP_SIZE);
+    if (RESTORE_SOLVER == 1)
+        rk_nlsm.restoreCheckPoint(CHKPT_FILE_PREFIX.c_str(), comm);
 
-	cog.outl("ode::solver::RK4_NLSM rk_nlsm(mesh,{0}::RK45_TIME_BEGIN,{0}::RK45_TIME_END,{0}::RK45_TIME_STEP_SIZE);".format(namespace))
-	######ode::solver::RK3_NLSM rk_nlsm(mesh,nlsm::NLSM_RK45_TIME_BEGIN,nlsm::NLSM_RK45_TIME_END,nlsm::NLSM_RK45_TIME_STEP_SIZE);
-
-	cog.outl("if({0}::RESTORE_SOLVER==1)".format(namespace))
-	cog.outl("\trk_nlsm.restoreCheckPoint({0}::CHKPT_FILE_PREFIX.c_str(),comm);".format(namespace))
-	cog.outl("")
-
-	cog.outl("{0}::timer::t_rkSolve.start();".format(namespace))
-	cog.outl("rk_nlsm.rkSolve();")
-	cog.outl("{0}::timer::t_rkSolve.stop();".format(namespace))
-	cog.outl("{0}::timer::total_runtime.stop();".format(namespace))
-
-	]]]*/
-	//[[[end]]]
+    timer::t_rkSolve.start();
+    rk_nlsm.rkSolve();
+    timer::t_rkSolve.stop();
+    timer::total_runtime.stop();
 
     rk_nlsm.freeMesh();
     //nlsm::timer::profileInfo(nlsm::NLSM_PROFILE_FILE_PREFIX.c_str(),mesh);

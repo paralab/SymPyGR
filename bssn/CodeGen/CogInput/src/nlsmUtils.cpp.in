@@ -421,15 +421,9 @@ cog.outl("namespace {0}".format(namespace))
                 outfile<<"active npes : "<<activeNpes<<std::endl;
                 outfile<<"global npes : "<<globalNpes<<std::endl;
 
-				/*[[[cog
-				import cog
-				from nlsmParams import namespace
-
-				cog.outl("outfile<<\"partition tol : \"<<{0}::LOAD_IMB_TOL<<std::endl;".format(namespace))
-				cog.outl("outfile<<\"RK tol : \"<<{0}::RK_MIN_TOL<<std::endl;".format(namespace))
-				cog.outl("outfile<<\"maxdepth : \"<<{0}::MAXDEPTH<<std::endl;".format(namespace))
-				]]]*/
-				//[[[end]]]
+                outfile << "partition tol : " << LOAD_IMB_TOL << std::endl;
+                outfile << "RK tol : " << RK_MIN_TOL << std::endl;
+                outfile << "maxdepth : " << MAXDEPTH << std::endl;
             }
 
             MPI_Comm comm=commActive;
@@ -664,15 +658,9 @@ cog.outl("namespace {0}".format(namespace))
                 outfile<<"global npes : "<<globalNpes<<std::endl;
                 outfile<<"current step : "<<currentStep<<std::endl;
 
-				/*[[[cog
-				import cog
-				from nlsmParams import namespace
-
-				cog.outl("outfile<<\"partition tol : \"<<{0}::LOAD_IMB_TOL<<std::endl;".format(namespace))
-				cog.outl("outfile<<\"RK tol : \"<<{0}::RK_MIN_TOL<<std::endl;".format(namespace))
-				cog.outl("outfile<<\"maxdepth : \"<<{0}::MAXDEPTH<<std::endl;".format(namespace))
-				]]]*/
-				//[[[end]]]
+                outfile << "partition tol : " << LOAD_IMB_TOL << std::endl;
+                outfile << "RK tol : " << RK_MIN_TOL << std::endl;
+                outfile << "maxdepth : " << MAXDEPTH << std::endl;
             }
 
             MPI_Comm comm=commActive;
@@ -1142,16 +1130,9 @@ cog.outl("namespace {0}".format(namespace))
 				outfile << activeNpes << "\t ";
 				outfile << globalNpes << "\t ";
 
-				/*[[[cog
-				import cog
-				from nlsmParams import namespace
-
-				cog.outl("outfile<<{0}::LOAD_IMB_TOL<<\"\t \";".format(namespace))
-				cog.outl("outfile<<{0}::RK_MIN_TOL<<\"\t \";".format(namespace))
-				cog.outl("outfile<<{0}::MAXDEPTH<<\"\t \";".format(namespace))
-
-				]]]*/
-				//[[[end]]]
+                outfile << LOAD_IMB_TOL << "	 ";
+                outfile << RK_MIN_TOL << "	 ";
+                outfile << MAXDEPTH << "	 ";
 			}
 
             localSz=pMesh->getNumLocalMeshElements();
