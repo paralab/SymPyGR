@@ -7,7 +7,7 @@
 */
 //
 
-#include "rk4nlsm.h"
+#include "rk4.h"
 
 namespace ode
 {

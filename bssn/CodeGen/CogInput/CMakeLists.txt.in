@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 2.8)
-project(NLSM)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -10,6 +9,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 ##cog.outl("set(DENDRO_ROOT_PATH ${{CMAKE_SOURCE_DIR}}/{0})".format(dendroRootPath))
 ##cog.outl("set(DENDRO_LIB_PATH ${{CMAKE_SOURCE_DIR}}/{0})".format(dendroLibPath))
 ##cog.outl("set(APP_NAME {0})".format(namespace))
+##cog.outl("project({0})".format(namespace.upper()))
 ##]]]
 ##[[[end]]]
 
@@ -130,22 +130,22 @@ endif()
 find_library(DENDRO_LIB NAMES dendro5 PATHS ${DENDRO_LIB_PATH})
 
 set(INC include/parameters.h
-        include/rk4nlsm.h
-        include/nlsmUtils.h
+        include/rk4.h
+        include/utils.h
         include/rhs.h
         include/derivs.h
         include/profile_params.h
         )
 
-set(SRC src/rk4nlsm.cpp
+set(SRC src/rk4.cpp
         src/parameters.cpp
-        src/nlsmUtils.cpp
+        src/utils.cpp
         src/rhs.cpp
         src/derivs.cpp
         src/profile_params.cpp
         )
 
-set(SOURCE_FILES src/nlsm.cpp  include/nlsm.h ${INC} ${SRC})
+set(SOURCE_FILES src/main.cpp  include/main.h ${INC} ${SRC})
 add_executable(${APP_NAME}Solver ${SOURCE_FILES})
 target_include_directories(${APP_NAME}Solver PRIVATE ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(${APP_NAME}Solver PRIVATE ${DENDRO_ROOT_PATH}/include)

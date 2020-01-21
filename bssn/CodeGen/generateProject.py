@@ -18,22 +18,22 @@ args = ["cog","-o",outputPath + "CMakeLists.txt", inputPath + "CMakeLists.txt.in
 ret = Cog().main(args)
 
 srcFiles = ["derivs.cpp.in",
-			"nlsm.cpp.in",
+			"main.cpp.in",
 			"nlsm_eqs.cpp.in",
-			"nlsmUtils.cpp.in",
+			"utils.cpp.in",
 			"profile_params.cpp.in",
 			"rhs.cpp.in",
-			"rk4nlsm.cpp.in"]
+			"rk4.cpp.in"]
 for file in srcFiles:
 	args = ["cog","-o",outputPath + "src/" + file[:len(file)-3], inputPath + "src/" + file]
 	ret = Cog().main(args)
 
 includeFiles = ["derivs.h.in",
-			"nlsm.h.in",
-			"nlsmUtils.h.in",
+			"main.h.in",
+			"utils.h.in",
 			"profile_params.h.in",
 			"rhs.h.in",
-			"rk4nlsm.h.in"]
+			"rk4.h.in"]
 
 for file in includeFiles:
 	args = ["cog","-o",outputPath + "include/" + file[:len(file)-3], inputPath + "include/" + file]

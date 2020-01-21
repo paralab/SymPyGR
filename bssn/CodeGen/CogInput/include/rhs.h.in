@@ -6,7 +6,7 @@
 #include <time.h>
 #include "derivs.h"
 #include "parameters.h"
-#include "nlsmUtils.h"
+#include "utils.h"
 #include "mathUtils.h"
 
 //#define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
