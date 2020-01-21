@@ -19,7 +19,6 @@ ret = Cog().main(args)
 
 srcFiles = ["derivs.cpp.in",
 			"main.cpp.in",
-			"nlsm_eqs.cpp.in",
 			"utils.cpp.in",
 			"profile_params.cpp.in",
 			"rhs.cpp.in",
