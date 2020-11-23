@@ -132,11 +132,11 @@ foreach $f (@con_dd) {
 $ofile = "bssnrhs_memalloc.h";
 open(OFILE, ">$ofile");
 
-  print OFILE "  const unsigned int bytes = n * sizeof(double);\n";
+  #print OFILE "  const unsigned int bytes = n * sizeof(double);\n";
 
 foreach $f (@funcs) {
   #print OFILE "  posix_memalign((void **)&" . $f . ", align, (n+AVX_SIMD_LENGTH) * sizeof(double));\n";
-  print OFILE "  double *" . $f . " = (double *) malloc(bytes);\n";
+  print OFILE "  double *" . $f . " = __mem_pool->allocate(n);\n";
 }
 
 close(OFILE);
@@ -149,84 +149,47 @@ close(OFILE);
 $ofile = "bssnrhs_derivs.h";
 open(OFILE, ">$ofile");
 
+# more cache friendly version, 
 foreach $e (@d) {
-  $dxn = "grad_0_" . $e;
-  $dxxn = "grad2_0_0_" . $e;
   if ($e ~~ @dd) {
+    $dxn = "grad_0_" . $e;
+    $dyn = "grad_1_" . $e;
+    $dzn = "grad_2_" . $e;
+
+    $dxxn = "grad2_0_0_" . $e;
+    $dyyn = "grad2_1_1_" . $e;
+    $dzzn = "grad2_2_2_" . $e;
+
+    $dxyn = "grad2_0_1_" . $e;
+    $dxzn = "grad2_0_2_" . $e;
+    $dyzn = "grad2_1_2_" . $e;
+
     print OFILE "  deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
     print OFILE "  deriv_xx(" . $dxxn . ", " . $e . ", hx, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dxn." , sz) )std::cout<<\"out ".$dxn.": \"<<seq::test::isBlockNAN(".$dxn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dxxn." , sz) )std::cout<<\"out ".$dxxn.": \"<<seq::test::isBlockNAN(".$dxxn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-  }
-  else {
-    print OFILE "  deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dxn." , sz) )std::cout<<\"out ".$dxn.": \"<<seq::test::isBlockNAN(".$dxn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
 
-  }
-}
-
-foreach $e (@d) {
-  $dyn = "grad_1_" . $e;
-  $dyyn = "grad2_1_1_" . $e;
-  if ($e ~~ @dd) {
     print OFILE "  deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
     print OFILE "  deriv_yy(" . $dyyn . ", " . $e . ", hy, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dyn." , sz) )std::cout<<\"out ".$dyn.": \"<<seq::test::isBlockNAN(".$dyn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dyyn." , sz) )std::cout<<\"out ".$dyyn.": \"<<seq::test::isBlockNAN(".$dyyn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-  }
-  else {
-    print OFILE "  deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dyn." , sz) )std::cout<<\"out ".$dyn.": \"<<seq::test::isBlockNAN(".$dyn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-  }
-}
 
-foreach $e (@d) {
-  $dzn = "grad_2_" . $e;
-  $dzzn = "grad2_2_2_" . $e;
-  if ($e ~~ @dd) {
     print OFILE "  deriv_z(" . $dzn . ", " . $e . ", hz, sz, bflag);\n";
     print OFILE "  deriv_zz(" . $dzzn . ", " . $e . ", hz, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dzn." , sz) )std::cout<<\"out ".$dzn.": \"<<seq::test::isBlockNAN(".$dzn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dzzn." , sz) )std::cout<<\"out ".$dzzn.": \"<<seq::test::isBlockNAN(".$dzzn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
+
+    # mixed 2nd derivs. 
+    print OFILE "  deriv_y(" . $dxyn . ", " . $dxn . ", hy, sz, bflag);\n";
+    print OFILE "  deriv_z(" . $dxzn . ", " . $dxn . ", hz, sz, bflag);\n";
+    print OFILE "  deriv_z(" . $dyzn . ", " . $dyn . ", hz, sz, bflag);\n";
+
+    
   }
   else {
+    $dxn = "grad_0_" . $e;
+    $dyn = "grad_1_" . $e;
+    $dzn = "grad_2_" . $e;
+    print OFILE "  deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
+    print OFILE "  deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
     print OFILE "  deriv_z(" . $dzn . ", " . $e . ", hz, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dzn." , sz) )std::cout<<\"out ".$dzn.": \"<<seq::test::isBlockNAN(".$dzn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
+    
   }
 }
-
-### Calls for mixed 2nd derivatives
-
-foreach $e (@dd) {
-  $dxn  = "grad_0_" . $e;
-  $dyn  = "grad_1_" . $e;
-  $dxyn = "grad2_0_1_" . $e;
-  $dxzn = "grad2_0_2_" . $e;
-  $dyzn = "grad2_1_2_" . $e;
-
-  #print OFILE "  cpy_unzip_padd(" . $dxn . ", " . $e . ",sz, bflag);\n";
-  #print OFILE "  cpy_unzip_padd(" . $dyn . ", " . $e . ",sz, bflag);\n";
-
-  print OFILE "  deriv_y(" . $dxyn . ", " . $dxn . ", hy, sz, bflag);\n";
-  print OFILE "  deriv_z(" . $dxzn . ", " . $dxn . ", hz, sz, bflag);\n";
-  print OFILE "  deriv_z(" . $dyzn . ", " . $dyn . ", hz, sz, bflag);\n";
-
-  #print OFILE "  if(seq::test::isBlockNAN(".$dxyn." , sz,bflag) )std::cout<<\"out ".$dxyn.": \"<<seq::test::isBlockNAN(".$dxyn." , sz,bflag) <<\" in ".$dxn." isNan: \"<<seq::test::isBlockNAN(".$dxn." , sz)<<std::endl;\n";
-  #print OFILE "  if(seq::test::isBlockNAN(".$dxzn." , sz,bflag) )std::cout<<\"out ".$dxzn.": \"<<seq::test::isBlockNAN(".$dxzn." , sz,bflag) <<\" in ".$dxn." isNan: \"<<seq::test::isBlockNAN(".$dxn." , sz)<<std::endl;\n";
-  #print OFILE "  if(seq::test::isBlockNAN(".$dyzn." , sz,bflag) )std::cout<<\"out ".$dyzn.": \"<<seq::test::isBlockNAN(".$dyzn." , sz,bflag) <<\" in ".$dyn." isNan: \"<<seq::test::isBlockNAN(".$dyn." , sz)<<std::endl;\n";
-}
-
-
-### Calls for KO dissipation
-#foreach $e (@kod) {
-#  $dxn  = "kograd_0_" . $e;
-#  $dyn  = "kograd_1_" . $e;
-#  $dzn  = "kograd_2_" . $e;
-#  print OFILE "  ko_deriv42_x(" . $dxn . ", " . $e . ", h, nx, ny, nz, mode);\n";
-#  print OFILE "  ko_deriv42_y(" . $dyn . ", " . $e . ", h, nx, ny, nz, mode);\n";
-#  print OFILE "  ko_deriv42_z(" . $dzn . ", " . $e . ", h, nx, ny, nz, mode);\n";
-#
-#}
 
 close(OFILE);
 
@@ -240,7 +203,7 @@ open(OFILE, ">$ofile");
 
 # geometric vars
 foreach $f (@funcs) {
-  print OFILE "  free(" . $f . ");\n";
+  print OFILE "__mem_pool->free(" . $f . ");\n";
 }
 
 close(OFILE);
@@ -258,11 +221,18 @@ close(OFILE);
 ###########################################################################
 $ofile = "bssnrhs_memalloc_adv.h";
 open(OFILE, ">$ofile");
-
+print OFILE "#ifdef BSSN_USE_ADVECTIVE_DERIVS\n";
 foreach $f (@afuncs) {
-  print OFILE "  double *" . $f . " = (double *) malloc(bytes);\n";
+  print OFILE "  double *" . $f . " = __mem_pool->allocate(n);\n";
+}
+print OFILE "#else\n";
+for($i = 0; $i <= $#afuncs; $i++){
+  print OFILE "  double *" . $afuncs[$i] . " = ". $afuncs2[$i] .";\n";
+	#$print("$afuncs[$i] = $afuncs2[$i] \n");
 }
 
+
+print OFILE "#endif\n";
 close(OFILE);
 
 ###########################################################################
@@ -272,23 +242,16 @@ close(OFILE);
 ###########################################################################
 $ofile = "bssnrhs_derivs_adv.h";
 open(OFILE, ">$ofile");
-
+print OFILE "#ifdef BSSN_USE_ADVECTIVE_DERIVS\n";
 foreach $e (@ad) {
   $dxn = "agrad_0_" . $e;
   print OFILE "  adv_deriv_x(" . $dxn . ", " . $e . ", hx, sz, beta0, bflag);\n";
-}
-
-# QQ
- foreach $e (@ad) {
   $dyn = "agrad_1_" . $e;
   print OFILE "  adv_deriv_y(" . $dyn . ", " . $e . ", hy, sz, beta1, bflag);\n";
-}
-
-foreach $e (@ad) {
   $dzn = "agrad_2_" . $e;
   print OFILE "  adv_deriv_z(" . $dzn . ", " . $e . ", hz, sz, beta2, bflag);\n";
 }
-
+print OFILE "#endif\n";
 close(OFILE);
 
 ###########################################################################
@@ -303,20 +266,40 @@ open(OFILE, ">$ofile");
 foreach $e (@ad) {
   $dxn = "grad_0_" . $e;
   print OFILE "  ko_deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
-}
-
-# QQ
- foreach $e (@ad) {
   $dyn = "grad_1_" . $e;
   print OFILE "  ko_deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
-}
-
-foreach $e (@ad) {
   $dzn = "grad_2_" . $e;
   print OFILE "  ko_deriv_z(" . $dzn . ", " . $e . ", hz, sz, bflag);\n";
+
 }
 
 close(OFILE);
+
+
+$ofile = "bssnrhs_lts_smooth_ko.h";
+open(OFILE, ">$ofile");
+
+foreach $e (@ad) {
+  $dxn = "grad_0_" . $e;
+  $dyn = "grad_1_" . $e;
+  $dzn = "grad_2_" . $e;
+  print OFILE "  double *" . $dxn . " = __mem_pool->allocate(n);\n";
+  print OFILE "  double *" . $dyn . " = __mem_pool->allocate(n);\n";
+  print OFILE "  double *" . $dzn . " = __mem_pool->allocate(n);\n";
+}
+
+foreach $e (@ad) {
+  $dxn = "grad_0_" . $e;
+  print OFILE "  ko_deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
+  $dyn = "grad_1_" . $e;
+  print OFILE "  ko_deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
+  $dzn = "grad_2_" . $e;
+  print OFILE "  ko_deriv_z(" . $dzn . ", " . $e . ", hz, sz, bflag);\n";
+
+}
+
+close(OFILE);
+
 
 
 ###########################################################################
@@ -326,10 +309,11 @@ close(OFILE);
 ###########################################################################
 $ofile = "bssnrhs_dealloc_adv.h";
 open(OFILE, ">$ofile");
-
+print OFILE "#ifdef BSSN_USE_ADVECTIVE_DERIVS\n";
 foreach $f (@afuncs) {
-  print OFILE "  free(" . $f . ");\n";
+  print OFILE "__mem_pool->free(" . $f . ");\n";
 }
+print OFILE "#endif\n";
 close(OFILE);
 
 
@@ -341,11 +325,9 @@ close(OFILE);
 $ofile = "constraint_memalloc.h";
 open(OFILE, ">$ofile");
 
-  print OFILE "  const unsigned int bytes = n * sizeof(double);\n";
-
 foreach $f (@cfuncs) {
   #print OFILE "  posix_memalign((void **)&" . $f . ", align, (n+AVX_SIMD_LENGTH) * sizeof(double));\n";
-  print OFILE "  double *" . $f . " = (double *) malloc(bytes);\n";
+  print OFILE "  double *" . $f . " = __mem_pool->allocate(n);\n";
 }
 
 close(OFILE);
@@ -359,70 +341,44 @@ $ofile = "constraint_derivs.h";
 open(OFILE, ">$ofile");
 
 foreach $e (@con_d) {
-  $dxn = "grad_0_" . $e;
-  $dxxn = "grad2_0_0_" . $e;
   if ($e ~~ @con_dd) {
+    $dxn = "grad_0_" . $e;
+    $dyn = "grad_1_" . $e;
+    $dzn = "grad_2_" . $e;
+
+    $dxxn = "grad2_0_0_" . $e;
+    $dyyn = "grad2_1_1_" . $e;
+    $dzzn = "grad2_2_2_" . $e;
+
+    $dxyn = "grad2_0_1_" . $e;
+    $dxzn = "grad2_0_2_" . $e;
+    $dyzn = "grad2_1_2_" . $e;
+
     print OFILE "  deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
     print OFILE "  deriv_xx(" . $dxxn . ", " . $e . ", hx, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dxn." , sz) )std::cout<<\"out ".$dxn.": \"<<seq::test::isBlockNAN(".$dxn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dxxn." , sz) )std::cout<<\"out ".$dxxn.": \"<<seq::test::isBlockNAN(".$dxxn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-  }
-  else {
-    print OFILE "  deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dxn." , sz) )std::cout<<\"out ".$dxn.": \"<<seq::test::isBlockNAN(".$dxn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
 
-  }
-}
-
-foreach $e (@con_d) {
-  $dyn = "grad_1_" . $e;
-  $dyyn = "grad2_1_1_" . $e;
-  if ($e ~~ @con_dd) {
     print OFILE "  deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
     print OFILE "  deriv_yy(" . $dyyn . ", " . $e . ", hy, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dyn." , sz) )std::cout<<\"out ".$dyn.": \"<<seq::test::isBlockNAN(".$dyn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dyyn." , sz) )std::cout<<\"out ".$dyyn.": \"<<seq::test::isBlockNAN(".$dyyn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-  }
-  else {
-    print OFILE "  deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dyn." , sz) )std::cout<<\"out ".$dyn.": \"<<seq::test::isBlockNAN(".$dyn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-  }
-}
 
-foreach $e (@con_d) {
-  $dzn = "grad_2_" . $e;
-  $dzzn = "grad2_2_2_" . $e;
-  if ($e ~~ @con_dd) {
     print OFILE "  deriv_z(" . $dzn . ", " . $e . ", hz, sz, bflag);\n";
     print OFILE "  deriv_zz(" . $dzzn . ", " . $e . ", hz, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dzn." , sz) )std::cout<<\"out ".$dzn.": \"<<seq::test::isBlockNAN(".$dzn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dzzn." , sz) )std::cout<<\"out ".$dzzn.": \"<<seq::test::isBlockNAN(".$dzzn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
+
+    # mixed 2nd derivs. 
+    print OFILE "  deriv_y(" . $dxyn . ", " . $dxn . ", hy, sz, bflag);\n";
+    print OFILE "  deriv_z(" . $dxzn . ", " . $dxn . ", hz, sz, bflag);\n";
+    print OFILE "  deriv_z(" . $dyzn . ", " . $dyn . ", hz, sz, bflag);\n";
+
+    
   }
   else {
+    $dxn = "grad_0_" . $e;
+    $dyn = "grad_1_" . $e;
+    $dzn = "grad_2_" . $e;
+    print OFILE "  deriv_x(" . $dxn . ", " . $e . ", hx, sz, bflag);\n";
+    print OFILE "  deriv_y(" . $dyn . ", " . $e . ", hy, sz, bflag);\n";
     print OFILE "  deriv_z(" . $dzn . ", " . $e . ", hz, sz, bflag);\n";
-    #print OFILE "  if(seq::test::isBlockNAN(".$dzn." , sz) )std::cout<<\"out ".$dzn.": \"<<seq::test::isBlockNAN(".$dzn." , sz) <<\" in ".$e." isNan: \"<<seq::test::isNAN(".$e." , sz[0]*sz[1]*sz[2] )<<std::endl;\n";
+    
   }
-}
-
-### Calls for mixed 2nd derivatives
-
-foreach $e (@con_dd) {
-  $dxn  = "grad_0_" . $e;
-  $dyn  = "grad_1_" . $e;
-  $dxyn = "grad2_0_1_" . $e;
-  $dxzn = "grad2_0_2_" . $e;
-  $dyzn = "grad2_1_2_" . $e;
-
-  #print OFILE "  cpy_unzip_padd(" . $dxn . ", " . $e . ",sz, bflag);\n";
-  #print OFILE "  cpy_unzip_padd(" . $dyn . ", " . $e . ",sz, bflag);\n";
-
-  print OFILE "  deriv_y(" . $dxyn . ", " . $dxn . ", hy, sz, bflag);\n";
-  print OFILE "  deriv_z(" . $dxzn . ", " . $dxn . ", hz, sz, bflag);\n";
-  print OFILE "  deriv_z(" . $dyzn . ", " . $dyn . ", hz, sz, bflag);\n";
-
-  #print OFILE "  if(seq::test::isBlockNAN(".$dxyn." , sz,bflag) )std::cout<<\"out ".$dxyn.": \"<<seq::test::isBlockNAN(".$dxyn." , sz,bflag) <<\" in ".$dxn." isNan: \"<<seq::test::isBlockNAN(".$dxn." , sz)<<std::endl;\n";
-  #print OFILE "  if(seq::test::isBlockNAN(".$dxzn." , sz,bflag) )std::cout<<\"out ".$dxzn.": \"<<seq::test::isBlockNAN(".$dxzn." , sz,bflag) <<\" in ".$dxn." isNan: \"<<seq::test::isBlockNAN(".$dxn." , sz)<<std::endl;\n";
-  #print OFILE "  if(seq::test::isBlockNAN(".$dyzn." , sz,bflag) )std::cout<<\"out ".$dyzn.": \"<<seq::test::isBlockNAN(".$dyzn." , sz,bflag) <<\" in ".$dyn." isNan: \"<<seq::test::isBlockNAN(".$dyn." , sz)<<std::endl;\n";
 }
 
 close(OFILE);
@@ -437,7 +393,7 @@ open(OFILE, ">$ofile");
 
 # geometric vars
 foreach $f (@cfuncs) {
-  print OFILE "  free(" . $f . ");\n";
+  print OFILE "__mem_pool->free(" . $f . ");\n";
 }
 
 close(OFILE);

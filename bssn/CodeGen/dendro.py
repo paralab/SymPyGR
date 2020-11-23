@@ -19,8 +19,6 @@ import re as regex
 
 import string
 import random
-import cog
-
 
 # internal variables
 undef = symbols('undefined')
@@ -193,9 +191,9 @@ def _Di_Dj(a):
     term in the At evolution equation.  As with DiDj, this object is symmetric
     in both indices when acting on a scalar.
     """
-#[ewh] shouldn't this be C2 instead of C3, i.e.:
+    #[ewh] shouldn't this be C2 instead of C3, i.e.:
     global d, C2
-#    global d, d2, C3
+    #global d, d2, C3
 
     m = Matrix([d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i]) for i, j in e_ij])
     return m.reshape(3, 3)
@@ -280,7 +278,7 @@ def laplacian(a, chi):
     full_metric = metric/chi
     inv_full_metric = simplify(full_metric.inv('ADJ'))
 
-#    return sum([(inv_full_metric[i, j] * d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    #return sum([(inv_full_metric[i, j] * d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
     return sum([ inv_full_metric[i, j] * ( d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i]) ) for i, j in e_ij])
 
 
@@ -304,7 +302,7 @@ def laplacian_conformal(a):
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-#ewh3    return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    #ewh3    return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
     return sum([ inv_metric[i, j] * (d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
 
 
@@ -332,7 +330,7 @@ def trace_free(x):
     trace = sum([ inv_metric[i, j] * x[i, j] for i, j in e_ij])
 
     # X_{ab} - 1/3 gt_{ab} X.
-#    tf = Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
+    # tf = Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
     tf = Matrix([x[i, j] - metric[i,j]*trace/3 for i, j in e_ij])
 
     return tf.reshape(3, 3)
@@ -352,7 +350,7 @@ def vec_j_ad_j(b, f):
     """
     return sum([b[i]*ad(i, f) for i in e_i])
 
-#vec_k_del_k = vec_j_del_j
+    #vec_k_del_k = vec_j_del_j
 
 ##########################################################################
 # metric related functions
@@ -411,7 +409,7 @@ def get_first_christoffel():
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-#                    C1[k, i, j] = 1 / 2 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
+                    #C1[k, i, j] = 1 / 2 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
                     C1[k, i, j] = 0.5 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
 
     return C1
@@ -458,7 +456,7 @@ def get_complete_christoffel(chi):
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-#                    C3[i, j, k] = C2[i, j, k] - 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
+                    #C3[i, j, k] = C2[i, j, k] - 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
                     C3[i, j, k] = C2[i, j, k] - 0.5/(chi)*(KroneckerDelta(i, j) * d(k, chi) +
                                                            KroneckerDelta(i, k) * d(j, chi) -
                                                            metric[j, k]*sum([inv_metric[i, m]*d(m, chi) for m in e_i])
@@ -494,7 +492,7 @@ def compute_ricci(Gt, chi):
     #print('Done with Lphi') #simplify(Lchi))
 
 
-#ewh4    DKchiDkchi = Matrix([4*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
+    #ewh4 DKchiDkchi = Matrix([4*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
     DKchiDkchi = Matrix([0.25/chi/chi*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
 
     #print('done with DKchi') # simplify(DKchiDkchi))
@@ -509,13 +507,13 @@ def compute_ricci(Gt, chi):
 
     #print('done with Rt') #simplify(Rt))
 
-#ewh5    Rphi_tmp = Matrix([2*metric[i, j]*Lchi - 4*d(i, chi)*d(j, chi) for i, j in e_ij])
-#dwn    Rphi_tmp = Matrix([ 0.5*metric[i, j]*Lchi/chi - 0.25*d(i, chi)*d(j, chi)/chi/chi for i, j in e_ij])
+    #ewh5    Rphi_tmp = Matrix([2*metric[i, j]*Lchi - 4*d(i, chi)*d(j, chi) for i, j in e_ij])
+    #dwn    Rphi_tmp = Matrix([ 0.5*metric[i, j]*Lchi/chi - 0.25*d(i, chi)*d(j, chi)/chi/chi for i, j in e_ij])
 
     #print(simplify(Rphi_tmp))
 
-#ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
-#dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
+    #ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
+    #dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
     xRphi = Matrix( [ 1/(2*chi)*(d2(i,j,chi) -
           sum(C2[k,j,i]*d(k,chi) for k in e_i)) -
           1/(4*chi*chi)*d(i,chi)*d(j,chi) for i, j in e_ij]).reshape(3,3)
@@ -599,29 +597,201 @@ def generate_cpu(ex, vnames, idx):
     cse=construct_cse(ex,vnames,idx)
     _v=cse[0]
     
-    cog.outl("// Dendro: {{{ ")
-    cog.outl("// Dendro: original ops: %d " %(cse[1]))
+    print("// Dendro: {{{ ")
+    print("// Dendro: original ops: %d " %(cse[1]))
 
     ee_name = 'DENDRO_' 
     ee_syms = numbered_symbols(prefix=ee_name)
     
     custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
     rops=0
-    cog.outl('// Dendro: printing temp variables')
+    print('// Dendro: printing temp variables')
     for (v1, v2) in _v[0]:
-        cog.out('double ')
-        cog.outl(change_deriv_names(ccode(v2, assign_to=v1, user_functions=custom_functions)))
+        print('double ', end='')
+        print(change_deriv_names(ccode(v2, assign_to=v1, user_functions=custom_functions)))
         rops = rops + count_ops(v2)
 
-    cog.outl()
-    cog.outl('// Dendro: printing variables')
+    print()
+    print('// Dendro: printing variables')
     for i, e in enumerate(_v[1]):
-        cog.outl("//--")
-        cog.outl(change_deriv_names(ccode(e, assign_to=lname[i], user_functions=custom_functions)))
+        print("//--")
+        print(change_deriv_names(ccode(e, assign_to=lname[i], user_functions=custom_functions)))
         rops = rops + count_ops(e)
 
-    cog.outl('// Dendro: reduced ops: %d' %(rops))
-    cog.outl('// Dendro: }}} ')
+    print('// Dendro: reduced ops: %d' %(rops))
+    print('// Dendro: }}} ')
+    
+
+
+def generate_fpcore(ex, vnames, idx):
+
+    """
+    Generate the FPCore code, 
+    """
+    mi = [0, 1, 2, 4, 5, 8]
+    midx = ['00', '01', '02', '11', '12', '22']
+    
+    # total number of expressions
+    # print("--------------------------------------------------------")
+    num_e = 0
+    lexp = []
+    lname = []
+    for i, e in enumerate(ex):
+        if type(e) == list:
+            num_e = num_e + len(e)
+            for j, ev in enumerate(e):
+                lexp.append(ev)
+                lname.append(vnames[i]+repr(j)+idx)
+        elif type(e) == Matrix:
+            num_e = num_e + len(e)
+            for j, k in enumerate(mi):
+                lexp.append(e[k])
+                lname.append(vnames[i]+midx[j]+idx)
+        else:
+            num_e = num_e + 1
+            lexp.append(e)
+            lname.append(vnames[i]+idx)
+
+    cse=construct_cse(ex,vnames,idx)
+    _v=cse[0]
+    
+    #print("// Dendro: {{{ ")
+    #print("// Dendro: original ops: %d " %(cse[1]))
+
+    ee_name = 'DENDRO_' 
+    ee_syms = numbered_symbols(prefix=ee_name)
+    
+    custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
+    rops=0
+    
+    #re_symbol=regex.compile(r"Symbol\('[a-z,A-Z,_]+[0-9,\[pp\],\[0-9\]]*'\)")
+    re_symbol=regex.compile(r"Symbol\('([a-z,A-Z,0-9,_,\[\]]*)'\)")
+    re_integer=regex.compile(r"Integer\(([\-,0-9]+)\)")
+    re_float=regex.compile(r"Float\('([\-,0-9]*\.[0-9]*)'\s prec=([0-9]+)\)")                
+    re_grad=regex.compile(r"Function\('([a-z]+[0-9]*)'\)\(Integer\(([0-9]+)\),\s*Symbol\('([a-z,A-Z]+[0-9]*\[pp\])'\)\)")
+
+    subs_functions={"Add(":"(+ ", "Integer(-1)": "-1 ", "Mul(":"(* ", "Div(":"(/ ", "Pow(":"(pow ","Rational(":"(/ "}
+
+    #print('// Dendro: printing temp variables')
+    tmp_vars=list()
+    for (v1, v2) in _v[0]:
+        tmp_vars.append(str(v1))
+        sym_sub=dict()
+        srep=srepr(v2)
+        #print(srep)
+
+        res=re_grad.findall(srep)
+        for g in res:
+            s="Function('%s')(Integer(%s), Symbol('%s'))" %(g[0],g[1],g[2])
+            #print(s)
+            ss="Symbol('%s')"%(g[0]+"_"+g[1]+"_"+g[2])
+            srep=srep.replace(s,ss)
+
+        srep=srep.replace(","," ")            
+        #print(srep)
+
+        res=re_symbol.findall(srep)
+        inp_params=list()
+        #print(res)
+        for s in res:
+            ss=s.replace("[pp]","")
+            for index in range(0,6):
+                ss=ss.replace("["+str(index)+"]",str(index))
+            inp_params.append(ss)
+            tmp_vars.append(ss)
+            sym_sub["Symbol(\'%s\')"%(s)]=ss
+
+        int_sub=dict()
+        res=re_integer.findall(srep)
+        for s in res:
+            int_sub["Integer(%s)"%(s)]=s
+
+        float_sub=dict()
+        res=re_float.findall(srep)
+        
+        for s in res:
+            float_sub["Float('%s'  prec=%s)"%(s[0],s[1])]=s[0]
+
+        for key,val in sym_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in int_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in float_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)            
+
+        for key, val in subs_functions.items():
+            srep=srep.replace(key,val)
+
+        
+        print("(FPCore (%s)" %(" ".join(inp_params)))
+        print("\t%s" %(srep))
+        print(")\n")
+    
+    #print(tmp_vars)
+    tmp_vars.clear();
+    tmp_vars=list()
+    for i, e in enumerate(_v[1]):
+        srep=srepr(e)
+
+        res=re_grad.findall(srep)
+        for g in res:
+            s="Function('%s')(Integer(%s), Symbol('%s'))" %(g[0],g[1],g[2])
+            #print(s)
+            ss="Symbol('%s')"%(g[0]+"_"+g[1]+"_"+g[2])
+            srep=srep.replace(s,ss)
+
+        srep=srep.replace(","," ")            
+        
+        res=re_symbol.findall(srep)
+        inp_params=list()
+        #print(res)
+        for s in res:
+            ss=s.replace("[pp]","")
+            for index in range(0,6):
+                ss=ss.replace("["+str(index)+"]",str(index))
+            inp_params.append(ss)
+            tmp_vars.append(ss)
+            sym_sub["Symbol(\'%s\')"%(s)]=ss
+
+        int_sub=dict()
+        res=re_integer.findall(srep)
+        for s in res:
+            int_sub["Integer(%s)"%(s)]=s
+        
+        float_sub=dict()
+        res=re_float.findall(srep)
+
+        for s in res:
+            float_sub["Float('%s'  prec=%s)"%(s[0],s[1])]=s[0]
+
+        for key,val in sym_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in int_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in float_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key, val in subs_functions.items():
+            srep=srep.replace(key,val)
+
+
+        tmp_vars=list(set(tmp_vars))
+        print("(FPCore (%s)" %(" ".join(tmp_vars)))
+        print("\t%s" %(srep))
+        print(")")
+        #print(")")
+        #print(")")
+        #print(change_deriv_names(ccode(e, assign_to=lname[i], user_functions=custom_functions)))
     
 
 
@@ -654,30 +824,30 @@ def generate_avx(ex, vnames, idx):
     cse=construct_cse(ex,vnames,idx)
     _v=cse[0]
     
-    cog.outl('// Dendro: {{{ ')
-    cog.outl("// Dendro: original ops: %d " %(cse[1]))
+    print('// Dendro: {{{ ')
+    print("// Dendro: original ops: %d " %(cse[1]))
 
     ee_name = 'DENDRO_' 
     ee_syms = numbered_symbols(prefix=ee_name)
     
-    cog.outl('// Dendro vectorized code: {{{')
+    print('// Dendro vectorized code: {{{')
     oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
     prevdefvars = set()
     for (v1, v2) in _v[0]:
         vv = numbered_symbols('v')
         vlist = []
         gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx)
-        cog.outl('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';')
+        print('  double ' + repr(v1) + ' = ' + repr(vlist[0]) + ';')
     for i, e in enumerate(_v[1]):
-        cog.outl("//--")
+        print("//--")
         vv = numbered_symbols('v')
         vlist = []
         gen_vector_code(e, vv, vlist, oper, prevdefvars, idx)
         #st = '  ' + repr(lname[i]) + '[idx] = ' + repr(vlist[0]) + ';'
         st = '  ' + repr(lname[i]) + " = " + repr(vlist[0]) + ';'
-        cog.outl(st.replace("'",""))
+        print(st.replace("'",""))
 
-    cog.outl('// Dendro vectorized code: }}} ')
+    print('// Dendro vectorized code: }}} ')
 
 
 
@@ -716,7 +886,7 @@ def change_deriv_names(str):
 
 
 
-def generate_separate(ex, vnames, idx):
+def generate_separate(ex, vnames, idx,prefix=""):
     """
     Generate the C++ code by simplifying the expressions.
     """
@@ -751,7 +921,7 @@ def generate_separate(ex, vnames, idx):
 
     # print(num_e)
     # print(len(lname))
-    c_file=open(vnames[0]+'.cpp','w')
+    c_file=open(prefix + vnames[0]+'.cpp','w')
     print('generating code for '+vnames[0])
     print('    bssn::timer::t_rhs.start();',file=c_file)
     print('for (unsigned int k = 3; k < nz-3; k++) { ',file=c_file)
@@ -929,7 +1099,7 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             idxn = idxn.replace("]","")
             st += repr(tv) + ' = ' + o1s + '(' + repr(ex.func) + '_' + '_'.join(str_args) + '+' + idxn + ' );'
             # st += repr(tv) + ' = ' + repr(ex) + ';'
-            cog.outl(st.replace(idx,""))
+            print(st.replace(idx,""))
             return
 
     if isinstance(ex, Pow):
@@ -947,7 +1117,7 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 st += repr(tv) + ' = ' + repr(a1) + ' * ' + repr(a1) + ';'
             else:
                 st += repr(tv) + ' = pow( ' + repr(a1) + ', ' + repr(a2) + ');'
-            cog.outl(st)
+            print(st)
             return
 
     # recursively process the arguments of the function or operator
@@ -967,13 +1137,13 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 st += repr(tv) + ' = ' + repr(float(ex)) + ';'
             else:
                 st += repr(tv) + ' = ' + repr(ex) + ';'
-            cog.outl(st)
+            print(st)
     elif isinstance(ex, Symbol):
         tv = next(vsym)
         vlist.append(tv)
         st = vec_print_str(tv, prevdefvars)
         st += repr(tv) +  ' = ' + repr(ex) + ';'
-        cog.outl(st)
+        print(st)
     elif isinstance(ex, Mul):
         nargs = len(ex.args)
         #print('mul..',len(vlist))
@@ -986,7 +1156,7 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             #st += repr(v1) + ' * ' + repr(v2) + ';'
             o1 = oper['mul']
             st += repr(o1) + '(' + repr(v1) + ', ' + repr(v2) + ');'
-            cog.outl(st.replace("'", ""))
+            print(st.replace("'", ""))
             vlist.append(tv)
     elif isinstance(ex, Add):
         nargs = len(ex.args)
@@ -999,7 +1169,7 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             v2 = vlist.pop()
             o1 = oper['add']
             st += repr(o1) + '(' + repr(v1) + ', ' + repr(v2) + ');'
-            cog.outl(st.replace("'",""))
+            print(st.replace("'",""))
             vlist.append(tv)
     elif isinstance(ex, Pow):
         tv = next(vsym)
@@ -1018,19 +1188,19 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                cog.outl(st.replace("'",""))
+                print(st.replace("'",""))
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = 1.0 / ' + repr(v1) + ';'
             elif (a2 > 2 and a2 < 8):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(qman) + ', ' + repr(qman) + ');'
-                cog.outl(st.replace("'",""))
+                print(st.replace("'",""))
                 for i in range(a2-3):
                     v2 = next(vsym)
                     st = vec_print_str(v2, prevdefvars)
                     st += repr(v2) + ' = ' + repr(o1) + '(' + repr(v1) + ', ' + repr(qman) + ');'
-                    cog.outl(st.replace("'",""))
+                    print(st.replace("'",""))
                     v1 = v2
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = ' + repr(o1) + '(' + repr(v1) + ', ' + repr(qman) + ');'
@@ -1040,5 +1210,5 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
         else:
             st = vec_print_str(tv, prevdefvars)
             st = repr(tv) + ' = pow(' + repr(qman) + ',' + repr(qexp) + ');'
-        cog.outl(st.replace("'",""))
+        print(st.replace("'",""))
         vlist.append(tv)

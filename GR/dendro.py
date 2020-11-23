@@ -191,9 +191,9 @@ def _Di_Dj(a):
     term in the At evolution equation.  As with DiDj, this object is symmetric
     in both indices when acting on a scalar.
     """
-#[ewh] shouldn't this be C2 instead of C3, i.e.:
+    #[ewh] shouldn't this be C2 instead of C3, i.e.:
     global d, C2
-#    global d, d2, C3
+    #global d, d2, C3
 
     m = Matrix([d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i]) for i, j in e_ij])
     return m.reshape(3, 3)
@@ -278,7 +278,7 @@ def laplacian(a, chi):
     full_metric = metric/chi
     inv_full_metric = simplify(full_metric.inv('ADJ'))
 
-#    return sum([(inv_full_metric[i, j] * d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    #return sum([(inv_full_metric[i, j] * d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
     return sum([ inv_full_metric[i, j] * ( d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i]) ) for i, j in e_ij])
 
 
@@ -302,7 +302,7 @@ def laplacian_conformal(a):
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-#ewh3    return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    #ewh3    return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
     return sum([ inv_metric[i, j] * (d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
 
 
@@ -330,7 +330,7 @@ def trace_free(x):
     trace = sum([ inv_metric[i, j] * x[i, j] for i, j in e_ij])
 
     # X_{ab} - 1/3 gt_{ab} X.
-#    tf = Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
+    # tf = Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
     tf = Matrix([x[i, j] - metric[i,j]*trace/3 for i, j in e_ij])
 
     return tf.reshape(3, 3)
@@ -350,7 +350,7 @@ def vec_j_ad_j(b, f):
     """
     return sum([b[i]*ad(i, f) for i in e_i])
 
-#vec_k_del_k = vec_j_del_j
+    #vec_k_del_k = vec_j_del_j
 
 ##########################################################################
 # metric related functions
@@ -409,7 +409,7 @@ def get_first_christoffel():
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-#                    C1[k, i, j] = 1 / 2 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
+                    #C1[k, i, j] = 1 / 2 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
                     C1[k, i, j] = 0.5 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
 
     return C1
@@ -456,7 +456,7 @@ def get_complete_christoffel(chi):
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-#                    C3[i, j, k] = C2[i, j, k] - 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
+                    #C3[i, j, k] = C2[i, j, k] - 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
                     C3[i, j, k] = C2[i, j, k] - 0.5/(chi)*(KroneckerDelta(i, j) * d(k, chi) +
                                                            KroneckerDelta(i, k) * d(j, chi) -
                                                            metric[j, k]*sum([inv_metric[i, m]*d(m, chi) for m in e_i])
@@ -492,7 +492,7 @@ def compute_ricci(Gt, chi):
     #print('Done with Lphi') #simplify(Lchi))
 
 
-#ewh4    DKchiDkchi = Matrix([4*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
+    #ewh4 DKchiDkchi = Matrix([4*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
     DKchiDkchi = Matrix([0.25/chi/chi*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
 
     #print('done with DKchi') # simplify(DKchiDkchi))
@@ -507,13 +507,13 @@ def compute_ricci(Gt, chi):
 
     #print('done with Rt') #simplify(Rt))
 
-#ewh5    Rphi_tmp = Matrix([2*metric[i, j]*Lchi - 4*d(i, chi)*d(j, chi) for i, j in e_ij])
-#dwn    Rphi_tmp = Matrix([ 0.5*metric[i, j]*Lchi/chi - 0.25*d(i, chi)*d(j, chi)/chi/chi for i, j in e_ij])
+    #ewh5    Rphi_tmp = Matrix([2*metric[i, j]*Lchi - 4*d(i, chi)*d(j, chi) for i, j in e_ij])
+    #dwn    Rphi_tmp = Matrix([ 0.5*metric[i, j]*Lchi/chi - 0.25*d(i, chi)*d(j, chi)/chi/chi for i, j in e_ij])
 
     #print(simplify(Rphi_tmp))
 
-#ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
-#dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
+    #ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
+    #dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
     xRphi = Matrix( [ 1/(2*chi)*(d2(i,j,chi) -
           sum(C2[k,j,i]*d(k,chi) for k in e_i)) -
           1/(4*chi*chi)*d(i,chi)*d(j,chi) for i, j in e_ij]).reshape(3,3)
@@ -530,16 +530,49 @@ def compute_ricci(Gt, chi):
 # code generation function
 ##########################################################################
 
+# construct the common sub-expression ellimination tree
+def construct_cse(ex,vnames,idx):
+    mi = [0, 1, 2, 4, 5, 8]
+    midx = ['00', '01', '02', '11', '12', '22']
+    
+    # total number of expressions
+    # print("--------------------------------------------------------")
+    num_e = 0
+    lexp = []
+    lname = []
+    for i, e in enumerate(ex):
+        if type(e) == list:
+            num_e = num_e + len(e)
+            for j, ev in enumerate(e):
+                lexp.append(ev)
+                lname.append(vnames[i]+repr(j)+idx)
+        elif type(e) == Matrix:
+            num_e = num_e + len(e)
+            for j, k in enumerate(mi):
+                lexp.append(e[k])
+                lname.append(vnames[i]+midx[j]+idx)
+        else:
+            num_e = num_e + 1
+            lexp.append(e)
+            lname.append(vnames[i]+idx)
+    
+    ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+    ee_syms = numbered_symbols(prefix=ee_name)
+    _v = cse(lexp, symbols=ee_syms, optimizations='basic')
+    
+    return [_v,count_ops(lexp)]
 
-def generate(ex, vnames, idx):
+
+
+def generate_cpu(ex, vnames, idx):
     """
     Generate the C++ code by simplifying the expressions.
     """
     # print(ex)
-
+    
     mi = [0, 1, 2, 4, 5, 8]
     midx = ['00', '01', '02', '11', '12', '22']
-
+    
     # total number of expressions
     # print("--------------------------------------------------------")
     num_e = 0
@@ -561,42 +594,20 @@ def generate(ex, vnames, idx):
             lexp.append(e)
             lname.append(vnames[i]+idx)
 
-    # print(num_e)
-    # print(len(lname))
+    cse=construct_cse(ex,vnames,idx)
+    _v=cse[0]
+    
+    print("// Dendro: {{{ ")
+    print("// Dendro: original ops: %d " %(cse[1]))
 
-    print('// Dendro: {{{ ')
-    print('// Dendro: original ops: ', count_ops(lexp))
-
-    # print("--------------------------------------------------------")
-    # print("Now trying Common Subexpression Detection and Collection")
-    # print("--------------------------------------------------------")
-
-    # Common Subexpression Detection and Collection
-    # for i in range(len(ex)):
-    #     # print("--------------------------------------------------------")
-    #     # print(ex[i])
-    #     # print("--------------------------------------------------------")
-    #     ee_name = ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
-    #     ee_syms = numbered_symbols(prefix=ee_name)
-    #     _v = cse(ex[i],symbols=ee_syms)
-    #     # print(type(_v))
-    #     for (v1,v2) in _v[0]:
-    #         print("double %s = %s;" % (v1, v2))
-    #     print("%s = %s" % (vnames[i], _v[1][0]))
-
-    #mex = Matrix(ex)
-    ee_name = 'DENDRO_' #''.join(random.choice(string.ascii_uppercase) for _ in range(5))
+    ee_name = 'DENDRO_' 
     ee_syms = numbered_symbols(prefix=ee_name)
-    _v = cse(lexp, symbols=ee_syms, optimizations='basic')
-
+    
     custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
-
     rops=0
     print('// Dendro: printing temp variables')
     for (v1, v2) in _v[0]:
-        # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
         print('double ', end='')
-        #print_ccode(v2, assign_to=v1, user_functions=custom_functions)
         print(change_deriv_names(ccode(v2, assign_to=v1, user_functions=custom_functions)))
         rops = rops + count_ops(v2)
 
@@ -604,18 +615,221 @@ def generate(ex, vnames, idx):
     print('// Dendro: printing variables')
     for i, e in enumerate(_v[1]):
         print("//--")
-        # print("%s = %s;" % (lname[i], e)) # replace_pow(e)))
-        #f = open(str(lname[i])+'.gv','w')
-        #print(dotprint(e), file=f)
-        #f.close()
-        #print_ccode(e, assign_to=lname[i], user_functions=custom_functions)
         print(change_deriv_names(ccode(e, assign_to=lname[i], user_functions=custom_functions)))
         rops = rops + count_ops(e)
 
-    print('// Dendro: reduced ops: ', rops)
+    print('// Dendro: reduced ops: %d' %(rops))
     print('// Dendro: }}} ')
+    
 
-'''
+
+def generate_fpcore(ex, vnames, idx):
+
+    """
+    Generate the FPCore code, 
+    """
+    mi = [0, 1, 2, 4, 5, 8]
+    midx = ['00', '01', '02', '11', '12', '22']
+    
+    # total number of expressions
+    # print("--------------------------------------------------------")
+    num_e = 0
+    lexp = []
+    lname = []
+    for i, e in enumerate(ex):
+        if type(e) == list:
+            num_e = num_e + len(e)
+            for j, ev in enumerate(e):
+                lexp.append(ev)
+                lname.append(vnames[i]+repr(j)+idx)
+        elif type(e) == Matrix:
+            num_e = num_e + len(e)
+            for j, k in enumerate(mi):
+                lexp.append(e[k])
+                lname.append(vnames[i]+midx[j]+idx)
+        else:
+            num_e = num_e + 1
+            lexp.append(e)
+            lname.append(vnames[i]+idx)
+
+    cse=construct_cse(ex,vnames,idx)
+    _v=cse[0]
+    
+    #print("// Dendro: {{{ ")
+    #print("// Dendro: original ops: %d " %(cse[1]))
+
+    ee_name = 'DENDRO_' 
+    ee_syms = numbered_symbols(prefix=ee_name)
+    
+    custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
+    rops=0
+    
+    #re_symbol=regex.compile(r"Symbol\('[a-z,A-Z,_]+[0-9,\[pp\],\[0-9\]]*'\)")
+    re_symbol=regex.compile(r"Symbol\('([a-z,A-Z,0-9,_,\[\]]*)'\)")
+    re_integer=regex.compile(r"Integer\(([\-,0-9]+)\)")
+    re_float=regex.compile(r"Float\('([\-,0-9]*\.[0-9]*)'\s prec=([0-9]+)\)")                
+    re_grad=regex.compile(r"Function\('([a-z]+[0-9]*)'\)\(Integer\(([0-9]+)\),\s*Symbol\('([a-z,A-Z]+[0-9]*\[pp\])'\)\)")
+
+    subs_functions={"Add(":"(+ ", "Integer(-1)": "-1 ", "Mul(":"(* ", "Div(":"(/ ", "Pow(":"(pow ","Rational(":"(/ "}
+
+    #print('// Dendro: printing temp variables')
+    tmp_vars=list()
+    for (v1, v2) in _v[0]:
+        tmp_vars.append(str(v1))
+        sym_sub=dict()
+        srep=srepr(v2)
+        #print(srep)
+
+        res=re_grad.findall(srep)
+        for g in res:
+            s="Function('%s')(Integer(%s), Symbol('%s'))" %(g[0],g[1],g[2])
+            #print(s)
+            ss="Symbol('%s')"%(g[0]+"_"+g[1]+"_"+g[2])
+            srep=srep.replace(s,ss)
+
+        srep=srep.replace(","," ")            
+        #print(srep)
+
+        res=re_symbol.findall(srep)
+        inp_params=list()
+        #print(res)
+        for s in res:
+            ss=s.replace("[pp]","")
+            for index in range(0,6):
+                ss=ss.replace("["+str(index)+"]",str(index))
+            inp_params.append(ss)
+            tmp_vars.append(ss)
+            sym_sub["Symbol(\'%s\')"%(s)]=ss
+
+        int_sub=dict()
+        res=re_integer.findall(srep)
+        for s in res:
+            int_sub["Integer(%s)"%(s)]=s
+
+        float_sub=dict()
+        res=re_float.findall(srep)
+        
+        for s in res:
+            float_sub["Float('%s'  prec=%s)"%(s[0],s[1])]=s[0]
+
+        for key,val in sym_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in int_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in float_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)            
+
+        for key, val in subs_functions.items():
+            srep=srep.replace(key,val)
+
+        
+        print("(FPCore (%s)" %(" ".join(inp_params)))
+        print("\t%s" %(srep))
+        print(")\n")
+    
+    #print(tmp_vars)
+    tmp_vars.clear();
+    tmp_vars=list()
+    for i, e in enumerate(_v[1]):
+        srep=srepr(e)
+
+        res=re_grad.findall(srep)
+        for g in res:
+            s="Function('%s')(Integer(%s), Symbol('%s'))" %(g[0],g[1],g[2])
+            #print(s)
+            ss="Symbol('%s')"%(g[0]+"_"+g[1]+"_"+g[2])
+            srep=srep.replace(s,ss)
+
+        srep=srep.replace(","," ")            
+        
+        res=re_symbol.findall(srep)
+        inp_params=list()
+        #print(res)
+        for s in res:
+            ss=s.replace("[pp]","")
+            for index in range(0,6):
+                ss=ss.replace("["+str(index)+"]",str(index))
+            inp_params.append(ss)
+            tmp_vars.append(ss)
+            sym_sub["Symbol(\'%s\')"%(s)]=ss
+
+        int_sub=dict()
+        res=re_integer.findall(srep)
+        for s in res:
+            int_sub["Integer(%s)"%(s)]=s
+        
+        float_sub=dict()
+        res=re_float.findall(srep)
+
+        for s in res:
+            float_sub["Float('%s'  prec=%s)"%(s[0],s[1])]=s[0]
+
+        for key,val in sym_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in int_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key,val in float_sub.items():
+            #print("{%s: %s} "%(key,val))
+            srep=srep.replace(key,val)
+
+        for key, val in subs_functions.items():
+            srep=srep.replace(key,val)
+
+
+        tmp_vars=list(set(tmp_vars))
+        print("(FPCore (%s)" %(" ".join(tmp_vars)))
+        print("\t%s" %(srep))
+        print(")")
+        #print(")")
+        #print(")")
+        #print(change_deriv_names(ccode(e, assign_to=lname[i], user_functions=custom_functions)))
+    
+
+
+def generate_avx(ex, vnames, idx):
+    
+    mi = [0, 1, 2, 4, 5, 8]
+    midx = ['00', '01', '02', '11', '12', '22']
+    
+    # total number of expressions
+    # print("--------------------------------------------------------")
+    num_e = 0
+    lexp = []
+    lname = []
+    for i, e in enumerate(ex):
+        if type(e) == list:
+            num_e = num_e + len(e)
+            for j, ev in enumerate(e):
+                lexp.append(ev)
+                lname.append(vnames[i]+repr(j)+idx)
+        elif type(e) == Matrix:
+            num_e = num_e + len(e)
+            for j, k in enumerate(mi):
+                lexp.append(e[k])
+                lname.append(vnames[i]+midx[j]+idx)
+        else:
+            num_e = num_e + 1
+            lexp.append(e)
+            lname.append(vnames[i]+idx)
+    
+    cse=construct_cse(ex,vnames,idx)
+    _v=cse[0]
+    
+    print('// Dendro: {{{ ')
+    print("// Dendro: original ops: %d " %(cse[1]))
+
+    ee_name = 'DENDRO_' 
+    ee_syms = numbered_symbols(prefix=ee_name)
+    
     print('// Dendro vectorized code: {{{')
     oper = {'mul': 'dmul', 'add': 'dadd', 'load': '*'}
     prevdefvars = set()
@@ -634,7 +848,8 @@ def generate(ex, vnames, idx):
         print(st.replace("'",""))
 
     print('// Dendro vectorized code: }}} ')
-'''
+
+
 
 def change_deriv_names(str):
     c_str=str
@@ -671,7 +886,7 @@ def change_deriv_names(str):
 
 
 
-def generate_separate(ex, vnames, idx):
+def generate_separate(ex, vnames, idx,prefix=""):
     """
     Generate the C++ code by simplifying the expressions.
     """
@@ -706,7 +921,7 @@ def generate_separate(ex, vnames, idx):
 
     # print(num_e)
     # print(len(lname))
-    c_file=open(vnames[0]+'.cpp','w')
+    c_file=open(prefix + vnames[0]+'.cpp','w')
     print('generating code for '+vnames[0])
     print('    bssn::timer::t_rhs.start();',file=c_file)
     print('for (unsigned int k = 3; k < nz-3; k++) { ',file=c_file)
@@ -778,17 +993,6 @@ def generate_separate(ex, vnames, idx):
     print('// Dendro: }}} ',file=c_file)
 
 
-
-
-
-    print('     /* debugging */',file=c_file)
-    print('     /*unsigned int qi = 46 - 1;',file=c_file)
-    print('     unsigned int qj = 10 - 1;',file=c_file)
-    print('     unsigned int qk = 60 - 1;',file=c_file)
-    print('     unsigned int qidx = qi + nx*(qj + ny*qk);',file=c_file)
-    print('     if (0 && qidx == pp) {',file=c_file)
-    print('     std::cout << ".... end OPTIMIZED debug stuff..." << std::endl;',file=c_file)
-    print('     }*/',file=c_file)
     print('  }',file=c_file)
     print(' }',file=c_file)
     print('}',file=c_file)

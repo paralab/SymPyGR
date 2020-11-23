@@ -177,6 +177,4 @@ mom = [item for sublist in mom.tolist() for item in sublist]
 # generate code
 ###################################################################
 
-outs = [psi4_real, psi4_img, ham, mom]
-vnames = ['psi4_real', 'psi4_img', 'ham', 'mom']
-dendro.generate(outs, vnames, '[pp]')
+
