@@ -6,20 +6,14 @@
 *@brief class definition of the class Block.
 */
 //
-
-
 #include "block.h"
-
-unsigned int m_uiMaxDepth=8;
 
 ot::Block::Block()
 {
-
-    m_uiX=0;
-    m_uiY=0;
-    m_uiZ=0;
-
+    m_uiBlockNode=ot::TreeNode(m_uiDim,m_uiMaxDepth);
     m_uiRegGridLev=0;
+    m_uiLocalElementBegin=0;
+    m_uiLocalElementEnd=0;
 
     m_uiPaddingWidth=GHOST_WIDTH;
 
@@ -30,25 +24,49 @@ ot::Block::Block()
     m_uiSzY=m_uiSize1D;
     m_uiSzZ=m_uiSize1D;
 
-    m_uiBlkElem_1D=1u<<(m_uiRegGridLev);
+    m_uiBlkElem_1D=1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel());
 
+    m_uiIsInternal=false;
+    m_uiBlkType = BlockType::UNSPECIFIED;
 
 
 }
 
-
-ot::Block::Block(unsigned int px,unsigned int py, unsigned int pz, unsigned int regLev,unsigned int eleOrder)
+ot::Block::Block(ot::TreeNode pNode, unsigned int rotID ,unsigned int regLev, unsigned int regEleBegin,unsigned int regEleEnd,unsigned int eleOrder)
 {
 
-    m_uiX=px;
-    m_uiY=py;
-    m_uiZ=pz;
-
+    m_uiBlockNode=pNode;
+    m_uiRotID=rotID;
     m_uiRegGridLev=regLev;
+    m_uiLocalElementBegin=regEleBegin;
+    m_uiLocalElementEnd=regEleEnd;
 
     m_uiPaddingWidth=GHOST_WIDTH;
 
     m_uiEleOrder=eleOrder;
+    m_uiSize1D=m_uiEleOrder*(1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel()))+1+2*m_uiPaddingWidth;
+
+    m_uiSzX=m_uiSize1D;
+    m_uiSzY=m_uiSize1D;
+    m_uiSzZ=m_uiSize1D;
+
+    m_uiBlkElem_1D=1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel());
+
+    m_uiIsInternal=false;
+    m_uiBlkType = BlockType::UNSPECIFIED;
+
+}
+
+ot::Block::Block(unsigned int px, unsigned int py, unsigned int pz, unsigned int pLevel, unsigned int pEleOrder)
+{
+    
+    m_uiBlockNode = ot::TreeNode(px,py,pz,pLevel,m_uiDim,m_uiMaxDepth);
+    
+    m_uiRegGridLev=pLevel;
+
+    m_uiPaddingWidth=GHOST_WIDTH;
+
+    m_uiEleOrder=pEleOrder;
     m_uiSize1D=m_uiEleOrder*((1u<<(m_uiRegGridLev))-1)+(m_uiEleOrder+1)+2*m_uiPaddingWidth;
 
     m_uiSzX=m_uiSize1D;
@@ -57,37 +75,26 @@ ot::Block::Block(unsigned int px,unsigned int py, unsigned int pz, unsigned int 
 
     m_uiBlkElem_1D=1u<<(m_uiRegGridLev);
 
-
-
 }
-
 
 ot::Block::~Block()
 {
-
+    m_uiBLK2DIAG.clear();
 }
-
 
 double ot::Block::computeGridDx() const
 {
-    return DX;
+    return ((m_uiBlockNode.maxX()-m_uiBlockNode.minX()))/((double)((1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel()))*m_uiEleOrder));
 }
 
 double ot::Block::computeGridDy() const
 {
-    return DY;
+    return ((m_uiBlockNode.maxY()-m_uiBlockNode.minY()))/((double)((1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel()))*m_uiEleOrder));
 }
 
 double ot::Block::computeGridDz() const
 {
-    return DZ;
-}
-
-
-
-void ot::Block::setOffset(DendroIntL offset)
-{
-    m_uiOffset=offset;
+    return ((m_uiBlockNode.maxZ()-m_uiBlockNode.minZ()))/((double)((1u<<(m_uiRegGridLev-m_uiBlockNode.getLevel()))*m_uiEleOrder));
 }
 
 double ot::Block::computeDx(const Point & d_min,const Point & d_max) const
@@ -103,4 +110,43 @@ double ot::Block::computeDy(const Point & d_min,const Point & d_max) const
 double ot::Block::computeDz(const Point & d_min,const Point & d_max) const
 {
     return ((d_max.z()-d_min.z())/((double)(1u<<m_uiMaxDepth)))*(computeGridDz());
+}
+
+void ot::Block::setOffset(DendroIntL offset)
+{
+    m_uiOffset=offset;
+}
+
+void ot::Block::initializeBlkDiagMap(const unsigned int value)
+{
+
+    m_uiBLK2DIAG.clear();
+    m_uiBLK2DIAG.resize(NUM_EDGES*2*m_uiBlkElem_1D,value);
+
+
+}
+
+void ot::Block::initializeBlkVertexMap(const unsigned int value)
+{
+    m_uiBLKVERTX.clear();
+    m_uiBLKVERTX.resize(NUM_CHILDREN,value);
+}
+
+void ot::Block::computeEleIJK(ot::TreeNode pNode, unsigned int* eijk) const 
+{
+    eijk[0]=(pNode.getX()-m_uiBlockNode.getX())>>(m_uiMaxDepth-m_uiRegGridLev);
+    eijk[1]=(pNode.getY()-m_uiBlockNode.getY())>>(m_uiMaxDepth-m_uiRegGridLev);
+    eijk[2]=(pNode.getZ()-m_uiBlockNode.getZ())>>(m_uiMaxDepth-m_uiRegGridLev);
+
+}
+
+bool ot::Block::isBlockInternalEle(ot::TreeNode pNode) const 
+{
+    unsigned int eijk[3];
+    this->computeEleIJK(pNode,eijk);
+    // note that integer overflow if the element is out of the min bounds. hence give MAX number which is larger than m_uiBlkElem_1D;
+    bool s1 = ( (eijk[0] < (m_uiBlkElem_1D-1) ) && (eijk[1] < (m_uiBlkElem_1D-1) ) && (eijk[2] < (m_uiBlkElem_1D-1) ) );
+    bool s2 = ( (eijk[0] >  0 ) && (eijk[1] >  0 ) && (eijk[2] >  0 ) );
+
+    return (s1 && s2);
 }

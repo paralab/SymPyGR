@@ -13,13 +13,16 @@
 #include "bh.h"
 #include <string.h>
 #include <iostream>
+#include "memory_pool.h"
+#include "grDef.h"
 
 
 namespace bssn
 {
 
+    extern mem::memory_pool<double> BSSN_MEM_POOL;
     /**@brief element order*/
-    static const unsigned int BSSN_ELE_ORDER=4;
+    extern unsigned int BSSN_ELE_ORDER;
 
     /**@brief number of variables*/
     static const unsigned int BSSN_NUM_VARS=24;
@@ -58,11 +61,17 @@ namespace bssn
     /**@brief solution output frequency*/
     extern unsigned int BSSN_IO_OUTPUT_FREQ;
 
+    /**@brief Gravitational wave data extraction frequency*/
+    extern unsigned int BSSN_GW_EXTRACT_FREQ;
+
     /**@brief timestep norms out put freq.*/
     extern unsigned int BSSN_TIME_STEP_OUTPUT_FREQ;
 
     /**@brief remesh test frequency*/
     extern unsigned int BSSN_REMESH_TEST_FREQ;
+
+    /**@brief remesh test freq. after the merger*/
+    extern unsigned int BSSN_REMESH_TEST_FREQ_AFTER_MERGER;
 
     /**@brief checkpoint store frequency*/
     extern unsigned int BSSN_CHECKPT_FREQ;
@@ -109,8 +118,27 @@ namespace bssn
     /**@brief AMR coarsening factor (we coarsen if tol<BSSN_DENDRO_AMR_FAC*BSSN_WAVELET_TOL)*/
     extern double BSSN_DENDRO_AMR_FAC;
 
+    /**@brief: AMR radius for the BH location based refinement. (BH1)*/
+    extern double BSSN_BH1_AMR_R;
+
+    /**@brief: AMR radius for the BH location based refinement. (BH2) */
+    extern double BSSN_BH2_AMR_R;
+
+    /**@brief: Maximum refinement level for BH1 */
+    extern unsigned int BSSN_BH1_MAX_LEV;
+
+    /**@brief: Maximum refinement level for BH2 */
+    extern unsigned int BSSN_BH2_MAX_LEV;
+
+    /**@brief: grid iterations till the grid converges*/
+    extern unsigned int BSSN_INIT_GRID_ITER;
+
     /**@brief wavelet tolerance value. */
     extern  double BSSN_WAVELET_TOL;
+
+    /**@brief: wabelet tolernace for GW extration(refinement after the merger)*/
+    extern double BSSN_GW_REFINE_WTOL;
+
     /**@brief load-imbalance tolerance value. */
     extern  double BSSN_LOAD_IMB_TOL;
     /**@brief: Splitter fix value*/
@@ -121,11 +149,14 @@ namespace bssn
 
 
     /**@brief simulation begin time. */
-    extern double BSSN_RK45_TIME_BEGIN;
+    extern double BSSN_RK_TIME_BEGIN;
     /**@brief simulation end time*/
-    extern double BSSN_RK45_TIME_END;
+    extern double BSSN_RK_TIME_END;
     /**@brief rk time step size. */
     extern double BSSN_RK45_TIME_STEP_SIZE;
+
+    /**@brief rk method type*/
+    extern unsigned int BSSN_RK_TYPE;
 
     /** desired tolerance value for the rk45 method (adaptive time stepping. )*/
     extern double BSSN_RK45_DESIRED_TOL;
@@ -134,6 +165,9 @@ namespace bssn
     extern BH BH1;
     /**@brief Black hole 2 */
     extern BH BH2;
+
+    /**@brief: evolved locations of the 0-BH1, 1 BH2*/
+    extern Point BSSN_BH_LOC[2];
 
     /**@brief BBH initial data type */
     extern unsigned int BSSN_ID_TYPE;
@@ -176,7 +210,10 @@ namespace bssn
 
     /**@brief: dimension of the grid*/
     extern unsigned int BSSN_DIM;
-
+    
+    /**@brief: minimum refinement level default=2*/
+    extern unsigned int BSSN_MINDEPTH;
+    
     /**@brief: max refinement level*/
     extern unsigned int BSSN_MAXDEPTH;
 
@@ -208,6 +245,9 @@ namespace bssn
     /**@brief: chi floor value */
     extern double CHI_FLOOR;
 
+    /**@brief: dissipation type */
+    extern unsigned int DISSIPATION_TYPE;
+
     /**@brief: Kreiss-Oliger dissipation */
     extern double KO_DISS_SIGMA;
 
@@ -228,6 +268,34 @@ namespace bssn
 
     /**@brief: eta function parameters (powers)*/
     extern double BSSN_ETA_POWER[2];
+
+    /**@brief: xi parameters to change between different gauge conditions*/
+    extern unsigned int BSSN_XI[3];
+
+    /**@brief: @david can you please add some comeents for these parameters. */
+    extern unsigned int BSSN_DISSIPATION_NC;
+
+    /**@brief: @david can you please add some comeents for these parameters. */
+    extern unsigned int BSSN_DISSIPATION_S;
+
+    /**@brief: tolerance for refinement based on EH */
+    extern double BSSN_EH_REFINE_VAL;
+    
+    /**@brief: tolerance for coarsen based on EH */
+    extern double BSSN_EH_COARSEN_VAL;
+
+    /**@brief: refinement mode for the application*/
+    extern RefinementMode BSSN_REFINEMENT_MODE;
+    
+    /**@brief: if true output only the z slice*/
+    extern bool BSSN_VTU_Z_SLICE_ONLY;
+
+    /**@brief TS off set for LTS in BSSN*/
+    extern unsigned int BSSN_LTS_TS_OFFSET;
+
+    /**@brief to track if a merged checkpoint file is writte.*/
+    extern bool BSSN_MERGED_CHKPT_WRITTEN;
+
 
 
 }
@@ -266,5 +334,57 @@ namespace TPID {
   extern int verbose;
   extern double adm_tol;
   extern double Newton_tol;
+  extern std::string FILE_PREFIX;
 }
+
+
+/**@brief parameters related to BH location extraction*/
+namespace BHLOC
+{
+    // Note: Current implementation of the BH location extraction is simple clustering property based on the initial location of the BH
+    // Later we can add the code to compute the BH locations based on the event horizon extraction.
+    
+    
+    /**@brief variable ID used for BH location extraction*/
+    extern unsigned int EXTRACTION_VAR_ID;
+    
+    /**@brief tolerance for BH extraction*/
+    extern double EXTRACTION_TOL;
+    
+    
+}
+
+
+/**@brief parameters related to GW extraction*/
+namespace GW
+{
+    
+    /**@brief max allowed radii values*/
+    static const unsigned int BSSN_GW_MAX_RADAII=20;
+    
+    /**@brief max allowed lmode values*/
+    static const unsigned int BSSN_GW_MAX_LMODES=8;
+
+    static const unsigned int BSSN_GW_LEBEDEV_PREC=25;
+    
+    /**@brief: number of different radius values for psi4 poly fit*/
+    extern unsigned int BSSN_GW_NUM_RADAII;
+    
+    /**@brief: number of L mode values*/
+    extern unsigned int BSSN_GW_NUM_LMODES;
+    
+    /**@brief: vallues of extraction radaii*/
+    extern double BSSN_GW_RADAII[BSSN_GW_MAX_RADAII];
+    
+    /**@brief: value of the spin*/
+    extern unsigned int BSSN_GW_SPIN;
+    
+    /**@brief values for l modes in SWSH*/
+    extern unsigned int BSSN_GW_L_MODES[BSSN_GW_MAX_LMODES];
+    
+    
+}
+
+
+
 #endif //SFCSORTBENCH_PARAMETERS_H

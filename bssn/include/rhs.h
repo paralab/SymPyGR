@@ -8,24 +8,27 @@
 #include "grUtils.h"
 #include "profile_param.h"
 #include "parameters.h"
+#include "grDef.h"
+#include "block.h"
+#include "hadrhs.h"
 
-#define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
+#ifdef BSSN_ENABLE_CUDA
+#include "rhs_cuda.cuh"
+    #include "params_cu.h"
+    #include "profile_gpu.h"
+#endif
 
-#define deriv_x deriv42_x
-#define deriv_y deriv42_y
-#define deriv_z deriv42_z
 
-#define deriv_xx deriv42_xx
-#define deriv_yy deriv42_yy
-#define deriv_zz deriv42_zz
 
-#define adv_deriv_x deriv42adv_x
-#define adv_deriv_y deriv42adv_y
-#define adv_deriv_z deriv42adv_z
 
-#define ko_deriv_x ko_deriv42_x
-#define ko_deriv_y ko_deriv42_y
-#define ko_deriv_z ko_deriv42_z
+
+/**@brief computes complete RHS iteratiing over all the blocks.
+ * @param[out] unzipVarsRHS: unzipped variables computed RHS
+ * @param[in]  unzipVars: unzipped variables. 
+ * @param[in]  blkList: block list. 
+ * @param[in]  numBlocks: number of blocks. 
+ */
+void bssnRHS(double **uzipVarsRHS, const double **uZipVars, const ot::Block* blkList, unsigned int numBlocks);
 
 void bssnrhs(double **uzipVarsRHS, const double **uZipVars,
              const unsigned int &offset,
@@ -48,5 +51,14 @@ void bssn_bcs(double *f_rhs, const double *f,
 void freeze_bcs(double *f_rhs, const unsigned int *sz, const unsigned int &bflag);
 
 void fake_initial_data(double x, double y, double z, double *u);
+
+void max_spacetime_speeds( double * const lambda1max, double * const lambda2max, double * const lambda3max, 
+                           const double * const alpha, 
+                           const double * const beta1, const double * const beta2, const double * const beta3,
+                           const double * const gtd11, const double * const gtd12, const double * const gtd13,
+                           const double * const gtd22, const double * const gtd23, const double * const gtd33,
+                           const double * const chi, const unsigned int *sz); 
+
+void call_HAD_rhs();
 
 #endif

@@ -14,17 +14,22 @@
 #define SFCSORTBENCH_BLOCK_H
 
 #include "dendro.h"
+#include "TreeNode.h"
 #include <assert.h>
+#include <vector>
 #include "point.h"
-
-extern unsigned int m_uiMaxDepth;
-
 #define GHOST_WIDTH 3
-#define DX 1e-3
-#define DY 1e-3
-#define DZ 1e-3
+
 namespace ot
 {
+   /**
+    * @brief Block type 
+    * UNSPECIFIED : block flag type is not set
+    * UNZIP_INDEPENDENT: unzip operation does not depend on ghost nodes
+    * UNZIP_DEPENDENT: unzip operation does depend on at least one ghost node
+    * 
+    */
+   enum BlockType{UNSPECIFIED=0, UNZIP_INDEPENDENT, UNZIP_DEPENDENT};
 
    class Block
    {
@@ -32,18 +37,20 @@ namespace ot
 
 
    private:
-     /**coords of the block*/
-     unsigned int m_uiX;
+     /**Coordinates of the block. */
+     ot::TreeNode m_uiBlockNode;
 
-     unsigned int m_uiY;
-
-     unsigned int m_uiZ;
+     /**rotation id of the block*/
+     unsigned int m_uiRotID;
 
      /** size of the regular grid inside the block. */
      unsigned int m_uiRegGridLev;
 
-     /**num elements per one side*/
-     unsigned int m_uiBlkElem_1D;
+      /**regular grid local element begin*/
+     DendroIntL m_uiLocalElementBegin;
+
+     /** regular grid local element end. Note that element ids in [localBegin,localEnd] is continous and all those elements are inside the current block. */
+     DendroIntL m_uiLocalElementEnd;
 
      /** offset used for local memory allocation.*/
      DendroIntL m_uiOffset;
@@ -66,10 +73,20 @@ namespace ot
      /** allocation length on Z direction*/
      unsigned int m_uiSzZ;
 
-    /**boundary */
-    unsigned int m_uiBflag;
+     /** indecies of the 12 negihbour elems*/
+     std::vector<unsigned int> m_uiBLK2DIAG;
 
+     /** indecies of the 8 vertex neighbor elems.*/
+     std::vector<unsigned int> m_uiBLKVERTX;
 
+     /** number of elements per block. **/
+     unsigned int m_uiBlkElem_1D;
+
+     /** set true after the perform block setpup if the block doesn't depend on the ghost region*/
+     bool m_uiIsInternal;
+     
+     /** block type*/      
+     BlockType m_uiBlkType;
 
 
    public:
@@ -85,16 +102,43 @@ namespace ot
      * @param [in] regEleEnd Local element end location for the octree embedded by the block .
      * @param [in] eleorder: element order of the mesh.
      * */
-     Block(unsigned int px,unsigned int py,unsigned int pz,unsigned int regLev,unsigned int  eleOrder);
+    Block(ot::TreeNode pNode, unsigned int rotID ,unsigned int regLev, unsigned int regEleBegin,unsigned int regEleEnd,unsigned int  eleOrder);
 
-     ~Block();
+    /**
+     * @brief Construct a new Block object
+     * @param px : corner px point
+     * @param py : corner py point
+     * @param pz : corner pz point
+     * @param pLevel : refinement level
+     * @param pEleOrder : element order 
+     */
+    Block(unsigned int px, unsigned int py, unsigned int pz, unsigned int pLevel, unsigned int pEleOrder);
 
+    ~Block();
+
+    /**
+     * @brief Return the block node
+     * */
+    inline ot::TreeNode getBlockNode()const {return m_uiBlockNode;}
 
     /**
      * @brief returns the regular grid lev (m_uiRegGridLev) value.
      * note: In octree2BlockDecomposition m_uiRegGridLev is used to store the rotation id of the block.
      *  */
      inline unsigned int getRegularGridLev()const {return m_uiRegGridLev;}
+
+     /**@brief returns the rotation id of the block*/
+     inline unsigned int getRotationID()const {return m_uiRotID;}
+
+     /**
+      * @brief returns the local element begin for the block.
+      * */
+      inline DendroIntL getLocalElementBegin()const {return m_uiLocalElementBegin;}
+
+     /**
+      * @brief returns the local element end for the block.
+      * */
+     inline DendroIntL getLocalElementEnd()const {return m_uiLocalElementEnd;}
 
      /** @brief returns 1D padding width */
      inline unsigned int get1DPadWidth()const {return m_uiPaddingWidth;}
@@ -105,17 +149,29 @@ namespace ot
      /**@brief set the block offset*/
      void setOffset(DendroIntL offset);
 
-     /**@brief set the blkFlag with the correct bdy*/
-     inline void setBlkNodeFlag(unsigned int flag){ m_uiBflag=flag;};
+     inline void setBlk2DiagMap(unsigned int owner,unsigned int dir, unsigned int id){m_uiBLK2DIAG[dir*(2*m_uiBlkElem_1D)+owner]=id;}
+
+     inline void setBlk2VertexMap(unsigned int dir, unsigned int id){m_uiBLKVERTX[dir]=id;}
+
+     inline void setIsInternal(bool isInternal){m_uiIsInternal=isInternal;}
+
+     inline void setBlkType(BlockType btype) { m_uiBlkType = btype; }
+
+     inline BlockType getBlockType() const {return m_uiBlkType;}
+
+     inline bool isInternal(){return m_uiIsInternal;}
 
      /**@brief set the blkFlag with the correct bdy*/
-     inline unsigned int getBlkNodeFlag() const { return m_uiBflag;};
+     inline void setBlkNodeFlag(unsigned int flag){m_uiBlockNode.setFlag(flag);};
 
-     /** @brief get offset*/
+     /**@brief set the blkFlag with the correct bdy*/
+     inline unsigned int getBlkNodeFlag() const { return (m_uiBlockNode.getFlag()>>NUM_LEVEL_BITS);};
+
+     /**@brief get offset*/
      inline DendroIntL getOffset() const {return m_uiOffset;}
 
      /** @brief returns the 1D array size*/
-     inline unsigned int get1DArraySize() const {return m_uiSize1D;}
+     inline unsigned int get1DArraySize() const {return m_uiSize1D ;}
 
      /**@brief allocation length on X direction*/
      inline unsigned int getAllocationSzX() const {return m_uiSzX;}
@@ -126,7 +182,29 @@ namespace ot
      /**@brief allocation length on Z direction*/
      inline unsigned int getAllocationSzZ() const {return m_uiSzZ;}
 
+     /**@brief align the total block size*/
+     inline unsigned int getAlignedBlockSz() const
+     {
+       unsigned int tmp;
+      ((m_uiSzX & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? tmp=m_uiSzX : tmp=((m_uiSzX/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
+      return tmp*m_uiSzY*m_uiSzZ;
+     }
 
+
+     inline const unsigned int * getBlk2DiagMap() const {return &(*(m_uiBLK2DIAG.begin()));}
+
+     inline const unsigned int * getBlk2VertexMap() const {return &(*(m_uiBLKVERTX.begin()));}
+
+     inline void setAllocationSzX(unsigned int sz) {m_uiSzX=sz;}
+     inline void setAllocationSzY(unsigned int sz) {m_uiSzY=sz;}
+     inline void setAllocationSzZ(unsigned int sz) {m_uiSzZ=sz;}
+     inline void setSiz1D(unsigned int sz){m_uiSize1D=sz;}
+
+     inline unsigned int getElemSz1D() const { return m_uiBlkElem_1D;}
+
+
+     inline const std::vector<unsigned int >& getBlk2DiagMap_vec() const {return m_uiBLK2DIAG;}
+     inline const std::vector<unsigned int >& getBlk2VertexMap_vec() const {return m_uiBLKVERTX;}
 
      /**@brief computes and returns the space discretization (grid domain) */
      double computeGridDx () const;
@@ -137,19 +215,26 @@ namespace ot
      /**@brief computes and returns the space discretization (grid domain) */
      double computeGridDz () const;
 
-       /**@brief computes and returns the space discretization on x direction (problem domain)*/
+     /**@brief computes and returns the space discretization on x direction (problem domain)*/
      double computeDx(const Point & d_min,const Point & d_max) const ;
      /**@brief computes and returns the space discretization on x direction (problem domain)*/
      double computeDy(const Point & d_min,const Point & d_max) const ;
      /**@brief computes and returns the space discretization on x direction (problem domain)*/
      double computeDz(const Point & d_min,const Point & d_max) const ;
 
-    inline unsigned int getAlignedBlockSz() const
-     {
-       unsigned int tmp;
-      ((m_uiSzX & ((1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG)-1))==0)? tmp=m_uiSzX : tmp=((m_uiSzX/(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG))+1)*(1u<<DENDRO_BLOCK_ALIGN_FACTOR_LOG);
-      return tmp*m_uiSzY*m_uiSzZ;
-     }
+     /*** @brief initialize the block diagonal map. */
+     void initializeBlkDiagMap(const unsigned int value);
+
+     /*** @brief initialize the block vertex neighbour map. */
+     void initializeBlkVertexMap(const unsigned int value);
+
+     /**@brief compute the eijk for an element inside the block.  */
+     void computeEleIJK(ot::TreeNode pNode, unsigned int* eijk) const;
+
+     /**@brief: returns true if the pNode is inside the current block*/
+     bool isBlockInternalEle(ot::TreeNode pNode) const ; 
+
+
 
 
    };

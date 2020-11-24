@@ -6,6 +6,14 @@
 #define SFCSORTBENCH_DENDRO_H
 
 #include <climits>
+#include <complex>
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
 
 #define RED "\e[1;31m"
 #define BLU "\e[2;34m"
@@ -28,11 +36,15 @@
 #endif
 
 
+#define DendroScalar double
+#define DendroComplex std::complex<double>
+
+
+
 //#define DendroIntL unsigned int
 typedef unsigned __int128 DendroUInt_128;
 
-#define DENDRO_BLOCK_ALIGN_FACTOR 1
-#define DENDRO_BLOCK_ALIGN_FACTOR_LOG 0
+
 
 
 // mesh.h # defines.
@@ -106,8 +118,8 @@ typedef unsigned __int128 DendroUInt_128;
 
 #define OCT_DIR_TOTAL 27
 
-
-#define MAXDEAPTH_LEVEL_DIFF 1 // difference between maxdepth and the level when constructing and balancing octrees. Used to ensure higher order mesh generation get proper octants sizes divisible by m_uiElementOrder.
+/** variable to ensure the element sz % element order =0 for higher order elemnts */
+extern unsigned int MAXDEAPTH_LEVEL_DIFF;
 
 
 #define NUM_LEVEL_BITS 5u
@@ -125,6 +137,8 @@ typedef unsigned __int128 DendroUInt_128;
 #define EDGE_OFFSET 4
 #define VERTEX_OFFSET 4
 #define ROTATION_OFFSET 8
+#define MAX_HANGING_FACES 2
+#define F2E_MAP_OFFSET 4
 #else
 #define NUM_CHILDREN 8
 #define NUM_FACES 6
@@ -132,7 +146,15 @@ typedef unsigned __int128 DendroUInt_128;
 #define EDGE_OFFSET 6
 #define VERTEX_OFFSET 18
 #define ROTATION_OFFSET 16
+#define MAX_HANGING_FACES 4
+#define F2E_MAP_OFFSET 6
 #endif
+
+#define F2E_FACE_DIR_OFFSET 3
+#define F2E_NUM_MAX_FACE_DIR 7
+#define F2E_FACE_INDEPEN_BIT 3
+#define F2E_FACE_DEPEN_BIT 4
+
 
 // AMR coarsening factor.
 #define DENDRO_AMR_COARSEN_FAC 0.1
@@ -147,5 +169,17 @@ typedef unsigned __int128 DendroUInt_128;
 
 #define DENDRO_REMESH_UNZIP_SCALE_FAC 1.0
 
+
+#define DENDRO_BLOCK_ALIGN_FACTOR 1
+#define DENDRO_BLOCK_ALIGN_FACTOR_LOG 0
+
+
+#define ODA_INDEPENDENT_FLAG_BIT 0
+#define ODA_W_DEPENDENT_FLAG_BIT 1
+#define ODA_W_BOUNDARY_FLAG_BIT 2
+// used in face to element map.
+#define ODA_FLAGS_TOTAL 3
+
+void __handler(int sig);
 
 #endif //SFCSORTBENCH_DENDRO_H

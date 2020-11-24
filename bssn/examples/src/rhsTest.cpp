@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     const double sd = (hLev - mean);
 
     const unsigned int MAX_STARS = 50;
-    const unsigned int eleOrder = 4;
+    const unsigned int eleOrder = bssn::BSSN_ELE_ORDER;
 
     std::default_random_engine generator;
     std::normal_distribution<double> distribution(mean, sd);

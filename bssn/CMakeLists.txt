@@ -31,10 +31,18 @@ option(WITH_CUDA " build with cuda " OFF)
 option(BSSN_ENABLE_CUDA "enable cuda execution" OFF)
 
 
+#set the build type to release by default.
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+            "Choose the type of build, options are: Debug Release " FORCE)
+endif()
+
+
 if(BSSN_ENABLE_CUDA)
     add_definitions(-DBSSN_ENABLE_CUDA)
 endif()
 
+add_definitions(-DBSSN_USE_6TH_ORDER_DERIVS)
 
 set(INC_FILES
         include/derivs.h
@@ -42,6 +50,7 @@ set(INC_FILES
         include/dendro.h
         include/bssn_profiler.h
         include/profile_param.h
+        include/TreeNode.h
         include/block.h
         include/grUtils.h
         include/parameters.h
@@ -54,6 +63,7 @@ set(SRC_FILES
         src/rhs.cpp
         src/bssn_profiler.cpp
         src/profile_param.cpp
+        src/TreeNode.cpp
         src/block.cpp
         src/grUtils.cpp
         src/parameters.cpp
@@ -67,7 +77,7 @@ endif()
 
 add_library(bssnUtils ${INC_FILE} ${SRC_FILES})
 target_include_directories(bssnUtils PRIVATE include)
-target_include_directories(bssnUtils PRIVATE utils)
+target_include_directories(bssnUtils PRIVATE scripts)
 
 
 if(WITH_CUDA)
@@ -135,7 +145,7 @@ endif()
 set(SOURCE_FILES cuda_gr/include/gpuBSSNExample.h cuda_gr/src/gpuBSSNExample.cpp ${CUDA_GR_INCLUDE_H} ${CUDA_GR_SRC_CPP} ${INC_FILES} ${SRC_FILES} )
 add_executable(cudaBSSN ${SOURCE_FILES})
 target_include_directories(cudaBSSN PRIVATE include)
-target_include_directories(cudaBSSN PRIVATE utils)
+target_include_directories(cudaBSSN PRIVATE scripts)
 target_include_directories(cudaBSSN PRIVATE cuda_gr/include)
 target_link_libraries(cudaBSSN bssnUtils m)
 
@@ -153,7 +163,7 @@ set(SOURCE_FILES examples/include/rhsTest.h examples/src/rhsTest.cpp ${INC_FILES
 add_executable(rhsTest ${SOURCE_FILES})
 target_include_directories(rhsTest PRIVATE include)
 target_include_directories(rhsTest PRIVATE examples/include)
-target_include_directories(rhsTest PRIVATE utils)
+target_include_directories(rhsTest PRIVATE scripts)
 target_link_libraries(rhsTest bssnUtils m)
 
 if(WITH_CUDA)
