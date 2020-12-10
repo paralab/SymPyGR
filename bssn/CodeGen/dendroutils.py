@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 
 
-
 """
 replace user defined functions with sympy symbols. 
 mainly written to replace the derivative functions with corresponding symbol name. 
@@ -63,6 +62,10 @@ def advanced_free_symbols(expr):
     return sym_set
     
 
+def graph_label_func(expr):
+    return str(expr.func)
+
+
 """
 Write sympy expression to a .dot(graphViz file format)
 """
@@ -81,7 +84,7 @@ def write_to_dot(outs, vnaems, suffix="[pp]", folder_ptah="."):
             for j, ev in enumerate(e):
                 print("processing expr : %d var name %s[%s]" %(i,vnaems[i],str(j)))
                 ev=replace_userdef_funcs(ev)
-                d_str=str(dotprint(ev,labelfunc=sympy.srepr))
+                d_str=str(dotprint(ev,labelfunc=sympy.srepr,repeat=False))
                 gv_file = open(folder_ptah+"/"+vnaems[i]+"_"+str(j)+".dot",'w')
                 gv_file.write(d_str)
                 gv_file.close()
@@ -90,7 +93,7 @@ def write_to_dot(outs, vnaems, suffix="[pp]", folder_ptah="."):
             for j, k in enumerate(mi):
                 print("processing expr : %d var name %s[%s]" %(i,vnaems[i],midx[j]))
                 e[k]=replace_userdef_funcs(e[k])
-                d_str=str(dotprint(e[k],labelfunc=sympy.srepr))
+                d_str=str(dotprint(e[k],labelfunc=sympy.srepr,repeat=False))
                 gv_file = open(folder_ptah+"/"+vnaems[i]+"_"+str(midx[j])+".dot",'w')
                 gv_file.write(d_str)
                 gv_file.close()
@@ -100,8 +103,7 @@ def write_to_dot(outs, vnaems, suffix="[pp]", folder_ptah="."):
             num_e = num_e + 1
             print("processing expr : %d var name %s" %(i,vnaems[i]))
             e=replace_userdef_funcs(e)
-            #d_str=str(dotprint(e,labelfunc=sympy.srepr))
-            d_str=str(dotprint(e))
+            d_str=str(dotprint(e,labelfunc=sympy.srepr,repeat=False))
             gv_file = open(folder_ptah+"/"+vnaems[i]+".dot",'w')
             gv_file.write(d_str)
             gv_file.close()
@@ -113,67 +115,51 @@ def write_to_dot(outs, vnaems, suffix="[pp]", folder_ptah="."):
 Construct a networkX digraph from a dot file. 
 """
 def construct_nx_digraph(file_name):
-    nxgraph = nx.MultiDiGraph(nx.drawing.nx_pydot.read_dot(file_name))
-    return nxgraph
-    #print(nxgraph)
-    #print(nx.linalg.graphmatrix.adj_matrix(nxgraph))
-    #print(nxgraph.adj)
-    #nx.draw(nxgraph,pos=nx.planar_layout(nxgraph))
-    #nx.draw_networkx(nxgraph,pos=nx.planar_layout(nxgraph),font_size=8)
-    #plt.show()
-    #print(nx.linalg.graphmatrix.adj_matrix(nxgraph))
+    G = nx.DiGraph(nx.drawing.nx_pydot.read_dot(file_name))
+    return G
+   
 
 """
-construct the dependancy matrix for a given list of expressions
-out     : symbolic expression list
-vnames  : variable names for the symbolic expression
-suffix  : suffix for append to vnames. 
+draw networkX graph. 
 """
-def construct_dep_matrix(outs, vnames, suffix="[pp]"):
-    
-    mi = [0, 1, 2, 4, 5, 8]
-    midx = ['00', '01', '02', '11', '12', '22']
-    idx=suffix
-    
-    # total number of expressions
-    # print("--------------------------------------------------------")
-    num_e = 0
-    lexp  = list()
-    lname = list()
-    exp_symbols = set()
-    
-    for i, e in enumerate(outs):
-        print("processing expr : %d" %i)
-        if type(e) == list:
-            num_e = num_e + len(e)
-            for j, ev in enumerate(e):
-                #exp_symbols = exp_symbols.union(replace_userdef_funcs(ev).free_symbols)
-                #print(exp_symbols)
-                ev=replace_userdef_funcs(ev)
-                #exp_symbols = exp_symbols.union(advanced_free_symbols(ev))
-        elif type(e) == sympy.Matrix:
-            num_e = num_e + len(e)
-            for j, k in enumerate(mi):
-                e[k]=replace_userdef_funcs(e[k])
-                #exp_symbols = exp_symbols.union(replace_userdef_funcs(e[k]).free_symbols)
-                #exp_symbols = exp_symbols.union(advanced_free_symbols(e[k]))
-        else:
-            num_e = num_e + 1
-            e=replace_userdef_funcs(e)
-            #exp_symbols = exp_symbols.union(replace_userdef_funcs(e).free_symbols)
-            #exp_symbols = exp_symbols.union(advanced_free_symbols(e))
 
-    print(num_e)
-    # for i,v in enumerate(lname):
-    #     print("var : %s expr : %s" %(v,lexp[i]))
-    
+def draw_nx_graph(G,draw_labels=False):
+    if( not draw_labels):
+        nx.draw(G,pos=nx.circular_layout(G))
+        plt.show()
+    else:
+        nx.draw_networkx(G,pos=nx.random_layout(G),font_size=8)
+        plt.show()
 
-    print(exp_symbols)
-    print(len(exp_symbols))
+
+"""
+Breadth first traversal from the root expr.
+"""
+def bfs_traversal(G,g=None):
+    nodes = iter(nx.nodes(g)) 
+    root  = next(nodes) 
+    #print(G.degree(root))
+
+    #for n in nx.classes.function.all_neighbors(G,root):
+    #    print(n)
+
+    bfs_iter = dict(nx.bfs_successors(G,root))
+    #print(bfs_iter)
+    for n in bfs_iter:
+        print("node %s has %d children" %(n,len(bfs_iter[n])))
+        e=sympy.parse_expr(n)
+        if(len(e.free_symbols)>1):
+            print("node : %s \n \t\t has  dep %d  distinct symbols \n" %(n, len(e.free_symbols)))
+        # for child in bfs_iter[n]:
+        #     e=sympy.parse_expr(child)
+        #     #print(e.free_symbols)
+        #     if(len(e.free_symbols)>1):
+        #         print("node : %s \n has a child node that violate the constraint dep %d \n child node :  %s\n" %(n, len(e.free_symbols), child))
+            
+        #for s in bfs_iter[n]:
+        #    print("node %s has suc %s " %(n,s))
 
 
     
-    
-
 
 
