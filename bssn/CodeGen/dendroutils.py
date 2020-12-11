@@ -48,15 +48,15 @@ def advanced_free_symbols(expr):
     sym_set=set()
     
     for item in expr.atoms(sympy.Function):
-        sym_name=str(item.func)
-        for a in item.args:
-            sym_name = sym_name + '_' + str(a)
-
-        print(item)
-        sym_set.add(sympy.Symbol(sym_name))
+        if isinstance(item.func, sympy.core.function.UndefinedFunction):
+            sym_name=str(item.func)
+            for a in item.args:
+                sym_name = sym_name + '_' + str(a)
+            #print(item)
+            sym_set.add(sympy.Symbol(sym_name))
 
     for item in expr.atoms(sympy.Symbol):
-        print(item)
+        #print(item)
         sym_set.add(item)
     
     return sym_set
@@ -158,6 +158,37 @@ def bfs_traversal(G,g=None):
             
         #for s in bfs_iter[n]:
         #    print("node %s has suc %s " %(n,s))
+
+
+
+"""
+extract all the expressions from quantities such as vectors and tensors
+"""
+def extract_expressions(outs,vnames,suffix="[pp]"):
+    mi = [0, 1, 2, 4, 5, 8]
+    midx = ['00', '01', '02', '11', '12', '22']
+
+    expr_dict=dict()
+    num_e = 0
+
+    for i, e in enumerate(outs):
+        if type(e) == list:
+            num_e = num_e + len(e)
+            for j, ev in enumerate(e):
+                expr_name = vnames[i] + "_" + str(j) + suffix
+                expr_dict[expr_name] = ev
+        elif type(e) == sympy.Matrix:
+            num_e = num_e + len(e)
+            for j, k in enumerate(mi):
+                expr_name = vnames[i] + "_" +str(midx[j]) + suffix
+                expr_dict[expr_name] = e[k]
+
+        else:
+            num_e = num_e + 1
+            expr_name = vnames[i] + suffix
+            expr_dict[expr_name] = e
+
+    return expr_dict
 
 
     

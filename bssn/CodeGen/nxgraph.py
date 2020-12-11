@@ -159,6 +159,12 @@ class ExpressionGraph():
         nx.draw_networkx(g,pos=nx.planar_layout(g),font_size=6)
         plt.show()
 
+    """
+    Get the computational graph for a given expression
+    """
+    def get_graph(self,expr_name):
+        g = self._nx_graphs[expr_name]
+        return g
 
                 
 

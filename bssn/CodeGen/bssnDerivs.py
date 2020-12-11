@@ -1,3 +1,22 @@
+
+"""
+input bssn variables
+"""
+BSSN_IN = ["alpha", "beta0", "beta1", "beta2",
+            "B0", "B1", "B2",
+            "chi", "Gt0", "Gt1", "Gt2", "K",
+            "gt0", "gt1", "gt2", "gt3", "gt4", "gt5",
+            "At0", "At1", "At2", "At3", "At4", "At5" ]
+
+"""
+Out varnames
+"""
+BSSN_OUT = ["a_rhs", "b_rhs_0", "b_rhs_1", "b_rhs_2", 
+            "B_rhs_0","B_rhs_1","B_rhs_2",
+            "chi_rhs", "Gt_rhs_0","Gt_rhs_1","Gt_rhs_2","K_rhs",
+            "gt_rhs_00","gt_rhs_01","gt_rhs_02","gt_rhs_11","gt_rhs_12","gt_rhs_22",
+            "At_rhs_00","At_rhs_01","At_rhs_02","At_rhs_11","At_rhs_12","At_rhs_22"]
+
 """
 Contains derivative computation for BSSN formulation of ET equations. 
 """

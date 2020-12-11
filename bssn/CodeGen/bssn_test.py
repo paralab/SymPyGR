@@ -45,7 +45,7 @@ weight_Gt = Rational(2,3)
 
 d = dendro.set_first_derivative('grad')    # first argument is direction
 d2s = dendro.set_second_derivative('grad2')  # first 2 arguments are directions
-ad = dendro.set_advective_derivative('grad')  # first argument is direction
+ad = dendro.set_advective_derivative('agrad')  # first argument is direction
 kod = dendro.set_kreiss_oliger_dissipation('kograd')
 
 d2 = dendro.d2
@@ -106,10 +106,10 @@ vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B
 
 exp_graph=nxgraph.ExpressionGraph()
 exp_graph.add_expressions(outs,vnames)
-G=exp_graph.composed_graph(verbose=True)
+G=exp_graph.composed_graph(verbose=False)
 #nx.draw_networkx(G,pos=nx.random_layout(G),font_size=4)
-nx.draw(G,pos=nx.random_layout(G))
-plt.show()
+#nx.draw(G,pos=nx.random_layout(G))
+#plt.show()
 
 #exp_graph.draw_graph("gt_rhs_00")
 #exp_graph.plot_adjmatrix()
@@ -118,7 +118,11 @@ plt.show()
 
 #dendroutils.construct_dep_matrix(outs,vnames,"[pp]")
 #dendroutils.write_to_dot(outs,vnames,folder_ptah="../dot")
-# a_G  = dendroutils.construct_nx_digraph("../dot/a_rhs.dot")
+# a_G  = dendroutils.construct_nx_digraph("../dot/bkp/At_rhs_00.dot")
+# a_G1 = exp_graph.get_graph("gt_rhs_00")
+
+# print(nx.info(a_G))
+# print(nx.info(a_G1))
 # b_0_G  = dendroutils.construct_nx_digraph("../dot/b_rhs_0.dot")
 # b_1_G  = dendroutils.construct_nx_digraph("../dot/b_rhs_1.dot")
 # b_2_G  = dendroutils.construct_nx_digraph("../dot/b_rhs_2.dot")
