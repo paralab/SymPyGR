@@ -68,6 +68,37 @@ int main(int argc, char **argv)
     double *B1    = __mem_pool->allocate(n);
     double *B2    = __mem_pool->allocate(n);
 
+
+    double *a_rhs    = __mem_pool->allocate(n);
+    double *chi_rhs  = __mem_pool->allocate(n);
+    double *K_rhs    =__mem_pool->allocate(n);
+    double *gt_rhs00 = __mem_pool->allocate(n);
+    double *gt_rhs01 = __mem_pool->allocate(n);
+    double *gt_rhs02 = __mem_pool->allocate(n);
+    double *gt_rhs11 = __mem_pool->allocate(n);
+    double *gt_rhs12 = __mem_pool->allocate(n);
+    double *gt_rhs22 = __mem_pool->allocate(n);
+    double *b_rhs0   = __mem_pool->allocate(n);
+    double *b_rhs1   = __mem_pool->allocate(n);
+    double *b_rhs2   = __mem_pool->allocate(n);
+    double *At_rhs00 = __mem_pool->allocate(n);
+    double *At_rhs01 = __mem_pool->allocate(n);
+    double *At_rhs02 = __mem_pool->allocate(n);
+    double *At_rhs11 = __mem_pool->allocate(n);
+    double *At_rhs12 = __mem_pool->allocate(n);
+    double *At_rhs22 = __mem_pool->allocate(n);
+    double *Gt_rhs0  = __mem_pool->allocate(n);
+    double *Gt_rhs1  = __mem_pool->allocate(n);
+    double *Gt_rhs2  = __mem_pool->allocate(n);
+    double *B_rhs0   = __mem_pool->allocate(n);
+    double *B_rhs1   = __mem_pool->allocate(n);
+    double *B_rhs2   = __mem_pool->allocate(n);
+
+    const unsigned int lambda[4] = {bssn::BSSN_LAMBDA[0], bssn::BSSN_LAMBDA[1],
+                                    bssn::BSSN_LAMBDA[2], bssn::BSSN_LAMBDA[3]
+                                   };
+    const double lambda_f[2] = {bssn::BSSN_LAMBDA_F[0], bssn::BSSN_LAMBDA_F[1]};
+
     for(unsigned int k=0; k < nz; k++)
     {
         const double z  =  k * hz;
@@ -115,43 +146,59 @@ int main(int argc, char **argv)
         }
     }
 
+    // allocate deriv vars. 
     #include "bssnrhs_memalloc.h"
+    #include "bssnrhs_memalloc_adv.h"
+    
+    // compute deriv vars. 
+    //#include "bssnrhs_derivs.h"
+    //#include "bssnrhs_derivs_adv.h"
+
+    // auto t1=Time::now();
+    // for(unsigned int rr=0; rr < iter; rr++)
+    // {
+    //     //#include
+    //     //#include "bssnrhs_derivs.h"
+    //     // deriv64_x(grad_0_alpha, alpha, hx, sz, bflag);
+    //     // deriv64_x(grad_0_beta0, beta0, hx, sz, bflag);
+    //     // deriv64_x(grad_0_beta1, beta1, hx, sz, bflag);
+    //     // deriv64_x(grad_0_beta2, beta2, hx, sz, bflag);
+    //     //deriv64_xx(grad2_0_0_alpha, alpha, hx, sz, bflag);
+    //     // deriv64_y(grad_1_alpha, alpha, hy, sz, bflag);
+    //     // deriv64_z(grad_2_alpha, alpha, hz, sz, bflag);
+        
+    // }
+
+    // auto t2=Time::now();
+    // fsec fs = t2 - t1;
+    // std::cout<<"Time: "<<fs.count()<<std::endl;
+
+    //std::cout<<"iter:"<<iter<<std::endl;
 
     auto t1=Time::now();
     for(unsigned int rr=0; rr < iter; rr++)
     {
-        #include "bssnrhs_derivs.h"
-        // deriv64_x(grad_0_alpha, alpha, hx, sz, bflag);
-        // deriv64_x(grad_0_beta0, beta0, hx, sz, bflag);
-        // deriv64_x(grad_0_beta1, beta1, hx, sz, bflag);
-        // deriv64_x(grad_0_beta2, beta2, hx, sz, bflag);
-        //deriv64_xx(grad2_0_0_alpha, alpha, hx, sz, bflag);
-        // deriv64_y(grad_1_alpha, alpha, hy, sz, bflag);
-        // deriv64_z(grad_2_alpha, alpha, hz, sz, bflag);
-        
+
+        for(unsigned int k=3; k < nz-3; k++)
+        {
+            const double z  =  k * hz;
+            for(unsigned int j=3; j < ny-3; j++)
+            {
+                const double y  =  j * hy;
+                for(unsigned int i=3; i < nx-3; i++)
+                {
+                    const double x  =  i * hx;
+                    double r_coord =x*x + y*y + z*z;
+                    double eta=2.0;
+                    const unsigned int pp = k*ny*nx + j*nx + i;
+                    #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
+                }
+            }
+        }
     }
 
     auto t2=Time::now();
-    fsec fs = t2 - t1;
-    std::cout<<"Time: "<<fs.count()<<std::endl;
-
-
-    t1=Time::now();
-    for(unsigned int rr=0; rr < iter; rr++)
-    {
-        #include "bssnrhs_derivs.h"
-        // deriv64_x(grad_0_alpha, alpha, hx, sz, bflag);
-        // deriv64_x(grad_0_beta0, beta0, hx, sz, bflag);
-        // deriv64_x(grad_0_beta1, beta1, hx, sz, bflag);
-        // deriv64_x(grad_0_beta2, beta2, hx, sz, bflag);
-        //deriv64_xx(grad2_0_0_alpha, alpha, hx, sz, bflag);
-        // deriv64_y(grad_1_alpha, alpha, hy, sz, bflag);
-        // deriv64_z(grad_2_alpha, alpha, hz, sz, bflag);
-        
-    }
-
-    t2=Time::now();
-    fs = t2 - t1;
+    auto fs = t2 - t1;
     std::cout<<"Time changed order: "<<fs.count()<<std::endl;
 
     // de-alloaction.
@@ -161,33 +208,7 @@ int main(int argc, char **argv)
 
 
 
-    // double* u  = new double[NN];
-    // double* Dxu = new double[NN];
-    // double* Dyu = new double[NN];
-    // double* Dzu = new double[NN];
-    // // double* u=nullptr;
-    // // double* Du=nullptr;
-    // // posix_memalign((void**)&u,128,sizeof(double)*NN);
-    // // posix_memalign((void**)&Du,128,sizeof(double)*NN);
-
-    // for(unsigned int i=0; i< NN; i++)
-    //     u[i] = i*0.01;
-
-    // auto t1=Time::now();
-    // for(unsigned int rr=0; rr < iter; rr++)
-    // {
-    //     deriv64_x(Dxu,u,hx,sz,0);
-    //     // deriv64_y(Dyu,u,hx,sz,0);
-    //     // deriv64_z(Dzu,u,hx,sz,0);
-    // }
-    // auto t2=Time::now();
-    // fsec fs = t2 - t1;
-    // std::cout<<"Time: "<<fs.count()<<std::endl;
-
-    // delete []  u;
-    // delete [] Dxu;
-    // delete [] Dyu;
-    // delete [] Dzu;
+    
 
     return 0;
     
