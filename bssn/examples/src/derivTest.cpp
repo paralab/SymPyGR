@@ -7,6 +7,12 @@
 #include "derivs.h"
 #include <immintrin.h>
 #include <chrono>
+#include "memory_pool.h"
+#include "grDef.h"
+#include "grUtils.h"
+#include "parameters.h"
+
+
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::milliseconds ms;
 typedef std::chrono::duration<float> fsec;
@@ -29,103 +35,159 @@ int main(int argc, char **argv)
     const unsigned int nz=sz[2];
     const unsigned int NN =nx*ny*nz;
     const unsigned int bflag=0;
+    
     const double hx=0.01;
+    const double hy=0.01;
+    const double hz=0.01;
+    double init_var[bssn::BSSN_NUM_VARS];
 
-    double* u  = new double[NN];
-    double* Du = new double[NN];
-    // double* u=nullptr;
-    // double* Du=nullptr;
-    // posix_memalign((void**)&u,128,sizeof(double)*NN);
-    // posix_memalign((void**)&Du,128,sizeof(double)*NN);
+    mem::memory_pool<double>* __mem_pool = new mem::memory_pool<double>(0,16);
+    const unsigned int n=NN;
+    double *alpha = __mem_pool->allocate(n);
+    double *chi   = __mem_pool->allocate(n);
+    double *K     = __mem_pool->allocate(n);
+    double *gt0   = __mem_pool->allocate(n);
+    double *gt1   = __mem_pool->allocate(n);
+    double *gt2   = __mem_pool->allocate(n);
+    double *gt3   = __mem_pool->allocate(n);
+    double *gt4   = __mem_pool->allocate(n);
+    double *gt5   = __mem_pool->allocate(n);
+    double *beta0 = __mem_pool->allocate(n);
+    double *beta1 = __mem_pool->allocate(n);
+    double *beta2 = __mem_pool->allocate(n);
+    double *At0   = __mem_pool->allocate(n);
+    double *At1   = __mem_pool->allocate(n);
+    double *At2   = __mem_pool->allocate(n);
+    double *At3   = __mem_pool->allocate(n);
+    double *At4   = __mem_pool->allocate(n);
+    double *At5   = __mem_pool->allocate(n);
+    double *Gt0   = __mem_pool->allocate(n);
+    double *Gt1   = __mem_pool->allocate(n);
+    double *Gt2   = __mem_pool->allocate(n);
+    double *B0    = __mem_pool->allocate(n);
+    double *B1    = __mem_pool->allocate(n);
+    double *B2    = __mem_pool->allocate(n);
 
-    for(unsigned int i=0; i< NN; i++)
-        u[i] = i*0.01;
+    for(unsigned int k=0; k < nz; k++)
+    {
+        const double z  =  k * hz;
+        for(unsigned int j=0; j < ny; j++)
+        {
+            const double y  =  j * hy;
+            for(unsigned int i=0; i < nx; i++)
+            {
+                const double x  =  i * hx;
+                const unsigned int pp = k*ny*nx + j*nx + i;
+                bssn::fake_initial_data(x,y,z,init_var);
+                alpha[pp]   = init_var[bssn::VAR::U_ALPHA];
+                
+                beta0[pp]   = init_var[bssn::VAR::U_BETA0];
+                beta1[pp]   = init_var[bssn::VAR::U_BETA1];
+                beta2[pp]   = init_var[bssn::VAR::U_BETA2];
+
+                B0[pp]      = init_var[bssn::VAR::U_B0];
+                B1[pp]      = init_var[bssn::VAR::U_B1];
+                B2[pp]      = init_var[bssn::VAR::U_B2];
+                
+                Gt0[pp]     = init_var[bssn::VAR::U_GT0];
+                Gt1[pp]     = init_var[bssn::VAR::U_GT1];
+                Gt2[pp]     = init_var[bssn::VAR::U_GT2];
+                
+                chi[pp]     = init_var[bssn::VAR::U_CHI];
+                K[pp]       = init_var[bssn::VAR::U_K];
+                
+                gt0[pp]     = init_var[bssn::VAR::U_SYMGT0];
+                gt1[pp]     = init_var[bssn::VAR::U_SYMGT3];
+                gt2[pp]     = init_var[bssn::VAR::U_SYMGT5];
+                gt3[pp]     = init_var[bssn::VAR::U_SYMGT1];
+                gt4[pp]     = init_var[bssn::VAR::U_SYMGT2];
+                gt5[pp]     = init_var[bssn::VAR::U_SYMGT4];
+
+                At0[pp]     = init_var[bssn::VAR::U_SYMAT0];
+                At1[pp]     = init_var[bssn::VAR::U_SYMAT1];
+                At2[pp]     = init_var[bssn::VAR::U_SYMAT2];
+                At3[pp]     = init_var[bssn::VAR::U_SYMAT3];
+                At4[pp]     = init_var[bssn::VAR::U_SYMAT4];
+                At5[pp]     = init_var[bssn::VAR::U_SYMAT5];
+                
+
+            }
+        }
+    }
+
+    #include "bssnrhs_memalloc.h"
 
     auto t1=Time::now();
     for(unsigned int rr=0; rr < iter; rr++)
     {
-        const double dx = hx;
-        const double idx = 1.0/dx;
-        const double idx_by_12 = idx/12.0;
-        const double idx_by_60 = idx/60.0;
-
-        const int nx = sz[0];
-        const int ny = sz[1];
-        const int nz = sz[2];
-        const int ib = 3;
-        const int jb = 3;
-        const int kb = 3;
-        const int ie = sz[0]-3;
-        const int je = sz[1]-3;
-        const int ke = sz[2]-3;
-        const int n=1;
-        
-        
-        for (int k = kb; k < ke; k++) 
-        for (int j = jb; j < je; j++)
-        for (int i = ib; i < ie; i++) 
-        {
-            int pp =IDX(i,j,k);
-            Du[pp] = ( - 1.0   * u[pp-3*n] 
-                        + 9.0  * u[pp-2*n]
-                        -45.0  * u[pp-1*n]
-                        +45.0  * u[pp+1*n]
-                        - 9.0  * u[pp+2*n]
-                        + 1.0  * u[pp+3*n] ) * idx_by_60;
-        }
-            
+        #include "bssnrhs_derivs.h"
+        // deriv64_x(grad_0_alpha, alpha, hx, sz, bflag);
+        // deriv64_x(grad_0_beta0, beta0, hx, sz, bflag);
+        // deriv64_x(grad_0_beta1, beta1, hx, sz, bflag);
+        // deriv64_x(grad_0_beta2, beta2, hx, sz, bflag);
+        //deriv64_xx(grad2_0_0_alpha, alpha, hx, sz, bflag);
+        // deriv64_y(grad_1_alpha, alpha, hy, sz, bflag);
+        // deriv64_z(grad_2_alpha, alpha, hz, sz, bflag);
         
     }
+
     auto t2=Time::now();
     fsec fs = t2 - t1;
-    std::cout<<"Time non tiled: "<<fs.count()<<std::endl;
+    std::cout<<"Time: "<<fs.count()<<std::endl;
+
 
     t1=Time::now();
     for(unsigned int rr=0; rr < iter; rr++)
     {
-        const double dx = hx;
-        const double idx = 1.0/dx;
-        const double idx_by_12 = idx/12.0;
-        const double idx_by_60 = idx/60.0;
-
-        const int nx = sz[0];
-        const int ny = sz[1];
-        const int nz = sz[2];
-        const int ib = 3;
-        const int jb = 3;
-        const int kb = 3;
-        const int ie = sz[0]-3;
-        const int je = sz[1]-3;
-        const int ke = sz[2]-3;
-        const int n=nx;
-        const int tsz[] = {ie,je,ke};
-
-        //for(int tk=kb; tk < ke; tk+=tsz[2])
-        //for(int tj=jb; tj < je; tj+=tsz[1])
-        //for(int ti=ib; ti < ie; ti+=tsz[0])
-        //for (int k = tk; k < std::min( ke , tk + tsz[2]); k++)
-        //for (int j = tj; j < std::min( je , tj + tsz[1]); j++)
-        //for (int i = ti; i < std::min( ie , ti + tsz[0]); i++)
-        for (int k = kb; k < ke; k++) 
-        for (int i = ib; i < ie; i++) 
-        for (int j = jb; j < je; j++)
-        {
-                int pp = IDX(i,j,k);
-                Du[pp] = ( - 1.0   * u[pp-3*n] 
-                            + 9.0  * u[pp-2*n]
-                            -45.0  * u[pp-1*n]
-                            +45.0  * u[pp+1*n]
-                            - 9.0  * u[pp+2*n]
-                            + 1.0  * u[pp+3*n] ) * idx_by_60;
-        }
-
+        #include "bssnrhs_derivs.h"
+        // deriv64_x(grad_0_alpha, alpha, hx, sz, bflag);
+        // deriv64_x(grad_0_beta0, beta0, hx, sz, bflag);
+        // deriv64_x(grad_0_beta1, beta1, hx, sz, bflag);
+        // deriv64_x(grad_0_beta2, beta2, hx, sz, bflag);
+        //deriv64_xx(grad2_0_0_alpha, alpha, hx, sz, bflag);
+        // deriv64_y(grad_1_alpha, alpha, hy, sz, bflag);
+        // deriv64_z(grad_2_alpha, alpha, hz, sz, bflag);
+        
     }
+
     t2=Time::now();
     fs = t2 - t1;
-    std::cout<<"Time tiled: "<<fs.count()<<std::endl;
+    std::cout<<"Time changed order: "<<fs.count()<<std::endl;
 
-    delete []  u;
-    delete [] Du;
+    // de-alloaction.
+    {
+        __mem_pool->purge();
+    }
+
+
+
+    // double* u  = new double[NN];
+    // double* Dxu = new double[NN];
+    // double* Dyu = new double[NN];
+    // double* Dzu = new double[NN];
+    // // double* u=nullptr;
+    // // double* Du=nullptr;
+    // // posix_memalign((void**)&u,128,sizeof(double)*NN);
+    // // posix_memalign((void**)&Du,128,sizeof(double)*NN);
+
+    // for(unsigned int i=0; i< NN; i++)
+    //     u[i] = i*0.01;
+
+    // auto t1=Time::now();
+    // for(unsigned int rr=0; rr < iter; rr++)
+    // {
+    //     deriv64_x(Dxu,u,hx,sz,0);
+    //     // deriv64_y(Dyu,u,hx,sz,0);
+    //     // deriv64_z(Dzu,u,hx,sz,0);
+    // }
+    // auto t2=Time::now();
+    // fsec fs = t2 - t1;
+    // std::cout<<"Time: "<<fs.count()<<std::endl;
+
+    // delete []  u;
+    // delete [] Dxu;
+    // delete [] Dyu;
+    // delete [] Dzu;
 
     return 0;
     
