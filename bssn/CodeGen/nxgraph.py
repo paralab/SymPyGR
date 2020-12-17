@@ -14,6 +14,7 @@ class ExpressionGraph():
 
     def __init__(self):
         self._nx_graphs=dict()
+        self._sympy_expr=dict()
 
 
     """
@@ -69,6 +70,7 @@ class ExpressionGraph():
         G.add_edges_from(edge_list)
 
         self._nx_graphs[str(expr_name)]=G
+        self._sympy_expr[str(expr_name)]=expr
         
         # print("Nodes in the Graph")
         # for sub_expr in node_list:

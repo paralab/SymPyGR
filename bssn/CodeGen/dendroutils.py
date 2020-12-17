@@ -190,7 +190,3 @@ def extract_expressions(outs,vnames,suffix="[pp]"):
 
     return expr_dict
 
-
-    
-
-

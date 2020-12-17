@@ -937,30 +937,11 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
-      /* Du[IDX(ib,j,k)] =  (
-                                 u[IDX(ib+3,j,k)]
-                          -  6.0*u[IDX(ib+2,j,k)]
-                          + 15.0*u[IDX(ib+1,j,k)]
-                          - 19.0*u[IDX(ib,j,k)]
-                          + 12.0*u[IDX(ib-1,j,k)]
-                          -  3.0*u[IDX(ib-2,j,k)]
-                          )/smr1; */
-        
-/* 
-        Du[IDX(ib,j,k)] = pre_factor_6_dx *
-                         (
-                         -      u[IDX(ib+4,j,k)]                             
-                         +  6.0*u[IDX(ib+3,j,k)]
-                         - 15.0*u[IDX(ib+2,j,k)]
-                         + 20.0*u[IDX(ib+1,j,k)]
-                         - 15.0*u[IDX(ib,j,k)]
-                         +  6.0*u[IDX(ib-1,j,k)]
-                         -      u[IDX(ib-2,j,k)]
-                         );
-*/
-        
+       #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,j)
+       #endif
        for (int i = ib; i < ie; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dx *
                          (
                          -      u[pp-3]
@@ -972,36 +953,15 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
                          -      u[pp+3]
                          );
        }
-
-       /* Du[IDX(ie-1,j,k)] = (
-                                 u[IDX(ie-4,j,k)]
-                          -  6.0*u[IDX(ie-3,j,k)]
-                          + 15.0*u[IDX(ie-2,j,k)]
-                          - 19.0*u[IDX(ie-1,j,k)]
-                          + 12.0*u[IDX(ie,j,k)]
-                          -  3.0*u[IDX(ie+1,j,k)]
-                           )/spr1; */
-
-      
-/*
-       Du[IDX(ie-1,j,k)] = pre_factor_6_dx *
-                         (
-                         -      u[IDX(ie+1,j,k)]                             
-                         +  6.0*u[IDX(ie,j,k)]
-                         - 15.0*u[IDX(ie-1,j,k)]
-                         + 20.0*u[IDX(ie-2,j,k)]
-                         - 15.0*u[IDX(ie-3,j,k)]
-                         +  6.0*u[IDX(ie-4,j,k)]
-                         -      u[IDX(ie-5,j,k)]
-                         );
-*/       
-       
-       
     }
   }
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
+
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int j = jb; j < je; j++) {
         Du[IDX(3,j,k)] =  (      u[IDX(6,j,k)]
                            - 3.0*u[IDX(5,j,k)]
@@ -1029,6 +989,9 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int j = jb; j < je; j++) {
          Du[IDX(ie-3,j,k)] = (
                                  u[IDX(ie-6,j,k)]
@@ -1103,30 +1066,11 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
-        
-      /*  Du[IDX(i,jb,k)] =  (
-                                 u[IDX(i,jb+3,k)]
-                          -  6.0*u[IDX(i,jb+2,k)]
-                          + 15.0*u[IDX(i,jb+1,k)]
-                          - 19.0*u[IDX(i,jb,k)]
-                          + 12.0*u[IDX(i,jb-1,k)]
-                          -  3.0*u[IDX(i,jb-2,k)]
-                          )/smr1; */
-/*      
-       Du[IDX(i,jb,k)] = pre_factor_6_dy *
-                         (
-                         -      u[IDX(i,jb+4,k)]                             
-                         +  6.0*u[IDX(i,jb+3,k)]
-                         - 15.0*u[IDX(i,jb+2,k)]
-                         + 20.0*u[IDX(i,jb+1,k)]
-                         - 15.0*u[IDX(i,jb,k)]
-                         +  6.0*u[IDX(i,jb-1,k)]
-                         -      u[IDX(i,jb-2,k)]
-                         );
-*/
-        
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,i)
+      #endif
        for (int j = jb; j < je; j++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dy *
                          (
                          -      u[pp-3*nx]
@@ -1138,36 +1082,15 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
                          -      u[pp+3*nx]
                          );
        }
-       
-       /* Du[IDX(i,je-1,k)] = (
-                                 u[IDX(i,je-4,k)]
-                          -  6.0*u[IDX(i,je-3,k)]
-                          + 15.0*u[IDX(i,je-2,k)]
-                          - 19.0*u[IDX(i,je-1,k)]
-                          + 12.0*u[IDX(i,je,k)]
-                          -  3.0*u[IDX(i,je+1,k)]
-                           )/spr1; */
-
-/*
-       Du[IDX(i,je-1,k)] = pre_factor_6_dy *
-                         (
-                         -      u[IDX(i,je+1,k)]                             
-                         +  6.0*u[IDX(i,je,k)]
-                         - 15.0*u[IDX(i,je-1,k)]
-                         + 20.0*u[IDX(i,je-2,k)]
-                         - 15.0*u[IDX(i,je-3,k)]
-                         +  6.0*u[IDX(i,je-4,k)]
-                         -      u[IDX(i,je-5,k)]
-                         );
-*/     
-       
-       
-       
     }
   }
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
+
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int i = ib; i < ie; i++) {
         Du[IDX(i,3,k)] =  (      u[IDX(i,6,k)]
                            - 3.0*u[IDX(i,5,k)]
@@ -1195,6 +1118,9 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int i = ib; i < ie; i++) {
          Du[IDX(i,je-3,k)] = (
                                  u[IDX(i,je-6,k)]
@@ -1272,31 +1198,11 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
-
-        /* Du[IDX(i,j,kb)] =  (
-                                 u[IDX(i,j,kb+3)]
-                          -  6.0*u[IDX(i,j,kb+2)]
-                          + 15.0*u[IDX(i,j,kb+1)]
-                          - 19.0*u[IDX(i,j,kb)]
-                          + 12.0*u[IDX(i,j,kb-1)]
-                          -  3.0*u[IDX(i,j,kb-2)]
-                          )/smr1; */
-        
-/*
-        Du[IDX(i,j,kb)] = pre_factor_6_dz *
-                         (
-                         -      u[IDX(i,j,kb+4)]                             
-                         +  6.0*u[IDX(i,j,kb+3)]
-                         - 15.0*u[IDX(i,j,kb+2)]
-                         + 20.0*u[IDX(i,j,kb+1)]
-                         - 15.0*u[IDX(i,j,kb)]
-                         +  6.0*u[IDX(i,j,kb-1)]
-                         -      u[IDX(i,j,kb-2)]
-                         );
-*/
-        
-       for (int k = kb; k < ke; k++) {
-          int pp = IDX(i,j,k);
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j,i)
+      #endif
+      for (int k = kb; k < ke; k++) {
+          const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dz *
                          (
                          -      u[pp-3*n]
@@ -1308,34 +1214,15 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
                          -      u[pp+3*n]
                          );
        }
-
-         /*  Du[IDX(i,j,ke-1)] = (
-                                 u[IDX(i,j,ke-4)]
-                          -  6.0*u[IDX(i,j,ke-3)]
-                          + 15.0*u[IDX(i,j,ke-2)]
-                          - 19.0*u[IDX(i,j,ke-1)]
-                          + 12.0*u[IDX(i,j,ke)]
-                          -  3.0*u[IDX(i,j,ke+1)]
-                           )/spr1; */
-
-/*
-       Du[IDX(i,j,ke-1)] = pre_factor_6_dz *
-                         (
-                         -      u[IDX(i,j,ke+1)]                             
-                         +  6.0*u[IDX(i,j,ke)]
-                         - 15.0*u[IDX(i,j,ke-1)]
-                         + 20.0*u[IDX(i,j,ke-2)]
-                         - 15.0*u[IDX(i,j,ke-3)]
-                         +  6.0*u[IDX(i,j,ke-4)]
-                         -      u[IDX(i,j,ke-5)]
-                         );
-*/     
-       
     }
   }
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
+
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
+      #endif
       for (int i = ib; i < ie; i++) {
         Du[IDX(i,j,3)] =  (      u[IDX(i,j,6)]
                            - 3.0*u[IDX(i,j,5)]
@@ -1363,6 +1250,9 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
+      #endif
       for (int i = ib; i < ie; i++) {
          Du[IDX(i,j,ke-3)] = (
                                  u[IDX(i,j,ke-6)]
@@ -2159,8 +2049,11 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,j)
+      #endif
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         Dxu[pp] = ( - 1.0  * u[pp-3] 
                     + 9.0  * u[pp-2]
                     -45.0  * u[pp-1]
@@ -2173,6 +2066,9 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int j = jb; j < je; j++) {
         Dxu[IDX(3,j,k)] = ( -  25.0 * u[IDX(3,j,k)]
                             +  48.0 * u[IDX(4,j,k)]
@@ -2200,6 +2096,9 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2230,36 +2129,6 @@ void deriv64_x(double * const  Dxu, const double * const  u,
     }
   }
 
-
-  //   if (bflag & (1u<<OCT_DIR_LEFT)) {
-  //   for (int k = kb; k < ke; k++) {
-  //     for (int j = jb; j < je; j++) {
-  //       Dxu[IDX(3,j,k)] = ( -  3.0 * u[IDX(3,j,k)]
-  //                           +  4.0 * u[IDX(4,j,k)]
-  //                           -        u[IDX(5,j,k)]
-  //                         ) * idx_by_12*6;
-  //       Dxu[IDX(4,j,k)] = ( - u[IDX(3,j,k)]
-  //                           + u[IDX(5,j,k)]
-  //                         ) * idx_by_12*6;
-  //     }
-  //   }
-  // }
-
-  // if (bflag & (1u<<OCT_DIR_RIGHT)) {
-  //   for (int k = kb; k < ke; k++) {
-  //     for (int j = jb; j < je; j++) {
-  //       Dxu[IDX(ie-2,j,k)] = ( - u[IDX(ie-3,j,k)]
-  //                              + u[IDX(ie-1,j,k)]
-  //                            ) * idx_by_12*6;
-
-  //       Dxu[IDX(ie-1,j,k)] = (        u[IDX(ie-3,j,k)]
-  //                             - 4.0 * u[IDX(ie-2,j,k)]
-  //                             + 3.0 * u[IDX(ie-1,j,k)]
-  //                            ) * idx_by_12*6;
-
-  //     }
-  //   }
-  // }
 
   #ifdef DEBUG_DERIVS_COMP
   #pragma message("DEBUG_DERIVS_COMP: ON")
@@ -2302,8 +2171,11 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,i)
+      #endif
       for (int j = jb; j < je; j++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         Dyu[pp] = ( - 1.0  * u[pp-3*nx] 
                     + 9.0  * u[pp-2*nx]
                     -45.0  * u[pp-1*nx]
@@ -2316,6 +2188,9 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int i = ib; i < ie; i++) {
         Dyu[IDX(i,3,k)] =  ( - 25.0 * u[IDX(i,3,k)]
                             +  48.0 * u[IDX(i,4,k)]
@@ -2342,6 +2217,9 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2369,37 +2247,6 @@ void deriv64_y(double * const  Dyu, const double * const  u,
       }
     }
   }
-
-
-  //   if (bflag & (1u<<OCT_DIR_DOWN)) {
-  //   for (int k = kb; k < ke; k++) {
-  //     for (int i = ib; i < ie; i++) {
-  //       Dyu[IDX(i, 3,k)] = ( - 3.0 * u[IDX(i,3,k)]
-  //                           +  4.0 * u[IDX(i,4,k)]
-  //                           -        u[IDX(i,5,k)]
-  //                         ) * idy_by_12*6;
-
-  //       Dyu[IDX(i,4,k)] = ( - u[IDX(i,3,k)]
-  //                           + u[IDX(i,5,k)]
-  //                         ) * idy_by_12*6;
-  //     }
-  //   }
-  // }
-
-  // if (bflag & (1u<<OCT_DIR_UP)) {
-  //   for (int k = kb; k < ke; k++) {
-  //     for (int i = ib; i < ie; i++) {
-  //       Dyu[IDX(i,je-2,k)] = ( - u[IDX(i,je-3,k)]
-  //                              + u[IDX(i,je-1,k)]
-  //                            ) * idy_by_12*6;
-
-  //       Dyu[IDX(i,je-1,k)] = (        u[IDX(i,je-3,k)]
-  //                             - 4.0 * u[IDX(i,je-2,k)]
-  //                             + 3.0 * u[IDX(i,je-1,k)]
-  //                         ) * idy_by_12*6;
-  //     }
-  //   }
-  // }
 
 
   #ifdef DEBUG_DERIVS_COMP
@@ -2443,8 +2290,11 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j,i)
+      #endif
       for (int k = kb; k < ke; k++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         Dzu[pp] = ( - 1.0  * u[pp-3*n] 
                     + 9.0  * u[pp-2*n]
                     -45.0  * u[pp-1*n]
@@ -2457,6 +2307,9 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
+      #endif
       for (int i = ib; i < ie; i++) {
         Dzu[IDX(i, j,3)] =  (- 25.0 * u[IDX(i,j,3)]
                             +  48.0 * u[IDX(i,j,4)]
@@ -2484,6 +2337,9 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
+      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2512,39 +2368,6 @@ void deriv64_z(double * const  Dzu, const double * const  u,
     }
 
   }
-
-  // if (bflag & (1u<<OCT_DIR_BACK)) {
-  //   for (int j = jb; j < je; j++) {
-  //     for (int i = ib; i < ie; i++) {
-  //       Dzu[IDX(i, j, 3)] = ( - 3.0 *  u[IDX(i,j,3)]
-  //                             +  4.0 * u[IDX(i,j,4)]
-  //                             -        u[IDX(i,j,5)]
-  //                           ) * idz_by_12*6;
-
-  //       Dzu[IDX(i,j,4)] = ( - u[IDX(i,j,3)]
-  //                           + u[IDX(i,j,5)]
-  //                         ) * idz_by_12*6;
-
-  //     }
-  //   }
-  // }
-
-  // if (bflag & (1u<<OCT_DIR_FRONT)) {
-  //   for (int j = jb; j < je; j++) {
-  //     for (int i = ib; i < ie; i++) {
-  //       Dzu[IDX(i,j,ke-2)] = ( - u[IDX(i,j,ke-3)]
-  //                              + u[IDX(i,j,ke-1)]
-  //                            ) * idz_by_12*6;
-
-  //       Dzu[IDX(i,j,ke-1)] = (        u[IDX(i,j,ke-3)]
-  //                             - 4.0 * u[IDX(i,j,ke-2)]
-  //                             + 3.0 * u[IDX(i,j,ke-1)]
-  //                            ) * idz_by_12*6;
-
-  //     }
-  //   }
-
-  // }
 
   #ifdef DEBUG_DERIVS_COMP
     for (int k = kb; k < ke; k++) {
@@ -2586,8 +2409,11 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,j)
+      #endif
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
 
         DxDxu[pp] = (      2.0  * u[pp-3]
                         - 27.0  * u[pp-2]
@@ -2603,6 +2429,9 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2633,6 +2462,9 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2700,8 +2532,11 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,i)
+      #endif
       for (int j = jb; j < je; j++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         DyDyu[pp] = (      2.0  * u[pp-3*nx]
                         - 27.0  * u[pp-2*nx]
                         +270.0  * u[pp-1*nx]
@@ -2716,6 +2551,9 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int i = ib; i < ie; i++) {
         
         DyDyu[IDX(i,3,k)] = (    35.0 * u[IDX(i,3,k)]
@@ -2747,6 +2585,9 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
+      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2816,8 +2657,11 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j,i)
+      #endif
       for (int k = kb; k < ke; k++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         DzDzu[pp] = (      2.0  * u[pp-3*n]
                         - 27.0  * u[pp-2*n]
                         +270.0  * u[pp-1*n]
@@ -2832,6 +2676,9 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
+      #endif
       for (int i = ib; i < ie; i++) {
         
         DzDzu[IDX(i,j,3)] = (    35.0 * u[IDX(i,j,3)]
@@ -2861,6 +2708,9 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
+      #ifdef BSSN_USE_AVX_DERIVS
+        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
+      #endif
       for (int i = ib; i < ie; i++) {
 
         

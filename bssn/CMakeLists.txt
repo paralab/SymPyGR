@@ -29,6 +29,7 @@ endif()
 
 option(WITH_CUDA " build with cuda " OFF)
 option(BSSN_ENABLE_CUDA "enable cuda execution" OFF)
+option(BSSN_USE_AVX_DERIVS "enable vectorized derivative computation" ON)
 
 
 #set the build type to release by default.
@@ -43,6 +44,12 @@ if(BSSN_ENABLE_CUDA)
 endif()
 
 add_definitions(-DBSSN_USE_6TH_ORDER_DERIVS)
+
+if(BSSN_USE_AVX_DERIVS)
+    add_definitions(-DBSSN_USE_AVX_DERIVS)
+    #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -xCORE-AVX2")
+    #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -xCORE-AVX2")
+endif(BSSN_USE_AVX_DERIVS)
 
 set(INC_FILES
         include/derivs.h

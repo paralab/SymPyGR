@@ -9,13 +9,14 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 import nxgraph
+import gutils
 
 ###################################################################
 # initialize
 ###################################################################
 
-l1, l2, l3, l4, eta = symbols('lambda[0] lambda[1] lambda[2] lambda[3] eta')
-lf0, lf1 = symbols('lambda_f[0] lambda_f[1]')
+l1, l2, l3, l4, eta = symbols('LAMBDA0 LAMBDA1 LAMBDA2 LAMBDA3 ETA')
+lf0, lf1 = symbols('LAMBDA_F0 LAMBDA_F1')
 
 # Additional parameters for damping term
 R0 = symbols('BSSN_ETA_R0')
@@ -24,18 +25,15 @@ ep1, ep2 = symbols('BSSN_ETA_POWER[0] BSSN_ETA_POWER[1]')
 xi1, xi2, xi3 = symbols('BSSN_XI[0] BSSN_XI[1] BSSN_XI[2] ')
 
 # declare variables
-a   = dendro.scalar("alpha", "[pp]")
-chi = dendro.scalar("chi", "[pp]")
-K   = dendro.scalar("K", "[pp]")
-
-Gt  = dendro.vec3("Gt", "[pp]")
-b   = dendro.vec3("beta", "[pp]")
-B   = dendro.vec3("B", "[pp]")
-
-gt  = dendro.sym_3x3("gt", "[pp]")
-At  = dendro.sym_3x3("At", "[pp]")
-
-Gt_rhs  = dendro.vec3("Gt_rhs", "[pp]")
+a   = dendro.scalar("alpha", "")
+chi = dendro.scalar("chi", "")
+K   = dendro.scalar("K", "")
+Gt  = dendro.vec3("Gt", "")
+b   = dendro.vec3("beta", "")
+B   = dendro.vec3("B", "")
+gt  = dendro.sym_3x3("gt", "")
+At  = dendro.sym_3x3("At", "")
+Gt_rhs  = dendro.vec3("Gt_rhs", "")
 
 # Lie derivative weight
 weight = -Rational(2,3)
@@ -107,6 +105,28 @@ vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B
 exp_graph=nxgraph.ExpressionGraph()
 exp_graph.add_expressions(outs,vnames)
 G=exp_graph.composed_graph(verbose=False)
+#G_rev = G.reverse()
+dd = nx.greedy_color(G)
+#print(type(d))
+colors=set()
+for (k,v) in dd.items():
+        colors.add(v)
+
+print(colors)
+
+
+#cse_nodes = gutils.sorted_nodes_by_in_degree(G,10)
+
+# for (k,v) in cse_nodes:
+#         print("node in degree %d out degree %d\n expression : %s\n\n" %(G.in_degree(v),G.out_degree(v),str(v)))
+
+# for  n in G.nodes():
+#         # if(G.in_degree(n)==0):
+#         #         print(n)
+#         if(G.in_degree(n)>10) and G.out_degree(n)>0:
+#                print("node in degree %d out degree %d\n expression : %s\n\n" %(G.in_degree(n),G.out_degree(n),str(n)))
+#                 #for v in G_rev.neighbors(n):
+                #        print("used in %s " %v)
 #nx.draw_networkx(G,pos=nx.random_layout(G),font_size=4)
 #nx.draw(G,pos=nx.random_layout(G))
 #plt.show()
