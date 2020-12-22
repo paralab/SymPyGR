@@ -20,7 +20,7 @@ class ExpressionGraph():
     """
     Preorder traversal of the expression converting undefined functions to sympy symbols
     """
-    def __pre_traversal(self,expr,node_list,edge_list):
+    def __pre_traversal_1(self,expr,node_list,edge_list):
         if isinstance(expr.func, sympy.core.function.UndefinedFunction):
             sym_name=str(expr.func)
             for a in expr.args:
@@ -41,7 +41,33 @@ class ExpressionGraph():
                 edge_list.append((expr,sympy.Symbol(sym_name)))
             else:
                 edge_list.append((expr,arg))
-                self.__pre_traversal(arg,node_list,edge_list)
+                self.__pre_traversal_1(arg,node_list,edge_list)
+
+    """
+    Keep undefined function references as it is pruning but not renaming. 
+    """
+
+    def __pre_traversal_2(self,expr,node_list,edge_list):
+        if isinstance(expr.func, sympy.core.function.UndefinedFunction):
+            # sym_name=str(expr.func)
+            # for a in expr.args:
+            #     sym_name = sym_name + '_' + str(a)
+            node_list.append(expr)
+        else:
+            node_list.append(expr)
+        
+        for arg in expr.args:
+            if isinstance(arg.func, sympy.core.function.UndefinedFunction):
+                f=arg.func
+                sym_name=str(f)
+                for a in arg.args:
+                    sym_name = sym_name + '_' + str(a)
+                
+                node_list.append(sympy.Symbol(sym_name))
+                edge_list.append((expr,sympy.Symbol(sym_name)))
+            else:
+                edge_list.append((expr,arg))
+                self.__pre_traversal_2(arg,node_list,edge_list)
 
     """
     Pre order traversal and returns the node list and edge list
@@ -50,7 +76,7 @@ class ExpressionGraph():
     def __preorder_traversal__(self,expr):
         expr_list=list()
         edge_list=list()
-        self.__pre_traversal(expr,expr_list,edge_list)
+        self.__pre_traversal_2(expr,expr_list,edge_list)
         return [expr_list,edge_list]
 
     """
@@ -99,7 +125,7 @@ class ExpressionGraph():
 
     """
 
-    def add_expressions(self,outs,vnames):
+    def add_expressions(self,outs,vnames,suffix_idx="[pp]"):
         mi = [0, 1, 2, 4, 5, 8]
         midx = ['00', '01', '02', '11', '12', '22']
         
@@ -108,19 +134,19 @@ class ExpressionGraph():
             if type(e) == list:
                 num_e = num_e + len(e)
                 for j, ev in enumerate(e):
-                    expr_name = vnames[i] + "_" + str(j)
+                    expr_name = vnames[i] + "" + str(j) + str(suffix_idx)
                     print("processing expr : %d var name %s[%s]" %(i,vnames[i],str(j)))
                     self.add_expression(ev,expr_name)
             elif type(e) == sympy.Matrix:
                 num_e = num_e + len(e)
                 for j, k in enumerate(mi):
-                    expr_name = vnames[i] + "_" +str(midx[j])
+                    expr_name = vnames[i] + "" +str(midx[j]) + str(suffix_idx)
                     print("processing expr : %d var name %s[%s]" %(i,vnames[i],midx[j]))
                     self.add_expression(e[k],expr_name)
             else:
                 num_e = num_e + 1
                 print("processing expr : %d var name %s" %(i,vnames[i]))
-                expr_name = vnames[i]
+                expr_name = vnames[i] + str(suffix_idx)
                 self.add_expression(e,expr_name)
     
     """

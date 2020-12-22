@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import nxgraph
 import gutils
+import re as regex
 
 ###################################################################
 # initialize
@@ -25,14 +26,24 @@ ep1, ep2 = symbols('BSSN_ETA_POWER[0] BSSN_ETA_POWER[1]')
 xi1, xi2, xi3 = symbols('BSSN_XI[0] BSSN_XI[1] BSSN_XI[2] ')
 
 # declare variables
-a   = dendro.scalar("alpha", "")
-chi = dendro.scalar("chi", "")
-K   = dendro.scalar("K", "")
-Gt  = dendro.vec3("Gt", "")
-b   = dendro.vec3("beta", "")
-B   = dendro.vec3("B", "")
-gt  = dendro.sym_3x3("gt", "")
-At  = dendro.sym_3x3("At", "")
+# a   = dendro.scalar("alpha", "")
+# chi = dendro.scalar("chi", "")
+# K   = dendro.scalar("K", "")
+# Gt  = dendro.vec3("Gt", "")
+# b   = dendro.vec3("beta", "")
+# B   = dendro.vec3("B", "")
+# gt  = dendro.sym_3x3("gt", "")
+# At  = dendro.sym_3x3("At", "")
+# Gt_rhs  = dendro.vec3("Gt_rhs", "")
+
+a   = dendro.scalar("alpha"   , "")
+chi = dendro.scalar("chi"     , "")
+K   = dendro.scalar("K"       , "")
+Gt  = dendro.vec3("Gt"        , "")
+b   = dendro.vec3("beta"      , "")
+B   = dendro.vec3("B"         , "")
+gt  = dendro.sym_3x3("gt"     , "")
+At  = dendro.sym_3x3("At"     , "")
 Gt_rhs  = dendro.vec3("Gt_rhs", "")
 
 # Lie derivative weight
@@ -43,7 +54,7 @@ weight_Gt = Rational(2,3)
 
 d = dendro.set_first_derivative('grad')    # first argument is direction
 d2s = dendro.set_second_derivative('grad2')  # first 2 arguments are directions
-ad = dendro.set_advective_derivative('agrad')  # first argument is direction
+ad = dendro.set_advective_derivative('grad')  # first argument is direction
 kod = dendro.set_kreiss_oliger_dissipation('kograd')
 
 d2 = dendro.d2
@@ -98,84 +109,76 @@ B_rhs = [ (Gt_rhs[i] - eta * B[i] +
 outs = [a_rhs, b_rhs, gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
 vnames = ['a_rhs', 'b_rhs', 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
 
-#outs = [a_rhs, b_rhs,gt_rhs]       #gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
-#vnames = ['a_rhs', 'b_rhs','gt_rhs'] #, 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
+#outs = [a_rhs, b_rhs,gt_rhs,chi_rhs,K_rhs, Gt_rhs, B_rhs]                       #gt_rhs, chi_rhs, At_rhs, K_rhs, Gt_rhs, B_rhs]
+#vnames = ['a_rhs', 'b_rhs','gt_rhs','chi_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs' ]     #, 'gt_rhs', 'chi_rhs', 'At_rhs', 'K_rhs', 'Gt_rhs', 'B_rhs']
 
 
 exp_graph=nxgraph.ExpressionGraph()
 exp_graph.add_expressions(outs,vnames)
 G=exp_graph.composed_graph(verbose=False)
-#G_rev = G.reverse()
-dd = nx.greedy_color(G)
-#print(type(d))
-colors=set()
-for (k,v) in dd.items():
-        colors.add(v)
 
-print(colors)
-
-
-#cse_nodes = gutils.sorted_nodes_by_in_degree(G,10)
-
-# for (k,v) in cse_nodes:
-#         print("node in degree %d out degree %d\n expression : %s\n\n" %(G.in_degree(v),G.out_degree(v),str(v)))
-
-# for  n in G.nodes():
-#         # if(G.in_degree(n)==0):
-#         #         print(n)
-#         if(G.in_degree(n)>10) and G.out_degree(n)>0:
-#                print("node in degree %d out degree %d\n expression : %s\n\n" %(G.in_degree(n),G.out_degree(n),str(n)))
-#                 #for v in G_rev.neighbors(n):
-                #        print("used in %s " %v)
-#nx.draw_networkx(G,pos=nx.random_layout(G),font_size=4)
-#nx.draw(G,pos=nx.random_layout(G))
-#plt.show()
-
-#exp_graph.draw_graph("gt_rhs_00")
-#exp_graph.plot_adjmatrix()
-
-#G.add_expression(a_rhs,"a_rhs")
-
-#dendroutils.construct_dep_matrix(outs,vnames,"[pp]")
-#dendroutils.write_to_dot(outs,vnames,folder_ptah="../dot")
-# a_G  = dendroutils.construct_nx_digraph("../dot/bkp/At_rhs_00.dot")
-# a_G1 = exp_graph.get_graph("gt_rhs_00")
-
-# print(nx.info(a_G))
-# print(nx.info(a_G1))
-# b_0_G  = dendroutils.construct_nx_digraph("../dot/b_rhs_0.dot")
-# b_1_G  = dendroutils.construct_nx_digraph("../dot/b_rhs_1.dot")
-# b_2_G  = dendroutils.construct_nx_digraph("../dot/b_rhs_2.dot")
-
-# gt_00_G  = dendroutils.construct_nx_digraph("../dot/gt_rhs_00.dot")
-# gt_01_G  = dendroutils.construct_nx_digraph("../dot/gt_rhs_01.dot")
-# gt_02_G  = dendroutils.construct_nx_digraph("../dot/gt_rhs_02.dot")
-# gt_11_G  = dendroutils.construct_nx_digraph("../dot/gt_rhs_11.dot")
-# gt_12_G  = dendroutils.construct_nx_digraph("../dot/gt_rhs_12.dot")
-# gt_22_G  = dendroutils.construct_nx_digraph("../dot/gt_rhs_22.dot")
-
-# g_list=[a_G,b_0_G,b_1_G,b_2_G,gt_00_G,gt_01_G,gt_02_G,gt_11_G,gt_12_G,gt_22_G]
-# G=nx.compose_all(g_list)
-# dendroutils.bfs_traversal(G,gt_12_G)
-# nx.write_multiline_adjlist(G.reverse(),'test_G_reverse.txt',delimiter="\n")
-# print(nx.classes.function.info(G))
-# A=nx.adj_matrix(G.reverse())
-# plt.figure()
-# plt.spy(A,markersize=3)
-# plt.show()
-#Gr = nx.classes.function.reverse_view(G)
-#tc_Gr = nx.algorithms.dag.transitive_closure_dag(Gr)
-#dendroutils.draw_nx_graph(G,draw_labels=False)
-
-#print(type(set(nx.classes.function.nodes(G))))
-#for n in nx.classes.function.nodes(G):
-#        print(n)
-#        print("neigh num: %s" % (nx.classes.function.neighbors(G,n)))
+#print(colors)
+custom_functions = {'grad': 'grad', 'grad2': 'grad2', 'agrad': 'agrad', 'kograd': 'kograd'}
+rename_dict={ 'alpha'   : 'alpha[pp]',
+              'beta0'   : 'beta0[pp]',
+              'beta1'   : 'beta1[pp]',
+              'beta2'   : 'beta2[pp]',
+              'gt0'     : 'gt0[pp]',
+              'gt1'     : 'gt1[pp]',
+              'gt2'     : 'gt2[pp]',
+              'gt3'     : 'gt3[pp]',
+              'gt4'     : 'gt4[pp]',
+              'gt5'     : 'gt5[pp]',
+              'At0'     : 'At0[pp]',
+              'At1'     : 'At1[pp]',
+              'At2'     : 'At2[pp]',
+              'At3'     : 'At3[pp]',
+              'At4'     : 'At4[pp]',
+              'At5'     : 'At5[pp]',
+              'B0'      : 'B0[pp]',
+              'B1'      : 'B1[pp]',
+              'B2'      : 'B2[pp]',
+              'Gt0'     : 'Gt0[pp]',
+              'Gt1'     : 'Gt1[pp]',
+              'Gt2'     : 'Gt2[pp]',
+              'chi'     : 'chi[pp]',
+              'K'       : 'K[pp]'}
 
 
-#for e in nx.classes.function.edges(G):
-#        print(e)
 
+def change_deriv_names(str):
+    c_str=str
+    derivs=['agrad','grad','kograd']
+    for deriv in derivs:
+        key=deriv+'\(\d, \w+\[pp\]\)'
+        slist=regex.findall(key,c_str)
+        for s in slist:
+            #print(s)
+            w1=s.split('(')
+            w2=w1[1].split(')')[0].split(',')
+            #print(w1[0]+'_'+w2[0].strip()+'_'+w2[1].strip()+';')
+            rep=w1[0]
+            for v in w2:
+                rep=rep+'_'+v.strip()
+            #rep=rep+';'
+            c_str=c_str.replace(s,rep)
 
+    derivs2=['grad2']
+    for deriv in derivs2:
+        key=deriv+'\(\d, \d, \w+\[pp\]\)'
+        slist=regex.findall(key,c_str)
+        for s in slist:
+            #print(s)
+            w1=s.split('(')
+            w2=w1[1].split(')')[0].split(',')
+            #print(w1[0]+'_'+w2[0].strip()+'_'+w2[1].strip()+';')
+            rep=w1[0]
+            for v in w2:
+                rep=rep+'_'+v.strip()
+            #rep=rep+';'
+            c_str=c_str.replace(s,rep)
+    return c_str
+
+gutils.generate_cpu_c_code(exp_graph,8,"bssn_eqs.cpp",rename_dict,change_deriv_names,custom_functions,None)
 
 
