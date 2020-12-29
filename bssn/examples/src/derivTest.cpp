@@ -71,7 +71,7 @@ int main(int argc, char **argv)
 
     double *a_rhs    = __mem_pool->allocate(n);
     double *chi_rhs  = __mem_pool->allocate(n);
-    double *K_rhs    =__mem_pool->allocate(n);
+    double *K_rhs    = __mem_pool->allocate(n);
     double *gt_rhs00 = __mem_pool->allocate(n);
     double *gt_rhs01 = __mem_pool->allocate(n);
     double *gt_rhs02 = __mem_pool->allocate(n);
@@ -180,26 +180,88 @@ int main(int argc, char **argv)
     {
 
         for(unsigned int k=3; k < nz-3; k++)
-        {
-            const double z  =  k * hz;
             for(unsigned int j=3; j < ny-3; j++)
-            {
-                const double y  =  j * hy;
                 for(unsigned int i=3; i < nx-3; i++)
                 {
                     const double x  =  i * hx;
-                    double r_coord =x*x + y*y + z*z;
-                    double eta=2.0;
+                    const double y  =  j * hy;
+                    const double z  =  k * hz;
+
+                    const double r_coord =x*x + y*y + z*z;
+                    const double eta=2.0;
+                    const double sigma=0.4;
+
+                    
                     const unsigned int pp = k*ny*nx + j*nx + i;
                     #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
+
+                    // KO dissipation. 
+                    a_rhs[pp]    += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
+                    b_rhs0[pp]   += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
+                    b_rhs1[pp]   += sigma * (grad_0_beta1[pp] + grad_1_beta1[pp] + grad_2_beta1[pp]);
+                    b_rhs2[pp]   += sigma * (grad_0_beta2[pp] + grad_1_beta2[pp] + grad_2_beta2[pp]);
+                    gt_rhs00[pp] += sigma * (grad_0_gt0[pp] + grad_1_gt0[pp] + grad_2_gt0[pp]);
+                    gt_rhs01[pp] += sigma * (grad_0_gt1[pp] + grad_1_gt1[pp] + grad_2_gt1[pp]);
+                    gt_rhs02[pp] += sigma * (grad_0_gt2[pp] + grad_1_gt2[pp] + grad_2_gt2[pp]);
+                    gt_rhs11[pp] += sigma * (grad_0_gt3[pp] + grad_1_gt3[pp] + grad_2_gt3[pp]);
+                    gt_rhs12[pp] += sigma * (grad_0_gt4[pp] + grad_1_gt4[pp] + grad_2_gt4[pp]);
+                    gt_rhs22[pp] += sigma * (grad_0_gt5[pp] + grad_1_gt5[pp] + grad_2_gt5[pp]);
+                    chi_rhs[pp]  += sigma * (grad_0_chi[pp] + grad_1_chi[pp] + grad_2_chi[pp]);
+                    At_rhs00[pp] += sigma * (grad_0_At0[pp] + grad_1_At0[pp] + grad_2_At0[pp]);
+                    At_rhs01[pp] += sigma * (grad_0_At1[pp] + grad_1_At1[pp] + grad_2_At1[pp]);
+                    At_rhs02[pp] += sigma * (grad_0_At2[pp] + grad_1_At2[pp] + grad_2_At2[pp]);
+                    At_rhs11[pp] += sigma * (grad_0_At3[pp] + grad_1_At3[pp] + grad_2_At3[pp]);
+                    At_rhs12[pp] += sigma * (grad_0_At4[pp] + grad_1_At4[pp] + grad_2_At4[pp]);
+                    At_rhs22[pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
+                    K_rhs[pp]    += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
+                    Gt_rhs0[pp]  += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
+                    Gt_rhs1[pp]  += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
+                    Gt_rhs2[pp]  += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
+                    B_rhs0[pp]   += sigma * (grad_0_B0[pp] + grad_1_B0[pp] + grad_2_B0[pp]);
+                    B_rhs1[pp]   += sigma * (grad_0_B1[pp] + grad_1_B1[pp] + grad_2_B1[pp]);
+                    B_rhs2[pp]   += sigma * (grad_0_B2[pp] + grad_1_B2[pp] + grad_2_B2[pp]);
+
                 }
-            }
-        }
     }
 
     auto t2=Time::now();
     auto fs = t2 - t1;
     std::cout<<"Time changed order: "<<fs.count()<<std::endl;
+
+
+    for(unsigned int k=3; k < nz-3; k+=10)
+            for(unsigned int j=3; j < ny-3; j+=10)
+                for(unsigned int i=3; i < nx-3; i+=10)
+                {
+                    const unsigned int pp = k*ny*nx + j*nx + i;
+                    std::cout<<"rhs: "<<a_rhs[pp]<<std::endl;
+                    std::cout<<"rhs: "<<b_rhs0[pp]<<std::endl;
+                    std::cout<<"rhs: "<<b_rhs1[pp]<<std::endl;
+                    std::cout<<"rhs: "<<b_rhs2[pp]<<std::endl;
+                    std::cout<<"rhs: "<<gt_rhs00[pp]<<std::endl;
+                    std::cout<<"rhs: "<<gt_rhs01[pp]<<std::endl;
+                    std::cout<<"rhs: "<<gt_rhs02[pp]<<std::endl;
+                    std::cout<<"rhs: "<<gt_rhs11[pp]<<std::endl;
+                    std::cout<<"rhs: "<<gt_rhs12[pp]<<std::endl;
+                    std::cout<<"rhs: "<<gt_rhs22[pp]<<std::endl;
+                    std::cout<<"rhs: "<<chi_rhs[pp]<<std::endl;
+                    std::cout<<"rhs: "<<At_rhs00[pp]<<std::endl;
+                    std::cout<<"rhs: "<<At_rhs01[pp]<<std::endl;
+                    std::cout<<"rhs: "<<At_rhs02[pp]<<std::endl;
+                    std::cout<<"rhs: "<<At_rhs11[pp]<<std::endl;
+                    std::cout<<"rhs: "<<At_rhs12[pp]<<std::endl;
+                    std::cout<<"rhs: "<<K_rhs[pp]<<std::endl;
+                    std::cout<<"rhs: "<<Gt_rhs0[pp]<<std::endl;
+                    std::cout<<"rhs: "<<Gt_rhs1[pp]<<std::endl;
+                    std::cout<<"rhs: "<<Gt_rhs2[pp]<<std::endl;
+                    std::cout<<"rhs: "<<B_rhs0[pp]<<std::endl;
+                    std::cout<<"rhs: "<<B_rhs1[pp]<<std::endl;
+                    std::cout<<"rhs: "<<B_rhs2[pp]<<std::endl;
+                    
+
+                    
+                }
+                    
 
     // de-alloaction.
     {

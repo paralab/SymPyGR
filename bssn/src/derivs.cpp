@@ -26,12 +26,12 @@ void deriv42_x(double * const  Dxu, const double * const  u,
   const int ie = sz[0]-3;
   const int je = sz[1]-1;
   const int ke = sz[2]-1;
-    const int n=1;
+  const int n=1;
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         Dxu[pp] = (u[pp-2] -8.0*u[pp-1] + 8.0*u[pp+1] - u[pp+2] ) * idx_by_12;
       }
     }
@@ -72,7 +72,7 @@ void deriv42_x(double * const  Dxu, const double * const  u,
   for (int k = 3; k < sz[2]-3; k++) {
     for (int j = 3; j < sz[1]-3; j++) {
       for (int i = 3; i < sz[0]-3; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
          if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -104,12 +104,12 @@ void deriv42_y(double * const  Dyu, const double * const  u,
   const int je = sz[1]-3;
   const int ke = sz[2]-1;
 
-    const int n=nx;
+  const int n=nx;
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
       for (int j = jb; j < je; j++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         Dyu[pp] = (u[pp-2*nx] - 8.0*u[pp-nx] + 8.0*u[pp+nx] - u[pp+2*nx])*idy_by_12;
       }
     }
@@ -149,7 +149,7 @@ void deriv42_y(double * const  Dyu, const double * const  u,
   for (int k = 3; k < sz[2]-3; k++) {
     for (int j = 3; j < sz[1]-3; j++) {
       for (int i = 3; i < sz[0]-3; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -185,7 +185,7 @@ void deriv42_z(double * const  Dzu, const double * const  u,
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
       for (int k = kb; k < ke; k++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         Dzu[pp] = (u[pp-2*n] - 8.0*u[pp-n] + 8.0*u[pp+n] - u[pp+2*n]) * idz_by_12;
       }
     }
@@ -228,7 +228,7 @@ void deriv42_z(double * const  Dzu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -262,7 +262,7 @@ void deriv42_xx(double * const  DxDxu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         DxDxu[pp] = (   -        u[pp-2]
                         + 16.0 * u[pp-1]
                         - 30.0 * u[pp]
@@ -313,7 +313,7 @@ void deriv42_xx(double * const  DxDxu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -347,7 +347,7 @@ void deriv42_yy(double * const  DyDyu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
       for (int j = jb; j < je; j++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         DyDyu[pp] = ( -u[pp-2*nx] + 16.0 * u[pp-nx] - 30.0 * u[pp]
                                + 16.0 * u[pp+nx] - u[pp+2*nx]
                  ) * idy_sqrd_by_12;
@@ -394,7 +394,7 @@ void deriv42_yy(double * const  DyDyu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -430,7 +430,7 @@ void deriv42_zz(double * const  DzDzu, const double * const  u,
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
       for (int k = kb; k < ke; k++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         DzDzu[pp] = ( - u[pp-2*n] + 16.0 * u[pp-n] - 30.0 * u[pp]
                    + 16.0 * u[pp+n] - u[pp+2*n] ) * idz_sqrd_by_12;
       }
@@ -477,7 +477,7 @@ void deriv42_zz(double * const  DzDzu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -514,7 +514,7 @@ void deriv42adv_x(double * const  Dxu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if (betax[pp] > 0.0 ) {
           Dxu[pp] = ( -  3.0 * u[pp-1]
                       - 10.0 * u[pp]
@@ -618,7 +618,7 @@ void deriv42adv_x(double * const  Dxu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -655,7 +655,7 @@ void deriv42adv_y(double * const  Dyu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
       for (int j = jb; j < je; j++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if (betay[pp] > 0.0 ) {
           Dyu[pp] = ( -  3.0 * u[pp-nx]
                       - 10.0 * u[pp]
@@ -758,7 +758,7 @@ void deriv42adv_y(double * const  Dyu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -797,7 +797,7 @@ void deriv42adv_z(double * const  Dzu, const double * const  u,
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
       for (int k = kb; k < ke; k++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if (betaz[pp] > 0.0 ) {
           Dzu[pp] = ( -  3.0 * u[pp-n]
                       - 10.0 * u[pp]
@@ -898,7 +898,7 @@ void deriv42adv_z(double * const  Dzu, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -937,9 +937,6 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
-       #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,j)
-       #endif
        for (int i = ib; i < ie; i++) {
           const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dx *
@@ -957,11 +954,7 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
   }
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
-
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int j = jb; j < je; j++) {
         Du[IDX(3,j,k)] =  (      u[IDX(6,j,k)]
                            - 3.0*u[IDX(5,j,k)]
@@ -989,9 +982,6 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int j = jb; j < je; j++) {
          Du[IDX(ie-3,j,k)] = (
                                  u[IDX(ie-6,j,k)]
@@ -1024,7 +1014,7 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -1066,9 +1056,6 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,i)
-      #endif
        for (int j = jb; j < je; j++) {
           const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dy *
@@ -1086,11 +1073,7 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
   }
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
-
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int i = ib; i < ie; i++) {
         Du[IDX(i,3,k)] =  (      u[IDX(i,6,k)]
                            - 3.0*u[IDX(i,5,k)]
@@ -1118,9 +1101,6 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int i = ib; i < ie; i++) {
          Du[IDX(i,je-3,k)] = (
                                  u[IDX(i,je-6,k)]
@@ -1154,7 +1134,7 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -1198,10 +1178,7 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j,i)
-      #endif
-      for (int k = kb; k < ke; k++) {
+       for (int k = kb; k < ke; k++) {
           const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dz *
                          (
@@ -1218,11 +1195,7 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
   }
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
-
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
-      #endif
       for (int i = ib; i < ie; i++) {
         Du[IDX(i,j,3)] =  (      u[IDX(i,j,6)]
                            - 3.0*u[IDX(i,j,5)]
@@ -1250,9 +1223,6 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
-      #endif
       for (int i = ib; i < ie; i++) {
          Du[IDX(i,j,ke-3)] = (
                                  u[IDX(i,j,ke-6)]
@@ -1285,7 +1255,7 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
       for (int i = ib; i < ie; i++) {
-        int pp = IDX(i,j,k);
+        const int pp = IDX(i,j,k);
         if(std::isnan(Du[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
       }
     }
@@ -1348,7 +1318,7 @@ void disstvb3_x(double * const  Du, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
        for (int i = ib+1; i < ie-1; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           Du[pp] = pre_factor *
                          (
                                lam[pp-2]*u[pp-2]
@@ -1452,7 +1422,7 @@ void disstvb3_y(double * const  Du, const double * const  u,
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
        for (int j = jb+1; j < je-1; j++) {
-         int pp = IDX(i,j,k);
+         const int pp = IDX(i,j,k);
          Du[pp] = pre_factor *
                          (
                                lam[pp-2*nx]*u[pp-2*nx]
@@ -1559,7 +1529,7 @@ void disstvb3_z(double * const  Du, const double * const  u,
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
        for (int k = kb+1; k < ke-1; k++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           Du[pp] = pre_factor *
                          (
                                lam[pp-2*n]*u[pp-2*n]
@@ -2049,9 +2019,6 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,j)
-      #endif
       for (int i = ib; i < ie; i++) {
         const int pp = IDX(i,j,k);
         Dxu[pp] = ( - 1.0  * u[pp-3] 
@@ -2066,9 +2033,6 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int j = jb; j < je; j++) {
         Dxu[IDX(3,j,k)] = ( -  25.0 * u[IDX(3,j,k)]
                             +  48.0 * u[IDX(4,j,k)]
@@ -2096,9 +2060,6 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2135,7 +2096,7 @@ void deriv64_x(double * const  Dxu, const double * const  u,
     for (int k = 3; k < sz[2]-3; k++) {
       for (int j = 3; j < sz[1]-3; j++) {
         for (int i = 3; i < sz[0]-3; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           if(isnan(Dxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
         }
       }
@@ -2171,9 +2132,6 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,i)
-      #endif
       for (int j = jb; j < je; j++) {
         const int pp = IDX(i,j,k);
         Dyu[pp] = ( - 1.0  * u[pp-3*nx] 
@@ -2188,9 +2146,6 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int i = ib; i < ie; i++) {
         Dyu[IDX(i,3,k)] =  ( - 25.0 * u[IDX(i,3,k)]
                             +  48.0 * u[IDX(i,4,k)]
@@ -2217,9 +2172,6 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2253,7 +2205,7 @@ void deriv64_y(double * const  Dyu, const double * const  u,
     for (int k = 3; k < sz[2]-3; k++) {
       for (int j = 3; j < sz[1]-3; j++) {
         for (int i = 3; i < sz[0]-3; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           if(std::isnan(Dyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
         }
       }
@@ -2290,9 +2242,6 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j,i)
-      #endif
       for (int k = kb; k < ke; k++) {
         const int pp = IDX(i,j,k);
         Dzu[pp] = ( - 1.0  * u[pp-3*n] 
@@ -2307,9 +2256,6 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
-      #endif
       for (int i = ib; i < ie; i++) {
         Dzu[IDX(i, j,3)] =  (- 25.0 * u[IDX(i,j,3)]
                             +  48.0 * u[IDX(i,j,4)]
@@ -2337,9 +2283,6 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
-      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2373,7 +2316,7 @@ void deriv64_z(double * const  Dzu, const double * const  u,
     for (int k = kb; k < ke; k++) {
       for (int j = jb; j < je; j++) {
         for (int i = ib; i < ie; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           if(std::isnan(Dzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
         }
       }
@@ -2409,9 +2352,6 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,j)
-      #endif
       for (int i = ib; i < ie; i++) {
         const int pp = IDX(i,j,k);
 
@@ -2429,9 +2369,6 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2462,9 +2399,6 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2497,7 +2431,7 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
     for (int k = kb; k < ke; k++) {
       for (int j = jb; j < je; j++) {
         for (int i = ib; i < ie; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           if(std::isnan(DxDxu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
         }
       }
@@ -2532,9 +2466,6 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k,i)
-      #endif
       for (int j = jb; j < je; j++) {
         const int pp = IDX(i,j,k);
         DyDyu[pp] = (      2.0  * u[pp-3*nx]
@@ -2551,9 +2482,6 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int i = ib; i < ie; i++) {
         
         DyDyu[IDX(i,3,k)] = (    35.0 * u[IDX(i,3,k)]
@@ -2585,9 +2513,6 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(k)
-      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2620,7 +2545,7 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
     for (int k = kb; k < ke; k++) {
       for (int j = jb; j < je; j++) {
         for (int i = ib; i < ie; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           if(std::isnan(DyDyu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
         }
       }
@@ -2657,9 +2582,6 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j,i)
-      #endif
       for (int k = kb; k < ke; k++) {
         const int pp = IDX(i,j,k);
         DzDzu[pp] = (      2.0  * u[pp-3*n]
@@ -2676,9 +2598,6 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
-      #endif
       for (int i = ib; i < ie; i++) {
         
         DzDzu[IDX(i,j,3)] = (    35.0 * u[IDX(i,j,3)]
@@ -2708,9 +2627,6 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
-      #ifdef BSSN_USE_AVX_DERIVS
-        #pragma omp simd simdlen(__DERIV_AVX_SIMD_LEN__) private(j)
-      #endif
       for (int i = ib; i < ie; i++) {
 
         
@@ -2745,7 +2661,7 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
     for (int k = kb; k < ke; k++) {
       for (int j = jb; j < je; j++) {
         for (int i = ib; i < ie; i++) {
-          int pp = IDX(i,j,k);
+          const int pp = IDX(i,j,k);
           if(std::isnan(DzDzu[pp])) std::cout<<"NAN detected function "<<__func__<<" file: "<<__FILE__<<" line: "<<__LINE__<<std::endl;
         }
       }
