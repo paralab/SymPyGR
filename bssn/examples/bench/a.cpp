@@ -61,13 +61,13 @@ int main() {
     //#pragma omp parallel
 {
     LIKWID_MARKER_START("Compute");
-
+    
+     
     for (int iter = 0; iter < R; iter ++){
-	    #pragma vector
-		for (int i = 0; i < N; i++){
-	    	C[i] += A[i] * B[i]; 
-	    }
-	}
+	for (int i = 0; i < N; i++){
+	   C[i] += A[i] * B[i]; 
+       }
+    }
 
     LIKWID_MARKER_STOP("Compute");
 }

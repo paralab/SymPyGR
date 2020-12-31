@@ -21,11 +21,22 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
 # endif()
 
 find_package(OpenMP REQUIRED)
+find_package(MPI REQUIRED)
+
 if(OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
+
+if(MPI_COMPILE_FLAGS)
+    set(COMPILE_FLAGS "${COMPILE_FLAGS} ${MPI_COMPILE_FLAGS}")
+endif()
+
+if(MPI_LINK_FLAGS)
+    set(LINK_FLAGS "${LINK_FLAGS} ${MPI_LINK_FLAGS}")
+endif()
+
 
 option(WITH_CUDA " build with cuda " OFF)
 option(BSSN_ENABLE_CUDA "enable cuda execution" OFF)
@@ -183,3 +194,11 @@ target_include_directories(derivTest PRIVATE include)
 target_include_directories(derivTest PRIVATE examples/include)
 target_include_directories(derivTest PRIVATE scripts)
 target_link_libraries(derivTest bssnUtils m)
+
+
+add_executable(stream_add examples/src/stream_add.cpp)
+target_include_directories(stream_add PRIVATE include)
+target_include_directories(stream_add PRIVATE examples/include)
+target_include_directories(stream_add PRIVATE scripts)
+target_include_directories(stream_add PRIVATE ${MPI_INCLUDE_PATH})
+target_link_libraries(stream_add ${MPI_LIBRARIES} bssnUtils m)

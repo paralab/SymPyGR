@@ -87,7 +87,8 @@ namespace mem
 
       #if 1
         // if want allocatations without the memeory pool. 
-        return new T[sz];
+        //return new T[sz];
+        return ((T*)aligned_alloc(m_uiAlignment, sz * sizeof(T)));
       #endif
 
       for(unsigned int i=0; i < m_vecBlocks.size(); i++) {
@@ -115,7 +116,8 @@ namespace mem
     {
 
       #if 1 
-        delete [] buf;
+        //delete [] buf;
+        free(buf);
         return;
       #endif
 

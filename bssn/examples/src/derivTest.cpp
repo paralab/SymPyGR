@@ -39,9 +39,11 @@ int main(int argc, char **argv)
     const double hx=0.01;
     const double hy=0.01;
     const double hz=0.01;
-    double init_var[bssn::BSSN_NUM_VARS];
 
-    mem::memory_pool<double>* __mem_pool = new mem::memory_pool<double>(0,16);
+    double init_var[bssn::BSSN_NUM_VARS];
+    
+
+    mem::memory_pool<double>* __mem_pool = new mem::memory_pool<double>(0,64);
     const unsigned int n=NN;
     double *alpha = __mem_pool->allocate(n);
     double *chi   = __mem_pool->allocate(n);
@@ -98,8 +100,18 @@ int main(int argc, char **argv)
                                     bssn::BSSN_LAMBDA[2], bssn::BSSN_LAMBDA[3]
                                    };
     const double lambda_f[2] = {bssn::BSSN_LAMBDA_F[0], bssn::BSSN_LAMBDA_F[1]};
+    
+    const double LAMBDA_F0 = lambda_f[0];
+    const double LAMBDA_F1 = lambda_f[1];
+    
+    const double LAMBDA0 = lambda[0];
+    const double LAMBDA1 = lambda[1];
+    const double LAMBDA2 = lambda[2];
+    const double LAMBDA3 = lambda[3];
 
-    for(unsigned int k=0; k < nz; k++)
+
+    
+    /*for(unsigned int k=0; k < nz; k++)
     {
         const double z  =  k * hz;
         for(unsigned int j=0; j < ny; j++)
@@ -144,7 +156,8 @@ int main(int argc, char **argv)
 
             }
         }
-    }
+    }*/
+    
 
     // allocate deriv vars. 
     #include "bssnrhs_memalloc.h"
@@ -178,50 +191,34 @@ int main(int argc, char **argv)
     auto t1=Time::now();
     for(unsigned int rr=0; rr < iter; rr++)
     {
+        #pragma vector
+        #pragma ivdep
+        for (unsigned int pp=0; pp < nx*ny*nz; pp++){
+            const double x=1.0;
+            const double y=1.0;
+            const double z=1.0;
+            const double r_coord =x*x + y*y + z*z;
+            const double eta=2.0;
+            const double sigma=0.4;
 
-        for(unsigned int k=3; k < nz-3; k++)
-            for(unsigned int j=3; j < ny-3; j++)
-                for(unsigned int i=3; i < nx-3; i++)
-                {
-                    const double x  =  i * hx;
-                    const double y  =  j * hy;
-                    const double z  =  k * hz;
+        // for(unsigned int k=3; k < nz-3; k++)
+        //     for(unsigned int j=3; j < ny-3; j++)
+        //         //#pragma omp simd simdlen(16)
+        //         for(unsigned int i=3; i < nx-3; i++)
+        //         {
+        //             const double x  =  i * hx;
+        //             const double y  =  j * hy;
+        //             const double z  =  k * hz;
 
-                    const double r_coord =x*x + y*y + z*z;
-                    const double eta=2.0;
-                    const double sigma=0.4;
+        //             const double r_coord =x*x + y*y + z*z;
+        //             const double eta=2.0;
+        //             const double sigma=0.4;
 
                     
-                    const unsigned int pp = k*ny*nx + j*nx + i;
+        //             const unsigned int pp = k*ny*nx + j*nx + i;
+        
                     #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
-
-                    // KO dissipation. 
-                    a_rhs[pp]    += sigma * (grad_0_alpha[pp] + grad_1_alpha[pp] + grad_2_alpha[pp]);
-                    b_rhs0[pp]   += sigma * (grad_0_beta0[pp] + grad_1_beta0[pp] + grad_2_beta0[pp]);
-                    b_rhs1[pp]   += sigma * (grad_0_beta1[pp] + grad_1_beta1[pp] + grad_2_beta1[pp]);
-                    b_rhs2[pp]   += sigma * (grad_0_beta2[pp] + grad_1_beta2[pp] + grad_2_beta2[pp]);
-                    gt_rhs00[pp] += sigma * (grad_0_gt0[pp] + grad_1_gt0[pp] + grad_2_gt0[pp]);
-                    gt_rhs01[pp] += sigma * (grad_0_gt1[pp] + grad_1_gt1[pp] + grad_2_gt1[pp]);
-                    gt_rhs02[pp] += sigma * (grad_0_gt2[pp] + grad_1_gt2[pp] + grad_2_gt2[pp]);
-                    gt_rhs11[pp] += sigma * (grad_0_gt3[pp] + grad_1_gt3[pp] + grad_2_gt3[pp]);
-                    gt_rhs12[pp] += sigma * (grad_0_gt4[pp] + grad_1_gt4[pp] + grad_2_gt4[pp]);
-                    gt_rhs22[pp] += sigma * (grad_0_gt5[pp] + grad_1_gt5[pp] + grad_2_gt5[pp]);
-                    chi_rhs[pp]  += sigma * (grad_0_chi[pp] + grad_1_chi[pp] + grad_2_chi[pp]);
-                    At_rhs00[pp] += sigma * (grad_0_At0[pp] + grad_1_At0[pp] + grad_2_At0[pp]);
-                    At_rhs01[pp] += sigma * (grad_0_At1[pp] + grad_1_At1[pp] + grad_2_At1[pp]);
-                    At_rhs02[pp] += sigma * (grad_0_At2[pp] + grad_1_At2[pp] + grad_2_At2[pp]);
-                    At_rhs11[pp] += sigma * (grad_0_At3[pp] + grad_1_At3[pp] + grad_2_At3[pp]);
-                    At_rhs12[pp] += sigma * (grad_0_At4[pp] + grad_1_At4[pp] + grad_2_At4[pp]);
-                    At_rhs22[pp] += sigma * (grad_0_At5[pp] + grad_1_At5[pp] + grad_2_At5[pp]);
-                    K_rhs[pp]    += sigma * (grad_0_K[pp] + grad_1_K[pp] + grad_2_K[pp]);
-                    Gt_rhs0[pp]  += sigma * (grad_0_Gt0[pp] + grad_1_Gt0[pp] + grad_2_Gt0[pp]);
-                    Gt_rhs1[pp]  += sigma * (grad_0_Gt1[pp] + grad_1_Gt1[pp] + grad_2_Gt1[pp]);
-                    Gt_rhs2[pp]  += sigma * (grad_0_Gt2[pp] + grad_1_Gt2[pp] + grad_2_Gt2[pp]);
-                    B_rhs0[pp]   += sigma * (grad_0_B0[pp] + grad_1_B0[pp] + grad_2_B0[pp]);
-                    B_rhs1[pp]   += sigma * (grad_0_B1[pp] + grad_1_B1[pp] + grad_2_B1[pp]);
-                    B_rhs2[pp]   += sigma * (grad_0_B2[pp] + grad_1_B2[pp] + grad_2_B2[pp]);
-
-                }
+        }
     }
 
     auto t2=Time::now();
@@ -261,6 +258,9 @@ int main(int argc, char **argv)
 
                     
                 }
+
+
+    
                     
 
     // de-alloaction.
@@ -268,9 +268,6 @@ int main(int argc, char **argv)
         __mem_pool->purge();
     }
 
-
-
-    
 
     return 0;
     
