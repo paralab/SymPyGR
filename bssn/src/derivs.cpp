@@ -2019,6 +2019,8 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      #pragma vector
+      #pragma ivdep
       for (int i = ib; i < ie; i++) {
         const int pp = IDX(i,j,k);
         Dxu[pp] = ( - 1.0  * u[pp-3] 
@@ -2132,6 +2134,8 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
+      #pragma vector
+      #pragma ivdep
       for (int j = jb; j < je; j++) {
         const int pp = IDX(i,j,k);
         Dyu[pp] = ( - 1.0  * u[pp-3*nx] 
@@ -2242,6 +2246,8 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+      #pragma vector
+      #pragma ivdep
       for (int k = kb; k < ke; k++) {
         const int pp = IDX(i,j,k);
         Dzu[pp] = ( - 1.0  * u[pp-3*n] 
@@ -2352,6 +2358,8 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      #pragma vector
+      #pragma ivdep
       for (int i = ib; i < ie; i++) {
         const int pp = IDX(i,j,k);
 
@@ -2466,6 +2474,8 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
+      #pragma vector
+      #pragma ivdep
       for (int j = jb; j < je; j++) {
         const int pp = IDX(i,j,k);
         DyDyu[pp] = (      2.0  * u[pp-3*nx]
@@ -2582,6 +2592,8 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+      #pragma vector
+      #pragma ivdep
       for (int k = kb; k < ke; k++) {
         const int pp = IDX(i,j,k);
         DzDzu[pp] = (      2.0  * u[pp-3*n]

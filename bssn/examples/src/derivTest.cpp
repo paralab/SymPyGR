@@ -11,6 +11,7 @@
 #include "grDef.h"
 #include "grUtils.h"
 #include "parameters.h"
+#include <mpi.h>
 
 
 typedef std::chrono::high_resolution_clock Time;
@@ -25,6 +26,12 @@ int main(int argc, char **argv)
         std::cout << "Usage: " << argv[0] << " blk_sz iter" << std::endl;
         return 0;
     }
+
+    MPI_Init(&argc,&argv);
+    int rank, npes;
+    MPI_Comm comm = MPI_COMM_WORLD;
+    MPI_Comm_size(comm,&npes);
+    MPI_Comm_rank(comm,&rank);
 
     const unsigned int blk_sz = atoi(argv[1]);
     const unsigned int iter   = atoi(argv[2]);
@@ -45,56 +52,45 @@ int main(int argc, char **argv)
 
     mem::memory_pool<double>* __mem_pool = new mem::memory_pool<double>(0,64);
     const unsigned int n=NN;
-    double *alpha = __mem_pool->allocate(n);
-    double *chi   = __mem_pool->allocate(n);
-    double *K     = __mem_pool->allocate(n);
-    double *gt0   = __mem_pool->allocate(n);
-    double *gt1   = __mem_pool->allocate(n);
-    double *gt2   = __mem_pool->allocate(n);
-    double *gt3   = __mem_pool->allocate(n);
-    double *gt4   = __mem_pool->allocate(n);
-    double *gt5   = __mem_pool->allocate(n);
-    double *beta0 = __mem_pool->allocate(n);
-    double *beta1 = __mem_pool->allocate(n);
-    double *beta2 = __mem_pool->allocate(n);
-    double *At0   = __mem_pool->allocate(n);
-    double *At1   = __mem_pool->allocate(n);
-    double *At2   = __mem_pool->allocate(n);
-    double *At3   = __mem_pool->allocate(n);
-    double *At4   = __mem_pool->allocate(n);
-    double *At5   = __mem_pool->allocate(n);
-    double *Gt0   = __mem_pool->allocate(n);
-    double *Gt1   = __mem_pool->allocate(n);
-    double *Gt2   = __mem_pool->allocate(n);
-    double *B0    = __mem_pool->allocate(n);
-    double *B1    = __mem_pool->allocate(n);
-    double *B2    = __mem_pool->allocate(n);
 
+    double * unzipIn   = new double[NN*bssn::BSSN_NUM_VARS];
+    double * unzipOut0  = new double[NN*bssn::BSSN_NUM_VARS];
+    double * unzipOut1  = new double[NN*bssn::BSSN_NUM_VARS];
 
-    double *a_rhs    = __mem_pool->allocate(n);
-    double *chi_rhs  = __mem_pool->allocate(n);
-    double *K_rhs    = __mem_pool->allocate(n);
-    double *gt_rhs00 = __mem_pool->allocate(n);
-    double *gt_rhs01 = __mem_pool->allocate(n);
-    double *gt_rhs02 = __mem_pool->allocate(n);
-    double *gt_rhs11 = __mem_pool->allocate(n);
-    double *gt_rhs12 = __mem_pool->allocate(n);
-    double *gt_rhs22 = __mem_pool->allocate(n);
-    double *b_rhs0   = __mem_pool->allocate(n);
-    double *b_rhs1   = __mem_pool->allocate(n);
-    double *b_rhs2   = __mem_pool->allocate(n);
-    double *At_rhs00 = __mem_pool->allocate(n);
-    double *At_rhs01 = __mem_pool->allocate(n);
-    double *At_rhs02 = __mem_pool->allocate(n);
-    double *At_rhs11 = __mem_pool->allocate(n);
-    double *At_rhs12 = __mem_pool->allocate(n);
-    double *At_rhs22 = __mem_pool->allocate(n);
-    double *Gt_rhs0  = __mem_pool->allocate(n);
-    double *Gt_rhs1  = __mem_pool->allocate(n);
-    double *Gt_rhs2  = __mem_pool->allocate(n);
-    double *B_rhs0   = __mem_pool->allocate(n);
-    double *B_rhs1   = __mem_pool->allocate(n);
-    double *B_rhs2   = __mem_pool->allocate(n);
+    for (unsigned int pp =0; pp < NN * bssn::BSSN_NUM_VARS ; pp++)
+    {
+        unzipIn[pp]=0.0;
+        unzipOut0[pp]=0.0;
+        unzipOut1[pp]=0.0;
+    }
+
+    
+
+    double *alpha = unzipIn + (bssn::VAR::U_ALPHA*NN);    //__mem_pool->allocate(n);
+    double *chi   = unzipIn + (bssn::VAR::U_CHI*NN);      //__mem_pool->allocate(n);
+    double *K     = unzipIn + (bssn::VAR::U_K*NN);        //__mem_pool->allocate(n);
+    double *gt0   = unzipIn + (bssn::VAR::U_SYMGT0*NN);   //__mem_pool->allocate(n);
+    double *gt1   = unzipIn + (bssn::VAR::U_SYMGT1*NN);   //__mem_pool->allocate(n);
+    double *gt2   = unzipIn + (bssn::VAR::U_SYMGT2*NN);   //__mem_pool->allocate(n);
+    double *gt3   = unzipIn + (bssn::VAR::U_SYMGT3*NN);   //__mem_pool->allocate(n);
+    double *gt4   = unzipIn + (bssn::VAR::U_SYMGT4*NN);   //__mem_pool->allocate(n);
+    double *gt5   = unzipIn + (bssn::VAR::U_SYMGT5*NN);   //__mem_pool->allocate(n);
+    double *beta0 = unzipIn + (bssn::VAR::U_BETA0*NN);    //__mem_pool->allocate(n);
+    double *beta1 = unzipIn + (bssn::VAR::U_BETA1*NN);    //__mem_pool->allocate(n);
+    double *beta2 = unzipIn + (bssn::VAR::U_BETA2*NN);    //__mem_pool->allocate(n);
+    double *At0   = unzipIn + (bssn::VAR::U_SYMAT0*NN);   //__mem_pool->allocate(n);
+    double *At1   = unzipIn + (bssn::VAR::U_SYMAT1*NN);   //__mem_pool->allocate(n);
+    double *At2   = unzipIn + (bssn::VAR::U_SYMAT2*NN);   //__mem_pool->allocate(n);
+    double *At3   = unzipIn + (bssn::VAR::U_SYMAT3*NN);   //__mem_pool->allocate(n);
+    double *At4   = unzipIn + (bssn::VAR::U_SYMAT4*NN);   //__mem_pool->allocate(n);
+    double *At5   = unzipIn + (bssn::VAR::U_SYMAT5*NN);   //__mem_pool->allocate(n);
+    double *Gt0   = unzipIn + (bssn::VAR::U_GT0*NN);      //__mem_pool->allocate(n);
+    double *Gt1   = unzipIn + (bssn::VAR::U_GT1*NN);      //__mem_pool->allocate(n);
+    double *Gt2   = unzipIn + (bssn::VAR::U_GT2*NN);      //__mem_pool->allocate(n);
+    double *B0    = unzipIn + (bssn::VAR::U_B0*NN);       //__mem_pool->allocate(n);
+    double *B1    = unzipIn + (bssn::VAR::U_B1*NN);       //__mem_pool->allocate(n);
+    double *B2    = unzipIn + (bssn::VAR::U_B2*NN);       //__mem_pool->allocate(n);
+  
 
     const unsigned int lambda[4] = {bssn::BSSN_LAMBDA[0], bssn::BSSN_LAMBDA[1],
                                     bssn::BSSN_LAMBDA[2], bssn::BSSN_LAMBDA[3]
@@ -111,15 +107,16 @@ int main(int argc, char **argv)
 
 
     
-    /*for(unsigned int k=0; k < nz; k++)
+    for(unsigned int k=0; k < nz; k++)
     {
-        const double z  =  k * hz;
         for(unsigned int j=0; j < ny; j++)
         {
-            const double y  =  j * hy;
             for(unsigned int i=0; i < nx; i++)
             {
                 const double x  =  i * hx;
+                const double z  =  k * hz;
+                const double y  =  j * hy;
+                    
                 const unsigned int pp = k*ny*nx + j*nx + i;
                 bssn::fake_initial_data(x,y,z,init_var);
                 alpha[pp]   = init_var[bssn::VAR::U_ALPHA];
@@ -156,119 +153,241 @@ int main(int argc, char **argv)
 
             }
         }
-    }*/
+    }
     
+    {
+        double lmin, lmax;
+        lmin = unzipIn[0];
+        lmax = unzipIn[0];
+        
+        for (unsigned int pp=1; pp < NN*bssn::BSSN_NUM_VARS; pp++)
+        {
+            if(lmax < unzipIn[pp])
+                lmax = unzipIn[pp];
+
+            if (lmin > unzipIn[pp])
+                lmin = unzipIn[pp];
+        }
+
+        std::cout<<std::scientific<<"input vector range : ("<< lmin <<"," << lmax << " )"<<std::endl;
+            
+
+    }
+
 
     // allocate deriv vars. 
     #include "bssnrhs_memalloc.h"
     #include "bssnrhs_memalloc_adv.h"
     
     // compute deriv vars. 
-    //#include "bssnrhs_derivs.h"
-    //#include "bssnrhs_derivs_adv.h"
-
-    // auto t1=Time::now();
-    // for(unsigned int rr=0; rr < iter; rr++)
-    // {
-    //     //#include
-    //     //#include "bssnrhs_derivs.h"
-    //     // deriv64_x(grad_0_alpha, alpha, hx, sz, bflag);
-    //     // deriv64_x(grad_0_beta0, beta0, hx, sz, bflag);
-    //     // deriv64_x(grad_0_beta1, beta1, hx, sz, bflag);
-    //     // deriv64_x(grad_0_beta2, beta2, hx, sz, bflag);
-    //     //deriv64_xx(grad2_0_0_alpha, alpha, hx, sz, bflag);
-    //     // deriv64_y(grad_1_alpha, alpha, hy, sz, bflag);
-    //     // deriv64_z(grad_2_alpha, alpha, hz, sz, bflag);
-        
-    // }
-
-    // auto t2=Time::now();
-    // fsec fs = t2 - t1;
-    // std::cout<<"Time: "<<fs.count()<<std::endl;
-
-    //std::cout<<"iter:"<<iter<<std::endl;
-
-    auto t1=Time::now();
-    for(unsigned int rr=0; rr < iter; rr++)
-    {
-        #pragma vector
-        #pragma ivdep
-        for (unsigned int pp=0; pp < nx*ny*nz; pp++){
-            const double x=1.0;
-            const double y=1.0;
-            const double z=1.0;
-            const double r_coord =x*x + y*y + z*z;
-            const double eta=2.0;
-            const double sigma=0.4;
-
-        // for(unsigned int k=3; k < nz-3; k++)
-        //     for(unsigned int j=3; j < ny-3; j++)
-        //         //#pragma omp simd simdlen(16)
-        //         for(unsigned int i=3; i < nx-3; i++)
-        //         {
-        //             const double x  =  i * hx;
-        //             const double y  =  j * hy;
-        //             const double z  =  k * hz;
-
-        //             const double r_coord =x*x + y*y + z*z;
-        //             const double eta=2.0;
-        //             const double sigma=0.4;
-
-                    
-        //             const unsigned int pp = k*ny*nx + j*nx + i;
-        
-                    #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
-        }
-    }
-
-    auto t2=Time::now();
-    auto fs = t2 - t1;
-    std::cout<<"Time changed order: "<<fs.count()<<std::endl;
-
-
-    for(unsigned int k=3; k < nz-3; k+=10)
-            for(unsigned int j=3; j < ny-3; j+=10)
-                for(unsigned int i=3; i < nx-3; i+=10)
-                {
-                    const unsigned int pp = k*ny*nx + j*nx + i;
-                    std::cout<<"rhs: "<<a_rhs[pp]<<std::endl;
-                    std::cout<<"rhs: "<<b_rhs0[pp]<<std::endl;
-                    std::cout<<"rhs: "<<b_rhs1[pp]<<std::endl;
-                    std::cout<<"rhs: "<<b_rhs2[pp]<<std::endl;
-                    std::cout<<"rhs: "<<gt_rhs00[pp]<<std::endl;
-                    std::cout<<"rhs: "<<gt_rhs01[pp]<<std::endl;
-                    std::cout<<"rhs: "<<gt_rhs02[pp]<<std::endl;
-                    std::cout<<"rhs: "<<gt_rhs11[pp]<<std::endl;
-                    std::cout<<"rhs: "<<gt_rhs12[pp]<<std::endl;
-                    std::cout<<"rhs: "<<gt_rhs22[pp]<<std::endl;
-                    std::cout<<"rhs: "<<chi_rhs[pp]<<std::endl;
-                    std::cout<<"rhs: "<<At_rhs00[pp]<<std::endl;
-                    std::cout<<"rhs: "<<At_rhs01[pp]<<std::endl;
-                    std::cout<<"rhs: "<<At_rhs02[pp]<<std::endl;
-                    std::cout<<"rhs: "<<At_rhs11[pp]<<std::endl;
-                    std::cout<<"rhs: "<<At_rhs12[pp]<<std::endl;
-                    std::cout<<"rhs: "<<K_rhs[pp]<<std::endl;
-                    std::cout<<"rhs: "<<Gt_rhs0[pp]<<std::endl;
-                    std::cout<<"rhs: "<<Gt_rhs1[pp]<<std::endl;
-                    std::cout<<"rhs: "<<Gt_rhs2[pp]<<std::endl;
-                    std::cout<<"rhs: "<<B_rhs0[pp]<<std::endl;
-                    std::cout<<"rhs: "<<B_rhs1[pp]<<std::endl;
-                    std::cout<<"rhs: "<<B_rhs2[pp]<<std::endl;
-                    
-
-                    
-                }
-
+    #include "bssnrhs_derivs.h"
+    #include "bssnrhs_derivs_adv.h"
 
     
-                    
-
-    // de-alloaction.
     {
-        __mem_pool->purge();
+
+        double *a_rhs    =  unzipOut0 + (bssn::VAR::U_ALPHA*NN); 
+        double *chi_rhs  =  unzipOut0 + (bssn::VAR::U_CHI*NN);   
+        double *K_rhs    =  unzipOut0 + (bssn::VAR::U_K*NN);     
+        double *gt_rhs00 =  unzipOut0 + (bssn::VAR::U_SYMGT0*NN);
+        double *gt_rhs01 =  unzipOut0 + (bssn::VAR::U_SYMGT1*NN);
+        double *gt_rhs02 =  unzipOut0 + (bssn::VAR::U_SYMGT2*NN);
+        double *gt_rhs11 =  unzipOut0 + (bssn::VAR::U_SYMGT3*NN);
+        double *gt_rhs12 =  unzipOut0 + (bssn::VAR::U_SYMGT4*NN);
+        double *gt_rhs22 =  unzipOut0 + (bssn::VAR::U_SYMGT5*NN);
+        double *b_rhs0   =  unzipOut0 + (bssn::VAR::U_BETA0*NN); 
+        double *b_rhs1   =  unzipOut0 + (bssn::VAR::U_BETA1*NN); 
+        double *b_rhs2   =  unzipOut0 + (bssn::VAR::U_BETA2*NN); 
+        double *At_rhs00 =  unzipOut0 + (bssn::VAR::U_SYMAT0*NN);
+        double *At_rhs01 =  unzipOut0 + (bssn::VAR::U_SYMAT1*NN);
+        double *At_rhs02 =  unzipOut0 + (bssn::VAR::U_SYMAT2*NN);
+        double *At_rhs11 =  unzipOut0 + (bssn::VAR::U_SYMAT3*NN);
+        double *At_rhs12 =  unzipOut0 + (bssn::VAR::U_SYMAT4*NN);
+        double *At_rhs22 =  unzipOut0 + (bssn::VAR::U_SYMAT5*NN);
+        double *Gt_rhs0  =  unzipOut0 + (bssn::VAR::U_GT0*NN);   
+        double *Gt_rhs1  =  unzipOut0 + (bssn::VAR::U_GT1*NN);   
+        double *Gt_rhs2  =  unzipOut0 + (bssn::VAR::U_GT2*NN);   
+        double *B_rhs0   =  unzipOut0 + (bssn::VAR::U_B0*NN);    
+        double *B_rhs1   =  unzipOut0 + (bssn::VAR::U_B1*NN);    
+        double *B_rhs2   =  unzipOut0 + (bssn::VAR::U_B2*NN);
+
+        // rhs computation with forced vectorization. 
+        for(unsigned int k=3; k < nz-3; k++){
+            for(unsigned int j=3; j < ny-3; j++){
+                #pragma novector
+                for(unsigned int i=3; i < nx-3; i++)
+                {
+                        const double x  =  i * hx;
+                        const double y  =  j * hy;
+                        const double z  =  k * hz;
+
+                        const double r_coord =sqrt(x*x + y*y + z*z);
+                        const double sigma=0.4;
+                        double eta=bssn::ETA_CONST;
+                        if (r_coord >= bssn::ETA_R0) {
+                            eta *= pow( (bssn::ETA_R0/r_coord), bssn::ETA_DAMPING_EXP);
+                        }
+
+                        const unsigned int pp = k*ny*nx + j* nx + i;
+
+                        #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
+                }
+            }
+        }
+
     }
 
 
+
+    {
+        double *a_rhs    =  unzipOut1 + (bssn::VAR::U_ALPHA*NN); 
+        double *chi_rhs  =  unzipOut1 + (bssn::VAR::U_CHI*NN);   
+        double *K_rhs    =  unzipOut1 + (bssn::VAR::U_K*NN);     
+        double *gt_rhs00 =  unzipOut1 + (bssn::VAR::U_SYMGT0*NN);
+        double *gt_rhs01 =  unzipOut1 + (bssn::VAR::U_SYMGT1*NN);
+        double *gt_rhs02 =  unzipOut1 + (bssn::VAR::U_SYMGT2*NN);
+        double *gt_rhs11 =  unzipOut1 + (bssn::VAR::U_SYMGT3*NN);
+        double *gt_rhs12 =  unzipOut1 + (bssn::VAR::U_SYMGT4*NN);
+        double *gt_rhs22 =  unzipOut1 + (bssn::VAR::U_SYMGT5*NN);
+        double *b_rhs0   =  unzipOut1 + (bssn::VAR::U_BETA0*NN); 
+        double *b_rhs1   =  unzipOut1 + (bssn::VAR::U_BETA1*NN); 
+        double *b_rhs2   =  unzipOut1 + (bssn::VAR::U_BETA2*NN); 
+        double *At_rhs00 =  unzipOut1 + (bssn::VAR::U_SYMAT0*NN);
+        double *At_rhs01 =  unzipOut1 + (bssn::VAR::U_SYMAT1*NN);
+        double *At_rhs02 =  unzipOut1 + (bssn::VAR::U_SYMAT2*NN);
+        double *At_rhs11 =  unzipOut1 + (bssn::VAR::U_SYMAT3*NN);
+        double *At_rhs12 =  unzipOut1 + (bssn::VAR::U_SYMAT4*NN);
+        double *At_rhs22 =  unzipOut1 + (bssn::VAR::U_SYMAT5*NN);
+        double *Gt_rhs0  =  unzipOut1 + (bssn::VAR::U_GT0*NN);   
+        double *Gt_rhs1  =  unzipOut1 + (bssn::VAR::U_GT1*NN);   
+        double *Gt_rhs2  =  unzipOut1 + (bssn::VAR::U_GT2*NN);   
+        double *B_rhs0   =  unzipOut1 + (bssn::VAR::U_B0*NN);    
+        double *B_rhs1   =  unzipOut1 + (bssn::VAR::U_B1*NN);    
+        double *B_rhs2   =  unzipOut1 + (bssn::VAR::U_B2*NN);  
+
+        // rhs computation with forced vectorization. 
+        for(unsigned int k=3; k < nz-3; k++){
+            for(unsigned int j=3; j < ny-3; j++){
+                #pragma vector
+                #pragma ivdep
+                for(unsigned int i=3; i < nx-3; i++)
+                {
+                        const double x  =  i * hx;
+                        const double y  =  j * hy;
+                        const double z  =  k * hz;
+
+                        const double r_coord =sqrt(x*x + y*y + z*z);
+                        const double sigma=0.4;
+                        double eta=bssn::ETA_CONST;
+                        if (r_coord >= bssn::ETA_R0) {
+                            eta *= pow( (bssn::ETA_R0/r_coord), bssn::ETA_DAMPING_EXP);
+                        }
+
+                        const unsigned int pp = k*ny*nx + j* nx + i;
+
+                        #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
+                }  
+            }
+        }
+
+    }
+
+    {
+        double lmax=0.0;
+        for (unsigned int pp=0; pp < NN*bssn::BSSN_NUM_VARS; pp++)
+            if(lmax < fabs(unzipOut0[pp] - unzipOut1[pp]) )
+                lmax = fabs(unzipOut0[pp] - unzipOut1[pp]);
+
+        std::cout<< std::scientific<< "l_inf (vec vs. novec): "<<lmax<<std::endl;
+    }
+
+    // profle run: 
+    {
+
+        double *a_rhs    =  unzipOut1 + (bssn::VAR::U_ALPHA*NN); 
+        double *chi_rhs  =  unzipOut1 + (bssn::VAR::U_CHI*NN);   
+        double *K_rhs    =  unzipOut1 + (bssn::VAR::U_K*NN);     
+        double *gt_rhs00 =  unzipOut1 + (bssn::VAR::U_SYMGT0*NN);
+        double *gt_rhs01 =  unzipOut1 + (bssn::VAR::U_SYMGT1*NN);
+        double *gt_rhs02 =  unzipOut1 + (bssn::VAR::U_SYMGT2*NN);
+        double *gt_rhs11 =  unzipOut1 + (bssn::VAR::U_SYMGT3*NN);
+        double *gt_rhs12 =  unzipOut1 + (bssn::VAR::U_SYMGT4*NN);
+        double *gt_rhs22 =  unzipOut1 + (bssn::VAR::U_SYMGT5*NN);
+        double *b_rhs0   =  unzipOut1 + (bssn::VAR::U_BETA0*NN); 
+        double *b_rhs1   =  unzipOut1 + (bssn::VAR::U_BETA1*NN); 
+        double *b_rhs2   =  unzipOut1 + (bssn::VAR::U_BETA2*NN); 
+        double *At_rhs00 =  unzipOut1 + (bssn::VAR::U_SYMAT0*NN);
+        double *At_rhs01 =  unzipOut1 + (bssn::VAR::U_SYMAT1*NN);
+        double *At_rhs02 =  unzipOut1 + (bssn::VAR::U_SYMAT2*NN);
+        double *At_rhs11 =  unzipOut1 + (bssn::VAR::U_SYMAT3*NN);
+        double *At_rhs12 =  unzipOut1 + (bssn::VAR::U_SYMAT4*NN);
+        double *At_rhs22 =  unzipOut1 + (bssn::VAR::U_SYMAT5*NN);
+        double *Gt_rhs0  =  unzipOut1 + (bssn::VAR::U_GT0*NN);   
+        double *Gt_rhs1  =  unzipOut1 + (bssn::VAR::U_GT1*NN);   
+        double *Gt_rhs2  =  unzipOut1 + (bssn::VAR::U_GT2*NN);   
+        double *B_rhs0   =  unzipOut1 + (bssn::VAR::U_B0*NN);    
+        double *B_rhs1   =  unzipOut1 + (bssn::VAR::U_B1*NN);    
+        double *B_rhs2   =  unzipOut1 + (bssn::VAR::U_B2*NN); 
+
+        auto t1=Time::now();
+        
+        for (unsigned int r=0; r < iter; r++)
+        {
+
+            #include "bssnrhs_derivs.h"
+            #include "bssnrhs_derivs_adv.h"
+
+            for(unsigned int k=3; k < nz-3; k++){
+                for(unsigned int j=3; j < ny-3; j++){
+                    #pragma vector
+                    #pragma ivdep
+                    for(unsigned int i=3; i < nx-3; i++){
+                
+                        const double x  =  i * hx;
+                        const double y  =  j * hy;
+                        const double z  =  k * hz;
+
+                        const double r_coord =sqrt(x*x + y*y + z*z);
+                        const double sigma=0.4;
+                        double eta=bssn::ETA_CONST;
+                        if (r_coord >= bssn::ETA_R0) {
+                            eta *= pow( (bssn::ETA_R0/r_coord), bssn::ETA_DAMPING_EXP);
+                        }
+
+                        const unsigned int pp = k*ny*nx + j* nx + i;
+
+                        #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
+                    }  
+                }
+            }
+
+            #pragma novector
+            for (unsigned int pp=0; pp < NN*bssn::BSSN_NUM_VARS; pp+=10)
+            {
+                unzipOut1[pp] += 1e-6;
+                unzipIn[pp] +=1e-6;
+            }
+                
+
+
+        }
+        auto t2=Time::now();
+        fsec fs = t2 - t1;
+        std::cout<<"Time(s): "<<fs.count()<<std::endl;
+        
+    }
+
+    for (unsigned int pp =0; pp < NN * bssn::BSSN_NUM_VARS ; pp++)
+    {
+        unzipIn[pp]*=1.0;
+        unzipOut0[pp]*=1.0001;
+        unzipOut1[pp]*=1.0001;
+    }
+
+    #include "bssnrhs_dealloc.h"
+    #include "bssnrhs_dealloc_adv.h"
+
+    MPI_Finalize();
     return 0;
     
 }

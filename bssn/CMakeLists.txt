@@ -193,7 +193,8 @@ add_executable(derivTest examples/src/derivTest.cpp)
 target_include_directories(derivTest PRIVATE include)
 target_include_directories(derivTest PRIVATE examples/include)
 target_include_directories(derivTest PRIVATE scripts)
-target_link_libraries(derivTest bssnUtils m)
+target_include_directories(derivTest PRIVATE ${MPI_INCLUDE_PATH})
+target_link_libraries(derivTest bssnUtils ${MPI_LIBRARIES} m)
 
 
 add_executable(stream_add examples/src/stream_add.cpp)
