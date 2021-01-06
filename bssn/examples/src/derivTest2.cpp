@@ -214,90 +214,46 @@ int main(int argc, char **argv)
     double *B_rhs2   =  unzipOut + (bssn::VAR::U_B2*NN);
 
     auto time_start=Time::now();
-    if(!vectorize)
+    for (unsigned int r=0; r < iter; r++)
     {
-        for (unsigned int r=0; r < iter; r++)
+        for(unsigned int k=3; k < nz-3; k++)
         {
-            for(unsigned int k=3; k < nz-3; k++){
-                for(unsigned int j=3; j < ny-3; j++){
-                    #pragma novector
-                    for(unsigned int i=3; i < nx-3; i++)
-                    {
-                            const double x  =  i * hx;
-                            const double y  =  j * hy;
-                            const double z  =  k * hz;
+            for(unsigned int j=3; j < ny-3; j++)
+            {
+                #pragma novector if(!vectorize)
+                #pragma vector if(vectorize)
+                #pragma ivdep if(vectorize)
+                for(unsigned int i=3; i < nx-3; i++)
+                {
+                        const double x  =  i * hx;
+                        const double y  =  j * hy;
+                        const double z  =  k * hz;
 
-                            const double r_coord =sqrt(x*x + y*y + z*z);
-                            const double sigma=0.4;
-                            double eta=bssn::ETA_CONST;
-                            if (r_coord >= bssn::ETA_R0) {
-                                eta *= pow( (bssn::ETA_R0/r_coord), bssn::ETA_DAMPING_EXP);
-                            }
+                        const double r_coord =sqrt(x*x + y*y + z*z);
+                        const double sigma=0.4;
+                        double eta=bssn::ETA_CONST;
+                        if (r_coord >= bssn::ETA_R0) {
+                            eta *= pow( (bssn::ETA_R0/r_coord), bssn::ETA_DAMPING_EXP);
+                        }
 
-                            const unsigned int pp = k*ny*nx + j* nx + i;
+                        const unsigned int pp = k*ny*nx + j* nx + i;
 
-                            #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
-                    }
+                        #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
                 }
             }
-            //prevent compiler from optimizing out the iter loop
-            #pragma novector
-            for (unsigned int pp=0; pp < NN*bssn::BSSN_NUM_VARS; pp+=10)
-            {
-                unzipOut[pp] += 1e-6;
-                unzipIn[pp] +=1e-6;
-            }
-        }  
-    }
-    //compute RHS with vectorization
-    else 
-    {
-        for (unsigned int r=0; r < iter; r++)
+        }
+        //prevent compiler from optimizing out the iter loop
+        #pragma novector
+        for (unsigned int pp=0; pp < NN*bssn::BSSN_NUM_VARS; pp+=10)
         {
-            // rhs computation with forced vectorization. 
-            for(unsigned int k=3; k < nz-3; k++){
-                for(unsigned int j=3; j < ny-3; j++){
-                    #pragma vector
-                    #pragma ivdep
-                    for(unsigned int i=3; i < nx-3; i++)
-                    {
-                            const double x  =  i * hx;
-                            const double y  =  j * hy;
-                            const double z  =  k * hz;
-
-                            const double r_coord =sqrt(x*x + y*y + z*z);
-                            const double sigma=0.4;
-                            double eta=bssn::ETA_CONST;
-                            if (r_coord >= bssn::ETA_R0) {
-                                eta *= pow( (bssn::ETA_R0/r_coord), bssn::ETA_DAMPING_EXP);
-                            }
-
-                            const unsigned int pp = k*ny*nx + j* nx + i;
-
-                            #include "../../src/bssneqs_eta_const_standard_gauge.cpp"
-                    }  
-                }
-            }
-
-            //prevent compiler from optimizing out the iter loop
-            #pragma novector
-            for (unsigned int pp=0; pp < NN*bssn::BSSN_NUM_VARS; pp+=10)
-            {
-                unzipOut[pp] += 1e-6;
-                unzipIn[pp] +=1e-6;
-            }
-        }        
-    }
+            unzipOut[pp] += 1e-6;
+            unzipIn[pp] +=1e-6;
+        }
+    }  
 
     auto time_end=Time::now();
     fsec fs = time_end - time_start;
     std::cout<<"Time(s): "<<fs.count()<<std::endl;
-
-    for (unsigned int pp =0; pp < NN * bssn::BSSN_NUM_VARS ; pp++)
-    {
-        unzipIn[pp]*=1.0;
-        unzipOut[pp]*=1.0001;
-    }
 
     #include "bssnrhs_dealloc.h"
     #include "bssnrhs_dealloc_adv.h"
