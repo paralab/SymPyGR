@@ -40,7 +40,7 @@ endif()
 
 option(WITH_CUDA " build with cuda " OFF)
 option(BSSN_ENABLE_CUDA "enable cuda execution" OFF)
-option(BSSN_USE_AVX_DERIVS "enable vectorized derivative computation" ON)
+option(ENABLE_BSSN_AVX "enable vectorized derivative computation" OFF)
 
 
 #set the build type to release by default.
@@ -53,6 +53,11 @@ endif()
 if(BSSN_ENABLE_CUDA)
     add_definitions(-DBSSN_ENABLE_CUDA)
 endif()
+
+if(ENABLE_BSSN_AVX)
+add_definitions(-DENABLE_BSSN_AVX)
+endif(ENABLE_BSSN_AVX)
+
 
 add_definitions(-DBSSN_USE_6TH_ORDER_DERIVS)
 
@@ -193,7 +198,8 @@ add_executable(derivTest examples/src/derivTest.cpp)
 target_include_directories(derivTest PRIVATE include)
 target_include_directories(derivTest PRIVATE examples/include)
 target_include_directories(derivTest PRIVATE scripts)
-target_link_libraries(derivTest bssnUtils m)
+target_include_directories(derivTest PRIVATE ${MPI_INCLUDE_PATH})
+target_link_libraries(derivTest bssnUtils ${MPI_LIBRARIES} m)
 
 
 add_executable(stream_add examples/src/stream_add.cpp)

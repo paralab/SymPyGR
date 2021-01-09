@@ -937,6 +937,12 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
        for (int i = ib; i < ie; i++) {
           const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dx *
@@ -955,6 +961,12 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
         Du[IDX(3,j,k)] =  (      u[IDX(6,j,k)]
                            - 3.0*u[IDX(5,j,k)]
@@ -982,6 +994,12 @@ void ko_deriv42_x(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
          Du[IDX(ie-3,j,k)] = (
                                  u[IDX(ie-6,j,k)]
@@ -1056,6 +1074,12 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
        for (int j = jb; j < je; j++) {
           const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dy *
@@ -1074,6 +1098,12 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         Du[IDX(i,3,k)] =  (      u[IDX(i,6,k)]
                            - 3.0*u[IDX(i,5,k)]
@@ -1101,6 +1131,12 @@ void ko_deriv42_y(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
          Du[IDX(i,je-3,k)] = (
                                  u[IDX(i,je-6,k)]
@@ -1178,6 +1214,12 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
        for (int k = kb; k < ke; k++) {
           const int pp = IDX(i,j,k);
           Du[pp] = pre_factor_6_dz *
@@ -1196,6 +1238,12 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         Du[IDX(i,j,3)] =  (      u[IDX(i,j,6)]
                            - 3.0*u[IDX(i,j,5)]
@@ -1223,6 +1271,12 @@ void ko_deriv42_z(double * const  Du, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
          Du[IDX(i,j,ke-3)] = (
                                  u[IDX(i,j,ke-6)]
@@ -2019,6 +2073,12 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         const int pp = IDX(i,j,k);
         Dxu[pp] = ( - 1.0  * u[pp-3] 
@@ -2033,6 +2093,12 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
         Dxu[IDX(3,j,k)] = ( -  25.0 * u[IDX(3,j,k)]
                             +  48.0 * u[IDX(4,j,k)]
@@ -2060,6 +2126,12 @@ void deriv64_x(double * const  Dxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2132,6 +2204,12 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder 
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
         const int pp = IDX(i,j,k);
         Dyu[pp] = ( - 1.0  * u[pp-3*nx] 
@@ -2146,6 +2224,12 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         Dyu[IDX(i,3,k)] =  ( - 25.0 * u[IDX(i,3,k)]
                             +  48.0 * u[IDX(i,4,k)]
@@ -2172,6 +2256,12 @@ void deriv64_y(double * const  Dyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2242,6 +2332,12 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int k = kb; k < ke; k++) {
         const int pp = IDX(i,j,k);
         Dzu[pp] = ( - 1.0  * u[pp-3*n] 
@@ -2256,6 +2352,12 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         Dzu[IDX(i, j,3)] =  (- 25.0 * u[IDX(i,j,3)]
                             +  48.0 * u[IDX(i,j,4)]
@@ -2283,6 +2385,12 @@ void deriv64_z(double * const  Dzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2352,6 +2460,12 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         const int pp = IDX(i,j,k);
 
@@ -2369,6 +2483,12 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_LEFT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2399,6 +2519,12 @@ void deriv64_xx(double * const  DxDxu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_RIGHT)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
 
 
@@ -2466,6 +2592,12 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   for (int k = kb; k < ke; k++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int j = jb; j < je; j++) {
         const int pp = IDX(i,j,k);
         DyDyu[pp] = (      2.0  * u[pp-3*nx]
@@ -2482,6 +2614,12 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_DOWN)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         
         DyDyu[IDX(i,3,k)] = (    35.0 * u[IDX(i,3,k)]
@@ -2513,6 +2651,12 @@ void deriv64_yy(double * const  DyDyu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_UP)) {
     for (int k = kb; k < ke; k++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         
 
@@ -2582,6 +2726,12 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   for (int j = jb; j < je; j++) {
     for (int i = ib; i < ie; i++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int k = kb; k < ke; k++) {
         const int pp = IDX(i,j,k);
         DzDzu[pp] = (      2.0  * u[pp-3*n]
@@ -2598,6 +2748,12 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_BACK)) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
         
         DzDzu[IDX(i,j,3)] = (    35.0 * u[IDX(i,j,3)]
@@ -2627,6 +2783,12 @@ void deriv64_zz(double * const  DzDzu, const double * const  u,
 
   if (bflag & (1u<<OCT_DIR_FRONT)) {
     for (int j = jb; j < je; j++) {
+      #ifdef ENABLE_BSSN_AVX
+        #ifdef __INTEL_COMPILER
+          #pragma vector vectorlength(__DERIV_AVX_SIMD_LEN__) vecremainder
+          #pragma ivdep
+        #endif
+      #endif
       for (int i = ib; i < ie; i++) {
 
         
