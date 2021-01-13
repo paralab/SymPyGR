@@ -17,6 +17,7 @@
 typedef std::chrono::high_resolution_clock Time;
 typedef std::chrono::milliseconds ms;
 typedef std::chrono::duration<float> fsec;
+#define __RHS_AVX_SIMD_LEN__ 16
 
 int main(int argc, char **argv)
 {
@@ -111,6 +112,7 @@ int main(int argc, char **argv)
     {
         for(unsigned int j=0; j < ny; j++)
         {
+            #pragma novector
             for(unsigned int i=0; i < nx; i++)
             {
                 const double x  =  i * hx;
@@ -270,7 +272,7 @@ int main(int argc, char **argv)
             for(unsigned int j=3; j < ny-3; j++){
                 #ifdef ENABLE_BSSN_AVX
                     #ifdef __INTEL_COMPILER
-                    #pragma vector vectorlength(16)
+                    #pragma vector vectorlength(__RHS_AVX_SIMD_LEN__) vecremainder
                     #pragma ivdep
                     #endif
                 #endif
@@ -346,7 +348,7 @@ int main(int argc, char **argv)
                 for(unsigned int j=3; j < ny-3; j++){
                     #ifdef ENABLE_BSSN_AVX
                         #ifdef __INTEL_COMPILER
-                        #pragma vector vectorlength(16)
+                        #pragma vector vectorlength(__RHS_AVX_SIMD_LEN__) vecremainder
                         #pragma ivdep
                         #endif
                     #endif

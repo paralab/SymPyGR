@@ -8,7 +8,7 @@
 #define IDX(i,j,k) ( (i) + nx * ( (j) + ny * (k) ) )
 #define __DERIV_AVX_CORE_COLLAPSE__ 2
 #define __DERIV_AVX_BDY_COLLAPSE__  2
-#define __DERIV_AVX_SIMD_LEN__ 8
+#define __DERIV_AVX_SIMD_LEN__ 16
 
 
 // stores the padding width. 
