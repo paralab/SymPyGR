@@ -22,66 +22,51 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 '''
 
-import dtypes as dtypes
+import dendrosym.dtypes as dtypes
+
 
 class RefEelement:
-    
-    def __init__(self,dim,eleOrder):
-        
+
+    def __init__(self, dim, eleOrder):
+
         # dimention of the reference element
-        self._dim=dtypes.scalar("dim")
-        
+        self._dim = dtypes.scalar("dim")
+
         # nodal locations of the element
-        self._r=dtypes.vec("r",eleOrder+1)
-        
+        self._r = dtypes.vec("r", eleOrder+1)
+
         # weights for the gll quadrature
-        self._wgll=dtypes.vec("wgll",eleOrder+1)
-        
+        self._wgll = dtypes.vec("wgll", eleOrder+1)
+
         # gauss points for quadrature
-        self._g=dtypes.vec("g",eleOrder+1)
-        
+        self._g = dtypes.vec("g", eleOrder+1)
+
         # weights for the gauss quadrature
-        self._wg=dtypes.vec("w",eleOrder+1)
-        
+        self._wg = dtypes.vec("w", eleOrder+1)
+
         # polynomial Vandermonde matrix evaluated at the reference points
-        self._Vr=dtypes.mat("Vr",eleOrder+1,eleOrder+1)
-        
+        self._Vr = dtypes.mat("Vr", eleOrder+1, eleOrder+1)
+
         # gradient of the polynomial Vandermonde matrix evaluated at the reference points
-        self._gradVr=dtypes.mat("gradVr",eleOrder+1,eleOrder+1)
-        
+        self._gradVr = dtypes.mat("gradVr", eleOrder+1, eleOrder+1)
+
         # polynomial Vandermonde matrix evaluated at the gauss points
-        self._Vg=dtypes.mat("Vg",eleOrder+1,eleOrder+1)
-        
+        self._Vg = dtypes.mat("Vg", eleOrder+1, eleOrder+1)
+
         # polynomial Vandermonde matrix evaluated at the gauss points
-        self._gradVg=dtypes.mat("gradVg",eleOrder+1,eleOrder+1)
-        
+        self._gradVg = dtypes.mat("gradVg", eleOrder+1, eleOrder+1)
+
         # Gradient interpolation to the reference points from gauss points
-        self._Dr = dtypes.mat("gradDr",eleOrder+1,eleOrder+1)
-        
+        self._Dr = dtypes.mat("gradDr", eleOrder+1, eleOrder+1)
+
         # Gradient interpolation to the gauss points from reference points
-        self._Dg = dtypes.mat("gradDg",eleOrder+1,eleOrder+1)
-        
+        self._Dg = dtypes.mat("gradDg", eleOrder+1, eleOrder+1)
+
         # matrix Identity
-        self._matI=dtypes.matI(eleOrder+1)
-        
-        # parent to child (one child) interpolation 
-        self._Vph = dtypes.mat("Vph",eleOrder+1,eleOrder+1) 
-        
+        self._matI = dtypes.matI(eleOrder+1)
+
+        # parent to child (one child) interpolation
+        self._Vph = dtypes.mat("Vph", eleOrder+1, eleOrder+1)
+
         # parent to all children interpolation
-        self._Vpp = dtypes.mat("Vpp",eleOrder+1,eleOrder+1) 
-        
-        
-        
-        
-        
-        
-        
-        
-    
-    
-    
-    
-    
-    
-    
-    
+        self._Vpp = dtypes.mat("Vpp", eleOrder+1, eleOrder+1)

@@ -26,7 +26,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 import cachesim
 
 
-
 """
 (base) [xxxxxxx@kingspeak1 ~]$ cat kp_lscpu
 Architecture:          x86_64
@@ -60,30 +59,53 @@ Flags:                 fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca 
 """
 
 
-
 """
 Simulate simple cache hierarchy to evaluate sympy expressions
 """
+
+
 class SympyCacheSim:
-    
+
     def __init__(self):
         self.__mem__ = cachesim.MainMemory()
-        self.__l3__  = cachesim.Cache("L3", 20480, 16, 64, "LRU")  # 20MB: 20480 sets, 16-ways with cacheline size of 64 bytes
-        
+        # 20MB: 20480 sets, 16-ways with cacheline size of 64 bytes
+        self.__l3__ = cachesim.Cache("L3", 20480, 16, 64, "LRU")
+
         self.__mem__.load_to(self.__l3__)
         self.__mem__.store_from(self.__l3__)
-        
-        self.__l2__ = cachesim.Cache("L2", 256, 8, 64, "LRU", store_to=self.__l3__, load_from=self.__l3__)  # 256KB
-        self.__l1__ = cachesim.Cache("L1", 32, 8, 64, "LRU", store_to=self.__l2__, load_from=self.__l2__)  # 32KB
+
+        # NOTE: these values aren't the same as the example 
+        self.__l2__ = cachesim.Cache(
+            "L2", 256, 8, 64, "LRU", store_to=self.__l3__, load_from=self.__l3__)  # 256KB
+        self.__l1__ = cachesim.Cache(
+            "L1", 32, 8, 64, "LRU", store_to=self.__l2__, load_from=self.__l2__)  # 32KB
         self.__cs__ = cachesim.CacheSimulator(self.__l1__, self.__mem__)
-        
+
     def get_cachesim(self):
         return self.__cs__
 
+if __name__ == "__main__":
 
-    
-    
+    # quick test of the cache for reference
+    # this was taken right from PyCacheSim's documentation
+    test_cache = SympyCacheSim()
 
+    # laod the cache as set from before
+    cs = test_cache.get_cachesim()
 
+    # load a byte from address 2342, should be a miss in all cache
+    cs.load(2342)
+    # store 8 bytes to addresses 512-519, should also be a load miss
+    cs.store(512, length=8)
+    # load address 512 until (exclusive) 520 (eight bytes)
+    cs.load(512, length=8)
 
+    # force write back, then print stats
+    cs.force_write_back()
+    cs.print_stats()
 
+    # NOTE: in the print statement:
+    # each row referrs to a single memory level, starting with L1 and ending with main Mem
+    # Then we have the information about how many hits were made in each type, then misses,
+    # then loads, then store, and then evictions
+    # take a look at their official GitHub for more info https://github.com/RRZE-HPC/pycachesim

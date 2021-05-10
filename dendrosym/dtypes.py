@@ -18,7 +18,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 '''
 
 ##########################################################################
-from  sympy import *
+import sympy as sym
 # from import abc import ABC, abstractmethod
 
 # class DType(enum.Enum):
@@ -29,13 +29,13 @@ from  sympy import *
 #     ASYM_MAT = 5
 
 # '''
-# basic abstract class for data types supported. 
+# basic abstract class for data types supported.
 # '''
 # class DSymbol():
 #     @abstractmethod
 #     def get_sym_var(self):
 #         pass
-        
+
 # '''
 # Scalar variable
 # '''
@@ -50,7 +50,7 @@ from  sympy import *
 
 # '''
 # Vector variable
-# '''    
+# '''
 # class DVector(DSymbol):
 #     def __init__(self,name,idx_range):
 #         self._name = name
@@ -59,10 +59,9 @@ from  sympy import *
 #         for i in idx_range:
 #             nameR = self._name + repr(i)
 #             self._sym.append(nameR)
-    
+
 #     def get_sym_var(self):
 #         return self._sym
-
 
 
 ##########################################################################
@@ -75,10 +74,10 @@ def scalar(name):
     variable name used in the C++ code.
     """
     tname = name
-    return symbols(tname)
+    return sym.symbols(tname)
 
 
-def vec(name,n):
+def vec(name, n):
     """
     Create a nD vector variable with the corresponding name. The 'name' will be during code generation, so should match
     the variable name used in the C++ code. The returned variable can be indexed(0,1,2), i.e.,
@@ -87,75 +86,62 @@ def vec(name,n):
     b[1] = x^2
     """
 
-    vname=list()
-    
-    for i in range(0,n):
-        nameR = name + repr(i) 
+    vname = list()
+
+    for i in range(0, n):
+        nameR = name + repr(i)
         vname.append(nameR)
-    
-    return Matrix([symbols(vname[i]) for i in range(0,n)])
+
+    return sym.Matrix([sym.symbols(vname[i]) for i in range(0, n)])
 
 
-def mat(name,n,m):
-    
+def mat(name, n, m):
     """
     Creates a symbolic matrix of size nxm
     """
-    vname=list()
-    
-    for i in range(0,n):
-        nameR = name + repr(i) 
-        nameC = ' '.join([nameR + repr(j)  for j in range(0,m)])
+    vname = list()
+
+    for i in range(0, n):
+        nameR = name + repr(i)
+        nameC = ' '.join([nameR + repr(j) for j in range(0, m)])
         vname.append(nameC)
-    
-    return Matrix([symbols(vname[i]) for i in range(0,n)])
-    
+
+    return sym.Matrix([sym.symbols(vname[i]) for i in range(0, n)])
+
 
 def matI(n):
-    
     """
     Creates a Idendity matrix of size nxn
     """
-    
-    return eye(n)
+
+    return sym.eye(n)
 
 
-def sym_mat(name,n):
+def sym_mat(name, n):
     """
     Creates a symbolic symmetric matrix of size nxn
     """
 
-    vname=list()
+    vname = list()
 
-    for i in range(0,n):
+    for i in range(0, n):
         nameR = name + repr(i)
-        nameC = ' '.join([nameR + repr(j)  for j in range(i,n)])
+        nameC = ' '.join([nameR + repr(j) for j in range(i, n)])
         vname.append(nameC)
 
-    return Matrix()
+    return sym.Matrix()
 
 
-def antisym_mat(name,n):
+def antisym_mat(name, n):
     """
     Creates a symbolic anti-symmetric matrix of size nxn
     """
 
-    vname=list()
+    vname = list()
 
-    for i in range(0,n):
+    for i in range(0, n):
         nameR = name + repr(i)
-        nameC = ' '.join([nameR + repr(j)  for j in range(i,n)])
+        nameC = ' '.join([nameR + repr(j) for j in range(i, n)])
         vname.append(nameC)
 
-    return Matrix()
-
-    
-
-            
-
-
-
-    
-
-
-
+    return sym.Matrix()
