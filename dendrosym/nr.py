@@ -1,31 +1,32 @@
-'''
+"""
 @author Hari Sundar
 @author Eric Hirschmann
 @author David Neilsen
 @author David Van Komen
 @author Milinda Fernando
 
-@note: The code is take from the original dendro.py for the SymPyGR refactoring. 
+@note: The code is take from the original dendro.py for the
+       SymPyGR refactoring.
 @brief: all the numerical relativity operators should go here.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use,copy, modify, merge, publish, distribute, sublicense,and/or sell copies
-of the Software,and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions: 
+of the Software,and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included 
-in all copies or substantial portions of the Software. 
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
-OTHER DEALINGS IN THE SOFTWARE.
-
-'''
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
+"""
 
 import sympy as sym
 from sympy.functions.special.tensor_functions import KroneckerDelta
@@ -59,6 +60,30 @@ Ricci = undef
 
 
 def d2(i, j, a):
+    """Apply the second derivative stencil
+
+    This is more for the C++ implementation, where the
+    second derivative stencil is a function that takes a
+    first index, a second index, and a variable.
+
+    Typically, this is the same as inputting
+
+    .. math:: d_{ij}u = g(i, j, u)
+
+    Parameters
+    ----------
+    i : int
+        The first index for the derivative
+    j : int
+        The second index for the derivative
+    a : sympy.Symbol
+        The variable over which the derivative should be calculated
+
+    Returns
+    -------
+    sympy.Symbol
+        The symbolic representation of the function being applied
+    """
     global d2s
     if (i > j):
         return d2s(j, i, a)
@@ -67,189 +92,476 @@ def d2(i, j, a):
 
 
 def set_first_derivative(g):
-    """
-    Set how the stencil for the first derivative will be called. Here g is a string
+    """Set the stencil function for the first derivative
 
-    Typically,
+    This is more for the C++ implementation, where the
+    first derivative stencil is a function that takes an
+    index, and a variable. This function takes a string which
+    is the function name in the C++ implementation that will
+    be applied.
 
-    d_i u =  g(i, u)
+    This is the same as inputting
+
+    .. math:: d_{i} = g(i, u)
+
+    This function returns the Sympy Function that can be used
+    in your implementation and also sets the DendroSym global
+    for the first derivative.
+
+    Parameters
+    ----------
+    g : str
+        The name of the function that will be applied as
+        the stencil for the first derivative
+
+    Returns
+    -------
+    sympy.Function
+        The Sympy function that can be used directly later
     """
+
     global d
+
     d = sym.Function(g)
+
     return d
 
 
 def set_second_derivative(g):
-    """
-    Set how the stencil for the second derivative will be called. Here g is a string
+    """Set the stencil function for the second derivative
 
-    Typically,
+    This is more for the C++ implementation, where the
+    second derivative stencil is a function that takes an
+    index, a second index, and a variable. This function takes
+    a string which is the function name in the C++ implementation
+    that will be applied.
 
-    d_ij u =  g(i, j, u)
+    This is the same as inputting
+
+    .. math:: d_{ij} u =  g(i, j, u)
+
+    This function returns the Sympy Function that can be used
+    in your implementation and also sets the DendroSym global
+    for the second derivative.
+
+    Parameters
+    ----------
+    g : str
+        The name of the function that will be applied as
+        the stencil for the first derivative.
+
+    Returns
+    -------
+    sympy.Function
+        The Sympy function that can be used directly later.
     """
+
     global d2s
+
     d2s = sym.Function(g)
+
     return d2s
 
 
 def set_advective_derivative(g):
-    """
-    Set how the stencil for the second derivative will be called. Here g is a string
+    """Set the stencil function for the advective derivative
 
-    Typically,
+    This is more for the C++ implementation, where the
+    advective derivative stencil is a function that takes an
+    index and a variable. This function takes
+    a string which is the function name in the C++ implementation
+    that will be applied.
 
-    ad_i u =  g(i, u)
+    This is the same as inputting
+
+    .. math:: d_{i} u =  g(i, u)
+
+    This function returns the Sympy Function that can be used
+    in your implementation and also sets the DendroSym global
+    for the advective derivative.
+
+    Parameters
+    ----------
+    g : str
+        The name of the function that will be applied as
+        the stencil for the first derivative
+
+    Returns
+    -------
+    sympy.Function
+        The Sympy function that can be used directly later
     """
+
     global ad
     ad = sym.Function(g)
     return ad
 
 
 def set_kreiss_oliger_dissipation(g):
-    """
-    Set how the stencil for Kreiss-Oliger dissipation will be called. Here g is a string.
+    """Set the stencil function for the Kriess-Oliger dissipation
 
-    Typically,
+    This is more for the C++ implementation, where the
+    advective derivative stencil is a function that takes an
+    index and a variable. This function takes
+    a string which is the function name in the C++ implementation
+    that will be applied.
 
-    kod_i u = g(i, u)
+    This is the same as inputting
+
+    .. math:: kod_{i} u =  g(i, u)
+
+    This function returns the Sympy Function that can be used
+    in your implementation and also sets the DendroSym global
+    for the Kriess-Oliger dissipation.
+
+    Parameters
+    ----------
+    g : str
+        The name of the function that will be applied as
+        the stencil for the first derivative
+
+    Returns
+    -------
+    sympy.Function
+        The Sympy function that can be used directly later
     """
+
     global kod
     kod = sym.Function(g)
     return kod
 
+
 # Covariant Derivatives
 
 
-def DiDj(a):
+def covariant_divergence(T):
+    """Determine the covariant divergence of a 3 vector
+
+    This function will calculate the covariant divergence
+    of a given 3 vector. Please note that it requires the
+    "metric" to be set via the `dendrosym.gr.set_metric`
+    function as the covariant divergence calculation requires
+    a metric.
+
+    Parameters
+    ----------
+    T : sympy.Matrix, tuple
+        The 3 dimensional input vector
+
+    Returns
+    -------
+    sympy.Expression
+        The output expression that would compute the
+        covariant divergence
     """
-    Defines the covariant derivative for a scalar a with respect to the full metric.
+
+    global metric, e_i
+
+    if metric == undef:
+        raise ValueError("You need to set the metric first")
+
+    # NOTE: norm already has a square root in it, so I think that covers the
+    # formulation as in the link below, will need to further research that
+    metric_norm = metric.norm()
+    one_over_norm = 1 / metric_norm
+
+    # then from
+    # https://ned.ipac.caltech.edu/level5/March01/Carroll3/Carroll3.html
+    # equation
+    return one_over_norm * sum([d(i, metric_norm * T[i]) for i in e_i])
+
+
+def DiDj(a):
+    """Defines two covariant derivatives acting on a scalar
+
+    Calculates the covariant derivative of a scalar. This is
+    an important operation in Numerical Relativity. It requires the
+    first derivative and the Christoffel symbols to be calculated
+    and stored.
+
+    Parameters
+    ----------
+    a : sympy.Symbol
+        The scalar over which the covariant derivatives should
+        be calculated
+
+    Returns
+    -------
+    sympy.Expression
+        A SymPy expression calculated that is the covariant derivative
+
+    Note
+    ----
     [ewh] Actually this defines two covariant derivatives acting on a scalar.
     The derivative in this case is built from the full (non-conformal) metric.
     Thus C3 is built from the full metric.  This object is symmetric in both
     indices.
     """
+
     global d, C3
 
-    m = sym.Matrix([d2(i, j, a) - sum([C3[l, i, j] * d(l, a)
-                                       for l in e_i]) for i, j in e_ij])
+    if d == undef:
+        raise ValueError("First derivative was not defined, please define.")
+    if C3 == undef:
+        raise ValueError(
+            "Third Christoffel symbols were not defined, please define.")
+
+    m = sym.Matrix([
+        d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])
+        for i, j in e_ij
+    ])
     return m.reshape(3, 3)
 
 
 def _Di_Dj(a):
-    """
-    Defines the covariant derivative.
-    [ewh]  Actually, this defines two covariant derivatives acting on a scalar.
+    """Defines two covariant derivatives acting on a scalar
+
+    Calculates the covariant derivative of a scalar. This is
+    an important operation in Numerical Relativity. It requires the
+    first derivative and the Christoffel symbols to be calculated
+    and stored.
+
+    Parameters
+    ----------
+    a : sympy.Symbol
+        The scalar over which the covariant derivatives should
+        be calculated
+
+    Returns
+    -------
+    sympy.Expression
+        A SymPy expression calculated that is the covariant derivative
+
+    Note
+    ----
+    [ewh] Actually, this defines two covariant derivatives acting on a scalar.
     The use of C2 below, however, suggests that this derivative is built
     from the conformal metric.  Such an operator and term shows up in the
     definition of the Ricci scalar which, in turn shows up in the trace-free
     term in the At evolution equation.  As with DiDj, this object is symmetric
     in both indices when acting on a scalar.
     """
+
     # [ewh] shouldn't this be C2 instead of C3, i.e.:
     global d, C2
-    #global d, d2, C3
 
-    m = sym.Matrix([d2(i, j, a) - sum([C2[l, i, j] * d(l, a)
-                                       for l in e_i]) for i, j in e_ij])
+    if d == undef:
+        raise ValueError("First derivative was not defined, please define.")
+
+    if C2 == undef:
+        raise ValueError(
+            "Second Christoffel symbols were not defined, please define.")
+    # global d, d2, C3
+
+    m = sym.Matrix([
+        d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])
+        for i, j in e_ij
+    ])
+
     return m.reshape(3, 3)
 
 
-# Index Raising
 def up_up(A):
+    """Raises both indices of a matrix A
+
+    This takes a 3x3 matrix and raises both of the indices:
+
+    .. math:: A_{ij} \rightarrow A^{ij}
+
+    Parameters
+    ----------
+    A : sympy.Matrix
+        The input 3x3 matrix to raise the indices of
+
+    Returns
+    -------
+    sympy.Matrix
+        The matrix of expressions to raise both indices of A
     """
-    raises both the indices of A, i.e., A_{ij} --> A^{ij}
-    """
+    # Index Raising
+
     global inv_metric
 
-    m = sym.Matrix([sum([inv_metric[i, k]*inv_metric[j, l]*A[k, l]
-                         for k, l in e_ij]) for i, j in e_ij])
-    return m.reshape(3, 3)
+    if inv_metric == undef:
+        # if the inverse metric is still undefined, we have to get it
+        inv_metric = get_inverse_metric()
 
-# One index rasing
+    if type(A) is not sym.Matrix:
+        raise ValueError("Input variable to UP UP needs to be a matrix.")
+
+    if A.shape != (3, 3):
+        raise ValueError("Input matrix into UP UP needs to be 3x3 in shape.")
+
+    m = sym.Matrix([
+        sum([inv_metric[i, k] * inv_metric[j, l] * A[k, l] for k, l in e_ij])
+        for i, j in e_ij
+    ])
+
+    return m.reshape(3, 3)
 
 
 def up_down(A):
+    """Raises one indices of a matrix A
+
+    This takes a 3x3 matrix and raises one of the indices:
+
+    .. math:: A_{ij} \rightarrow A^i_j
+
+    Parameters
+    ----------
+    A : sympy.Matrix
+        The input 3x3 matrix to transform
+
+    Returns
+    -------
+    sympy.Matrix
+        The matrix of expressions to raise one index of A
     """
-    raises one index of A, i.e., A_{ij} --> A^i_j
-    """
+
+    # One index rasing
     global inv_metric
 
-    m = sym.Matrix([sum([inv_metric[i, k]*A[k, j] for k in e_i])
-                   for i, j in e_ij])
+    m = sym.Matrix(
+        [sum([inv_metric[i, k] * A[k, j] for k in e_i]) for i, j in e_ij])
+
     return m.reshape(3, 3)
 
 
 def lie(b, a, weight=0):
-    """
-    Computes the Lie derivative of a field, a, along the vector b.  Assumes
-    the metric has been set.  An optional weight for the field can be
-    specified.
+    """Compute the Lie derivative of a field along a vector
 
-    b must be of type dendro.vec3
-    a can be scalar, vec3 or sym_3x3
+    Takes a field, a, and computes the Lie derivative along the vector b.
+    This function assumes that the metric has already been set.
 
-    Computes L_b(v)
+    An optional weight for the field is also allowed.
+
+    Parameters
+    ----------
+    b : tuple, sympy.Matrix
+        The vector b the derivative will be along
+    a : sympy.Symbol, tuple, sympy.Matrix
+        The field a to take the derivative of
+
+    Returns
+    -------
+    sympy.Expression, list, sympy.Matrix
+        The expressions that compute the derivative
     """
+
     global d, ad
 
-    # e_ij = [(0, 0), (0, 1), (0, 2), (1, 1), (1, 2), (2, 2)]
+    if type(b) == sym.Matrix:
+        # NOTE: a matrix *will* work, but it must be 3, or (3x1)
+        # temporarily convert b to a 1D array
+        assert b.shape[0] == 3, "The field wrt is too large!"
 
-    if type(b) != tuple:
+    elif type(b) != tuple:
         raise ValueError(
-            'Dendro: The field wrt which the Lie derivative is calculated needs to be vec3.')
+            'Dendro: The field wrt which the Lie derivative is calculated'
+            ' needs to be vec3.')
 
     if type(a) == sym.Symbol:
-        return sum([b[i] * ad(i, a) for i in e_i]) + weight*a*sum([d(i, b[i]) for i in e_i])
+        return sum([b[i] * ad(i, a) for i in e_i
+                    ]) + weight * a * sum([d(i, b[i]) for i in e_i])
+
     elif type(a) == tuple:
-        return [sum([b[j] * ad(j, a[i]) - a[j] * d(j, b[i]) + weight*a[i]*d(j, b[j]) for j in e_i]) for i in e_i]
+        return [
+            sum([
+                b[j] * ad(j, a[i]) - a[j] * d(j, b[i]) +
+                weight * a[i] * d(j, b[j]) for j in e_i
+            ]) for i in e_i
+        ]
+
     elif type(a) == sym.Matrix:
-        m = sym.Matrix([sum([b[k]*ad(k, a[i, j]) + a[i, k]*d(j, b[k]) + a[k, j] *
-                             d(i, b[k]) + weight*a[i, j]*d(k, b[k]) for k in e_i]) for i, j in e_ij])
+        m = sym.Matrix([
+            sum([
+                b[k] * ad(k, a[i, j]) + a[i, k] * d(j, b[k]) +
+                a[k, j] * d(i, b[k]) + weight * a[i, j] * d(k, b[k])
+                for k in e_i
+            ]) for i, j in e_ij
+        ])
         return m.reshape(3, 3)
+
     else:
         raise ValueError(
-            'Dendro: Unknown type for input field to compute Lie derivative for.')
+            'Dendro: Unknown type for input field to compute Lie derivative.')
 
 
 def kodiss(a):
+    """Apply Kreiss-Oliger dissipation to a variable
+
+    This takes the variable and automatically applies the Kreiss-Oliger
+    dissipation. It assumes that it was already set through the
+    `dendrosym.nr.set_kreiss_oliger_dissipation`
+
+    Parameter
+    ---------
+    a : sympy.Symbol, tuple, sympy.Matrix
+        The variable to apply Kreiss-Oliger dissipation to
+
+    Returns
+    -------
+    sympy.Expression, list, sympy.Matrix
+        The expression that applies the Kreiss-Oliger dissipation.
+        The output type depends on what was input to the function.
     """
-    Kreiss-Oliger dissipation operator
-    """
+
     global kod
 
     if type(a) == sym.Symbol:
         return sum([kod(i, a) for i in e_i])
+
     elif type(a) == tuple:
         return [sum([kod(i, a[j]) for i in e_i]) for j in e_i]
+
     elif type(a) == sym.Matrix:
-        return sym.Matrix([sum([kod(k, a[i, j]) for k in e_i]) for i, j in e_ij]).reshape(3, 3)
+        return sym.Matrix([
+            sum([kod(k, a[i, j]) for k in e_i]) for i, j in e_ij
+        ]).reshape(3, 3)
+
     else:
-        raise ValueError('Dendro: Unknown type for input to computer kodiss.')
+        raise ValueError('Dendro: Unknown type for input to compute kodiss.')
 
 
 def laplacian(a, chi):
-    """
-    Computes the laplacian of a scalar function with respect to the 3D metric
-    gamma_ij.  Assumes that the conformally rescaled metric (called gt in
+    """Compute the Laplacian of a scalar with respect to the metric
+
+    Assumes that the conformally rescaled metric (called gt in
     various places) and the conformal factor (chi) is set.  Note that C3 is
-    built from the same 3D metric.  The only place that this laplacian is
-    used in the bssn equations is in the evolution equation for K and is
-    the laplacian of alpha (the lapse).
+    built from the same 3D metric.  The only place that this Laplacian is
+    used in the BSSN equations is in the evolution equation for K and is
+    the Laplacian of alpha (the lapse).
+
+    Parameters
+    ----------
+    a : sympy.Symbol
+        The scalar that will have the Laplacian calculated of
+    chi : sympy.Symbol
+        The conformal factor required in the BSSN equation
+
+    Returns
+    -------
+    sympy.Expression
+        The final expression that calculates the Laplacian of the inputs
     """
     global d, metric, C3
 
-    full_metric = metric/chi
+    full_metric = metric / chi
     inv_full_metric = sym.simplify(full_metric.inv('ADJ'))
 
-    # return sum([(inv_full_metric[i, j] * d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
-    return sum([inv_full_metric[i, j] * (d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    # return sum([(inv_full_metric[i, j] * d2(i, j, a) -
+    #            sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    return sum([
+        inv_full_metric[i, j] *
+        (d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i]))
+        for i, j in e_ij
+    ])
 
 
 def laplacian_conformal(a):
-    """
-    Computes the (conformal) laplacian of a scalar function with respect
-    to the tilded or conformally rescaled metric (called gt in various
-    places).  We assume the rescaled metric is set as well the conformal
+    """Compute the conformal Laplacian of a scalar with respect to the metric
+
+    We assume the rescaled metric is set as well the conformal
     factor, chi.  Note that C2 is built from the conformally rescaled
     metrci.  This (conformal) laplacian is only used in the definition of
     Ricci that shows up in the evolution equation for At (under the trace
@@ -259,62 +571,189 @@ def laplacian_conformal(a):
     in the evolution equations themselves.  However, if the constraints
     are included or the full Ricci is needed for another reason, this
     would be needed.
+
+    Parameters
+    ----------
+    a : sympy.Symbol
+        The scalar that will have the Laplacian calculated of
+
+    Returns
+    -------
+    sympy.Expression
+        The final expression that calculates the Laplacian of the inputs
     """
+
     global d, inv_metric, C2
 
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-    # ewh3    return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
-    return sum([inv_metric[i, j] * (d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
+    # ewh3
+    # return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j]\
+    #     * d(l, a) for l in e_i])) for i, j in e_ij])
+    return sum([
+        inv_metric[i, j] *
+        (d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i]))
+        for i, j in e_ij
+    ])
 
 
-def sqr(a):
+def sqr(A):
+    """Computes the square of the matrix.
+
+    This will take a 3x3 matrix and will compute its square.
+    Assumes the metric is set.
+
+    Parameters
+    ----------
+    A : sympy.Matrix
+        The input matrix to compute the square of
+
+    Returns
+    -------
+    sympy.Expression
+        The expression that computes the matrix square
     """
-    Computes the square of the matrix. Assumes metric is set.
-    """
+
     global inv_metric
 
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-    return sum([a[i, j]*sum([inv_metric[i, k] * inv_metric[j, l] * a[k, l] for k in e_i for l in e_i]) for i, j in e_ij])
+    return sum([
+        A[i, j] * sum([
+            inv_metric[i, k] * inv_metric[j, l] * A[k, l] for k in e_i
+            for l in e_i
+        ]) for i, j in e_ij
+    ])
 
 
-def trace_free(x):
+def trace(A):
+    """Calculate the trace of a Matrix
+
+    Assumes the metric is set, will get the inverse metric.
+
+    Parameters
+    ----------
+    A : sympy.Matrix
+        The input matrix
+
+    Returns
+    -------
+    sympy.Expression
+        The expression that computes the trace of the matrix.
     """
-    makes the operator trace-free
+
+    global inv_metric
+
+    if inv_metric == undef:
+        inv_metric = get_inverse_metric()
+
+    trace = sum([inv_metric[i, j] * A[i, j] for i, j in e_ij])
+
+    return trace
+
+
+def trace_free(A):
+    """Transforms an input matrix to be trace free
+
+    If an equation requires a matrix to be trace free, then this
+    function is necessary. Assumes the metric is set.
+
+    Parameters
+    ----------
+    A : sympy.Matrix
+        The input matrix that needs to be converted to have no
+        trace
+
+    Returns
+    -------
+    sympy.Matrix
+        The now-trace-free matrix
     """
     global metric, inv_metric
 
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-    trace = sum([inv_metric[i, j] * x[i, j] for i, j in e_ij])
+    trace = sum([inv_metric[i, j] * A[i, j] for i, j in e_ij])
 
     # X_{ab} - 1/3 gt_{ab} X.
-    # tf = Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
-    tf = sym.Matrix([x[i, j] - metric[i, j]*trace/3 for i, j in e_ij])
+    # tf = sym.Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
+    tf = sym.Matrix([A[i, j] - metric[i, j] * trace / 3 for i, j in e_ij])
 
     return tf.reshape(3, 3)
 
 
 def vec_j_del_j(b, a):
+    """Computes the regular derivative of a scalar over all indices with a vector
+
+    This function calculates the following:
+
+    .. math:: \\beta^i \\partial_i \\alpha
+
+    Parameters
+    ----------
+    b : tuple, sympy.Matrix
+        The 3 vector "beta"
+    a : sympy.Symbol
+        The scalar "alpha"
+
+    Returns
+    -------
+    sympy.Expression
+        The output expression
     """
-    expands to  $\beta^i\partial_i \alpha$
-    """
-    return sum([b[i]*d(i, a) for i in e_i])
+    return sum([b[i] * d(i, a) for i in e_i])
 
 
-# [ewh] Adding this as this term needs to be in the beta equation as an
-#      advective derivative ... and not as a regular (partial) derivative.
 def vec_j_ad_j(b, f):
-    """
-    expands to  $\beta^i\partial_i f$
-    """
-    return sum([b[i]*ad(i, f) for i in e_i])
+    """Computes the advective derivative of a scalar over all indices with a vector
 
-    #vec_k_del_k = vec_j_del_j
+    Note that this function calculates the advective derivative when
+    using the following equation:
+
+    .. math:: \\beta^i \\partial_i \\alpha
+
+    Parameters
+    ----------
+    b : tuple, sympy.Matrix
+        The 3 vector "beta"
+    a : sympy.Symbol
+        The scalar "alpha"
+
+    Returns
+    -------
+    sympy.Expression
+        The output expression
+
+    Note
+    ----
+    [ewh] Adding this as this term needs to be in the beta equation as an
+    advective derivative and not as a regular (partial) derivative.
+    """
+
+    return sum([b[i] * ad(i, f) for i in e_i])
+
+
+def calc_symmetric_part_rank2(M):
+    """Compute the symmetric part of a rank 2 tensor
+
+    Parameters
+    ----------
+    M : sympy.Matrix
+        The rank 2 tensor (3x3 matrix) to compute the symmetric
+        part of.
+
+    Returns
+    -------
+    sympy.Matrix
+        The newly-symmetric tensor (3x3 matrix)
+    """
+
+    return (1 / 2) * sym.Matrix([M[i, j] + M[j, i]
+                                 for i, j in e_ij]).reshape(3, 3)
+
 
 ##########################################################################
 # metric related functions
@@ -322,26 +761,47 @@ def vec_j_ad_j(b, f):
 
 
 def set_metric(g):
-    """
-    sets the metric variable, so that dendro knows how to compute the derived variables. This should be done fairly
-    early on. e.g.,
+    """Set the metric variable to be used in the NR calculations
 
-    gt = dendro.sym_3x3("gt")
-    dendro.set_metric(gt)
+    Sets the metric variable, so that DendroSym knows how to compute
+    various derived variables. This should be done early on in the
+    generating script.
+
+    Parameters
+    ----------
+    g : sympy.Matrix
+        The 3x3 matrix that will be used as the metric
+
+    Example
+    -------
+    >>> gt = dendrosym.dtypes.sym_3x3("gt")
+    >>> dendrosym.nr.set_metric(gt)
     """
+
     global metric
 
     metric = g
 
 
 def get_inverse_metric():
-    """
-    Computes and returns the inverse metric. The variables need for be defined in advance. e.g.,
+    """Computes and returns the inverse metric
 
-    gt = dendro.sym_3x3("gt")
-    dendro.set_metric(gt)
-    igt = dendro.get_inverse_metric()
+    Sets the inverse metric variable, so that DendroSym knows how to compute
+    various derived variables. This should be done early on in the
+    generating script. It requires the metric to already be defined.
+
+    Returns
+    -------
+    sympy.Matrix
+        The 3x3 matrix returned is the inverse metric
+
+    Example
+    -------
+    >>> gt = dendrosym.dtypes.sym_3x3("gt")
+    >>> dendrosym.nr.set_metric(gt)
+    >>> igt = dendrosym.nr.get_inverse_metric()
     """
+
     global metric, inv_metric, undef
 
     if metric == undef:
@@ -355,12 +815,24 @@ def get_inverse_metric():
 
 
 def get_first_christoffel():
-    """
-    Computes and returns the first Christoffel Symbols. Assumes the metric has been set. e.g.,
+    """Computes and returns the first Christoffel Symbols
 
-    dendro.set_metric(gt);
+    This function will take the metric, inverse metric,
+    first derivative, and then calculate the first Christoffel
+    Symbols. It will store these symbols internally for
+    other calculations as well.
 
-    C1 = dendro.get_first_christoffel();
+    If these first Christoffel Symbols were already computed,
+    it will just return the already-stored Symbols.
+
+    Returns
+    -------
+    sympy.Matrix
+        The 3x3 matrix returned is the first Christoffel Symbols
+
+    Example
+    -------
+    >>> C1 = dendrosym.nr.get_first_christoffel()
     """
     global metric, inv_metric, undef, C1, d
 
@@ -373,22 +845,40 @@ def get_first_christoffel():
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-                    #C1[k, i, j] = 1 / 2 * (d(j, metric[k, i]) + d(i, metric[k, j]) - d(k, metric[i, j]))
-                    C1[k, i, j] = 0.5 * (d(j, metric[k, i]) +
-                                         d(i, metric[k, j]) - d(k, metric[i, j]))
+                    # C1[k, i,
+                    #    j] = 1/2 * (d(j, metric[k, i]) + d(i, metric[k, j]) -
+                    #                  d(k, metric[i, j]))
+                    C1[k, i,
+                       j] = 0.5 * (d(j, metric[k, i]) + d(i, metric[k, j]) -
+                                   d(k, metric[i, j]))
 
     return C1
 
 
 def get_second_christoffel():
-    """
-    Computes and returns the second Christoffel Symbols. Assumes the metric has been set. Will compute the first
-    Christoffel if not already computed. e.g.,
+    """Computes and returns the second Christoffel Symbols
 
-    dendro.set_metric(gt);
+    This function will take the metric, inverse metric,
+    first derivative, and then calculate the second Christoffel
+    Symbols. It will store these symbols internally for
+    other calculations as well.
 
-    C2 = dendro.get_second_christoffel();
+    If the first Christoffel Symbols were not already computed,
+    it will compute them and store them internally.
+
+    If these second Christoffel Symbols were already computed,
+    it will just return the already-stored Symbols.
+
+    Returns
+    -------
+    sympy.Matrix
+        The 3x3 matrix returned is the second Christoffel Symbols
+
+    Example
+    -------
+    >>> C2 = dendrosym.nr.get_second_christoffel()
     """
+
     global C2, C1, inv_metric
 
     if C2 == undef:
@@ -403,14 +893,34 @@ def get_second_christoffel():
 
 
 def get_complete_christoffel(chi):
-    """
-    Computes and returns the second Christoffel Symbols. Assumes the metric has been set. Will compute the first/second
-    Christoffel if not already computed. e.g.,
+    """Computes and returns the complete Christoffel Symbols
 
-    dendro.set_metric(gt);
+    This function will take the metric, inverse metric,
+    first derivative, and then calculate the complete Christoffel
+    Symbols. It will store these symbols internally for
+    other calculations as well.
 
-    C2_spatial = dendro.get_complete_christoffel();
+    If the second Christoffel Symbols were not already computed,
+    it will compute them and store them internally.
+
+    If these complete Christoffel Symbols were already computed,
+    it will just return the already-stored Symbols.
+
+    Parameters
+    ----------
+    chi : sympy.Scalar
+        The input scalar used in the calculation
+
+    Returns
+    -------
+    sympy.Matrix
+        The 3x3 matrix returned is the complete Christoffel Symbols
+
+    Example
+    -------
+    >>> C3 = dendrosym.nr.get_complete_christoffel()
     """
+
     global metric, inv_metric, undef, C1, C2, C3, d
 
     if C3 == undef:
@@ -422,73 +932,121 @@ def get_complete_christoffel(chi):
         for k in e_i:
             for j in e_i:
                 for i in e_i:
-                    # C3[i, j, k] = C2[i, j, k] - 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
-                    C3[i, j, k] = C2[i, j, k] - 0.5/(chi)*(KroneckerDelta(i, j) * d(k, chi) +
-                                                           KroneckerDelta(i, k) * d(j, chi) -
-                                                           metric[j, k]*sum(
-                                                               [inv_metric[i, m]*d(m, chi) for m in e_i])
-                                                           )
+                    # C3[i, j, k] = C2[i, j, k] - \
+                    # 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
+                    C3[i, j, k] = C2[i, j, k] - 0.5 / (chi) * (
+                        KroneckerDelta(i, j) * d(k, chi) +
+                        KroneckerDelta(i, k) * d(j, chi) - metric[j, k] *
+                        sum([inv_metric[i, m] * d(m, chi) for m in e_i]))
 
     return C3
 
 
 def compute_ricci(Gt, chi):
-    """
-    Computes the Ricci tensor. e.g.,
+    """Computes the Ricci tensor
 
-    dendro.set_metric(gt)
+    The conformal connection coefficient and the conformal variable
+    need to be supplied.
 
-    R = dendro.compute_ricci(Gt, chi)
+    The metric needs to already have been set,as well as the first
+    and second Christoffel symbols.
 
-    or
+    Parameters
+    ----------
+    Gt : tuple, sympy.Matrix
+        The 3-vector input Gt values
+    chi : sympy.Scalar
+        The input scalar used in the calculations
 
-    dendro.compute_ricci(Gt, chi)
+    Returns
+    -------
+    R : sympy.Matrix
+        The Ricci tensor (includes the additional addon term of
+        Rphi)
+    Rt : sympy.Matrix
+        The Ricci tensor (without Rphi added)
+    Rphi : sympy.Matrix
+        Just the Rphi portion
+    CalGt : sympy.Matrix
+        The calculated Gt matrix
 
-    and use
-
-    dendro.ricci
-
-    The conformal connection coefficient and the conformal variable needs to be supplied.
+    Example
+    -------
+    >>> dendrosym.nr.compute_ricci(Gt, chi)
     """
     global metric, inv_metric, C1, C2
 
-    Lchi = laplacian_conformal(chi)
+    # TODO: is this necessary? They are never referenced or returned
+    # NOTE: DFVK has commented this piece out because it's never used!!!
+    # Lchi = laplacian_conformal(chi)
 
     # print(type(Lchi))
 
     # print('Done with Lphi') #simplify(Lchi))
 
-    # ewh4 DKchiDkchi = Matrix([4*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi) for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
-    DKchiDkchi = sym.Matrix([0.25/chi/chi*metric[i, j]*sum([sum([inv_metric[k, l]*d(l, chi)
-                                                                 for l in e_i])*d(k, chi) for k in e_i]) for i, j in e_ij])
+    # ewh4 DKchiDkchi = sym.Matrix([
+    #     4 * metric[i, j] * sum([
+    #         sum([inv_metric[k, l] * d(l, chi) for l in e_i]) * d(k, chi)
+    #         for k in e_i
+    #     ]) for i, j in e_ij
+    # ])
+    # TODO: is this necessary? THey are never referenced or returned
+    # NOTE: DFVK has commented this piece out because it's never used!!!!!
+    # DKchiDkchi = sym.Matrix([
+    #     0.25 / chi / chi * metric[i, j] * sum([
+    #         sum([inv_metric[k, l] * d(l, chi) for l in e_i]) * d(k, chi)
+    #         for k in e_i
+    #     ]) for i, j in e_ij
+    # ])
 
     # print('done with DKchi') # simplify(DKchiDkchi))
 
-    CalGt = [sum(inv_metric[k, l]*C2[i, k, l] for k, l in e_ij) for i in e_i]
+    CalGt = [sum(inv_metric[k, l] * C2[i, k, l] for k, l in e_ij) for i in e_i]
 
-    Rt = sym.Matrix([-0.5*sum([inv_metric[l, m]*d2(l, m, metric[i, j]) for l, m in e_ij]) +
-                     0.5*sum([metric[k, i]*d(j, Gt[k]) + metric[k, j]*d(i, Gt[k]) for k in e_i]) +
-                     0.5*sum([CalGt[k]*(C1[i, j, k] + C1[j, i, k]) for k in e_i]) +
-                     sum([inv_metric[l, m]*(C2[k, l, i]*C1[j, k, m] + C2[k, l, j]*C1[i, k, m] + C2[k, i, m]*C1[k, l, j])
-                          for k in e_i for l, m in e_ij]) for i, j in e_ij])
+    Rt = sym.Matrix([
+        -0.5 *
+        sum([inv_metric[l, m] * d2(l, m, metric[i, j])
+             for l, m in e_ij]) + 0.5 * sum([
+                 metric[k, i] * d(j, Gt[k]) + metric[k, j] * d(i, Gt[k])
+                 for k in e_i
+             ]) +
+        0.5 * sum([CalGt[k] * (C1[i, j, k] + C1[j, i, k])
+                   for k in e_i]) + sum([
+                       inv_metric[l, m] *
+                       (C2[k, l, i] * C1[j, k, m] + C2[k, l, j] * C1[i, k, m] +
+                        C2[k, i, m] * C1[k, l, j]) for k in e_i
+                       for l, m in e_ij
+                   ]) for i, j in e_ij
+    ])
 
     # print('done with Rt') #simplify(Rt))
 
-    # ewh5    Rphi_tmp = Matrix([2*metric[i, j]*Lchi - 4*d(i, chi)*d(j, chi) for i, j in e_ij])
-    # dwn    Rphi_tmp = Matrix([ 0.5*metric[i, j]*Lchi/chi - 0.25*d(i, chi)*d(j, chi)/chi/chi for i, j in e_ij])
+    # ewh5  Rphi_tmp = sym.Matrix(
+    #     [2 * metric[i, j] * Lchi - \
+    #        4 * d(i, chi) * d(j, chi) for i, j in e_ij])
+    # dwn Rphi_tmp = sym.Matrix([
+    #     0.5 * metric[i, j] * Lchi / chi -
+    #     0.25 * d(i, chi) * d(j, chi) / chi / chi for i, j in e_ij
+    # ])
 
     # print(simplify(Rphi_tmp))
 
-    # ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
-    # dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - DKchiDkchi.reshape(3, 3)
-    xRphi = sym.Matrix([1/(2*chi)*(d2(i, j, chi) -
-                                   sum(C2[k, j, i]*d(k, chi) for k in e_i)) -
-                        1/(4*chi*chi)*d(i, chi)*d(j, chi) for i, j in e_ij]).reshape(3, 3)
+    # ewh6    Rphi = -2*_Di_Dj(chi) - Rphi_tmp.reshape(3, 3) - \
+    #         DKchiDkchi.reshape(3, 3)
+    # dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - \
+    #        DKchiDkchi.reshape(3, 3)
+    xRphi = sym.Matrix([
+        1 / (2 * chi) * (d2(i, j, chi) - sum(C2[k, j, i] * d(k, chi)
+                                             for k in e_i)) - 1 /
+        (4 * chi * chi) * d(i, chi) * d(j, chi) for i, j in e_ij
+    ]).reshape(3, 3)
 
     Rphi = xRphi + sym.Matrix([
-        1/(2*chi)*metric[i, j] * (sum(inv_metric[k, l]*(d2(k, l, chi) -
-                                                        3/(2*chi)*d(k, chi)*d(l, chi)) for k, l in e_ij) -
-                                  sum(CalGt[m]*d(m, chi) for m in e_i))
-        for i, j in e_ij]).reshape(3, 3)
+        1 / (2 * chi) * metric[i, j] *
+        (sum(inv_metric[k, l] * (d2(k, l, chi) - 3 /
+                                 (2 * chi) * d(k, chi) * d(l, chi))
+             for k, l in e_ij) - sum(CalGt[m] * d(m, chi) for m in e_i))
+        for i, j in e_ij
+    ]).reshape(3, 3)
 
-    return [Rt.reshape(3, 3) + Rphi, Rt.reshape(3, 3), Rphi, CalGt]
+    return Rt.reshape(3, 3) + Rphi, Rt.reshape(3, 3), Rphi, CalGt

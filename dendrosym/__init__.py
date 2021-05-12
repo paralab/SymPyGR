@@ -14,7 +14,6 @@ import dendrosym.codegen
 # parameter information
 import dendrosym.params
 
-
 # ==== MISC. FUNCTIONS AND OPERATIONS ====
 # the basic memory manager
 import dendrosym.memoryManager

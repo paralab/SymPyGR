@@ -23,7 +23,6 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 
 class MemManager():
-
     def __init__(self, base_addr=0):
         self.__mmap__ = dict()
         self.__next_addr = base_addr
@@ -52,8 +51,8 @@ class MemManager():
         add_begin = self.__mmap__[var][0]
         add_size = self.__mmap__[var][1]
 
-        req_add = add_begin + k*size_t
-        if(req_add > add_begin + add_size):
+        req_add = add_begin + k * size_t
+        if (req_add > add_begin + add_size):
             print("mem manager: access out of bounds")
 
         return req_add

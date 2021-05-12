@@ -19,6 +19,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 ##########################################################################
 import sympy as sym
+import re as regex
+import numpy as np
 # from import abc import ABC, abstractmethod
 
 # class DType(enum.Enum):
@@ -47,7 +49,6 @@ import sympy as sym
 #     def get_sym_var(self):
 #         return self._sym
 
-
 # '''
 # Vector variable
 # '''
@@ -63,10 +64,25 @@ import sympy as sym
 #     def get_sym_var(self):
 #         return self._sym
 
-
 ##########################################################################
 # variable initialization functions
 ##########################################################################
+
+
+def get_name_suffix(name):
+    """Used to extract out the name and suffix of a variable so that they can
+    include indexing information
+
+    """
+    # NOTE: if name has our indexing information, we need to rip it out
+    if name.endswith("]"):
+        re_match = regex.search("\[[^\]]*\]", name)
+        suffix = re_match.group(0)
+        name = name[0:re_match.start()]
+    else:
+        suffix = ""
+    return name, suffix
+
 
 def scalar(name):
     """
@@ -86,13 +102,24 @@ def vec(name, n):
     b[1] = x^2
     """
 
+    name, suffix = get_name_suffix(name)
+
     vname = list()
 
     for i in range(0, n):
-        nameR = name + repr(i)
+        nameR = name + repr(i) + suffix
         vname.append(nameR)
 
     return sym.Matrix([sym.symbols(vname[i]) for i in range(0, n)])
+
+
+def vec3(name):
+    """Simple function wrapper of vec for 3D
+
+    Simply calls vec and passes through dimensionality of three
+    """
+
+    return vec(name, 3)
 
 
 def mat(name, n, m):
@@ -122,14 +149,38 @@ def sym_mat(name, n):
     Creates a symbolic symmetric matrix of size nxn
     """
 
+    name, suffix = get_name_suffix(name)
+
     vname = list()
 
     for i in range(0, n):
         nameR = name + repr(i)
-        nameC = ' '.join([nameR + repr(j) for j in range(i, n)])
-        vname.append(nameC)
+        nameC = ' '.join([nameR + repr(j) + suffix for j in range(i, n)])
+        vname.append(nameC.split(' '))
 
-    return sym.Matrix()
+    mat_out = sym.zeros(n, n)
+
+    # then iterate through our values to fill the sides
+    for i in range(0, n):
+        mat_out[i, i:n] = sym.symbols([vname[i]])
+
+    # add the transpose to "diagonalize"
+    mat_out = mat_out + mat_out.T
+    # convert to numpy for a minute just to make things easier
+    mat_out = np.array(mat_out)
+    # then divide the diagonal by two
+    mat_out[range(n), range(n)] /= 2
+
+    # return the symbolic part of the matrix
+    return sym.Matrix(mat_out)
+
+
+def sym_3x3(name):
+    """Creates a 3x3 symbolic symmetric matrix
+
+    Simple wrapper of sym_mat passing through 3 as the `n` parameter
+    """
+    return sym_mat(name, 3)
 
 
 def antisym_mat(name, n):

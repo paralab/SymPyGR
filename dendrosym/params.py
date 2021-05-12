@@ -1,3 +1,3 @@
 '''
-@brief parameter file generation should go here. 
+@brief parameter file generation should go here.
 '''

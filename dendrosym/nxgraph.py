@@ -27,7 +27,6 @@ import matplotlib.pyplot as plt
 
 
 class ExpressionGraph():
-
     def __init__(self):
         self._nx_graphs = dict()
         self._sympy_expr = dict()
@@ -151,15 +150,15 @@ class ExpressionGraph():
                 num_e = num_e + len(e)
                 for j, ev in enumerate(e):
                     expr_name = vnames[i] + "" + str(j) + str(suffix_idx)
-                    print("processing expr : %d var name %s[%s]" % (
-                        i, vnames[i], str(j)))
+                    print("processing expr : %d var name %s[%s]" %
+                          (i, vnames[i], str(j)))
                     self.add_expression(ev, expr_name)
             elif type(e) == sympy.Matrix:
                 num_e = num_e + len(e)
                 for j, k in enumerate(mi):
                     expr_name = vnames[i] + "" + str(midx[j]) + str(suffix_idx)
-                    print("processing expr : %d var name %s[%s]" % (
-                        i, vnames[i], midx[j]))
+                    print("processing expr : %d var name %s[%s]" %
+                          (i, vnames[i], midx[j]))
                     self.add_expression(e[k], expr_name)
             else:
                 num_e = num_e + 1
