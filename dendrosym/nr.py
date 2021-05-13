@@ -307,7 +307,7 @@ def DiDj(a):
             "Third Christoffel symbols were not defined, please define.")
 
     m = sym.Matrix([
-        d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i])
+        d2(i, j, a) - sum([C3[ll, i, j] * d(ll, a) for ll in e_i])
         for i, j in e_ij
     ])
     return m.reshape(3, 3)
@@ -354,7 +354,7 @@ def _Di_Dj(a):
     # global d, d2, C3
 
     m = sym.Matrix([
-        d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i])
+        d2(i, j, a) - sum([C2[ll, i, j] * d(ll, a) for ll in e_i])
         for i, j in e_ij
     ])
 
@@ -553,7 +553,7 @@ def laplacian(a, chi):
     #            sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
     return sum([
         inv_full_metric[i, j] *
-        (d2(i, j, a) - sum([C3[l, i, j] * d(l, a) for l in e_i]))
+        (d2(i, j, a) - sum([C3[ll, i, j] * d(ll, a) for ll in e_i]))
         for i, j in e_ij
     ])
 
@@ -593,7 +593,7 @@ def laplacian_conformal(a):
     #     * d(l, a) for l in e_i])) for i, j in e_ij])
     return sum([
         inv_metric[i, j] *
-        (d2(i, j, a) - sum([C2[l, i, j] * d(l, a) for l in e_i]))
+        (d2(i, j, a) - sum([C2[ll, i, j] * d(ll, a) for ll in e_i]))
         for i, j in e_ij
     ])
 
@@ -622,8 +622,8 @@ def sqr(A):
 
     return sum([
         A[i, j] * sum([
-            inv_metric[i, k] * inv_metric[j, l] * A[k, l] for k in e_i
-            for l in e_i
+            inv_metric[i, k] * inv_metric[j, ll] * A[k, ll] for k in e_i
+            for ll in e_i
         ]) for i, j in e_ij
     ])
 
@@ -1005,18 +1005,16 @@ def compute_ricci(Gt, chi):
 
     Rt = sym.Matrix([
         -0.5 *
-        sum([inv_metric[l, m] * d2(l, m, metric[i, j])
-             for l, m in e_ij]) + 0.5 * sum([
-                 metric[k, i] * d(j, Gt[k]) + metric[k, j] * d(i, Gt[k])
-                 for k in e_i
-             ]) +
-        0.5 * sum([CalGt[k] * (C1[i, j, k] + C1[j, i, k])
-                   for k in e_i]) + sum([
-                       inv_metric[l, m] *
-                       (C2[k, l, i] * C1[j, k, m] + C2[k, l, j] * C1[i, k, m] +
-                        C2[k, i, m] * C1[k, l, j]) for k in e_i
-                       for l, m in e_ij
-                   ]) for i, j in e_ij
+        sum([inv_metric[ll, m] * d2(ll, m, metric[i, j]) for ll, m in e_ij]) +
+        0.5 * sum([
+            metric[k, i] * d(j, Gt[k]) + metric[k, j] * d(i, Gt[k])
+            for k in e_i
+        ]) + 0.5 * sum([CalGt[k] * (C1[i, j, k] + C1[j, i, k]) for k in e_i]) +
+        sum([
+            inv_metric[ll, m] *
+            (C2[k, ll, i] * C1[j, k, m] + C2[k, ll, j] * C1[i, k, m] +
+             C2[k, i, m] * C1[k, ll, j]) for k in e_i for ll, m in e_ij
+        ]) for i, j in e_ij
     ])
 
     # print('done with Rt') #simplify(Rt))
