@@ -1,24 +1,27 @@
 """
 @author : Milinda Fernando
-@brief  : Compute a directed graph from a sympy expression. 
+@brief  : Compute a directed graph from a sympy expression.
     1. Rename custom functions to symbols
     2. Graphs are merged from multiple expressions
-NetworkX is required, and used to store the graph. 
+NetworkX is required, and used to store the graph.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), 
-to deal in the Software without restriction, including without limitation the rights to use,
-copy, modify, merge, publish, distribute, sublicense,and/or sell copies
-of the Software,and to permit persons to whom the Software is 
-furnished to do so, subject to the following conditions:
-The above copyright notice and this permission notice shall be included 
-in all copies or substantial portions of the Software. 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
-OTHER DEALINGS IN THE SOFTWARE.
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use,copy, modify, merge, publish, distribute, sublicense,and/or sell copies
+of the Software,and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+IN THE SOFTWARE.
 """
 
 import sympy as sympy
@@ -32,7 +35,8 @@ class ExpressionGraph():
         self._sympy_expr = dict()
 
     """
-    Preorder traversal of the expression converting undefined functions to sympy symbols
+    Preorder traversal of the expression converting undefined functions
+    to sympy symbols
     """
 
     def __pre_traversal_1(self, expr, node_list, edge_list):
@@ -59,7 +63,7 @@ class ExpressionGraph():
                 self.__pre_traversal_1(arg, node_list, edge_list)
 
     """
-    Keep undefined function references as it is pruning but not renaming. 
+    Keep undefined function references as it is pruning but not renaming.
     """
 
     def __pre_traversal_2(self, expr, node_list, edge_list):
@@ -95,9 +99,7 @@ class ExpressionGraph():
         return [expr_list, edge_list]
 
     """
-    
     Generate a networkx graph for a given expression
-
     """
 
     def add_expression(self, expr, expr_name):
@@ -135,9 +137,7 @@ class ExpressionGraph():
         # plt.show()
 
     """
-    
     Adds list of sympy expressions
-
     """
 
     def add_expressions(self, outs, vnames, suffix_idx="[pp]"):
