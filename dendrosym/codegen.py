@@ -2,12 +2,20 @@
 
 This file contains the functions that generate the C++ or CUDA code
 that can be used by Dendro to run the programmed simulations.
+
+TODO: Please note that there are a few functions missing from the original
+dendro.py script currently. This includes the GPU code and other small
+currently unused functions. They will be added soon.
 """
 
+# import enum
 import re as regex
 from typing import List, Tuple, Union
 
 import sympy as sym
+# from sympy.core.evalf import N
+# from sympy.core.symbol import var
+# from sympy.utilities.iterables import uniq
 from dendrosym import nr
 
 
@@ -805,10 +813,12 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
             if (a2 == -1):
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' =  1.0 / ' + repr(qman) + ';'
+
             elif (a2 == 2):
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = ' + repr(o1) + '(' + repr(
                     qman) + ', ' + repr(qman) + ');'
+
             elif (a2 == -2):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
@@ -817,12 +827,14 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                 print(st.replace("'", ""))
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = 1.0 / ' + repr(v1) + ';'
+
             elif (a2 > 2 and a2 < 8):
                 v1 = next(vsym)
                 st = vec_print_str(v1, prevdefvars)
                 st += repr(v1) + ' = ' + repr(o1) + '(' + repr(
                     qman) + ', ' + repr(qman) + ');'
                 print(st.replace("'", ""))
+
                 for i in range(a2 - 3):
                     v2 = next(vsym)
                     st = vec_print_str(v2, prevdefvars)
@@ -830,16 +842,81 @@ def gen_vector_code(ex, vsym, vlist, oper, prevdefvars, idx):
                         v1) + ', ' + repr(qman) + ');'
                     print(st.replace("'", ""))
                     v1 = v2
+
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = ' + repr(o1) + '(' + repr(
                     v1) + ', ' + repr(qman) + ');'
+
             else:
                 st = vec_print_str(tv, prevdefvars)
                 st += repr(tv) + ' = pow(' + repr(qman) + ',' + repr(
                     qexp) + ');'
+
         else:
             st = vec_print_str(tv, prevdefvars)
             st = repr(tv) + ' = pow(' + repr(qman) + ',' + repr(qexp) + ');'
 
         print(st.replace("'", ""))
         vlist.append(tv)
+
+
+# TODO: rename, this is the wrong function, this just yanks out the values
+def gen_enum_info(var_names: list,
+                  enum_name: str = "VAR",
+                  enum_prefix: str = "U",
+                  enum_start_idx: int = 0):
+    """Generates the strings for the enums present in grDef.h
+    """
+
+    enum_text = f"enum {enum_name}\n{{\n"
+
+    for ii, var_name in enumerate(var_names):
+        enum_line = f"    {enum_prefix}_{var_name.upper()}"
+        enum_line += f" = {enum_start_idx}" if ii == 0 else ""
+        enum_line += ",\n" if ii != len(var_names) - 1 else "\n"
+        enum_text += enum_line
+
+    enum_text += "};"
+
+    return enum_text
+
+
+def gen_var_info(var_names: list,
+                 zip_var_name: str = "uZipVars",
+                 enum_name: str = "VAR",
+                 enum_prefix: str = "U",
+                 enum_start_idx: int = 0):
+    """Generates the allocation variables in physcon.cpp
+
+    """
+
+    physcon_text = ""
+
+    for ii, var_name in enumerate(var_names):
+
+        phys_con_line = "    const double *"
+        phys_con_line += f"{var_name} = &"
+        phys_con_line += f"{zip_var_name}["
+        phys_con_line += f"{enum_name}::{enum_prefix}_{var_name.upper()}"
+        phys_con_line += "][offset];\n"
+
+        physcon_text += phys_con_line
+
+    return physcon_text
+
+
+def gen_var_name_array(var_names: list,
+                       project_name: str = "ccz4",
+                       enum_prefix: str = "C",
+                       list_name_inner: str = "VAR"):
+
+    name_array_text = "static const char *"
+    name_array_text += f"{project_name.upper()}_{list_name_inner}_NAMES"
+
+    name_array_text += "[] = {"
+
+    for ii, var_name in enumerate(var_names):
+        name_array_text += f'"{var_name.upper()}"'
+        name_array_text += ", " if ii != len(var_names) - 1 else "};"
+
+    return name_array_text
