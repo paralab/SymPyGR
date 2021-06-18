@@ -9,7 +9,10 @@ currently unused functions. They will be added soon.
 """
 
 # import enum
+import enum
+from os import replace
 import re as regex
+import sys
 from typing import List, Tuple, Union
 
 import sympy as sym
@@ -17,6 +20,123 @@ import sympy as sym
 # from sympy.core.symbol import var
 # from sympy.utilities.iterables import uniq
 from dendrosym import nr
+
+
+def extract_expression(expression):
+    """This extracts out individual expressions
+
+    This is meant to be used with other functions to try and pull out
+    individual variables from matrices and vectors and lists
+    """
+
+    mi = [0, 1, 2, 4, 5, 8]
+
+    num_e = 0
+    list_expressions = []
+    # check the typing
+    if type(expression) == list:
+        num_e += len(expression)
+        for ii, exp_individual in enumerate(expression):
+            list_expressions.append(exp_individual)
+    elif type(expression) == sym.Matrix:
+
+        # 1D matrix from sympy using our 3vec notation
+        if expression.shape[1] == 1:
+            num_e += len(expression)
+            for ii in range(expression.shape[0]):
+                list_expressions.append(expression[ii])
+        # otherwise it's a matrix
+        else:
+
+            num_e += len(expression)
+
+            # NOTE: original method, does *not* check for symmetry
+            for j, k, in enumerate(mi):
+                list_expressions.append(expression[k])
+
+            # NOTE: my implementation if there's symmetry is currently
+            # really slow and broken, need to consider more info...
+            # check for matrix symmetry
+            # if sym.simplify(e) == sym.simplify(e.T):
+            #     # print("Symmetric matrix found")
+            #     for jj in range(e.shape[0]):
+            #         for kk in range(jj, e.shape[1]):
+            #             lname.append(vnames[i] + repr(jj) + repr(kk) + idx)
+            #             lexp.append(e[jj, kk])
+            # else:
+            #     for jj in range(e.shape[0]):
+            #         for kk in range(e.shape[1]):
+            #             lname.append(vnames[i] + repr(jj) + repr(kk) + idx)
+            #             lexp.append(e[jj, kk])
+
+    else:
+        num_e += 1
+        list_expressions.append(expression)
+
+    return list_expressions, num_e
+
+
+def construct_expression_list(ex: Union[list, sym.Matrix, sym.Expr],
+                              vnames: List[str],
+                              idx: str = "[pp]"):
+
+    # NOTE: there seems to be an issue with the symmetric stuff
+    mi = [0, 1, 2, 4, 5, 8]
+    midx = ['00', '01', '02', '11', '12', '22']
+
+    # total number of expressions
+    # print("--------------------------------------------------------")
+
+    num_e = 0
+    lexp = []
+    lname = []
+    for i, e in enumerate(ex):
+        if type(e) == list:
+            num_e = num_e + len(e)
+            for j, ev in enumerate(e):
+                lexp.append(ev)
+                lname.append(vnames[i] + repr(j) + idx)
+        elif type(e) == sym.Matrix:
+            num_e = num_e + len(e)
+
+            # NOTE: Original
+            for j, k in enumerate(mi):
+                lexp.append(e[k])
+                lname.append(vnames[i] + midx[j] + idx)
+
+            # NOTE: my implementation if there's symmetry is currently
+            # really slow and broken, need to consider more info...
+            # check for matrix symmetry
+            # if sym.simplify(e) == sym.simplify(e.T):
+            #     # print("Symmetric matrix found")
+            #     for jj in range(e.shape[0]):
+            #         for kk in range(jj, e.shape[1]):
+            #             lname.append(vnames[i] + repr(jj) + repr(kk) + idx)
+            #             lexp.append(e[jj, kk])
+            # else:
+            #     for jj in range(e.shape[0]):
+            #         for kk in range(e.shape[1]):
+            #             lname.append(vnames[i] + repr(jj) + repr(kk) + idx)
+            #             lexp.append(e[jj, kk])
+        else:
+            num_e = num_e + 1
+            lexp.append(e)
+            lname.append(vnames[i] + idx)
+
+    return lexp, lname, num_e
+
+
+def custom_numbered_symbols(prefix="DENDRO_", start=0, num_digits=4):
+
+    while True:
+        num_str = str(start).zfill(num_digits)
+        name = f"{prefix}{num_str}"
+
+        s = sym.Symbol(name)
+
+        yield s
+
+        start += 1
 
 
 def construct_cse(ex: Union[list, sym.Matrix, sym.Expr], vnames: List[str],
@@ -42,36 +162,87 @@ def construct_cse(ex: Union[list, sym.Matrix, sym.Expr], vnames: List[str],
 
     """
 
-    mi = [0, 1, 2, 4, 5, 8]
-    midx = ['00', '01', '02', '11', '12', '22']
-
-    # total number of expressions
-    # print("--------------------------------------------------------")
-    num_e = 0
-    lexp = []
-    lname = []
-    for i, e in enumerate(ex):
-        if type(e) == list:
-            num_e = num_e + len(e)
-            for j, ev in enumerate(e):
-                lexp.append(ev)
-                lname.append(vnames[i] + repr(j) + idx)
-        elif type(e) == sym.Matrix:
-            num_e = num_e + len(e)
-            for j, k in enumerate(mi):
-                lexp.append(e[k])
-                lname.append(vnames[i] + midx[j] + idx)
-        else:
-            num_e = num_e + 1
-            lexp.append(e)
-            lname.append(vnames[i] + idx)
+    lexp, lname, num_e = construct_expression_list(ex, vnames, idx)
 
     # ''.join(random.choice(string.ascii_uppercase) for _ in range(5))
     ee_name = 'DENDRO_'
     ee_syms = sym.numbered_symbols(prefix=ee_name)
+    print("Now generating cse", file=sys.stderr)
     _v = sym.cse(lexp, symbols=ee_syms, optimizations='basic')
+    print("Finished generating cse", file=sys.stderr)
 
     return _v, sym.count_ops(lexp)
+
+
+def construct_cse_from_list(expression_list):
+
+    temp_var_prefix = "DENDRO_"
+    temp_var_gen = custom_numbered_symbols(temp_var_prefix)
+
+    print("Now generating cse!", file=sys.stderr)
+    cse_out = sym.cse(expression_list,
+                      symbols=temp_var_gen,
+                      optimizations='basic')
+    print("Finished generating cse!", file=sys.stderr)
+
+    return cse_out
+
+
+def generate_cpu_preextracted(cse_list,
+                              rhs_var_names,
+                              idx,
+                              orig_ops,
+                              dtype="double",
+                              use_const=False):
+
+    custom_functions = {
+        'grad': 'grad',
+        'grad2': 'grad2',
+        'agrad': 'agrad',
+        'kograd': 'kograd'
+    }
+
+    output_str = "// Dendro: C++ Equation Code Generation {{{{ \n"
+
+    reduced_ops = 0
+    output_str += '// Dendro: TEMPORARY VARIABLES\n'
+    for (v1, v2) in cse_list[0]:
+        temp_str = f'{"const " if use_const else ""}{dtype} '
+
+        temp_str += change_deriv_names(
+            sym.ccode(v2, assign_to=v1, user_functions=custom_functions))
+
+        # TODO: remove calls to the pow function if possible
+        output_str += temp_str + "\n"
+        reduced_ops += sym.count_ops(v2)
+
+    output_str += "// Dendro: END TEMPORARY VARIABLES\n"
+    output_str += '\n// Dendro: MAIN VARIABLES'
+    for i, e in enumerate(cse_list[1]):
+        temp_str = "\n//--\n"
+        temp_str += change_deriv_names(
+            sym.ccode(e,
+                      assign_to=rhs_var_names[i] + idx,
+                      user_functions=custom_functions))
+        # TODO: remove calls to the pow function if possible
+
+        output_str += temp_str + "\n"
+        reduced_ops += sym.count_ops(e)
+
+    output_str += "// Dendro: END MAIN VARIABLES\n\n"
+
+    output_str += "// Dendro: INFORMATION"
+    output_str += "// Dendro: number of original operations: %d \n" % (
+        orig_ops)
+    output_str += '// Dendro: number of reduced operations: %d \n' % (
+        reduced_ops)
+    output_str += "// Dendro: preprocessing reduced the "
+    output_str += f"number of operations by {orig_ops-reduced_ops}\n"
+    percent_reduction = (orig_ops - reduced_ops) / orig_ops
+    output_str += f"// Dendro: a {percent_reduction:0.5%}% reduction\n"
+    output_str += '// Dendro: }}}} End Code Generation \n'
+
+    return output_str
 
 
 def generate_cpu(ex: Union[list, sym.Matrix, sym.Expr], vnames: List[str],
@@ -91,37 +262,20 @@ def generate_cpu(ex: Union[list, sym.Matrix, sym.Expr], vnames: List[str],
     idx : str
         The string used for indexing. e.g. '[pp]'
     """
-    # print(ex)
 
-    mi = [0, 1, 2, 4, 5, 8]
-    midx = ['00', '01', '02', '11', '12', '22']
+    output_string = ""
+    # print(ex)
 
     # total number of expressions
     # print("--------------------------------------------------------")
-    num_e = 0
-    lexp = []
-    lname = []
-    for i, e in enumerate(ex):
-        if type(e) == list:
-            num_e = num_e + len(e)
-            for j, ev in enumerate(e):
-                lexp.append(ev)
-                lname.append(vnames[i] + repr(j) + idx)
-        elif type(e) == sym.Matrix:
-            num_e = num_e + len(e)
-            for j, k in enumerate(mi):
-                lexp.append(e[k])
-                lname.append(vnames[i] + midx[j] + idx)
-        else:
-            num_e = num_e + 1
-            lexp.append(e)
-            lname.append(vnames[i] + idx)
+
+    lexp, lname, num_e = construct_expression_list(ex, vnames, idx)
 
     cse = construct_cse(ex, vnames, idx)
     _v = cse[0]
 
-    print("// Dendro: {{{ ")
-    print("// Dendro: original ops: %d " % (cse[1]))
+    output_string += "// Dendro: {{{ \n"
+    output_string += "// Dendro: original ops: %d \n" % (cse[1])
 
     ee_name = 'DENDRO_'
     ee_syms = sym.utilities.numbered_symbols(prefix=ee_name)
@@ -134,27 +288,28 @@ def generate_cpu(ex: Union[list, sym.Matrix, sym.Expr], vnames: List[str],
     }
 
     rops = 0
-    print('// Dendro: printing temp variables')
+    output_string += '// Dendro: printing temp variables\n'
     for (v1, v2) in _v[0]:
-        print('const double ', end='')
-        print(
-            change_deriv_names(
-                sym.ccode(v2, assign_to=v1, user_functions=custom_functions)))
+        # TODO: add the potential for const???? They're not going to be modified, but might not be necessary
+        temp_str = 'double '
+
+        temp_str += change_deriv_names(
+            sym.ccode(v2, assign_to=v1, user_functions=custom_functions))
+        output_string += temp_str + "\n"
         rops = rops + sym.count_ops(v2)
 
-    print()
-    print('// Dendro: printing variables')
+    output_string += '\n// Dendro: printing variables'
     for i, e in enumerate(_v[1]):
-        print("//--")
-        print(
-            change_deriv_names(
-                sym.ccode(e,
-                          assign_to=lname[i],
-                          user_functions=custom_functions)))
+        output_string += "\n//--\n"
+        output_string += change_deriv_names(
+            sym.ccode(e, assign_to=lname[i], user_functions=custom_functions))
+        output_string += "\n"
         rops = rops + sym.count_ops(e)
 
-    print('// Dendro: reduced ops: %d' % (rops))
-    print('// Dendro: }}} ')
+    output_string += '// Dendro: reduced ops: %d \n' % (rops)
+    output_string += '// Dendro: }}} \n'
+
+    return output_string
 
 
 def change_deriv_names(in_str: str) -> str:
@@ -182,6 +337,7 @@ def change_deriv_names(in_str: str) -> str:
     for deriv in derivs:
         key = deriv + r'\(\d, \w+\[pp\]\)'
         slist = regex.findall(key, c_str)
+        # print(slist, file=sys.stderr)
         for s in slist:
             # print(s)
             w1 = s.split('(')
@@ -883,31 +1039,50 @@ def gen_enum_info(var_names: list,
 
 def gen_var_info(var_names: list,
                  zip_var_name: str = "uZipVars",
+                 offset_name: str = "offset",
                  enum_name: str = "VAR",
                  enum_prefix: str = "U",
-                 enum_start_idx: int = 0):
+                 use_const: bool = True,
+                 enum_start_idx: int = 0,
+                 enum_var_names: list = [],
+                 dtype: str = "double",
+                 num_spaces: int = 0):
     """Generates the allocation variables in physcon.cpp
 
+    If enum_var_names is empty, then it'll just use "upper"
+    on the var names input. Other wise, the list should match
+    one-to-one with the incoming variable names.
     """
+
+    if enum_var_names:
+        assert len(var_names) == len(
+            enum_var_names), "The input list sizes do not match"
 
     physcon_text = ""
 
     for ii, var_name in enumerate(var_names):
+        if enum_var_names:
+            enum_entry = enum_var_names[ii]
+            enum_prefix_use = ""
+        else:
+            enum_entry = var_name.upper()
+            enum_prefix_use = f"{enum_prefix}_"
 
-        phys_con_line = "    const double *"
+        phys_con_line = "".join(" " for i in range(num_spaces))
+        # NOTE: before I had it without the ` const `
+        phys_con_line += f"{'const ' if use_const else ''}{dtype} * const "
         phys_con_line += f"{var_name} = &"
         phys_con_line += f"{zip_var_name}["
-        phys_con_line += f"{enum_name}::{enum_prefix}_{var_name.upper()}"
-        phys_con_line += "][offset];\n"
+        phys_con_line += f"{enum_name}::{enum_prefix_use}{enum_entry}"
+        phys_con_line += f"][{offset_name}];\n"
 
         physcon_text += phys_con_line
 
     return physcon_text
 
 
-def gen_var_name_array(var_names: list,
+def gen_var_name_array(enum_names: list,
                        project_name: str = "ccz4",
-                       enum_prefix: str = "C",
                        list_name_inner: str = "VAR"):
 
     name_array_text = "static const char *"
@@ -915,8 +1090,334 @@ def gen_var_name_array(var_names: list,
 
     name_array_text += "[] = {"
 
-    for ii, var_name in enumerate(var_names):
-        name_array_text += f'"{var_name.upper()}"'
-        name_array_text += ", " if ii != len(var_names) - 1 else "};"
+    for ii, enum_name in enumerate(enum_names):
+        name_array_text += f'"{enum_name}"'
+        name_array_text += ", " if ii != len(enum_names) - 1 else ""
 
-    return name_array_text
+    return name_array_text + "};\n"
+
+
+def generate_memory_alloc(var_names: list,
+                          var_type: str = "double",
+                          include_byte_declaration=False):
+
+    if include_byte_declaration:
+        return_text = f"const unsigned int bytes = n * sizeof({var_type});\n"
+    else:
+        return_text = ""
+
+    for va in var_names:
+        return_text += f"{var_type} *{va} = ({var_type} *) malloc(bytes);\n"
+
+    return return_text
+
+
+def generate_memory_dealloc(var_names: list):
+    return_text = ""
+
+    for va in var_names:
+        return_text += f"free({va});\n"
+
+    return return_text
+
+
+def generate_deriv_comp(var_names: list, adv_der_var: str = "beta"):
+
+    # map dir
+    dir_map = {"0": "x", "1": "y", "2": "z"}
+
+    return_text = ""
+
+    for va in var_names:
+        # split by underscore
+        split_va = va.split("_")
+
+        if split_va[0] == "grad":
+            # get the original var name from the string, just in case
+            # there are more underscores
+            va_name = ''.join(short_text + "_"
+                              for short_text in split_va[2:])[:-1]
+            # get the direction
+            the_dir = dir_map[split_va[1]]
+            # if it's grad, then it's a one dimensional derivative
+            return_text += f"deriv_{the_dir}({va}, {va_name}, " + \
+                f"h{the_dir}, sz, bflag);\n"
+
+        elif split_va[0] == "grad2":
+            # get the original var name from the string, just in case
+            # there are more underscores
+            va_name = ''.join(short_text + "_"
+                              for short_text in split_va[3:])[:-1]
+            # get the direction
+            the_dir = dir_map[split_va[1]]
+            # if it's grad, then it's a one dimensional derivative
+            return_text += f"deriv_{the_dir}{the_dir}({va}, {va_name}, " + \
+                f"h{the_dir}, sz, bflag);\n"
+
+            # TODO: allow grad2 support to include over multiple directions
+            # currently the deriv_xx function, for example, only supports
+            # the hx direction
+
+        elif split_va[0] == "agrad":
+            # get the original var name from the string, just in case
+            # there are more underscores
+            va_name = ''.join(short_text + "_"
+                              for short_text in split_va[2:])[:-1]
+            # get the direction
+            the_dir = dir_map[split_va[1]]
+            dir_idx = split_va[1]
+            # then stitch it together
+            return_text += f"adv_deriv_{the_dir}({va}, {va_name}, " + \
+                f"h{the_dir}, sz, {adv_der_var}{dir_idx}, bflag);\n"
+
+        else:
+            raise NotImplementedError(
+                "Sorry, but this hasn't been implemented yet")
+
+    return return_text
+
+
+def generate_bcs_function_call(var_rhs_name,
+                               var_name,
+                               f_falloff,
+                               f_asymptotic,
+                               deriv_names=[],
+                               prefix="ccz4",
+                               pmin="pmin",
+                               pmax="pmax",
+                               sz="sc",
+                               bflag="bflag"):
+
+    if deriv_names:
+        assert len(deriv_names) == 3, "Not enough entries in the deriv names"
+
+    temp_str = f"{prefix}_bcs("
+    temp_str += f"{var_rhs_name}, "
+    temp_str += f"{var_name}, "
+
+    if deriv_names:
+        temp_str += ", ".join(x for x in deriv_names)
+    else:
+        temp_str += ", ".join(f"grad_{ii}_{var_name}" for ii in range(3))
+
+    temp_str += f", {pmin}, {pmax}, "
+
+    temp_str += f"{float(f_falloff)}, {float(f_asymptotic)},"
+    temp_str += f" {sz}, {bflag});\n"
+
+    return temp_str
+
+
+def generate_force_sym_matrix_det_to_one(vname,
+                                         unzip_access,
+                                         uzip="uiVar",
+                                         node="node",
+                                         dtype="double"):
+
+    # NOTE: the function already should have `one_third` defined
+
+    return_str = ""
+
+    # then calculate the determinant
+    return_str += f"{dtype} det_{vname} = "
+    # first term
+    det_str = f"{vname}[0][0] * "
+    det_str += f"({vname}[1][1] * {vname}[2][2] "
+    det_str += f"- {vname}[1][2] * {vname}[1][2])"
+
+    # second term
+    det_str += f" - {vname}[0][1] * {vname}[0][1] * {vname}[2][2]"
+
+    # third term
+    det_str += f" + 2.0 * {vname}[0][1] * {vname}[0][2] * {vname}[1][2]"
+
+    # fourth term
+    det_str += f" - {vname}[0][2] * {vname}[0][2] * {vname}[1][1]"
+
+    # add the determinant calculation to the return str
+    return_str += det_str + ";\n\n"
+
+    # TODO: what can we do to fix the metric determinant being negative?
+    # for now, we exit
+    return_str += f"if (det_{vname} < 0.0){{\n"
+    return_str += f'    std::cout << "Determinant of {vname} is negative: " '
+    return_str += f'<< det_{vname} << std::endl;\n'
+    return_str += "    exit(0);\n}\n"
+
+    # now add the calculation for negative third
+    return_str += f"{dtype} det_{vname}_to_neg_third = " + \
+        f"1.0 / pow(det_{vname}, one_third);\n"
+
+    # now we go and update all of the values inside the matrix
+    return_str += "for (unsigned int j = 0; j < 3; j++)\n{\n"
+    return_str += "    for (unsigned int i = 0; i < 3; i++)\n"
+    return_str += "{\n"
+    return_str += f"        {vname}[i][j] *= det_{vname}_to_neg_third;\n"
+    return_str += "    }\n}\n\n"
+
+    # recalculate the determinant
+    return_str += f"det_{vname} = " + det_str + ";\n\n"
+
+    # now if it's greater than one, we've got an issue
+    return_str += f"if (fabs(det_{vname} - 1.0) > 1.0e-6) {{\n"
+    return_str += "    std::cout.precision(14);\n"
+    return_str += f'    std::cout << "det({vname}) != 1.0 det="'
+    return_str += f' << std::fixed << det_{vname} << std::endl;\n'
+    # then print out variable info
+    return_str += f'    std::cout << "    {vname}(1,1)" << '
+    return_str += f"{vname}[0][0] << std::endl;\n"
+    return_str += f'    std::cout << "    {vname}(1,2)" << '
+    return_str += f"{vname}[0][1] << std::endl;\n"
+    return_str += f'    std::cout << "    {vname}(1,3)" << '
+    return_str += f"{vname}[0][1] << std::endl;\n"
+    return_str += f'    std::cout << "    {vname}(2,2)" << '
+    return_str += f"{vname}[1][1] << std::endl;\n"
+    return_str += f'    std::cout << "    {vname}(2,3)" << '
+    return_str += f"{vname}[1][2] << std::endl;\n"
+    return_str += f'    std::cout << "    {vname}(3,3)" << '
+    return_str += f"{vname}[2][2] << std::endl;\n"
+    # exit, and close the block
+    return_str += "exit(0);\n}\n\n"
+
+    # then we can make the calculations to update everything
+    return_str += f"double {vname}_up[3][3];\n"
+    return_str += f"double idet_{vname} = 1.0 / det_{vname};\n"
+    # fill in this new matrix
+
+    return_str += f"{vname}_up[0][0] = idet_{vname} * " + \
+        f"({vname}[1][1] * {vname}[2][2] - {vname}[1][2] * {vname}[1][2]);\n"
+    return_str += f"{vname}_up[0][1] = idet_{vname} * " + \
+        f"(-{vname}[0][1] * {vname}[2][2] + {vname}[0][2] * {vname}[1][2]);\n"
+    return_str += f"{vname}_up[0][2] = idet_{vname} * " + \
+        f"({vname}[0][1] * {vname}[1][2] - {vname}[0][2] * {vname}[1][1]);\n"
+    return_str += f"{vname}_up[1][1] = idet_{vname} * " + \
+        f"({vname}[0][0] * {vname}[2][2] - {vname}[0][2] * {vname}[0][2]);\n"
+    return_str += f"{vname}_up[1][2] = idet_{vname} * " + \
+        f"(-{vname}[0][0] * {vname}[1][2] + {vname}[0][1] * {vname}[0][2]);\n"
+    return_str += f"{vname}_up[2][2] = idet_{vname} * " + \
+        f"({vname}[0][0] * {vname}[1][1] - {vname}[0][1] * {vname}[0][1]);\n"
+    return_str += f"{vname}_up[1][0] = {vname}_up[0][1];\n"
+    return_str += f"{vname}_up[2][0] = {vname}_up[0][2];\n"
+    return_str += f"{vname}_up[2][1] = {vname}_up[1][2];\n"
+
+    return return_str + "\n"
+
+
+def generate_force_symmat_traceless(vname, metric_vname, dtype="double"):
+
+    return_str = ""
+
+    # calculate one third of the trace
+    return_str += "//// one third of the trace:\n"
+    return_str += f"{dtype} ot_trace_{vname} = "
+    return_str += "one_third * ("
+    return_str += f"{vname}[0][0] * {metric_vname}_up[0][0]"
+    return_str += f" + {vname}[1][1] * {metric_vname}_up[1][1]"
+    return_str += f" + {vname}[2][2] * {metric_vname}_up[2][2]"
+    return_str += " + 2.0 * ("
+    return_str += f"{vname}[0][1] * {metric_vname}_up[0][1]"
+    return_str += f" + {vname}[0][2] * {metric_vname}_up[0][2]"
+    return_str += f" + {vname}[1][2] * {metric_vname}_up[1][2]"
+    return_str += "));\n\n"
+
+    # then update the matrix by subtracing off a third of the trace
+    # and the original metric
+    return_str += f"{vname}[0][0] -= ot_trace_{vname} * {metric_vname}[0][0];\n"
+    return_str += f"{vname}[0][1] -= ot_trace_{vname} * {metric_vname}[0][1];\n"
+    return_str += f"{vname}[0][2] -= ot_trace_{vname} * {metric_vname}[0][2];\n"
+    return_str += f"{vname}[1][1] -= ot_trace_{vname} * {metric_vname}[1][1];\n"
+    return_str += f"{vname}[1][2] -= ot_trace_{vname} * {metric_vname}[1][2];\n"
+    return_str += f"{vname}[2][2] -= ot_trace_{vname} * {metric_vname}[2][2];\n"
+
+    # then calculate the trace again but without the one third
+    return_str += "//// now the actual trace:\n"
+    return_str += f"{dtype} trace_{vname} = "
+    return_str += f"{vname}[0][0] * {metric_vname}_up[0][0]"
+    return_str += f" + {vname}[1][1] * {metric_vname}_up[1][1]"
+    return_str += f" + {vname}[2][2] * {metric_vname}_up[2][2]"
+    return_str += " + 2.0 * ("
+    return_str += f"{vname}[0][1] * {metric_vname}_up[0][1]"
+    return_str += f" + {vname}[0][2] * {metric_vname}_up[0][2]"
+    return_str += f" + {vname}[1][2] * {metric_vname}_up[1][2]"
+    return_str += ");\n\n"
+
+    # then the actual check that it is zero
+    return_str += f"if (fabs(trace_{vname}) > 1.0e-6)\n"
+    return_str += "{\n    "
+    return_str += f'std::cout << "ERROR: tr({vname}) != 0, ="' + \
+        f'  << trace_{vname} << std::endl;\n'
+    cout_str = '    std::cout << "       '
+    cout_end_str = ' << std::endl;\n'
+    return_str += cout_str + f'{vname}(1,1)=" << {vname}[0][0]' + \
+        cout_end_str
+    return_str += cout_str + f'{vname}(1,2)=" << {vname}[0][1]' + \
+        cout_end_str
+    return_str += cout_str + f'{vname}(1,3)=" << {vname}[0][2]' + \
+        cout_end_str
+    return_str += cout_str + f'{vname}(2,2)=" << {vname}[1][1]' + \
+        cout_end_str
+    return_str += cout_str + f'{vname}(2,3)=" << {vname}[1][2]' + \
+        cout_end_str
+    return_str += cout_str + f'{vname}(3,3)=" << {vname}[2][2]' + \
+        cout_end_str
+    return_str += "    exit(0);\n}\n\n"
+
+    return return_str
+
+
+def generate_update_sym_mat_extract(vname, unzip_access, uzip="uiVar", dtype="double", node="node"):
+
+    # NOTE: all of the symmetric matrices grab the indexing based on the upper
+    # triangle, so get those first
+    midx = [[0, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 2]]
+    # that leaves the remaining three of
+    midx_exc = [[1, 0], [0, 2], [2, 1]]
+
+    # so we need to generate a quick matrix for them and extract it out
+    return_str = f"{dtype} {vname}[3][3];\n\n"
+
+    # then generate the extraction to fill the matrix
+    for ii, idxs in enumerate(midx):
+        return_str += f"{vname}[{idxs[0]}][{idxs[1]}]"
+        return_str += f" = {uzip}[{unzip_access[ii]}][{node}];\n"
+
+    # then copy over the other side
+    for idxs in midx_exc:
+        return_str += f"{vname}[{idxs[0]}][{idxs[1]}]"
+        return_str += f" = {vname}[{idxs[1]}][{idxs[0]}];\n"
+
+    return return_str + "\n"
+
+
+def generate_update_sym_mat_code(vname,
+                                 unzip_access,
+                                 uzip="uiVar",
+                                 node="node",
+                                 include_up=True):
+
+    return_str = ""
+
+    # NOTE: all of the symmetric matrices grab the indexing based on the upper
+    # triangle, so get those first
+    midx = [[0, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 2]]
+
+    # then generate the extraction to fill the matrix
+    for ii, idxs in enumerate(midx):
+        return_str += f"{uzip}[{unzip_access[ii]}][{node}]"
+        return_str += f" = {vname}" + \
+            f"{'_up' if include_up else ''}" + \
+            f"[{idxs[0]}][{idxs[1]}];\n"
+
+    return return_str + "\n"
+
+
+def generate_variable_always_positive(uzip_access,
+                                      floor_var=None,
+                                      uzip="uiVar",
+                                      node="node"):
+
+    if floor_var is None:
+        floor_var = "1.0e-6"
+
+    return f"{uzip}[{uzip_access}][{node}] = std::max(" +\
+        f"{uzip}[{uzip_access}][{node}], {floor_var});\n"
