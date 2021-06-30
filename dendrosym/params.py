@@ -3,9 +3,13 @@
 '''
 
 import tomlkit as toml
-from tomlkit.api import key, table
 
 TAB = "    "
+
+BHOLE_VARS = [
+    "MASS", "X", "Y", "Z", "V_X", "V_Y", "V_Z", "SPIN", "SPIN_THETA",
+    "SPIN_PHI"
+]
 
 
 def get_toml_data(filename):
@@ -62,7 +66,7 @@ def params_file_data(project_short: str, filename: str):
     # now we define the param read definition
     param_read = f"namespace {ps}\n{{\n"
     param_read += f"{t}void readParamFile(const char* inFile, " + \
-        "MPI_Comm comm)\n{t}{{\n\n"
+        f"MPI_Comm comm)\n{t}{{\n\n"
     param_read += get_rank_npes()
     param_read += f"{t*2}auto file = toml::parse(inFile);\n\n"
     param_read += f"{t*2}if(!rank)\n{t*2}{{\n"
@@ -149,10 +153,7 @@ def params_file_data(project_short: str, filename: str):
                         # parameter name
                         tmp_param_dump = ""
                         tmp_param_dump += f'{t*3}sout << "\\t'
-                        tmp_param_dump += "::".join(namespace_list)
-                        tmp_param_dump += "::"
-                        tmp_param_dump += table_names
-                        tmp_param_dump += k
+                        tmp_param_dump += get_full_vname(namespace_list, table_names, k)
 
                         if v['type'][-2] == "[":  # arrays
                             tmp_param_dump += ": [\";"
@@ -160,10 +161,7 @@ def params_file_data(project_short: str, filename: str):
                                 " int i = 0; i < "
                             tmp_param_dump += str(v["size"])
                             tmp_param_dump += f"; ++i)\n{t*3}{{\n{t*4}sout << "
-                            tmp_param_dump += "::".join(namespace_list)
-                            tmp_param_dump += "::"
-                            tmp_param_dump += table_names
-                            tmp_param_dump += k
+                            tmp_param_dump += get_full_vname(namespace_list, table_names, k)
                             tmp_param_dump += "[i] << (i<"
                             tmp_param_dump += str(v["size"])
                             tmp_param_dump += "-1"
@@ -171,10 +169,7 @@ def params_file_data(project_short: str, filename: str):
                             tmp_param_dump += f"{t*3}}}\n{t*3}sout"
                         else:  # non-arrays
                             tmp_param_dump += ": \" << "
-                            tmp_param_dump += "::".join(namespace_list)
-                            tmp_param_dump += "::"
-                            tmp_param_dump += table_names
-                            tmp_param_dump += k
+                            tmp_param_dump += get_full_vname(namespace_list, table_names, k)
                         tmp_param_dump += " << std::endl;\n"
 
                         param_dump += tmp_param_dump
@@ -310,7 +305,7 @@ def params_file_data(project_short: str, filename: str):
                                 first_pc = False
 
                                 # "previous non-invariant parameter" in this NS
-                                PNIP = False
+                                PNIP = True
 
                             # if this is not the first namespace
                             else:
@@ -362,131 +357,13 @@ def params_file_data(project_short: str, filename: str):
                             # In grUtils.cpp: define from user input; throw
                             # error if value input not given
 
-                            paramh_str += indent_pc
-                            paramh_str += "extern std::" if v["type"][
-                                0] == 's' else "extern "
-                            paramh_str += v["type"][:-2] if v["type"][
-                                -2] == '[' else v["type"]
-                            paramh_str += " "
-                            paramh_str += table_names
-                            paramh_str += k
+                            temp_ph, temp_pc, temp_read = get_variant(
+                                namespace_list, table_names, k, v, indent_ph,
+                                indent_pc, curr_namespace_list_ph, 3)
 
-                            # this writes the size declaration for arrays
-                            if v["type"][-2] == '[':
-                                paramh_str += "[" + str(v["size"]) + "]"
-
-                            paramh_str += ';\n'
-
-                            # add to the c version
-                            paramc_str += indent_pc
-                            if v["type"][0] == 's':
-                                paramc_str += "std::"  # strings need "std::"
-                            # arrays: chop "[]"
-                            paramc_str += v["type"][:-2] if v["type"][
-                                -2] == '[' else v["type"]
-                            paramc_str += " "
-                            paramc_str += table_names
-                            paramc_str += k
-
-                            # this writes the size declaration for arrays
-                            if v["type"][-2] == '[':
-                                paramc_str += "[" + str(v["size"]) + "]"
-
-                            paramc_str += ";\n"
-
-                            # now we update the param_read string
-                            param_read += f"{t*3}if(file.contains(\""
-                            param_read += "::".join(namespace_list)
-                            param_read += "::"
-                            param_read += table_names
-                            param_read += k
-                            param_read += f"\"))\n{t*3}{{\n{t*3}"
-
-                            if (v["type"][0] == 'i' or v["type"][0]
-                                    == 'd') and v["type"][-2] != '[':
-                                param_read += "if (" + str(v["min"])
-                                param_read += " > file[\""
-                                param_read += "::".join(namespace_list)
-                                param_read += "::"
-                                param_read += table_names
-                                param_read += k
-                                param_read += "\"].as_"
-                                param_read += "floating" if v["type"][
-                                    0] == 'd' else "integer"
-                                param_read += "() || "
-                                # maximum side of the check
-                                param_read += str(v["max"])
-                                param_read += " < file[\""
-                                param_read += "::".join(namespace_list)
-                                param_read += "::"
-                                param_read += table_names
-                                param_read += k
-                                param_read += "\"].as_"
-                                param_read += "floating" if v["type"][
-                                    0] == 'd' else "integer"
-                                param_read += f"())\n{t*4}{{\n{t*5}"
-                                param_read += "std::cerr << R\"" + \
-                                    "(Invalid value for \""
-                                param_read += "::".join(namespace_list)
-                                param_read += "::"
-                                param_read += table_names
-                                param_read += k
-                                param_read += "\")\" << std::endl;" + \
-                                    f"\n{t*5}exit(-1);\n{t*4}}}\n\n{t*4}"
-
-                            # only for arrays: write a loop to assign values
-                            if v["type"][-2] == '[':
-                                param_read += "for (int i = 0; i < "
-                                param_read += str(v["size"])
-                                param_read += f"; ++i)\n{t*4}{{\n{t*5}"
-
-                            param_read += "::".join(namespace_list)
-                            param_read += "::"
-                            param_read += table_names
-                            param_read += k
-                            # array loop stuff
-                            param_read += "[i] = file[\"" \
-                                if v["type"][-2] == '[' else " = file[\""
-
-                            param_read += "::".join(namespace_list)
-                            param_read += "::"
-                            param_read += table_names
-                            param_read += k
-                            param_read += "\"][i].as_" \
-                                if v["type"][-2] == '[' else "\"].as_"
-
-                            # pick correct type for parameter
-                            if v["type"][0] == 'd':
-                                param_read += "floating"
-                            elif v["type"][0] == 'i' or v["type"][0] == 'u':
-                                param_read += "integer"
-                            elif v["type"][0] == 's':
-                                param_read += "string"
-                            else:
-                                param_read += "boolean"
-
-                            if v["type"][-2] == '[':
-                                param_read += f"();\n{t*4}}}\n{t*3}}}\n\n"
-                            else:
-                                param_read += f"();\n{t*3}}}\n\n"
-
-                            param_read += f"{t*3}else\n{t*3}{{\n{t*4}"
-                            param_read += "std::cerr << R\"(No value for \""
-                            param_read += table_names
-                            param_read += k
-                            param_read += "\"; \""
-                            param_read += table_names + k
-                            param_read += "\" must be given a value)\" " + \
-                                "<< std::endl;"
-                            param_read += f"\n{t*4}exit(-1);\n{t*3}}}\n\n"
-
-                            # temp_ph, temp_pc, temp_read = get_variant(
-                            #     namespace_list, table_names, k, v, indent_ph,
-                            #     indent_pc, curr_namespace_list_ph, 3)
-                            
-                            # paramh_str += temp_ph
-                            # paramc_str += temp_pc
-                            # param_read += temp_read
+                            paramh_str += temp_ph
+                            paramc_str += temp_pc
+                            param_read += temp_read
 
                         # if the parameter is semivariant
                         elif v["class"][0] == 's':
@@ -498,6 +375,57 @@ def params_file_data(project_short: str, filename: str):
                             paramh_str += temp_ph
                             paramc_str += temp_pc
                             param_read += temp_read
+
+                        # if the parameter is invariant
+                        elif v["class"][0] == "i":
+                            temp_ph = get_invariant(table_names, k, v,
+                                                    indent_ph)
+
+                        # now, for all but invariant, we write broadcast code
+                        if v["class"][0] != "i":
+                            bcasts.append(
+                                get_broadcast(table_names, k, v,
+                                              curr_namespace_list_ph, 3))
+
+                        # now update indent_ph and indent_pc
+                        indent_ph = indent_ph[:-len(TAB)]
+                        indent_pc = indent_pc[:-len(TAB)]
+
+                        break
+
+    # now we close up all namespaces
+    for ii in range(len(curr_namespace_list_ph)):
+        paramh_str += indent_ph
+        paramh_str += "}\n"
+        indent_ph = indent_ph[:-len(TAB)]
+
+    # and close up all namespaces in the cpp file
+    for ii in range(len(curr_namespace_list_pc)):
+        paramc_str += indent_pc
+        paramc_str += "}\n"
+        indent_pc = indent_pc[:-len(TAB)]
+
+    # blackhole 1
+    param_read += f"{TAB * 3}{ps}:BH1 = BH({ps_u}_BH1_MASS,\n"
+    for bhvar in BHOLE_VARS[1:]:
+        param_read += f"{TAB * 6}{ps_u}_BH1_{bhvar.upper()}\n"
+
+    # blackhole 2
+    param_read += f"{TAB * 3}{ps}:BH2 = BH({ps_u}_BH2_MASS,\n"
+    for bhvar in BHOLE_VARS[1:]:
+        param_read += f"{TAB * 6}{ps_u}_BH2_{bhvar.upper()}\n"
+
+    # combine the brodcasts to the param_read
+    param_read += "\n".join(bcasts)
+    param_read += f"\n{TAB*2}}}\n{TAB}}}"
+
+    # then add param_read to the c file
+    paramc_str += param_read
+    paramc_str += "\n"
+    paramc_str += param_dump
+
+    # then close it out with braces
+    paramc_str += f"{TAB*2}}}\n{TAB}}}\n}}\n"
 
     return paramh_str, paramc_str
 
@@ -566,11 +494,11 @@ def get_variant(namespaces,
     param_read += "[i]" if vinfo["type"][-2] == '[' else ""
     param_read += " = file[\""
     param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += "][i]" if vinfo["type"][-2] == '[' else "]"
+    param_read += "\"][i]" if vinfo["type"][-2] == '[' else "\"]"
     param_read += ".as_"
     if vinfo["type"][0] == 'd':
         param_read += "floating"
-    elif vinfo["type"][0] == 'i' or vinfo["type"] == 'u':
+    elif vinfo["type"][0] == 'i' or vinfo["type"][0] == 'u':
         param_read += "integer"
     elif vinfo["type"][0] == 's':
         param_read += "string"
@@ -617,7 +545,7 @@ def get_semiinvariant(namespaces,
 
     # size declaration for arrays
     if vinfo["type"][-2] == '[':
-        paramh_str += "[" + str(v["size"]) + "]"
+        paramh_str += "[" + str(vinfo["size"]) + "]"
     paramh_str += ';\n'
 
     # now for the declarations in the cpp file
@@ -660,13 +588,13 @@ def get_semiinvariant(namespaces,
     param_read += "[i]" if vinfo["type"][-2] == '[' else ""
     param_read += " = file[\""
     param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += "][i]" if vinfo["type"][-2] == '[' else "]"
+    param_read += "\"][i]" if vinfo["type"][-2] == '[' else "\"]"
     param_read += ".as_"
     if vinfo["type"][0] == 'd':
         param_read += "floating"
-    elif vinfo["type"][0] == 'i' or vinfo["type"] == 'u':
+    elif vinfo["type"][0] == 'i' or vinfo["type"][0] == 'u':
         param_read += "integer"
-    elif v["type"][0] == 's':
+    elif vinfo["type"][0] == 's':
         param_read += "string"
     else:
         param_read += "boolean"
@@ -677,6 +605,56 @@ def get_semiinvariant(namespaces,
         param_read += f"();\n{TAB * base_t}}}\n\n"
 
     return paramh_str, paramc_str, param_read
+
+
+def get_invariant(table_name, vname, vinfo, indent_ph):
+
+    paramh_str = indent_ph
+    paramh_str += "static const "
+    paramh_str += "std::" if vinfo["type"][0] == 's' else ""
+    paramh_str += vinfo["type"][:-2] if vinfo["type"][-2] == '[' else vinfo[
+        "type"]
+    paramh_str += " "
+
+    paramh_str += table_name + vname
+
+    if vinfo["type"][-2] == "[":
+        paramh_str += "[" + str(vinfo["size"]) + "[ = {"
+        paramh_str += str(vinfo["default"])[1:-1]
+        paramh_str += "};\n"
+    else:
+        paramh_str += " = \"" if vinfo["type"] == 's' else " = "
+        paramh_str += str(vinfo["default"])
+        paramh_str += "\";\n" if vinfo["type"] == 's' else ";\n"
+
+    return paramh_str
+
+
+def get_broadcast(table_name, vname, vinfo, curr_namespace_list_ph, base_t=3):
+
+    bcasts = f"{TAB * base_t}"
+
+    # if we have an array
+    if vinfo["type"][-1] == ']':
+        bcasts += "MPI_Bcast(&("
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += "), " + str(vinfo["size"]) + ", "
+        bcasts += "MPI_DOUBLE" if vinfo["type"][0] == "d" else "MPI_INT"
+        bcasts += ", 0, comm);"
+
+    elif vinfo["type"] == "s":
+        bcasts += "MPI_Bcast(const_cast<char*>("
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += ".c_str()), "
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += ".size() + 1, MPI_CHAR, 0, comm);"
+
+    else:
+        bcasts += "par::Mpi_Bcast(&"
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += ", 1, 0, comm);"
+
+    return bcasts
 
 
 def get_full_vname(namespaces, table_name, vname):
