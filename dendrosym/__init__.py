@@ -26,6 +26,8 @@ import dendrosym.sympy_cachesim
 
 import dendrosym.utils
 
+import dendrosym.params
+
 # and import the class
 from dendrosym.theclass import DendroGRCodeGen
 from dendrosym.nr_configs import NRConfig

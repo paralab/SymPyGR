@@ -153,15 +153,17 @@ def params_file_data(project_short: str, filename: str):
                         # parameter name
                         tmp_param_dump = ""
                         tmp_param_dump += f'{t*3}sout << "\\t'
-                        tmp_param_dump += get_full_vname(namespace_list, table_names, k)
+                        tmp_param_dump += get_full_vname(
+                            namespace_list, table_names, k)
 
-                        if v['type'][-2] == "[":  # arrays
+                        if v['dtype'][-2] == "[":  # arrays
                             tmp_param_dump += ": [\";"
                             tmp_param_dump += f"\n{t*3}for (unsigned " + \
                                 " int i = 0; i < "
                             tmp_param_dump += str(v["size"])
                             tmp_param_dump += f"; ++i)\n{t*3}{{\n{t*4}sout << "
-                            tmp_param_dump += get_full_vname(namespace_list, table_names, k)
+                            tmp_param_dump += get_full_vname(
+                                namespace_list, table_names, k)
                             tmp_param_dump += "[i] << (i<"
                             tmp_param_dump += str(v["size"])
                             tmp_param_dump += "-1"
@@ -169,7 +171,8 @@ def params_file_data(project_short: str, filename: str):
                             tmp_param_dump += f"{t*3}}}\n{t*3}sout"
                         else:  # non-arrays
                             tmp_param_dump += ": \" << "
-                            tmp_param_dump += get_full_vname(namespace_list, table_names, k)
+                            tmp_param_dump += get_full_vname(
+                                namespace_list, table_names, k)
                         tmp_param_dump += " << std::endl;\n"
 
                         param_dump += tmp_param_dump
@@ -380,6 +383,8 @@ def params_file_data(project_short: str, filename: str):
                         elif v["class"][0] == "i":
                             temp_ph = get_invariant(table_names, k, v,
                                                     indent_ph)
+                            
+                            paramh_str += temp_ph
 
                         # now, for all but invariant, we write broadcast code
                         if v["class"][0] != "i":
@@ -445,32 +450,35 @@ def get_variant(namespaces,
     # error if value input not given
 
     paramh_str = indent_pc
-    paramh_str += "extern std::" if vinfo["type"][0] == 's' else "extern "
-    paramh_str += vinfo["type"][:-2] if vinfo["type"][-2] == '[' else vinfo[
-        "type"]
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get("desc", "No description given") + " */\n"
+        paramh_str += indent_ph
+    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
+    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
     paramh_str += " "
     paramh_str += table_name
     paramh_str += vname
 
     # this writes the size declaration for arrays
-    if vinfo["type"][-2] == '[':
+    if vinfo["dtype"][-2] == '[':
         paramh_str += "[" + str(vinfo["size"]) + "]"
 
-    paramh_str += ';\n'
+    paramh_str += ';\n\n'
 
     # add to the c version
     paramc_str = indent_pc
-    if vinfo["type"][0] == 's':
+    if vinfo["dtype"][0] == 's':
         paramc_str += "std::"  # strings need "std::"
     # arrays: chop "[]"
-    paramc_str += vinfo["type"][:-2] if vinfo["type"][-2] == '[' else vinfo[
-        "type"]
+    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
     paramc_str += " "
     paramc_str += table_name
     paramc_str += vname
 
     # this writes the size declaration for arrays
-    if vinfo["type"][-2] == '[':
+    if vinfo["dtype"][-2] == '[':
         paramc_str += "[" + str(vinfo["size"]) + "]"
 
     paramc_str += ";\n"
@@ -480,32 +488,32 @@ def get_variant(namespaces,
     param_read += get_full_vname(namespaces, table_name, vname)
     param_read += f"\"))\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
 
-    if (vinfo["type"][0] == 'i'
-            or vinfo["type"][0] == 'd') and vinfo["type"][-2] != '[':
+    if (vinfo["dtype"][0] == 'i'
+            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
         param_read += get_bound_text(namespaces, table_name, vname, vinfo)
 
     # only for arrays: write a loop to assign values
-    if vinfo["type"][-2] == '[':
+    if vinfo["dtype"][-2] == '[':
         param_read += get_array_assignment_start(vinfo, base_t + 1)
 
     param_read += get_full_vname(namespaces, table_name, vname)
 
     # add the read definition
-    param_read += "[i]" if vinfo["type"][-2] == '[' else ""
+    param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
     param_read += " = file[\""
     param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += "\"][i]" if vinfo["type"][-2] == '[' else "\"]"
+    param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
     param_read += ".as_"
-    if vinfo["type"][0] == 'd':
+    if vinfo["dtype"][0] == 'd':
         param_read += "floating"
-    elif vinfo["type"][0] == 'i' or vinfo["type"][0] == 'u':
+    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
         param_read += "integer"
-    elif vinfo["type"][0] == 's':
+    elif vinfo["dtype"][0] == 's':
         param_read += "string"
     else:
         param_read += "boolean"
 
-    if vinfo["type"][-2] == '[':
+    if vinfo["dtype"][-2] == '[':
         param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
     else:
         param_read += f"();\n{TAB * base_t}}}\n\n"
@@ -538,68 +546,71 @@ def get_semiinvariant(namespaces,
     # source needs declaration and define
     # grUtils.cpp define from user input
     paramh_str += indent_ph
-    paramh_str += "extern std::" if vinfo["type"][0] == 's' else "extern "
-    paramh_str += vinfo["type"][:-2] if vinfo["type"][-2] == '[' else vinfo[
-        "type"]
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get("desc", "No description given") + " */\n"
+        paramh_str += indent_ph
+    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
+    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
     paramh_str += " " + table_name + vname
 
     # size declaration for arrays
-    if vinfo["type"][-2] == '[':
+    if vinfo["dtype"][-2] == '[':
         paramh_str += "[" + str(vinfo["size"]) + "]"
-    paramh_str += ';\n'
+    paramh_str += ';\n\n'
 
     # now for the declarations in the cpp file
     paramc_str += indent_pc
-    if vinfo["type"][0] == 's':
+    if vinfo["dtype"][0] == 's':
         paramc_str += "std::"
-    paramc_str += vinfo["type"][:-2] if vinfo["type"][-2] == '[' else vinfo[
-        "type"]
+    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
     paramc_str += " " + table_name + vname
 
     # if we have an array
-    if vinfo["type"][-2] == '[':
+    if vinfo["dtype"][-2] == '[':
         paramc_str += "[" + str(vinfo["size"]) + "]"
         paramc_str += " = {" + str(vinfo["default"])[1:-1] + "}"
     # if it isn't an array
     else:
-        paramc_str += " = \"" if vinfo["type"][0] == 's' else " = "
+        paramc_str += " = \"" if vinfo["dtype"][0] == 's' else " = "
         paramc_str += str(
-            vinfo["default"]).lower() if vinfo["type"][0] == 'b' else str(
+            vinfo["default"]).lower() if vinfo["dtype"][0] == 'b' else str(
                 vinfo["default"])
 
-    paramc_str += "\";\n" if vinfo["type"][0] == 's' else ";\n"
+    paramc_str += "\";\n" if vinfo["dtype"][0] == 's' else ";\n"
 
     # then the parameter reading chunk
     param_read += f"{TAB*3}if(file.contains(\""
     param_read += get_full_vname(namespaces, table_name, vname)
     param_read += f"\"))\n{TAB*base_t}{{\n{TAB*(base_t+1)}"
 
-    if (vinfo["type"][0] == 'i'
-            or vinfo["type"][0] == 'd') and vinfo["type"][-2] != '[':
+    if (vinfo["dtype"][0] == 'i'
+            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
         param_read += get_bound_text(namespaces, table_name, vname, vinfo)
 
     # only for arrays, we need to write a loop to assign values
-    if vinfo["type"][-2] == '[':
+    if vinfo["dtype"][-2] == '[':
         param_read += get_array_assignment_start(vinfo)
 
     param_read += get_full_vname(curr_namespace_list_ph, table_name, vname)
 
     # add the read definition
-    param_read += "[i]" if vinfo["type"][-2] == '[' else ""
+    param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
     param_read += " = file[\""
     param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += "\"][i]" if vinfo["type"][-2] == '[' else "\"]"
+    param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
     param_read += ".as_"
-    if vinfo["type"][0] == 'd':
+    if vinfo["dtype"][0] == 'd':
         param_read += "floating"
-    elif vinfo["type"][0] == 'i' or vinfo["type"][0] == 'u':
+    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
         param_read += "integer"
-    elif vinfo["type"][0] == 's':
+    elif vinfo["dtype"][0] == 's':
         param_read += "string"
     else:
         param_read += "boolean"
 
-    if vinfo["type"][-2] == "[":
+    if vinfo["dtype"][-2] == "[":
         param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
     else:
         param_read += f"();\n{TAB * base_t}}}\n\n"
@@ -610,24 +621,27 @@ def get_semiinvariant(namespaces,
 def get_invariant(table_name, vname, vinfo, indent_ph):
 
     paramh_str = indent_ph
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get("desc", "No description given") + " */\n"
+        paramh_str += indent_ph
     paramh_str += "static const "
-    paramh_str += "std::" if vinfo["type"][0] == 's' else ""
-    paramh_str += vinfo["type"][:-2] if vinfo["type"][-2] == '[' else vinfo[
-        "type"]
+    paramh_str += "std::" if vinfo["dtype"][0] == 's' else ""
+    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
     paramh_str += " "
 
     paramh_str += table_name + vname
 
-    if vinfo["type"][-2] == "[":
+    if vinfo["dtype"][-2] == "[":
         paramh_str += "[" + str(vinfo["size"]) + "[ = {"
         paramh_str += str(vinfo["default"])[1:-1]
         paramh_str += "};\n"
     else:
-        paramh_str += " = \"" if vinfo["type"] == 's' else " = "
+        paramh_str += " = \"" if vinfo["dtype"] == 's' else " = "
         paramh_str += str(vinfo["default"])
-        paramh_str += "\";\n" if vinfo["type"] == 's' else ";\n"
+        paramh_str += "\";\n" if vinfo["dtype"] == 's' else ";\n"
 
-    return paramh_str
+    return paramh_str + "\n"
 
 
 def get_broadcast(table_name, vname, vinfo, curr_namespace_list_ph, base_t=3):
@@ -635,14 +649,14 @@ def get_broadcast(table_name, vname, vinfo, curr_namespace_list_ph, base_t=3):
     bcasts = f"{TAB * base_t}"
 
     # if we have an array
-    if vinfo["type"][-1] == ']':
+    if vinfo["dtype"][-1] == ']':
         bcasts += "MPI_Bcast(&("
         bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
         bcasts += "), " + str(vinfo["size"]) + ", "
-        bcasts += "MPI_DOUBLE" if vinfo["type"][0] == "d" else "MPI_INT"
+        bcasts += "MPI_DOUBLE" if vinfo["dtype"][0] == "d" else "MPI_INT"
         bcasts += ", 0, comm);"
 
-    elif vinfo["type"] == "s":
+    elif vinfo["dtype"] == "s":
         bcasts += "MPI_Bcast(const_cast<char*>("
         bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
         bcasts += ".c_str()), "
@@ -676,14 +690,14 @@ def get_bound_text(namespaces, table_name, vname, vinfo, base_t=4):
     out_str += get_full_vname(namespaces, table_name, vname)
     out_str += "\"].as_"
 
-    out_str += "floating" if vinfo["type"][0] == 'd' else "integer"
+    out_str += "floating" if vinfo["dtype"][0] == 'd' else "integer"
 
     out_str += "() || " + str(vinfo["max"]) + " < file[\""
 
     out_str += get_full_vname(namespaces, table_name, vname)
 
     out_str += "\".as_"
-    out_str += "floating" if vinfo["type"][0] == 'd' else "integer"
+    out_str += "floating" if vinfo["dtype"][0] == 'd' else "integer"
 
     # now for the text that declares it's an invalid value
     out_str += f"())\n{TAB * base_t}{{\n"
