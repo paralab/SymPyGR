@@ -2,6 +2,7 @@
 @brief parameter file generation should go here.
 '''
 
+import os
 import tomlkit as toml
 
 TAB = "    "
@@ -13,8 +14,23 @@ BHOLE_VARS = [
 
 
 def get_toml_data(filename):
-    """Function that can read a TOML file and create a dictionary
+    """Function that can read a TOML file and create a table
 
+    The main purpose of this function is to make it easier to
+    load a TOML file in Python. Instead of having to write the
+    `open` block of code, you can just pass through a filename
+    and it will read the entire file.
+
+    Parameters
+    ----------
+    filename : str
+        The input file name for the TOML data to load.
+
+    Returns
+    -------
+    tomlkit.Table
+        A "wrapped" dict object that contains the key and
+        item pairs found inside the TOML file.
     """
     with open(filename, "r") as in_file:
         toml_data = toml.parse(in_file.read())
@@ -22,10 +38,28 @@ def get_toml_data(filename):
     return toml_data
 
 
-# NOTE: i'm ignoring all of the "includes, jumping straight to the params"
-
-
 def get_rank_npes(n_tabs=2, tab_char="    "):
+    """Generates the code for getting MPI rank and size
+
+    This is to keep the block clean later on, but can also
+    handle having a different number of indents with custom
+    tab characters.
+
+    Parameters
+    ----------
+    n_tabs : int, optional
+        The indentation size that you would like for this block.
+        Defaults to two.
+    tab_char : str, optional
+        The character to use for the indentation. Defaults to
+        four spaces.
+
+    Returns
+    -------
+    tomlkit.Table
+        A "wrapped" dict object that contains the key and
+        item pairs found inside the TOML file.
+    """
     t = tab_char * n_tabs
     outstr = f"{t}int rank, npes;\n"
     outstr += f"{t}MPI_Comm_rank(comm, &rank);\n"
@@ -33,8 +67,539 @@ def get_rank_npes(n_tabs=2, tab_char="    "):
     return outstr
 
 
-def params_file_data(project_short: str, filename: str):
+def get_variant_text(namespaces: list,
+                     table_name: str,
+                     vname: str,
+                     vinfo: toml.table,
+                     indent_ph: str,
+                     indent_pc: str,
+                     curr_namespace_list_ph,
+                     base_t: int = 3):
+    """Generate text pieces for a variant parameter
 
+    This function will create the different pieces of text
+    that are required for a variant parameter. A variant
+    parameter is one that is declared as an external variable
+    in the header file, initialilzed in the source file, but
+    required to be read in at run time.
+
+    This returns three different output strings that define
+    the behavior for each of those different files.
+
+    Parameters
+    ----------
+    namespaces : list
+        The list of namespaces that belong to this parameter.
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    indent_ph : str
+        The current indentation for the parameter header
+    indent_pc : str
+        The current indentation for the parameter source
+    curr_namespace_list_ph : list of str
+        The current list of namespaces captured inside the
+        header file.
+    base_t : int
+        The number of indents that are currently used in this block.
+
+    Returns
+    -------
+    paramh_str : str
+        The parameters header string
+    paramc_str : str
+        The parameters source string
+    param_read : str
+        The parameter read string
+    """
+
+    # In parameters.h: declare extern
+    # In parameters.cpp: declare but don't define
+    # In grUtils.cpp: define from user input; throw
+    # error if value input not given
+
+    paramh_str = indent_pc
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get(
+            "desc", "No description given") + " */\n"
+        paramh_str += indent_ph
+    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
+    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
+    paramh_str += " "
+    paramh_str += table_name
+    paramh_str += vname
+
+    # this writes the size declaration for arrays
+    if vinfo["dtype"][-2] == '[':
+        paramh_str += "[" + str(vinfo["size"]) + "]"
+
+    paramh_str += ';\n\n'
+
+    # add to the c version
+    paramc_str = indent_pc
+    if vinfo["dtype"][0] == 's':
+        paramc_str += "std::"  # strings need "std::"
+    # arrays: chop "[]"
+    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
+    paramc_str += " "
+    paramc_str += table_name
+    paramc_str += vname
+
+    # this writes the size declaration for arrays
+    if vinfo["dtype"][-2] == '[':
+        paramc_str += "[" + str(vinfo["size"]) + "]"
+
+    paramc_str += ";\n"
+
+    # now we update the param_read string
+    param_read = f"{TAB * base_t}if(file.contains(\""
+    param_read += get_full_vname(namespaces, table_name, vname)
+    param_read += f"\"))\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
+
+    if (vinfo["dtype"][0] == 'i'
+            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
+        param_read += get_bound_text(namespaces, table_name, vname, vinfo)
+
+    # only for arrays: write a loop to assign values
+    if vinfo["dtype"][-2] == '[':
+        param_read += get_array_assignment_start(vinfo, base_t + 1)
+
+    param_read += get_full_vname(namespaces, table_name, vname)
+
+    # add the read definition
+    param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
+    param_read += " = file[\""
+    param_read += get_full_vname(namespaces, table_name, vname)
+    param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
+    param_read += ".as_"
+    if vinfo["dtype"][0] == 'd':
+        param_read += "floating"
+    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
+        param_read += "integer"
+    elif vinfo["dtype"][0] == 's':
+        param_read += "string"
+    else:
+        param_read += "boolean"
+
+    if vinfo["dtype"][-2] == '[':
+        param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
+    else:
+        param_read += f"();\n{TAB * base_t}}}\n\n"
+
+    param_read += f"{TAB * base_t}else\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
+    param_read += "std::cerr << R\"(No value for \""
+    param_read += table_name + vname
+    param_read += "\"; \""
+    param_read += table_name + vname
+    param_read += "\" must be given a value)\" " + "<< std::endl;"
+    param_read += f"\n{TAB * (base_t + 1)}exit(-1);\n{TAB * base_t}}}\n\n"
+
+    return paramh_str, paramc_str, param_read
+
+
+def get_semivariant_text(namespaces: list,
+                         table_name: str,
+                         vname: str,
+                         vinfo: toml.table,
+                         indent_ph: str,
+                         indent_pc: str,
+                         curr_namespace_list_ph: list,
+                         base_t: int = 3):
+    """Generate text pieces for a semivariant parameter
+
+    This function will create the different pieces of text
+    that are required for a semivariant parameter. A semivariant
+    parameter is one that is declared as an external variable
+    in the header file, initialilzed in the source file, and
+    able to be modified through an input parameter file at runtime.
+
+    This returns three different output strings that define
+    the behavior for each of those different files.
+
+    Parameters
+    ----------
+    namespaces : list
+        The list of namespaces that belong to this parameter.
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    indent_ph : str
+        The current indentation for the parameter header
+    indent_pc : str
+        The current indentation for the parameter source
+    curr_namespace_list_ph : list of str
+        The current list of namespaces captured inside the
+        header file.
+    base_t : int
+        The number of indents that are currently used in this block.
+
+    Returns
+    -------
+    paramh_str : str
+        The parameters header string
+    paramc_str : str
+        The parameters source string
+    param_read : str
+        The parameter read string
+    """
+
+    paramh_str = ""
+    paramc_str = ""
+    param_read = ""
+
+    # header needs extern declaration
+    # source needs declaration and define
+    # grUtils.cpp define from user input
+    paramh_str += indent_ph
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get(
+            "desc", "No description given") + " */\n"
+        paramh_str += indent_ph
+    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
+    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
+    paramh_str += " " + table_name + vname
+
+    # size declaration for arrays
+    if vinfo["dtype"][-2] == '[':
+        paramh_str += "[" + str(vinfo["size"]) + "]"
+    paramh_str += ';\n\n'
+
+    # now for the declarations in the cpp file
+    paramc_str += indent_pc
+    if vinfo["dtype"][0] == 's':
+        paramc_str += "std::"
+    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
+    paramc_str += " " + table_name + vname
+
+    # if we have an array
+    if vinfo["dtype"][-2] == '[':
+        paramc_str += "[" + str(vinfo["size"]) + "]"
+        paramc_str += " = {" + str(vinfo["default"])[1:-1] + "}"
+    # if it isn't an array
+    else:
+        paramc_str += " = \"" if vinfo["dtype"][0] == 's' else " = "
+        paramc_str += str(
+            vinfo["default"]).lower() if vinfo["dtype"][0] == 'b' else str(
+                vinfo["default"])
+
+    paramc_str += "\";\n" if vinfo["dtype"][0] == 's' else ";\n"
+
+    # then the parameter reading chunk
+    param_read += f"{TAB*3}if(file.contains(\""
+    param_read += get_full_vname(namespaces, table_name, vname)
+    param_read += f"\"))\n{TAB*base_t}{{\n{TAB*(base_t+1)}"
+
+    if (vinfo["dtype"][0] == 'i'
+            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
+        param_read += get_bound_text(namespaces, table_name, vname, vinfo)
+
+    # only for arrays, we need to write a loop to assign values
+    if vinfo["dtype"][-2] == '[':
+        param_read += get_array_assignment_start(vinfo)
+
+    param_read += get_full_vname(curr_namespace_list_ph, table_name, vname)
+
+    # add the read definition
+    param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
+    param_read += " = file[\""
+    param_read += get_full_vname(namespaces, table_name, vname)
+    param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
+    param_read += ".as_"
+    if vinfo["dtype"][0] == 'd':
+        param_read += "floating"
+    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
+        param_read += "integer"
+    elif vinfo["dtype"][0] == 's':
+        param_read += "string"
+    else:
+        param_read += "boolean"
+
+    if vinfo["dtype"][-2] == "[":
+        param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
+    else:
+        param_read += f"();\n{TAB * base_t}}}\n\n"
+
+    return paramh_str, paramc_str, param_read
+
+
+def get_invariant_text(table_name: str, vname: str, vinfo: toml.table,
+                       indent_ph: str):
+    """Generate text pieces for an invariant parameter
+
+    This function will create the different pieces of text
+    that are required for an invariant parameter. An invariant
+    parameter is one that is declared as a constant variable
+    in the header file. It cannot be modified unless the program
+    is recompiled.
+
+    This returns the output string that define
+    the behavior for the header file.
+
+    Parameters
+    ----------
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    indent_ph : str
+        The current indentation for the parameter header
+
+    Returns
+    -------
+    paramh_str : str
+        The parameters header string
+    """
+
+    paramh_str = indent_ph
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get(
+            "desc", "No description given") + " */\n"
+        paramh_str += indent_ph
+    paramh_str += "static const "
+    paramh_str += "std::" if vinfo["dtype"][0] == 's' else ""
+    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
+    paramh_str += " "
+
+    paramh_str += table_name + vname
+
+    if vinfo["dtype"][-2] == "[":
+        paramh_str += "[" + str(vinfo["size"]) + "[ = {"
+        paramh_str += str(vinfo["default"])[1:-1]
+        paramh_str += "};\n"
+    else:
+        paramh_str += " = \"" if vinfo["dtype"] == 's' else " = "
+        paramh_str += str(vinfo["default"])
+        paramh_str += "\";\n" if vinfo["dtype"] == 's' else ";\n"
+
+    return paramh_str + "\n"
+
+
+def get_broadcast(table_name: str,
+                  vname: str,
+                  vinfo: toml.table,
+                  curr_namespace_list_ph: str,
+                  base_t: int = 3):
+    """Generate broadcasting text for MPI implementations
+
+    This function will create the code that broadcasts the parameters
+    through MPI to the other processes. This is necessary for each
+    individual process (across multiple nodes) as it is the only
+    way for the parameters to be consistent.
+
+    This returns the output string that defines the behavior
+    of broadcasting the parameters.
+
+    Parameters
+    ----------
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    curr_namespace_list_ph : list of str
+        The current list of namespaces captured inside the
+        header file.
+    base_t : int
+        The number of indents that are currently used in this block.
+
+    Returns
+    -------
+    bcasts : str
+        The broadcasting source string
+    """
+    bcasts = f"{TAB * base_t}"
+
+    # if we have an array
+    if vinfo["dtype"][-1] == ']':
+        bcasts += "MPI_Bcast(&("
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += "), " + str(vinfo["size"]) + ", "
+        bcasts += "MPI_DOUBLE" if vinfo["dtype"][0] == "d" else "MPI_INT"
+        bcasts += ", 0, comm);"
+
+    # if it's a string
+    elif vinfo["dtype"][0] == "s":
+        bcasts += "MPI_Bcast(const_cast<char*>("
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += ".c_str()), "
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += ".size() + 1, MPI_CHAR, 0, comm);"
+
+    # if it's anything else, we have to use the par
+    # implementation of mpi_bcast in dendro
+    else:
+        bcasts += "par::Mpi_Bcast(&"
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += ", 1, 0, comm);"
+
+    return bcasts
+
+
+def get_full_vname(namespaces: list, table_name: str, vname: str):
+    """Generates the string that is the full variable name
+
+    This full variable name is what is used in the C++ code across
+    all of the different namespaces and if there's a table prefix.
+    Putting it all here reduces repeated code.
+
+    Parameters
+    ----------
+    namespaces : list
+        The list of namespaces that belong to this parameter.
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+
+    Returns
+    -------
+    str
+        The output string of the full variable name
+    """
+    out_str = "::".join(namespaces)
+    out_str += "::" + table_name + vname
+    return out_str
+
+
+def get_array_assignment_start(vinfo: toml.table, base_t: int = 4):
+    """Generates the text for starting an array's assignment
+
+    This simple function creates the C++ code for populating
+    a parameter that's an array with the data from the input
+    file. The rest of the block needs to be handled separately.
+
+    Parameters
+    ----------
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    base_t : int
+        The number of indents that are currently used in this block.
+
+    Returns
+    -------
+    str
+        The output string for array population
+    """
+
+    out_str = "for (int i = 0; i < "
+    out_str += str(vinfo["size"])
+    out_str += f"; ++i)\n{TAB*base_t}{{\n{TAB*(base_t+1)}"
+    return out_str
+
+
+def get_bound_text(namespaces, table_name, vname, vinfo, base_t=4):
+    """Creates the code for checking the bounds of a parameter
+
+    A parameter has the option of having a minimum and a maximum
+    set in the template. This function creates the code that
+    will then check if the input value by the incoming parameter
+    file is within those bounds.
+
+    Parameters
+    ----------
+    namespaces : list
+        The list of namespaces that belong to this parameter.
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    base_t : int
+        The number of indents that are currently used in this block.
+
+    Returns
+    -------
+    str
+        The output code that checks the input against the bounds
+    """
+    out_str = "if (" + str(vinfo["min"]) + " > file[\""
+    out_str += get_full_vname(namespaces, table_name, vname)
+    out_str += "\"].as_"
+
+    out_str += "floating" if vinfo["dtype"][0] == 'd' else "integer"
+
+    out_str += "() || " + str(vinfo["max"]) + " < file[\""
+
+    out_str += get_full_vname(namespaces, table_name, vname)
+
+    out_str += "\"].as_"
+    out_str += "floating" if vinfo["dtype"][0] == 'd' else "integer"
+
+    # now for the text that declares it's an invalid value
+    out_str += f"())\n{TAB * base_t}{{\n"
+    out_str += f"{TAB * (base_t + 1)}std::cerr << R\"(Invalid value for \""
+
+    out_str += get_full_vname(namespaces, table_name, vname)
+
+    out_str += f"\")\" << std::endl;\n{TAB * (base_t + 1)}"
+    out_str += f"exit(-1);\n{TAB * base_t}}}\n\n"
+
+    return out_str + f"{TAB * base_t}"
+
+
+def generate_all_parameter_text(project_short: str, filename: str):
+    """Generate all of the C++ code for parameters
+
+    This function takes a project "short", which is just a short
+    name like "bssn" or "ccz4". It also takes in a template file
+    in TOML format that defines all of the behavior of *all* parameters
+    corresponding to the project.
+
+    Please note that the output strings of source code *do not* include
+    includes or preprocessor definitions. Those need to be added by
+    hand! This was done so that the parameter files could have different
+    names than "parameters.cpp" or "parameters.h" if necessary.
+
+    Parameters
+    ----------
+    project_short : str
+        A short string for prefixing various things. "bssn" or
+        "ccz4" for example.
+    filename : str
+        The input filename that has the template for all parameters.
+
+    Returns
+    -------
+    paramh_str : str
+        The header file string. This should then be placed in the header
+        file for parameters.
+    paramc_str : str
+        The source file string. This should then be placed in the source
+        file for parameters.
+    """
     namespace_tag = "-NMSPC"
 
     ps = project_short.lower()
@@ -42,7 +607,7 @@ def params_file_data(project_short: str, filename: str):
 
     setup_dict = get_toml_data(filename)
     # tab delimiter
-    t = "    "
+    t = TAB
 
     # start with the namespace block
     paramh_str = f"namespace {ps}\n{{\n"
@@ -72,7 +637,7 @@ def params_file_data(project_short: str, filename: str):
     param_read += f"{t*2}if(!rank)\n{t*2}{{\n"
 
     # and now we start the dump param file information
-    param_dump = f"{t}void dumpParamFile(std::osstream& sout, " + \
+    param_dump = f"{t}void dumpParamFile(std::ostream& sout, " + \
         "int root, MPI_Comm comm)\n"
     param_dump += f"{t}{{\n\n"
     param_dump += get_rank_npes()
@@ -158,7 +723,7 @@ def params_file_data(project_short: str, filename: str):
 
                         if v['dtype'][-2] == "[":  # arrays
                             tmp_param_dump += ": [\";"
-                            tmp_param_dump += f"\n{t*3}for (unsigned " + \
+                            tmp_param_dump += f"\n{t*3}for (unsigned" + \
                                 " int i = 0; i < "
                             tmp_param_dump += str(v["size"])
                             tmp_param_dump += f"; ++i)\n{t*3}{{\n{t*4}sout << "
@@ -167,7 +732,7 @@ def params_file_data(project_short: str, filename: str):
                             tmp_param_dump += "[i] << (i<"
                             tmp_param_dump += str(v["size"])
                             tmp_param_dump += "-1"
-                            tmp_param_dump += "?',',:']');\n"
+                            tmp_param_dump += "?',':']');\n"
                             tmp_param_dump += f"{t*3}}}\n{t*3}sout"
                         else:  # non-arrays
                             tmp_param_dump += ": \" << "
@@ -360,7 +925,7 @@ def params_file_data(project_short: str, filename: str):
                             # In grUtils.cpp: define from user input; throw
                             # error if value input not given
 
-                            temp_ph, temp_pc, temp_read = get_variant(
+                            temp_ph, temp_pc, temp_read = get_variant_text(
                                 namespace_list, table_names, k, v, indent_ph,
                                 indent_pc, curr_namespace_list_ph, 3)
 
@@ -371,7 +936,7 @@ def params_file_data(project_short: str, filename: str):
                         # if the parameter is semivariant
                         elif v["class"][0] == 's':
 
-                            temp_ph, temp_pc, temp_read = get_semiinvariant(
+                            temp_ph, temp_pc, temp_read = get_semivariant_text(
                                 namespace_list, table_names, k, v, indent_ph,
                                 indent_pc, curr_namespace_list_ph, 3)
 
@@ -381,9 +946,9 @@ def params_file_data(project_short: str, filename: str):
 
                         # if the parameter is invariant
                         elif v["class"][0] == "i":
-                            temp_ph = get_invariant(table_names, k, v,
-                                                    indent_ph)
-                            
+                            temp_ph = get_invariant_text(
+                                table_names, k, v, indent_ph)
+
                             paramh_str += temp_ph
 
                         # now, for all but invariant, we write broadcast code
@@ -411,14 +976,22 @@ def params_file_data(project_short: str, filename: str):
         indent_pc = indent_pc[:-len(TAB)]
 
     # blackhole 1
-    param_read += f"{TAB * 3}{ps}:BH1 = BH({ps_u}_BH1_MASS,\n"
-    for bhvar in BHOLE_VARS[1:]:
-        param_read += f"{TAB * 6}{ps_u}_BH1_{bhvar.upper()}\n"
+    param_read += f"{TAB * 3}{ps}::BH1 = BH({ps_u}_BH1_MASS,\n"
+    for ii, bhvar in enumerate(BHOLE_VARS[1:]):
+        param_read += f"  {TAB * 6}{ps_u}_BH1_{bhvar.upper()}"
+        if ii < len(BHOLE_VARS) - 2:
+            param_read += ",\n"
+        else:
+            param_read += ");\n\n"
 
     # blackhole 2
-    param_read += f"{TAB * 3}{ps}:BH2 = BH({ps_u}_BH2_MASS,\n"
-    for bhvar in BHOLE_VARS[1:]:
-        param_read += f"{TAB * 6}{ps_u}_BH2_{bhvar.upper()}\n"
+    param_read += f"{TAB * 3}{ps}::BH2 = BH({ps_u}_BH2_MASS,\n"
+    for ii, bhvar in enumerate(BHOLE_VARS[1:]):
+        param_read += f"  {TAB * 6}{ps_u}_BH2_{bhvar.upper()}"
+        if ii < len(BHOLE_VARS) - 2:
+            param_read += ",\n"
+        else:
+            param_read += ");\n\n"
 
     # combine the brodcasts to the param_read
     param_read += "\n".join(bcasts)
@@ -435,277 +1008,193 @@ def params_file_data(project_short: str, filename: str):
     return paramh_str, paramc_str
 
 
-def get_variant(namespaces,
-                table_name,
-                vname,
-                vinfo,
-                indent_ph,
-                indent_pc,
-                curr_namespace_list_ph,
-                base_t=3):
+def recurse_param_dict_for_toml(in_dict: toml.table,
+                                namespaces: list = [],
+                                table_name: str = ""):
+    """Recurses an input dictionary for parameter information
 
-    # In parameters.h: declare extern
-    # In parameters.cpp: declare but don't define
-    # In grUtils.cpp: define from user input; throw
-    # error if value input not given
+    This function takes in the input dictionary and recursively
+    iterates through it to find all of the parameters contained
+    within the dictionary. Then, it can generate the lines of
+    text for the sample parameter TOML file based on that information.
 
-    paramh_str = indent_pc
-    if vinfo.get("desc", "") != "":
-        paramh_str += "/** @brief: " + vinfo.get("desc", "No description given") + " */\n"
-        paramh_str += indent_ph
-    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
-    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
-    paramh_str += " "
-    paramh_str += table_name
-    paramh_str += vname
+    Parameters
+    ----------
+    in_dict : dict or tomlkit.table
+        The input dictionary based on the template file. The structure
+        of this dictionary depends entirely on what stage the recursion
+        is on and on the template file.
+    namespaces : list
+        The list of encountered namespaces.
+    table_name : str
+        The name of the current table (often nothing)
 
-    # this writes the size declaration for arrays
-    if vinfo["dtype"][-2] == '[':
-        paramh_str += "[" + str(vinfo["size"]) + "]"
+    Returns
+    -------
+    str
+        The currently built-up string with all of the TOML code
+        for the parameters.
+    """
+    out_str = ""
 
-    paramh_str += ';\n\n'
+    for the_key, the_var in in_dict.items():
 
-    # add to the c version
-    paramc_str = indent_pc
-    if vinfo["dtype"][0] == 's':
-        paramc_str += "std::"  # strings need "std::"
-    # arrays: chop "[]"
-    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
-    paramc_str += " "
-    paramc_str += table_name
-    paramc_str += vname
+        if isinstance(the_var, dict):
+            # if we've got "class" in the variable, it's an item
+            if "class" in the_var.keys():
+                if the_var["class"] != "invariant":
+                    out_str += get_toml_lines(the_key, the_var, namespaces,
+                                              table_name)
 
-    # this writes the size declaration for arrays
-    if vinfo["dtype"][-2] == '[':
-        paramc_str += "[" + str(vinfo["size"]) + "]"
+            else:
+                namespace_name = the_key.split("-NMSPC")[0]
+                if namespace_name != the_key:
+                    namespaces.append(namespace_name)
+                else:
+                    table_name = namespace_name + "_"
 
-    paramc_str += ";\n"
+                out_str += "\n# ========\n# === "
+                out_str += "::".join(namespaces)
+                if table_name:
+                    out_str += "::" + table_name[:-1]
+                out_str += " PARAMETERS\n"
+                out_str += "# ========\n"
+                out_str += recurse_param_dict_for_toml(the_var, namespaces,
+                                                       table_name)
 
-    # now we update the param_read string
-    param_read = f"{TAB * base_t}if(file.contains(\""
-    param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += f"\"))\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
+            # if there was no table name, we pop off the last namespace
+            if the_key.endswith("-NMSPC"):
+                try:
+                    namespaces.pop()
+                except IndexError:
+                    pass
 
-    if (vinfo["dtype"][0] == 'i'
-            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
-        param_read += get_bound_text(namespaces, table_name, vname, vinfo)
-
-    # only for arrays: write a loop to assign values
-    if vinfo["dtype"][-2] == '[':
-        param_read += get_array_assignment_start(vinfo, base_t + 1)
-
-    param_read += get_full_vname(namespaces, table_name, vname)
-
-    # add the read definition
-    param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
-    param_read += " = file[\""
-    param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
-    param_read += ".as_"
-    if vinfo["dtype"][0] == 'd':
-        param_read += "floating"
-    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
-        param_read += "integer"
-    elif vinfo["dtype"][0] == 's':
-        param_read += "string"
-    else:
-        param_read += "boolean"
-
-    if vinfo["dtype"][-2] == '[':
-        param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
-    else:
-        param_read += f"();\n{TAB * base_t}}}\n\n"
-
-    param_read += f"{TAB * base_t}else\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
-    param_read += "std::cerr << R\"(No value for \""
-    param_read += table_name + vname
-    param_read += "\"; \""
-    param_read += table_name + vname
-    param_read += "\" must be given a value)\" " + "<< std::endl;"
-    param_read += f"\n{TAB * (base_t + 1)}exit(-1);\n{TAB * base_t}}}\n\n"
-
-    return paramh_str, paramc_str, param_read
-
-
-def get_semiinvariant(namespaces,
-                      table_name,
-                      vname,
-                      vinfo,
-                      indent_ph,
-                      indent_pc,
-                      curr_namespace_list_ph,
-                      base_t=3):
-
-    paramh_str = ""
-    paramc_str = ""
-    param_read = ""
-
-    # header needs extern declaration
-    # source needs declaration and define
-    # grUtils.cpp define from user input
-    paramh_str += indent_ph
-    if vinfo.get("desc", "") != "":
-        paramh_str += "/** @brief: " + vinfo.get("desc", "No description given") + " */\n"
-        paramh_str += indent_ph
-    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
-    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
-    paramh_str += " " + table_name + vname
-
-    # size declaration for arrays
-    if vinfo["dtype"][-2] == '[':
-        paramh_str += "[" + str(vinfo["size"]) + "]"
-    paramh_str += ';\n\n'
-
-    # now for the declarations in the cpp file
-    paramc_str += indent_pc
-    if vinfo["dtype"][0] == 's':
-        paramc_str += "std::"
-    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
-    paramc_str += " " + table_name + vname
-
-    # if we have an array
-    if vinfo["dtype"][-2] == '[':
-        paramc_str += "[" + str(vinfo["size"]) + "]"
-        paramc_str += " = {" + str(vinfo["default"])[1:-1] + "}"
-    # if it isn't an array
-    else:
-        paramc_str += " = \"" if vinfo["dtype"][0] == 's' else " = "
-        paramc_str += str(
-            vinfo["default"]).lower() if vinfo["dtype"][0] == 'b' else str(
-                vinfo["default"])
-
-    paramc_str += "\";\n" if vinfo["dtype"][0] == 's' else ";\n"
-
-    # then the parameter reading chunk
-    param_read += f"{TAB*3}if(file.contains(\""
-    param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += f"\"))\n{TAB*base_t}{{\n{TAB*(base_t+1)}"
-
-    if (vinfo["dtype"][0] == 'i'
-            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
-        param_read += get_bound_text(namespaces, table_name, vname, vinfo)
-
-    # only for arrays, we need to write a loop to assign values
-    if vinfo["dtype"][-2] == '[':
-        param_read += get_array_assignment_start(vinfo)
-
-    param_read += get_full_vname(curr_namespace_list_ph, table_name, vname)
-
-    # add the read definition
-    param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
-    param_read += " = file[\""
-    param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
-    param_read += ".as_"
-    if vinfo["dtype"][0] == 'd':
-        param_read += "floating"
-    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
-        param_read += "integer"
-    elif vinfo["dtype"][0] == 's':
-        param_read += "string"
-    else:
-        param_read += "boolean"
-
-    if vinfo["dtype"][-2] == "[":
-        param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
-    else:
-        param_read += f"();\n{TAB * base_t}}}\n\n"
-
-    return paramh_str, paramc_str, param_read
-
-
-def get_invariant(table_name, vname, vinfo, indent_ph):
-
-    paramh_str = indent_ph
-    if vinfo.get("desc", "") != "":
-        paramh_str += "/** @brief: " + vinfo.get("desc", "No description given") + " */\n"
-        paramh_str += indent_ph
-    paramh_str += "static const "
-    paramh_str += "std::" if vinfo["dtype"][0] == 's' else ""
-    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
-    paramh_str += " "
-
-    paramh_str += table_name + vname
-
-    if vinfo["dtype"][-2] == "[":
-        paramh_str += "[" + str(vinfo["size"]) + "[ = {"
-        paramh_str += str(vinfo["default"])[1:-1]
-        paramh_str += "};\n"
-    else:
-        paramh_str += " = \"" if vinfo["dtype"] == 's' else " = "
-        paramh_str += str(vinfo["default"])
-        paramh_str += "\";\n" if vinfo["dtype"] == 's' else ";\n"
-
-    return paramh_str + "\n"
-
-
-def get_broadcast(table_name, vname, vinfo, curr_namespace_list_ph, base_t=3):
-
-    bcasts = f"{TAB * base_t}"
-
-    # if we have an array
-    if vinfo["dtype"][-1] == ']':
-        bcasts += "MPI_Bcast(&("
-        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
-        bcasts += "), " + str(vinfo["size"]) + ", "
-        bcasts += "MPI_DOUBLE" if vinfo["dtype"][0] == "d" else "MPI_INT"
-        bcasts += ", 0, comm);"
-
-    elif vinfo["dtype"] == "s":
-        bcasts += "MPI_Bcast(const_cast<char*>("
-        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
-        bcasts += ".c_str()), "
-        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
-        bcasts += ".size() + 1, MPI_CHAR, 0, comm);"
-
-    else:
-        bcasts += "par::Mpi_Bcast(&"
-        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
-        bcasts += ", 1, 0, comm);"
-
-    return bcasts
-
-
-def get_full_vname(namespaces, table_name, vname):
-    out_str = "::".join(namespaces)
-    out_str += "::" + table_name + vname
     return out_str
 
 
-def get_array_assignment_start(vinfo, base_t=4):
+def get_toml_lines(var_name: str, in_dict: dict, namespaces: list,
+                   table_name: str):
+    """Generates the lines of TOML for a given parameter
 
-    out_str = "for (int i = 0; i < "
-    out_str += str(vinfo["size"])
-    out_str += f"; ++i)\n{TAB*base_t}{{\n{TAB*(base_t+1)}"
+    With the input information, it generates the lines for the
+    sample TOML file. This includes a brief description
+    of the parameter (based on a "desc" field in the template file)
+    as well as setting the value equal to the default.
+
+    Parameters
+    ----------
+    var_name : str
+        The name of the variable (not the full name)
+    in_dict : dict or tomlkit.table
+        The set of information corresponding to the parameter
+    namespaces : list
+        The list of namespaces that correspond to this variable
+    table_name : str
+        The corresponding table name
+
+    Returns
+    -------
+    str
+        The generated TOML code for the parameter
+    """
+    # basic parameter information
+    out_str = "# @brief: "
+    out_str += in_dict.get("desc", "No description given.")
+    out_str += "\n# data type: " + in_dict["dtype"] + " "
+
+    if "default" in in_dict.keys():
+        out_str += f"| default: {in_dict['default']} "
+    if "min" in in_dict.keys():
+        out_str += f"| min: {in_dict['min']} "
+    if "max" in in_dict.keys():
+        out_str += f"| max: {in_dict['max']}"
+
+    full_v_name = get_full_vname(namespaces, table_name, var_name)
+
+    out_str += "\n\"" + full_v_name + "\" = "
+    if in_dict['dtype'] == "string":
+        out_str += "\"" + str(in_dict["default"]) + "\""
+    else:
+        if isinstance(in_dict["default"], str):
+            print(f"\nWARNING: The parameter {full_v_name} was identified",
+                  "as a number but the default value is not.",
+                  "The C++ code generation will take that value,",
+                  "as we accept expressions.",
+                  "However, THIS WILL NEED TO BE UPDATED",
+                  "BY HAND BEFORE RUNNING.",
+                  "Either remove this parameter or fix the",
+                  "values in the generated file.\n")
+        out_str += str(in_dict["default"])
+
+    out_str += "\n\n"
+
     return out_str
 
 
-def get_bound_text(namespaces, table_name, vname, vinfo, base_t=4):
-    out_str = "if (" + str(vinfo["min"]) + " > file[\""
-    out_str += get_full_vname(namespaces, table_name, vname)
-    out_str += "\"].as_"
+def generate_sample_config_file_text(project_short: str, filename: str):
+    """Generate TOML file text from the template Parameters
 
-    out_str += "floating" if vinfo["dtype"][0] == 'd' else "integer"
+    This function will take the template parameter file
+    just as the `generate_all_parameter_text` function does,
+    but it will generate the text needed to create a sample
+    configuration file that specifies parameters. This file
+    can then be used in conjunction with the compiled project
+    for setting the various parameters.
 
-    out_str += "() || " + str(vinfo["max"]) + " < file[\""
+    It will create entries for every single parameter in the
+    template file, except for the invariant parameters. Invariant
+    parameters can only be changed in the source code and the project
+    needs to be recompiled for the changes to persist.
 
-    out_str += get_full_vname(namespaces, table_name, vname)
+    The output text will also assign all of the default values
+    to the different variables. This means that if C++
+    expressions are used for the defaults, they will need to be
+    changed by hand before running. If such a problem occurs,
+    a warning will be printed in the console with the variable
+    name that needs to be adjusted.
 
-    out_str += "\".as_"
-    out_str += "floating" if vinfo["dtype"][0] == 'd' else "integer"
+    Parameters
+    ----------
+    project_short : str
+        A short string for prefixing various things. "bssn" or
+        "ccz4" for example.
+    filename : str
+        The input filename that has the template for all parameters.
 
-    # now for the text that declares it's an invalid value
-    out_str += f"())\n{TAB * base_t}{{\n"
-    out_str += f"{TAB * (base_t + 1)}std::cerr << R\"(Invalid value for \""
+    Returns
+    -------
+    str
+        The string that can be written or inserted into the
+        sample parameters TOML file.
+    """
 
-    out_str += get_full_vname(namespaces, table_name, vname)
+    ps = project_short.lower()
+    ps_u = project_short.upper()
 
-    out_str += f"\")\" << std::endl;\n{TAB * (base_t + 1)}"
-    out_str += f"exit(-1);\n{TAB * base_t}}}\n\n"
+    setup_dict = get_toml_data(filename)
 
-    return out_str + f"{TAB * base_t}"
+    # start with the output string
+    out_str = ""
+    out_str += "# ===========================================\n"
+    out_str += "# ==== PARAMETER FILE FOR PROJECT: " + ps_u + "\n"
+    out_str += "# ===========================================\n"
+    out_str += "#\n# This file contains all of the configurable parameters" + \
+        " for running this Dendro project.\n"
+    out_str += "#\n# This file was initially generated from the file: " + \
+        os.path.basename(filename) + "\n"
+    out_str += "#\n# Feel free to edit any of the values listed in this " + \
+        " file or make copies for individual runs.\n"
+    out_str += "#\n# Each of the parameters listed in this file should" + \
+        " contain information about the parameter according to the template.\n"
+    out_str += "# Please note that all \"Invariant\" parameters were" + \
+        " not included.\n"
+    out_str += "\n\n"
+
+    # time to iterate through the dictionary
+    out_str += recurse_param_dict_for_toml(setup_dict)
+
+    out_str += "# ===========================================\n"
+    out_str += "# END PARAMTER FILE GENERATION\n"
+    out_str += "# ===========================================\n"
+
+    return out_str
