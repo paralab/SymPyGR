@@ -1,6 +1,17 @@
-'''
-@brief parameter file generation should go here.
-'''
+"""Parameter file generation functions
+
+This file contains the functions that can generate entire parameter
+files based on information provided by the user. This simplifies adding
+a parameter to a project because it can place it exactly where it needs
+to go while also providing a routine for reading the configurable values
+during runtime.
+
+Please see each function for more information, but the most important
+ones for preparing this generation are `generate_all_parameter_text`
+and `generate_sample_config_file_text`. The first generates all of the
+header and source file code while the second creates a sample configuration
+file to be used during runtime.
+"""
 
 import os
 import tomlkit as toml
