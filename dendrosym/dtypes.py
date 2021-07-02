@@ -65,6 +65,54 @@ import numpy as np
 #     def get_sym_var(self):
 #         return self._sym
 
+
+class ParameterVariable:
+    """For defining parameters used in equations
+    """
+    def __init__(self, var_name, dtype="double", num_params=1):
+
+        self.var_name = var_name
+        self.dtype = dtype
+        # list size is how many different parameters belong to
+        # this one
+        self.num_params = num_params
+
+        # make the pretty var names
+        if self.num_params > 1:
+            self.var_symbols = sym.symbols(' '.join(
+                self.var_name + f"[{ii}]" for ii in range(self.num_params)))
+        else:
+            self.var_symbols = sym.Symbol(self.var_name)
+
+    def get_symbolic_repr(self):
+
+        return self.var_symbols
+
+    def generate_cpp_line(self, global_param_prefix="", use_const=True):
+        global_param_name = self.var_name.upper()
+        if global_param_prefix != "":
+            global_param_name = global_param_prefix.upper(
+            ) + "_" + global_param_name
+
+        return_str = "const " if use_const else ""
+
+        if self.num_params > 1:
+            return_str += f"{self.dtype} "
+            return_str += f"{self.var_name}[{self.num_params}] = {{"
+            return_str += ", ".join(global_param_name + f"[{ii}]"
+                                    for ii in range(self.num_params))
+            return_str += "};"
+        else:
+            return_str += f"{self.dtype} "
+            return_str += f"{self.var_name} = "
+            return_str += f"{global_param_name};"
+
+        return return_str
+    
+    def __repr__(self):
+        return f"<Param '{self.var_name}'>"
+
+
 ##########################################################################
 # variable initialization functions
 ##########################################################################
