@@ -1111,7 +1111,9 @@ def get_toml_lines(var_name: str, in_dict: dict, namespaces: list,
     # basic parameter information
     out_str = "# @brief: "
     out_str += in_dict.get("desc", "No description given.")
-    out_str += "\n# data type: " + in_dict["dtype"] + " "
+    out_str += f"\n# param type: {in_dict['class']} "
+    out_str += f"| data type: {in_dict['dtype']} "
+
 
     if "default" in in_dict.keys():
         out_str += f"| default: {in_dict['default']} "
@@ -1125,6 +1127,8 @@ def get_toml_lines(var_name: str, in_dict: dict, namespaces: list,
     out_str += "\n\"" + full_v_name + "\" = "
     if in_dict['dtype'] == "string":
         out_str += "\"" + str(in_dict["default"]) + "\""
+    elif in_dict['dtype'] == "bool":
+        out_str += str(in_dict["default"]).lower()
     else:
         if isinstance(in_dict["default"], str):
             print(f"\nWARNING: The parameter {full_v_name} was identified",
