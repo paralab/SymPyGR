@@ -1,6 +1,18 @@
 """Simple file for running all of the parameter generation
 
-This basically is an example for how the parameter code is generated.
+This script handles taking the template file and creates the source
+code for the various parameters detailed with the template file.
+It also creates a sample TOML file that can be modified for use
+when using the program.
+
+Usage:
+
+generate_parameter_files.py [-h] [-hpp OUTPUT_PARAM_H] 
+    [-cpp OUTPUT_PARAM_C] [-s OUTPUT_PARAM_SAMPLE] template_file project_name
+
+It requires a template file as well as the name of the project this is
+being generated for. Optionally you can include target output files
+for each type of file.
 """
 
 import argparse

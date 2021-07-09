@@ -1,6 +1,17 @@
-'''
-@brief parameter file generation should go here.
-'''
+"""Parameter file generation functions
+
+This file contains the functions that can generate entire parameter
+files based on information provided by the user. This simplifies adding
+a parameter to a project because it can place it exactly where it needs
+to go while also providing a routine for reading the configurable values
+during runtime.
+
+Please see each function for more information, but the most important
+ones for preparing this generation are `generate_all_parameter_text`
+and `generate_sample_config_file_text`. The first generates all of the
+header and source file code while the second creates a sample configuration
+file to be used during runtime.
+"""
 
 import os
 import tomlkit as toml
@@ -394,6 +405,175 @@ def get_invariant_text(table_name: str, vname: str, vinfo: toml.table,
         paramh_str += "\";\n" if vinfo["dtype"] == 's' else ";\n"
 
     return paramh_str + "\n"
+
+
+def get_hyperinvariant_text(table_name: str, vname: str, vinfo: toml.table,
+                            indent_ph: str):
+    """Generate text pieces for a hyperinvariant parameter
+
+    This function will create the different pieces of text
+    that are required for an invariant parameter. An invariant
+    parameter is one that is declared as a constant variable
+    in the header file with options from the compiler. It cannot be 
+    modified unless the program is recompiled.
+
+    This returns the output string that define
+    the behavior for the header file.
+
+    Parameters
+    ----------
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    indent_ph : str
+        The current indentation for the parameter header
+
+    Returns
+    -------
+    paramh_str : str
+        The parameters header string
+    """
+
+    paramh_str = indent_ph
+
+    # start with the brief comment
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get(
+            "desc", "No description given") + " */\n"
+
+    for ii, curr_item in enumerate(vinfo["compiler_options"]):
+
+        # initial string for the compiler option
+        paramh_str += "#ifdef " + str(curr_item) + "\n"
+
+        paramh_str += indent_ph
+        paramh_str += "static const "
+        paramh_str += "std::" if vinfo["dtype"][0] == 's' else ""
+        paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][
+            -2] == '[' else vinfo["dtype"]
+        paramh_str += " "
+
+        paramh_str += table_name + vname
+
+        if vinfo["dtype"][-2] == "[":
+            paramh_str += "[" + str(vinfo["size"]) + "[ = {"
+            paramh_str += str(vinfo["default"][ii])[1:-1]
+            paramh_str += "};\n"
+        else:
+            paramh_str += " = \"" if vinfo["dtype"] == 's' else " = "
+            paramh_str += str(vinfo["default"][ii])
+            paramh_str += "\";\n" if vinfo["dtype"] == 's' else ";\n"
+
+    if len(vinfo["compiler_options"]) < len(vinfo["default"]):
+        default_option = len(vinfo["compiler_options"])
+        paramh_str += "#else\n"
+
+        paramh_str += indent_ph
+        paramh_str += "static const "
+        paramh_str += "std::" if vinfo["dtype"][0] == 's' else ""
+        paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][
+            -2] == '[' else vinfo["dtype"]
+        paramh_str += " "
+
+        paramh_str += table_name + vname
+
+        if vinfo["dtype"][-2] == "[":
+            paramh_str += "[" + str(vinfo["size"]) + "[ = {"
+            paramh_str += str(vinfo["default"][default_option])[1:-1]
+            paramh_str += "};\n"
+        else:
+            paramh_str += " = \"" if vinfo["dtype"] == 's' else " = "
+            paramh_str += str(vinfo["default"][default_option])
+            paramh_str += "\";\n" if vinfo["dtype"] == 's' else ";\n"
+
+    paramh_str += "#endif\n"
+
+    return paramh_str + "\n"
+
+
+def get_dependent_text(namespaces: list,
+                       table_name: str,
+                       vname: str,
+                       vinfo: toml.table,
+                       indent_ph: str,
+                       curr_namespace_list_ph: list,
+                       base_t: int = 3):
+    """Generate text pieces for a dependent parameter
+
+    This function will create the different pieces of text
+    that are required for an invariant parameter. A dependent
+    parameter is one that requires information from a previously
+    read one. It is declared in the header file, and then
+    updated in the broadcast text (just a simple place to add it
+    as broadcasting is done after reading but before continuing).
+
+    This returns the output string that define
+    the behavior for the header file and C++ file.
+
+    Parameters
+    ----------
+    table_name : str
+        The "table" name for this parameter. This is typically
+        when there's a block of parameters that all use the same
+        prefix. I.e. bssn::BH1_MASS and bssn::BH2_MASS can be defined
+        in the template file in one table alone.
+    vname : str
+        The name of the variable (the key for the corresponding table)
+    vinfo : tomlkit.Table or dict
+        The information for the current parameter
+    indent_ph : str
+        The current indentation for the parameter header
+
+    Returns
+    -------
+    paramh_str : str
+        The parameters header string
+    """
+
+    paramh_str = ""
+
+    # header needs extern declaration
+    # source needs declaration and define
+    # grUtils.cpp define from user input
+    paramh_str += indent_ph
+    if vinfo.get("desc", "") != "":
+        paramh_str += "/** @brief: " + vinfo.get(
+            "desc", "No description given") + " */\n"
+        paramh_str += indent_ph
+    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
+    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
+        "dtype"]
+    paramh_str += " " + table_name + vname
+
+    # size declaration for arrays
+    if vinfo["dtype"][-2] == '[':
+        paramh_str += "[" + str(vinfo["size"]) + "]"
+    paramh_str += ';\n\n'
+
+    # now the "broadcast" parameter text to add
+    param_bcast = f"\n{TAB*3}/* NOTE: this is not a broadcast," + \
+        " but an assignment due to previous dependencies! */\n"
+    param_bcast += f"{TAB*3}"
+
+    # only for arrays, we need to write a loop to assign values
+    if vinfo["dtype"][-2] == '[':
+        raise NotImplementedError("Dependent arrays are not yet supported")
+
+    param_bcast += get_full_vname(curr_namespace_list_ph, table_name, vname)
+
+    # add the read definition
+    param_bcast += " = "
+    param_bcast += vinfo["default"]
+
+    param_bcast += ";\n"
+
+    return paramh_str, param_bcast
 
 
 def get_broadcast(table_name: str,
@@ -951,6 +1131,23 @@ def generate_all_parameter_text(project_short: str, filename: str):
 
                             paramh_str += temp_ph
 
+                        # if a parameter is hyperinvariant
+                        elif v["class"][0] == "h":
+                            temp_ph = get_hyperinvariant_text(
+                                table_names, k, v, indent_ph)
+
+                            paramh_str += temp_ph
+
+                        # if a parameter is dependent
+                        elif v["class"][0] == "d":
+                            temp_ph, temp_bcast = get_dependent_text(
+                                namespace_list, table_names, k, v, indent_ph,
+                                curr_namespace_list_ph, 3)
+
+                            paramh_str += temp_ph
+                            # add a "bcast" string because it's easy to slot here
+                            bcasts.insert(0, temp_bcast)
+
                         # now, for all but invariant, we write broadcast code
                         if v["class"][0] != "i":
                             bcasts.append(
@@ -1042,7 +1239,9 @@ def recurse_param_dict_for_toml(in_dict: toml.table,
         if isinstance(the_var, dict):
             # if we've got "class" in the variable, it's an item
             if "class" in the_var.keys():
-                if the_var["class"] != "invariant":
+                if the_var["class"] not in [
+                        "invariant", "dependent", "hypervariant"
+                ]:
                     out_str += get_toml_lines(the_key, the_var, namespaces,
                                               table_name)
 
@@ -1100,7 +1299,8 @@ def get_toml_lines(var_name: str, in_dict: dict, namespaces: list,
     # basic parameter information
     out_str = "# @brief: "
     out_str += in_dict.get("desc", "No description given.")
-    out_str += "\n# data type: " + in_dict["dtype"] + " "
+    out_str += f"\n# param type: {in_dict['class']} "
+    out_str += f"| data type: {in_dict['dtype']} "
 
     if "default" in in_dict.keys():
         out_str += f"| default: {in_dict['default']} "
@@ -1114,6 +1314,8 @@ def get_toml_lines(var_name: str, in_dict: dict, namespaces: list,
     out_str += "\n\"" + full_v_name + "\" = "
     if in_dict['dtype'] == "string":
         out_str += "\"" + str(in_dict["default"]) + "\""
+    elif in_dict['dtype'] == "bool":
+        out_str += str(in_dict["default"]).lower()
     else:
         if isinstance(in_dict["default"], str):
             print(f"\nWARNING: The parameter {full_v_name} was identified",
@@ -1186,8 +1388,12 @@ def generate_sample_config_file_text(project_short: str, filename: str):
         " file or make copies for individual runs.\n"
     out_str += "#\n# Each of the parameters listed in this file should" + \
         " contain information about the parameter according to the template.\n"
-    out_str += "# Please note that all \"Invariant\" parameters were" + \
-        " not included.\n"
+    out_str += "#\n# Please note that all \"invariant\", \"dependent\", and " + \
+        "\"hyperinvariant\" parameters were not included.\n"
+    out_str += "#\n# NOTE: What follows is an explanation on parameter types:"
+    out_str += "\n# A variant parameter is required for execution."
+    out_str += "\n# A semivariant parameter is not required for execution" + \
+        " and can be removed from this file safely."
     out_str += "\n\n"
 
     # time to iterate through the dictionary
