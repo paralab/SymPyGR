@@ -7,7 +7,7 @@ when using the program.
 
 Usage:
 
-generate_parameter_files.py [-h] [-hpp OUTPUT_PARAM_H] 
+generate_parameter_files.py [-h] [-hpp OUTPUT_PARAM_H]
     [-cpp OUTPUT_PARAM_C] [-s OUTPUT_PARAM_SAMPLE] template_file project_name
 
 It requires a template file as well as the name of the project this is

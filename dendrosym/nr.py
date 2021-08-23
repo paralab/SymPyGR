@@ -467,7 +467,8 @@ def lie(b, a, weight=0):
         return sum([b[ii] * ad(ii, a) for ii in e_i
                     ]) + weight * a * sum([d(ii, b[ii]) for ii in e_i])
 
-    elif type(a) == tuple:
+    # if it's a 3-vector, this is what we calculate
+    elif type(a) == tuple or (type(a) == sym.Matrix and a.shape == (3, 1)):
         return [
             sum([
                 b[jj] * ad(jj, a[ii]) - a[jj] * d(jj, b[ii]) +

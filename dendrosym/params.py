@@ -414,7 +414,7 @@ def get_hyperinvariant_text(table_name: str, vname: str, vinfo: toml.table,
     This function will create the different pieces of text
     that are required for an invariant parameter. An invariant
     parameter is one that is declared as a constant variable
-    in the header file with options from the compiler. It cannot be 
+    in the header file with options from the compiler. It cannot be
     modified unless the program is recompiled.
 
     This returns the output string that define

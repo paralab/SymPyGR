@@ -28,6 +28,8 @@ import dendrosym.utils
 
 import dendrosym.params
 
-# and import the class
-from dendrosym.theclass import DendroGRCodeGen
+# base configuration class
+from dendrosym.general_configs import DendroConfiguration
+
+# and then the numerical relativity class
 from dendrosym.nr_configs import NRConfig

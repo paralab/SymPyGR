@@ -10,6 +10,7 @@ currently unused functions. They will be added soon.
 
 # import enum
 import enum
+from math import exp
 from os import replace
 import re as regex
 import sys
@@ -193,7 +194,8 @@ def generate_cpu_preextracted(cse_list,
                               idx,
                               orig_ops,
                               dtype="double",
-                              use_const=False):
+                              use_const=False,
+                              return_stats=False):
 
     custom_functions = {
         'grad': 'grad',
@@ -209,10 +211,19 @@ def generate_cpu_preextracted(cse_list,
     for (v1, v2) in cse_list[0]:
         temp_str = f'{"const " if use_const else ""}{dtype} '
 
-        temp_str += change_deriv_names(
-            sym.ccode(v2, assign_to=v1, user_functions=custom_functions))
+        # replace powers with multiplication if possible
+        v2 = replace_pow(v2)
 
-        # TODO: remove calls to the pow function if possible
+        # extract the c-generated code for the expression
+        ccode_text = sym.ccode(v2,
+                               assign_to=v1,
+                               user_functions=custom_functions)
+        # then we need to pass it through the changing of derivative names
+        ccode_text = change_deriv_names(ccode_text)
+
+        # add add the text
+        temp_str += ccode_text
+
         output_str += temp_str + "\n"
         reduced_ops += sym.count_ops(v2)
 
@@ -220,29 +231,43 @@ def generate_cpu_preextracted(cse_list,
     output_str += '\n// Dendro: MAIN VARIABLES'
     for i, e in enumerate(cse_list[1]):
         temp_str = "\n//--\n"
-        temp_str += change_deriv_names(
-            sym.ccode(e,
-                      assign_to=rhs_var_names[i] + idx,
-                      user_functions=custom_functions))
-        # TODO: remove calls to the pow function if possible
+
+        # replace powers with multiplication if possible
+        e = replace_pow(e)
+
+        # extract the c-generated code for the expression
+        ccode_text = sym.ccode(e,
+                               assign_to=rhs_var_names[i] + idx,
+                               user_functions=custom_functions)
+        # then we need to pass it through the changing of derivative names
+        ccode_text = change_deriv_names(ccode_text)
+
+        # add add the text
+        temp_str += ccode_text
 
         output_str += temp_str + "\n"
         reduced_ops += sym.count_ops(e)
 
     output_str += "// Dendro: END MAIN VARIABLES\n\n"
 
-    output_str += "// Dendro: INFORMATION"
-    output_str += "// Dendro: number of original operations: %d \n" % (
-        orig_ops)
-    output_str += '// Dendro: number of reduced operations: %d \n' % (
-        reduced_ops)
-    output_str += "// Dendro: preprocessing reduced the "
-    output_str += f"number of operations by {orig_ops-reduced_ops}\n"
-    percent_reduction = (orig_ops - reduced_ops) / orig_ops
-    output_str += f"// Dendro: a {percent_reduction:0.5%}% reduction\n"
-    output_str += '// Dendro: }}}} End Code Generation \n'
+    if not return_stats:
 
-    return output_str
+        output_str += "// Dendro: INFORMATION\n"
+        output_str += "// Dendro: number of original operations: %d \n" % (
+            orig_ops)
+        output_str += '// Dendro: number of reduced operations: %d \n' % (
+            reduced_ops)
+        output_str += "// Dendro: preprocessing reduced the "
+        output_str += f"number of operations by {orig_ops-reduced_ops}\n"
+        percent_reduction = (orig_ops - reduced_ops) / orig_ops
+        output_str += f"// Dendro: a {percent_reduction:0.5%}% reduction\n"
+        output_str += '// Dendro: }}}} End Code Generation \n'
+
+        return output_str
+
+    else:
+
+        return output_str, reduced_ops
 
 
 def generate_cpu(ex: Union[list, sym.Matrix, sym.Expr], vnames: List[str],
@@ -623,6 +648,86 @@ def generate_avx(ex, vnames, idx):
     print('// Dendro vectorized code: }}} ')
 
 
+def generate_separate_cpu(ex,
+                          vnames,
+                          idx,
+                          orig_n_exp,
+                          proj_name="bssn",
+                          dtype="double",
+                          use_const=False):
+    """Generates the code for separate variable calculation on CPU
+    """
+
+    total_reduced_ops = 0
+    orig_ops = sym.count_ops(ex)
+
+    output_str = "// Dendro: C++ Equation Code Generation for Separate Calculation {{{{ \n"
+    output_str += "// =================\n"
+
+    # now we iterate through each one of our variables
+    for ii, single_ex in enumerate(ex):
+        single_vname = vnames[ii]
+        print("== Now generating for " + single_vname, file=sys.stderr)
+
+        output_str += f"// Dendro: Generated code for {single_vname}\n"
+        output_str += f"{proj_name}::timer::{single_vname}.start();\n\n"
+
+        # start loop opening for K (z)
+        output_str += "for (unsigned int k = PW; k < nz - PW; k++) {\n"
+        # definition for the z position
+        output_str += "    z = pmin[2] + k * hz;\n"
+
+        # start loop opening for y
+        output_str += "for (unsigned int j = PW; j < ny - PW; j++) {\n"
+        # definition for the y position
+        output_str += "    y = pmin[1] + j * hy;\n"
+
+        # start loop opening for x
+        output_str += "for (unsigned int i = PW; i < nx - PW; i++) {\n"
+        # definition for the x position
+        output_str += "    x = pmin[0] + i * hx;\n"
+
+        # then we add the calculation for pp, r_coord, eta, and more
+        output_str += f"    {idx} = i + nx * (j + ny * k);\n"
+        output_str += "    r_coord = sqrt(x*x + y*y + z*z);\n"
+
+        # TODO: ETA CONSTANT NEEDS TO BE CONSIDERED HERE!!!! MAY NOT BE NECESSARY
+        output_str += "    eta = ETA_CONST;\n"
+        output_str += "    if (r_coord >= ETA_R0)\n"
+        output_str += "        eta *= pow( (ETA_R0/r_coord), ETA_DAMPING_EXP);\n"
+
+        # then we can get the generated code
+        exp_ops = sym.count_ops(single_ex)
+        # now extract the CSE
+        cse_out = construct_cse_from_list([single_ex])
+        tmp_str, reduced_ops = generate_cpu_preextracted(
+            cse_out, [single_vname], idx, 0, dtype, use_const, True)
+        total_reduced_ops += reduced_ops
+        output_str += tmp_str
+
+        output_str += f"// Dendro: Original operations for this variable: {exp_ops}\n"
+        output_str += f"// Dendro: Reduced operations for this variable: {reduced_ops}\n"
+        output_str += "    }\n  }\n}\n"
+        output_str += f"{proj_name}::timer::{single_vname}.stop();\n"
+        output_str += f"// Dendro: End generated code for {single_vname}\n\n"
+
+    # now at the end, we can add some other cool stuff
+
+    output_str += "// =================\n"
+    output_str += "// Dendro: INFORMATION\n"
+    output_str += "// Dendro: number of original operations: %d \n" % (
+        orig_ops)
+    output_str += '// Dendro: number of reduced operations: %d \n' % (
+        total_reduced_ops)
+    output_str += "// Dendro: preprocessing reduced the "
+    output_str += f"number of operations by {orig_ops-reduced_ops}\n"
+    percent_reduction = (orig_ops - total_reduced_ops) / orig_ops
+    output_str += f"// Dendro: a {percent_reduction:0.5%}% reduction\n"
+    output_str += '// Dendro: }}}} End Code Generation \n'
+
+    return output_str
+
+
 def generate_separate(ex, vnames, idx, prefix=""):
     """Generate 'separate' C++ code after simplification
 
@@ -768,12 +873,43 @@ def replace_pow(exp_in):
         The new output expression that has replaced the "pow" with
         multiplication.
     """
-    pows = list(exp_in.atoms(sym.Pow))
-    if any(not e.is_Integer for b, e in (i.as_base_exp() for i in pows)):
-        raise ValueError("Dendro: Non integer power encountered.")
-    repl = zip(pows, (sym.Mul(*[b] * e, evaluate=False)
-                      for b, e in (i.as_base_exp() for i in pows)))
-    return exp_in.xreplace(dict(repl))
+
+    if isinstance(exp_in, sym.Expr):
+
+        pows = list(exp_in.atoms(sym.Pow))
+
+        # if it didn't find any, just go ahead and return the original expression
+        if len(pows) == 0:
+            return exp_in
+
+        # do a quick check for non-integer power, we'll keep it as is and let C++ use the pow function here
+        for b, e in (i.as_base_exp() for i in pows):
+            if not e.is_integer:
+                print("WARNING: pow function with non-integer will be called",
+                      file=sys.stderr)
+                return exp_in
+            elif e.is_real:
+                if e < 0:
+                    print(
+                        "WARNING: pow function with negative value will be called",
+                        file=sys.stderr)
+                    return exp_in
+            else:
+                # otherwise we're good to continue forward
+                pass
+
+        # otherwise the new replacement needs to be generated
+        repl = zip(pows, (sym.Mul(*[b] * e, evaluate=False)
+                          for b, e in (i.as_base_exp() for i in pows)))
+
+        # and return with the replacement
+        return exp_in.xreplace(dict(repl))
+
+    else:
+
+        # TODO: this will require some kind of recursive parsing...
+
+        return exp_in
 
 
 def generate_debug(ex, vnames):
@@ -1148,15 +1284,34 @@ def generate_deriv_comp(var_names: list, adv_der_var: str = "beta"):
             # there are more underscores
             va_name = ''.join(short_text + "_"
                               for short_text in split_va[3:])[:-1]
-            # get the direction
-            the_dir = dir_map[split_va[1]]
-            # if it's grad, then it's a one dimensional derivative
-            return_text += f"deriv_{the_dir}{the_dir}({va}, {va_name}, " + \
-                f"h{the_dir}, sz, bflag);\n"
+            
+            dir_int = split_va[1]
+            dir_int2 = split_va[2]
 
-            # TODO: allow grad2 support to include over multiple directions
-            # currently the deriv_xx function, for example, only supports
-            # the hx direction
+            # get the direction
+            the_dir = dir_map[dir_int]
+            the_dir2 = dir_map[dir_int2]
+
+            if the_dir == the_dir2:
+                # if it's grad, then it's a one dimensional derivative
+                return_text += f"deriv_{the_dir}{the_dir}({va}, {va_name}, " + \
+                    f"h{the_dir}, sz, bflag);\n"
+
+            else:
+                # this is if we have different directions
+                # knowing how the code is generated, this will be done
+                # by taking the variable from before and calculating it
+
+                # we assume the first direction is saved, then we
+                # use it to calculate the second
+                grad2_str = f"deriv_{the_dir2}({va}, "
+
+                # then build up the grad string from the original direction
+                grad2_str += f"grad_{dir_int}_" \
+                    + va_name + f", h{the_dir2}, sz, bflag);\n"
+
+                return_text += grad2_str
+                # TODO: potentially make it so that the order is "ordered"?
 
         elif split_va[0] == "agrad":
             # get the original var name from the string, just in case
@@ -1365,7 +1520,11 @@ def generate_force_symmat_traceless(vname, metric_vname, dtype="double"):
     return return_str
 
 
-def generate_update_sym_mat_extract(vname, unzip_access, uzip="uiVar", dtype="double", node="node"):
+def generate_update_sym_mat_extract(vname,
+                                    unzip_access,
+                                    uzip="uiVar",
+                                    dtype="double",
+                                    node="node"):
 
     # NOTE: all of the symmetric matrices grab the indexing based on the upper
     # triangle, so get those first
