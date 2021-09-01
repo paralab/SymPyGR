@@ -136,9 +136,17 @@ class DendroConfiguration:
         if var_type not in self.all_var_names.keys():
             raise ValueError(f"Unfortunately {var_type} doesn't work yet")
 
-        # so now we can get started by getting the rhs information
-        all_exp, all_rhs_names, orig_n_exp = self._extract_rhs_expressions(
-            var_type)
+        if self.stored_rhs_function.get(var_type, None) is not None:
+            temp_funcs = self.stored_rhs_function[var_type]
+            all_exp = temp_funcs["exprs"]
+            all_rhs_names = temp_funcs["all_rhs_names"]
+            orig_n_exp = temp_funcs["orig_n_exp"]
+            print("Found stored RHS info", file=sys.stderr)
+        else:
+            # so now we can get started by getting the rhs information
+            append_rhs_to_var = var_type != "constraint"
+            all_exp, all_rhs_names, orig_n_exp = self._extract_rhs_expressions(
+                var_type, append_rhs_to_var=append_rhs_to_var)
 
         # count the number of original operations on the expressions
         orig_n_ops = sym.count_ops(all_exp)
@@ -459,7 +467,7 @@ class DendroConfiguration:
         # if that's all good, then we're good to add the function to our list
         self.all_rhs_functions.update({var_type: rhs_func})
 
-    def _extract_rhs_expressions(self, var_type: str):
+    def _extract_rhs_expressions(self, var_type: str, append_rhs_to_var=True):
         """An internal function that extracts the expressions for a variable type
 
         It does this to match up expressions with their corresponding RHS
@@ -501,8 +509,11 @@ class DendroConfiguration:
 
             # note: if we have a sym.Matrix as our variable, we need to then
             # keep in mind the indexing so we can build the RHS variables
-            rhs_vars = self.generate_rhs_var_names(
-                self.clean_var_names([the_var]))
+            if append_rhs_to_var:
+                rhs_vars = self.generate_rhs_var_names(
+                    self.clean_var_names([the_var]))
+            else:
+                rhs_vars = self.clean_var_names([the_var])
 
             all_expressions += list_expressions
             all_rhs_var_names += rhs_vars
@@ -514,7 +525,10 @@ class DendroConfiguration:
         # okay, now that we have them we can return them
         return all_expressions, all_rhs_var_names, original_number_expressions
 
-    def gen_grad_memory_alloc(self, var_type: str, grad_type: str = "grad"):
+    def gen_grad_memory_alloc(self,
+                              var_type: str,
+                              grad_type: str = "grad",
+                              include_byte_declaration=False):
         """Generates memory allocation code
 
         This method takes the internally-stored set of variables as
@@ -536,7 +550,7 @@ class DendroConfiguration:
         grad_vars = self.create_grad_var_names(orig_vars, grad_type, 3)
 
         return_text = dendrosym.codegen.generate_memory_alloc(
-            grad_vars, "double", grad_type == "grad")
+            grad_vars, "double", include_byte_declaration)
 
         return return_text
 
@@ -620,12 +634,15 @@ class DendroConfiguration:
 
         return return_text
 
-    def gen_grad_calculations(self, var_type: str, grad_type: str = "grad", use_eqns=False):
+    def gen_grad_calculations(self,
+                              var_type: str,
+                              grad_type: str = "grad",
+                              use_eqns=False):
         """"""
         if use_eqns:
 
             pass
-        
+
         else:
 
             orig_vars = self.all_var_names.get(var_type, [])
@@ -633,7 +650,6 @@ class DendroConfiguration:
             grad_vars = self.create_grad_var_names(orig_vars, grad_type, 3)
 
             return_text = dendrosym.codegen.generate_deriv_comp(grad_vars)
-
 
         return return_text
 
@@ -702,7 +718,10 @@ class DendroConfiguration:
         return (int(var_end[:len_idx]), int(var_end[len_idx:]))
 
     @staticmethod
-    def create_grad_var_names(in_vars: list, grad_type="grad", ndim=3, assume_symmetry=True):
+    def create_grad_var_names(in_vars: list,
+                              grad_type="grad",
+                              ndim=3,
+                              assume_symmetry=True):
         """Generate the gradient variable names
 
         This also takes in the gradient type, which is specifically for
@@ -1060,16 +1079,22 @@ class DendroConfiguration:
 
         return False, None
 
-    def generate_pre_necessary_derivatives(self, var_type, dtype="double"):
+    def generate_pre_necessary_derivatives(self,
+                                           var_type,
+                                           dtype="double",
+                                           include_byte_declaration=False):
 
         (exprs, all_rhs_names, found_derivatives,
          orig_n_exp) = self.find_derivatives(var_type)
 
-        if len(found_derivatives) == 0:
-            return "// NO INTERMEDIATE DERIVATIVES FOUND\n", ""
+        if include_byte_declaration:
+            # get the number of bytes we need for allocation
+            outstr = f"const unsigned int bytes = n * sizeof({dtype});\n\n"
+        else:
+            outstr = ""
 
-        # get the number of bytes we need for allocation
-        outstr = f"const unsigned int bytes = n * sizeof({dtype});\n\n"
+        if len(found_derivatives) == 0:
+            return outstr + "// NO INTERMEDIATE DERIVATIVES FOUND\n", ""
 
         out_dealloc = ""
 
@@ -1112,9 +1137,13 @@ class DendroConfiguration:
         # now we need to iterate through the found derivatives and start with largest
         # "depth" field
         max_depth = self.find_max_depth_value(found_derivatives)
-        print("Max Depth is:" + str(max_depth), file=sys.stderr)
+        # DEBUG:
+        # print("Max Depth is:" + str(max_depth), file=sys.stderr)
 
         already_calculated_inters = []
+        already_added_derivs = []
+
+        final_intermediate_dealloc = ""
 
         for curr_depth in reversed(range(max_depth + 1)):
 
@@ -1138,7 +1167,9 @@ class DendroConfiguration:
                 # otherwise, get the information from the function
                 (all_str, all_tmp_str, calc_str, deriv_str, deall_str,
                  deall_tmp_str) = self.gen_individual_der_strs(
-                     deriv_info, inter_var_name)
+                     deriv_info,
+                     inter_var_name,
+                     already_calculated_inters=already_added_derivs)
 
                 curr_all += all_str
                 curr_temp_all += all_tmp_str
@@ -1149,6 +1180,7 @@ class DendroConfiguration:
 
                 if not already_included:
                     already_calculated_inters.append(deriv_info)
+                already_added_derivs.append(deriv_info)
 
                 ders_remove.append(ii)
 
@@ -1164,7 +1196,7 @@ class DendroConfiguration:
             outstr += curr_temp_all + "\n"
             outstr += curr_calc + "\n"
             outstr += curr_deriv + "\n"
-            outstr += curr_temp_deall + "\n"
+            final_intermediate_dealloc += curr_temp_deall + "\n"
 
             out_dealloc += curr_deall + "\n"
 
@@ -1172,6 +1204,9 @@ class DendroConfiguration:
             if max_depth > 0:
                 for idx in sorted(ders_remove, reverse=True):
                     del found_derivatives[idx]
+        
+        # then stitch on the intermediate deallocation string at the end
+        outstr += final_intermediate_dealloc
 
         return outstr, out_dealloc
 
@@ -1189,6 +1224,7 @@ class DendroConfiguration:
     def gen_individual_der_strs(self,
                                 deriv_info,
                                 inter_var_name=None,
+                                already_calculated_inters=[],
                                 dtype="double",
                                 t="    "):
 
@@ -1217,7 +1253,7 @@ class DendroConfiguration:
                 + sym.ccode(deriv_info["orig_exp"]) + ";\n"
 
             # then deallocate the temporary var
-            deallocate_tmp_str = f"free({var_name_no_idx}_inter);\n"
+            deallocate_tmp_str = f"free({var_name_no_idx}_intermediate);\n"
         else:
             allocate_tmp_str = ""
             calculation_str = ""
@@ -1239,8 +1275,44 @@ class DendroConfiguration:
                 deriv_str += ", h" + idx_to_dir[deriv_info['index_order'][0]]
                 deriv_str += ", sz, bflag);\n"
             else:
-                # so we have to start by calculating it
-                deriv_str = f"TODO: {deriv_info['index_order']}, {inter_var_name}\n"
+                # so we have to start by checking if the first direction was already calculated
+                dir1, dir2 = deriv_info['index_order']
+
+                # inter_var_name
+                found_first_dir = False
+                # base string so that the compiler throws and error
+                intermediate_value_name = "INVALID_VARIABLE_NAME_DO_NOT_USE"
+                for completed_deriv_info in already_calculated_inters:
+                    if type(completed_deriv_info['index_order']) == tuple:
+                        # we have a tuple for the index order
+                        completed_dir1 = completed_deriv_info['index_order'][0]
+                    else:
+                        completed_dir1 = completed_deriv_info['index_order']
+
+                    # now if it's the same direction
+                    if completed_dir1 == dir1:
+                        # then we check the operation is grad 1
+                        if completed_deriv_info["operation"] == "grad":
+                            # then we check if the
+                            if sym.simplify(completed_deriv_info["orig_exp"] -
+                                            deriv_info["orig_exp"]) == 0:
+                                found_first_dir = True
+                                # get the intermediate value name, and then we're golden
+                                intermediate_value_name = str(
+                                    completed_deriv_info["temp_var_name"]
+                                ).split(self.idx_str)[0]
+                                break
+
+                if found_first_dir:
+                    deriv_str = f"deriv_{idx_to_dir[dir2]}("
+                    deriv_str += var_name_no_idx
+                    deriv_str += ", " + intermediate_value_name
+                    deriv_str += ", h" + idx_to_dir[dir2]
+                    deriv_str += ", sz, bflag);\n"
+
+                else:
+                    # TODO: handle edge case where we have some weird derivative that wasn't already calculated
+                    deriv_str = f"TODO: {deriv_info['index_order']}, {inter_var_name}\n"
 
         elif deriv_info["operation"] == "agrad":
             adv_der_var_use = getattr(self, "advective_der_var",
@@ -1285,3 +1357,177 @@ class DendroConfiguration:
                 break
 
         return found_derivatives
+
+    def generate_deriv_allocation_and_calc(self,
+                                           var_type="evolution",
+                                           include_byte_declaration=False):
+        """Generates all of the C++ code for allocation and calculation of derivatives
+        
+        
+        """
+
+        # get the RHS stuff
+        temp_funcs = self.stored_rhs_function[var_type]
+        grad_list, grad2_list, agrad_list = self.find_all_unique_ders(
+            temp_funcs["exprs"], temp_funcs["all_rhs_names"])
+
+        # then we need to convert them
+        if var_type == "evolution":
+            grad_alloc = self.gen_grad_memory_alloc(
+                var_type,
+                "grad",
+                include_byte_declaration=include_byte_declaration)
+            grad_calc = self.gen_grad_calculations(var_type, "grad")
+            grad_dealloc = self.gen_grad_memory_dealloc(var_type, "grad")
+
+            orig_vars = self.all_var_names.get(var_type, [])
+            grad_grad_names = self.create_grad_var_names(orig_vars, "grad", 3)
+        else:
+            (grad_alloc, grad_dealloc, grad_calc,
+             grad_grad_names) = self.create_func_list_code(
+                 grad_list, self.idx_str)
+
+        # grad 2
+        (grad2_alloc, grad2_dealloc, grad2_calc,
+         grad2_grad_names) = self.create_func_list_code(
+             grad2_list, self.idx_str, grad1_list=grad_grad_names)
+
+        # agrad
+        (agrad_alloc, agrad_dealloc, agrad_calc,
+         agrad_grad_names) = self.create_func_list_code(
+             agrad_list,
+             self.idx_str,
+             agrad_var=getattr(self, "advective_der_var", "NONE"))
+
+        # stitch them together and return the strings
+        all_alloc = grad_alloc + grad2_alloc + agrad_alloc
+        all_calc = grad_calc + grad2_calc + agrad_calc
+        all_dealloc = grad_dealloc + grad2_dealloc + agrad_dealloc
+
+        return all_alloc, all_calc, all_dealloc
+
+    @staticmethod
+    def create_func_list_code(input_funcs,
+                              idx_str,
+                              dtype="double",
+                              grad1_list=[],
+                              agrad_var="beta"):
+
+        # if it's not an input
+        if not isinstance(input_funcs, set) and not isinstance(
+                input_funcs, list):
+            input_funcs = [input_funcs]
+
+        out_alloc = ""
+        out_dealloc = ""
+        out_calc = ""
+        all_grad_names = []
+
+        dir_dict = {0: "x", 1: "y", 2: "z"}
+
+        for fun in input_funcs:
+
+            if fun.name == "grad":
+                direction, var = fun.args
+
+                var_name = str(var).split(idx_str)[0]
+
+                grad_name = f"grad_{direction}_{var_name}"
+
+                calc_str = f"deriv_{dir_dict[direction]}(" + \
+                    grad_name + ", " + var_name + ", " + \
+                    "h" + dir_dict[direction] + ", sz, bflag);\n"
+
+                all_grad_names.append(grad_name)
+
+            elif fun.name == "grad2":
+                dir1, dir2, var = fun.args
+
+                var_name = str(var).split(idx_str)[0]
+
+                grad_name = f"grad2_{dir1}_{dir2}_{var_name}"
+
+                # now the calculation is a bit different
+                if dir1 == dir2:
+                    calc_str = "deriv_" + 2 * dir_dict[dir1]
+                    calc_str += "(" + grad_name + ", " + var_name
+                    calc_str += ", h" + dir_dict[dir1] + ", sz, bflag);\n"
+
+                # if they are not equal, we need to do a few things
+                else:
+                    first_dir_name = f"grad_{dir1}_{var_name}"
+                    # first check if the first direction is in our list of grad1
+                    if first_dir_name in grad1_list:
+                        # then we can just add the second direction
+                        calc_str = f"deriv_{dir_dict[dir2]}("
+                        calc_str += grad_name + ", " + \
+                            f"grad_{dir1}_{var_name}" + ", " + \
+                            "h" + dir_dict[dir2] + ", sz, bflag);\n"
+
+                        all_grad_names.append(grad_name)
+                    else:
+                        # then we need to add to the allocation string
+                        # a temporary variable
+                        out_alloc += f"{dtype} *{first_dir_name} = ({dtype} *) malloc(bytes);\n"
+                        out_dealloc += f"free({first_dir_name});\n"
+
+                        # then the calculation string
+                        calc_str = f"deriv_{dir_dict[dir1]}(" + \
+                            first_dir_name + ", " + var_name + ", " + \
+                            "h" + dir_dict[dir1] + ", sz, bflag);\n"
+
+                        calc_str += f"deriv_{dir_dict[dir2]}(" + \
+                            grad_name + ", " + first_dir_name + ", " + \
+                            "h" + dir_dict[dir2] + ", sz, bflag);\n"
+
+            elif fun.name == "agrad":
+                direction, var = fun.args
+
+                var_name = str(var).split(idx_str)[0]
+
+                grad_name = f"agrad_{direction}_{var_name}"
+
+                calc_str = "adv_deriv_" + dir_dict[direction] + \
+                    "(" + grad_name + ", " + var_name + \
+                    ", h" + dir_dict[direction] + ", sz, " + \
+                    agrad_var + str(direction) + ", bflag);\n"
+
+            # grad allocation
+            alloc_str = f"{dtype} *{grad_name} = ({dtype} *) malloc(bytes);\n"
+
+            # grad deallocation
+            dealloc_str = f"free({grad_name});\n"
+
+            out_alloc += alloc_str
+            out_dealloc += dealloc_str
+            out_calc += calc_str
+
+        return out_alloc, out_dealloc, out_calc, all_grad_names
+
+    # TODO: potentially remove this from static and make it real
+    @staticmethod
+    def find_all_unique_ders(rhs_funcs, rhs_names):
+        # NOTE: this is assumed to be after the complicated ones are
+        # gathered
+        # this will then help us keep track of all of the different derivatives
+        # we have to calculate
+
+        funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
+
+        grad_list = set()
+        grad2_list = set()
+        agrad_list = set()
+
+        for ii, eqn in enumerate(rhs_funcs):
+
+            # this creates sets for all of the gradient atoms
+            all_current_grads = eqn.atoms(funcs_to_find[0])
+            all_current_grad2s = eqn.atoms(funcs_to_find[1])
+            all_current_agrads = eqn.atoms(funcs_to_find[2])
+
+            # then add them to our set which forces uniqueness, but not order
+            grad_list.update(all_current_grads)
+            grad2_list.update(all_current_grad2s)
+            agrad_list.update(all_current_agrads)
+
+        return grad_list, grad2_list, agrad_list
