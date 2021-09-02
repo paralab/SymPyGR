@@ -634,9 +634,9 @@ def get_broadcast(table_name: str,
     # if it's anything else, we have to use the par
     # implementation of mpi_bcast in dendro
     else:
-        bcasts += "par::Mpi_Bcast(&"
+        bcasts += "par::Mpi_Bcast(&("
         bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
-        bcasts += ", 1, 0, comm);"
+        bcasts += "), 1, 0, comm);"
 
     return bcasts
 
@@ -1152,7 +1152,7 @@ def generate_all_parameter_text(project_short: str, filename: str):
                         if v["class"][0] != "i":
                             bcasts.append(
                                 get_broadcast(table_names, k, v,
-                                              curr_namespace_list_ph, 3))
+                                              curr_namespace_list_ph, 2))
 
                         # now update indent_ph and indent_pc
                         indent_ph = indent_ph[:-len(TAB)]
@@ -1189,14 +1189,18 @@ def generate_all_parameter_text(project_short: str, filename: str):
             param_read += ",\n"
         else:
             param_read += ");\n\n"
+    
+    # then we close out of rank0-only code that reads things in
+    param_read += f"{TAB*2}}}\n\n"
 
     # combine the brodcasts to the param_read
+    param_read += f"{TAB*2}// Broadcast code to send parameters to other processes\n"
     param_read += "\n".join(bcasts)
-    param_read += f"\n{TAB*2}}}\n{TAB}}}"
+    param_read += f"\n{TAB*1}}}\n"
 
     # then add param_read to the c file
     paramc_str += param_read
-    paramc_str += "\n"
+    paramc_str += "\n\n"
     paramc_str += param_dump
 
     # then close it out with braces
