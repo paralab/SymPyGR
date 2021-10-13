@@ -140,9 +140,13 @@ def get_variant_text(namespaces: list,
         paramh_str += "/** @brief: " + vinfo.get(
             "desc", "No description given") + " */\n"
         paramh_str += indent_ph
-    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
-    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
+    paramh_str += "extern std::" if vinfo["dtype"][0] == "s" else "extern "
+    if vinfo["dtype"][-2] == '[':
+        paramh_str += vinfo["dtype"][:-2]
+    elif vinfo["dtype"] == "enum":
+        paramh_str += vinfo["enum_name"]
+    else:
+        paramh_str += vinfo["dtype"]
     paramh_str += " "
     paramh_str += table_name
     paramh_str += vname
@@ -158,8 +162,12 @@ def get_variant_text(namespaces: list,
     if vinfo["dtype"][0] == 's':
         paramc_str += "std::"  # strings need "std::"
     # arrays: chop "[]"
-    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
+    if vinfo["dtype"][-2] == '[':
+        paramc_str += vinfo["dtype"][:-2]
+    elif vinfo["dtype"] == "enum":
+        paramc_str += vinfo["enum_name"]
+    else:
+        paramc_str += str(vinfo["dtype"])
     paramc_str += " "
     paramc_str += table_name
     paramc_str += vname
@@ -175,8 +183,8 @@ def get_variant_text(namespaces: list,
     param_read += get_full_vname(namespaces, table_name, vname)
     param_read += f"\"))\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
 
-    if (vinfo["dtype"][0] == 'i'
-            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
+    if (vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'd'
+            or vinfo["dtype"] == "enum") and vinfo["dtype"][-2] != '[':
         param_read += get_bound_text(namespaces, table_name, vname, vinfo)
 
     # only for arrays: write a loop to assign values
@@ -187,23 +195,31 @@ def get_variant_text(namespaces: list,
 
     # add the read definition
     param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
-    param_read += " = file[\""
+    param_read += " = "
+    if vinfo["dtype"] == "enum":
+        param_read += "static_cast<" + vinfo["enum_name"] + ">("
+    param_read += "file[\""
     param_read += get_full_vname(namespaces, table_name, vname)
     param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
     param_read += ".as_"
     if vinfo["dtype"][0] == 'd':
         param_read += "floating"
-    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
+    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u' or vinfo[
+            "dtype"] == "enum":
         param_read += "integer"
     elif vinfo["dtype"][0] == 's':
         param_read += "string"
     else:
         param_read += "boolean"
 
+    param_read += "()"
+    if vinfo["dtype"] == "enum":
+        param_read += ")"
+
     if vinfo["dtype"][-2] == '[':
-        param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
+        param_read += f";\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
     else:
-        param_read += f"();\n{TAB * base_t}}}\n\n"
+        param_read += f";\n{TAB * base_t}}}\n\n"
 
     param_read += f"{TAB * base_t}else\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
     param_read += "std::cerr << R\"(No value for \""
@@ -280,9 +296,13 @@ def get_semivariant_text(namespaces: list,
         paramh_str += "/** @brief: " + vinfo.get(
             "desc", "No description given") + " */\n"
         paramh_str += indent_ph
-    paramh_str += "extern std::" if vinfo["dtype"][0] == 's' else "extern "
-    paramh_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
+    paramh_str += "extern std::" if vinfo["dtype"][0] == "s" else "extern "
+    if vinfo["dtype"][-2] == '[':
+        paramh_str += vinfo["dtype"][:-2]
+    elif vinfo["dtype"] == "enum":
+        paramh_str += vinfo["enum_name"]
+    else:
+        paramh_str += vinfo["dtype"]
     paramh_str += " " + table_name + vname
 
     # size declaration for arrays
@@ -294,14 +314,21 @@ def get_semivariant_text(namespaces: list,
     paramc_str += indent_pc
     if vinfo["dtype"][0] == 's':
         paramc_str += "std::"
-    paramc_str += vinfo["dtype"][:-2] if vinfo["dtype"][-2] == '[' else vinfo[
-        "dtype"]
+    if vinfo["dtype"][-2] == "[":
+        paramc_str += vinfo["dtype"][:-2]
+    elif vinfo["dtype"] == "enum":
+        paramc_str += vinfo["enum_name"]
+    else:
+        paramc_str += vinfo["dtype"]
     paramc_str += " " + table_name + vname
 
     # if we have an array
     if vinfo["dtype"][-2] == '[':
         paramc_str += "[" + str(vinfo["size"]) + "]"
         paramc_str += " = {" + str(vinfo["default"])[1:-1] + "}"
+    elif vinfo["dtype"] == "enum":
+        paramc_str += " = static_cast<" + vinfo["enum_name"] + ">("
+        paramc_str += str(vinfo["default"]) + ")"
     # if it isn't an array
     else:
         paramc_str += " = \"" if vinfo["dtype"][0] == 's' else " = "
@@ -316,8 +343,8 @@ def get_semivariant_text(namespaces: list,
     param_read += get_full_vname(namespaces, table_name, vname)
     param_read += f"\"))\n{TAB*base_t}{{\n{TAB*(base_t+1)}"
 
-    if (vinfo["dtype"][0] == 'i'
-            or vinfo["dtype"][0] == 'd') and vinfo["dtype"][-2] != '[':
+    if (vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'd'
+            or vinfo["dtype"] == "enum") and vinfo["dtype"][-2] != '[':
         param_read += get_bound_text(namespaces, table_name, vname, vinfo)
 
     # only for arrays, we need to write a loop to assign values
@@ -328,23 +355,31 @@ def get_semivariant_text(namespaces: list,
 
     # add the read definition
     param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
-    param_read += " = file[\""
+    param_read += " = "
+    if vinfo["dtype"] == "enum":
+        param_read += "static_cast<" + vinfo["enum_name"] + ">("
+    param_read += "file[\""
     param_read += get_full_vname(namespaces, table_name, vname)
     param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
     param_read += ".as_"
     if vinfo["dtype"][0] == 'd':
         param_read += "floating"
-    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u':
+    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u' or vinfo[
+            "dtype"] == "enum":
         param_read += "integer"
     elif vinfo["dtype"][0] == 's':
         param_read += "string"
     else:
         param_read += "boolean"
 
+    param_read += "()"
+    if vinfo["dtype"] == "enum":
+        param_read += ")"
+
     if vinfo["dtype"][-2] == "[":
-        param_read += f"();\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
+        param_read += f";\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
     else:
-        param_read += f"();\n{TAB * base_t}}}\n\n"
+        param_read += f";\n{TAB * base_t}}}\n\n"
 
     return paramh_str, paramc_str, param_read
 
@@ -630,6 +665,12 @@ def get_broadcast(table_name: str,
         bcasts += ".c_str()), "
         bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
         bcasts += ".size() + 1, MPI_CHAR, 0, comm);"
+    
+    # if it's one of our enums, we have to cast it
+    elif vinfo["dtype"] == "enum":
+        bcasts += "par::Mpi_Bcast((int*)&"
+        bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        bcasts += ", 1, 0, comm);"
 
     # if it's anything else, we have to use the par
     # implementation of mpi_bcast in dendro
@@ -1189,7 +1230,7 @@ def generate_all_parameter_text(project_short: str, filename: str):
             param_read += ",\n"
         else:
             param_read += ");\n\n"
-    
+
     # then we close out of rank0-only code that reads things in
     param_read += f"{TAB*2}}}\n\n"
 
