@@ -430,7 +430,7 @@ def up_down(A):
     return m.reshape(3, 3)
 
 
-def lie(b, a, weight=0):
+def lie(b, a, weight=0, use_advective=False):
     """Compute the Lie derivative of a field along a vector
 
     Takes a field, a, and computes the Lie derivative along the vector b.
@@ -444,6 +444,15 @@ def lie(b, a, weight=0):
         The vector b the derivative will be along
     a : sympy.Symbol, tuple, sympy.Matrix
         The field a to take the derivative of
+    weight : number, optional
+        A number (could be a sympy rational) for the weighting
+        of the Lie derivative
+    use_advective : bool, optional
+        A flag for enabling advective derivative calculation.
+        In some cases, using the advective derivative may be
+        beneficial, but after discussion the stability provided
+        often is not worth the computational expense. The option
+        remains for those that wish to use it.
 
     Returns
     -------
@@ -452,6 +461,9 @@ def lie(b, a, weight=0):
     """
 
     global d, ad
+
+    # assign if we're using the advective derivative function or not
+    ad_use = ad if use_advective else d
 
     if type(b) == sym.Matrix:
         # NOTE: a matrix *will* work, but it must be 3, or (3x1)
@@ -464,14 +476,14 @@ def lie(b, a, weight=0):
             ' needs to be vec3.')
 
     if type(a) == sym.Symbol:
-        return sum([b[ii] * ad(ii, a) for ii in e_i
+        return sum([b[ii] * ad_use(ii, a) for ii in e_i
                     ]) + weight * a * sum([d(ii, b[ii]) for ii in e_i])
 
     # if it's a 3-vector, this is what we calculate
     elif type(a) == tuple or (type(a) == sym.Matrix and a.shape == (3, 1)):
         return [
             sum([
-                b[jj] * ad(jj, a[ii]) - a[jj] * d(jj, b[ii]) +
+                b[jj] * ad_use(jj, a[ii]) - a[jj] * d(jj, b[ii]) +
                 weight * a[ii] * d(jj, b[jj]) for jj in e_i
             ]) for ii in e_i
         ]
@@ -479,7 +491,7 @@ def lie(b, a, weight=0):
     elif type(a) == sym.Matrix:
         m = sym.Matrix([
             sum([
-                b[kk] * ad(kk, a[ii, jj]) + a[ii, kk] * d(jj, b[kk]) +
+                b[kk] * ad_use(kk, a[ii, jj]) + a[ii, kk] * d(jj, b[kk]) +
                 a[kk, jj] * d(ii, b[kk]) + weight * a[ii, jj] * d(kk, b[kk])
                 for kk in e_i
             ]) for ii, jj in e_ij

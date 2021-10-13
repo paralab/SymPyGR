@@ -24,6 +24,18 @@ class ImproperInitalization(Exception):
 class DendroConfiguration:
     """Store and use configurations for Dendro projects
 
+    This class is used to define and store all of the pieces necessary
+    for the Dendro code generation tool. Dendro is an adaptive mesh
+    framework written in C/C++ that can divide a problem across
+    multiple nodes efficiently. The purpose of this class is to generate
+    some of the Dendro-ready C++ code from symbolic Python code to make
+    it easier to go from equations to project.
+
+    More information on how to use this class will be forthcoming.
+
+    This class is the base configuration class. For use with general
+    relativity projects, use the NRConfigs child class within `nr_configs`.
+
 
     """
     def __init__(self, project_name: str):
@@ -46,6 +58,14 @@ class DendroConfiguration:
         self.stored_rhs_function = {}
 
     def set_idx_str(self, idx_str):
+        """Store the string used for indexing into the variables
+
+        For the Dendro projects, this should be "[pp]", but the flexibility
+        is provided.
+
+        TODO: it might be convenient to make this "update idx str"
+        for if someone wants to use something *other* than "[pp]".
+        """
         self.idx_str = idx_str
 
     def add_parameter_variables(self,
@@ -82,6 +102,15 @@ class DendroConfiguration:
             self.all_vars["parameter"][eqn_type].append(one_var)
 
     def add_variable(self, in_vars: list, eqn_type: str = "general"):
+        """Add a symbolic variable to a particular equation type
+
+        This is necessary so the code generation can allocate memory,
+        keep track of, and store variables throughout the problem's evolution.
+
+        Parameters
+        ----------
+        in_vars: 
+        """
 
         if eqn_type not in self.all_vars.keys():
             raise ImproperInitalization(
@@ -131,7 +160,27 @@ class DendroConfiguration:
 
         return rhs_vars
 
-    def generate_rhs_code(self, var_type: str, arc_type="cpu"):
+    def generate_rhs_code(self,
+                          var_type: str,
+                          arc_type="cpu",
+                          include_rhs_in_name=True):
+        """Generate the code that calculates the 'RHS' variables
+        
+        This method takes the SymPy equations that were stored during configuration
+        and then generates the C++ code that calculates them. It is referred to
+        RHS even if every equation type is the RHS of a partial differential
+        system of equations.
+
+        For example, if "evolution" is a variable type, that can be sent in
+        and the class will then generate the code.
+
+        As an additional bonus, if used in conjunction with other methods,
+        it will take into account other "optimizations" used to either simplify,
+        precalculate, or likewise the equations automatically.
+
+        Please note that while `arc_type` is a possible parameter, it currently
+        only supports CPU code generation. GPU is planned.
+        """
 
         if var_type not in self.all_var_names.keys():
             raise ValueError(f"Unfortunately {var_type} doesn't work yet")
@@ -140,13 +189,18 @@ class DendroConfiguration:
             temp_funcs = self.stored_rhs_function[var_type]
             all_exp = temp_funcs["exprs"]
             all_rhs_names = temp_funcs["all_rhs_names"]
+            if not include_rhs_in_name:
+                all_rhs_names_tmp = []
+                for rhs_name in all_rhs_names:
+                    # replace/remove the _rhs side
+                    all_rhs_names_tmp.append(rhs_name.replace("_rhs", ""))
+                all_rhs_names = all_rhs_names_tmp
             orig_n_exp = temp_funcs["orig_n_exp"]
             print("Found stored RHS info", file=sys.stderr)
         else:
             # so now we can get started by getting the rhs information
-            append_rhs_to_var = var_type != "constraint"
             all_exp, all_rhs_names, orig_n_exp = self._extract_rhs_expressions(
-                var_type, append_rhs_to_var=append_rhs_to_var)
+                var_type, append_rhs_to_var=include_rhs_in_name)
 
         # count the number of original operations on the expressions
         orig_n_ops = sym.count_ops(all_exp)
@@ -1204,7 +1258,7 @@ class DendroConfiguration:
             if max_depth > 0:
                 for idx in sorted(ders_remove, reverse=True):
                     del found_derivatives[idx]
-        
+
         # then stitch on the intermediate deallocation string at the end
         outstr += final_intermediate_dealloc
 
@@ -1531,3 +1585,18 @@ class DendroConfiguration:
             agrad_list.update(all_current_agrads)
 
         return grad_list, grad2_list, agrad_list
+
+    # def add_initial_data(init_func, name="", desc=""):
+    #     # NOTE: just like the RHS function part, we need the
+    #     # init function to handle returning a list of expressions
+    #     # for each of the variables
+
+    #     # the name is for when we save a file and create a function
+    #     # for the initial data. The description is to give some
+    #     # helpful info about how things
+
+    #     # NOTE: I also need to decide if we're going to be using
+    #     # x or xx. The general ctx files are using xx, so I'll just
+    #     # consider that
+
+    #     pass
