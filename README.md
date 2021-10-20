@@ -1,4 +1,58 @@
-# SymPyGR 
+# DendroSym
+
+A symbolic framework for generating efficient C++ code with the Dendro framework for complicated simulation systems.
+
+## About DendroSym
+
+To come.
+
+## Installation
+
+This repository is installed as a Python package. The project is not on PyPi.org, so the repository will need to be cloned and installed. It is recommended that this package is installed in a virtual environment and not on the system as a whole.
+
+1. Clone the repository and enter the folder:
+
+    ```sh
+    git clone https://github.com/paralab/SymPyGR
+    cd SymPyGR
+    ```
+
+    This step can be skipped if you follow Method 3 for installing the repository.
+2. Install the repository:
+
+    **Method 1** (easiest, but any changes require reinstallation)
+    ```sh
+    pip3 install .
+    ```
+
+    **Method 2** (any changes made to the files in the folder are immediately recognized and used)
+    ```sh
+    pip3 install -e .
+    ```
+    The `-e` flag tells `pip` that this is an "editable" install which allows active development of the project.
+
+    **Method 3**
+    ```sh
+    pip3 install git+https://github.com/paralab/SymPyGR
+    ```
+
+    For this method, the `-e` flag can also be placed after the word `install` to mimic Method 2's editable mode.
+
+    Installation of the repository should handle all dependencies as well.
+
+
+## Usage
+
+More information to come. A sample Python file will be included soon.
+
+---
+
+## Legacy SymPyGR 
+
+What follows is the original documentation of SymPyGR. The original code can be found in the `master-old` branch since the project has taken a new direction.
+
+---
+
 SymPy based framework for optimized code generation for BSSN formulation of Einstein equation for heterogeneous platforms. 
 
 Dendro is an adaptive meshing framework that enables solving large-scale
