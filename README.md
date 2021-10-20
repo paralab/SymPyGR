@@ -49,7 +49,7 @@ More information to come. A sample Python file will be included soon.
 
 ## Legacy SymPyGR 
 
-What follows is the original documentation of SymPyGR. The original code can be found in the `master-old` branch since the project has taken a new direction.
+What follows is the original documentation of SymPyGR. The original code can be found in the `master-legacy` branch since the project has taken a new direction.
 
 ---
 
