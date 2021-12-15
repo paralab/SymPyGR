@@ -2,3 +2,4 @@ matplotlib
 networkx
 sympy
 pycachesim
+tomlkit

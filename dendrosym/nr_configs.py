@@ -71,6 +71,9 @@ class NRConfig(dendrosym.DendroConfiguration):
 
         self.stored_rhs_function = {}
 
+        # and initialize the intial data functions
+        self.all_initial_data_functions = {"general": [], "evolution": []}
+
     def add_evolution_variables(self, in_vars: list):
         return super().add_variable(in_vars, "evolution")
 

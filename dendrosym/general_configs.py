@@ -874,12 +874,10 @@ class DendroConfiguration:
         return f"<DendroConfigs for '{self.project_name}'>"
 
     def add_initial_data(self,
-                         var_type,
                          in_func,
                          func_name,
+                         var_type="general",
                          initial_data_id=None):
-        if var_type not in self.all_initial_data_functions.keys():
-            raise Exception("Need to fix this!")
 
         if initial_data_id is None:
             initial_data_id = 0
@@ -923,7 +921,32 @@ class DendroConfiguration:
                 " in Initial Data function. Remaining variables were:" +
                 repr(temp_vars))
 
-        self.all_initial_data_functions[var_type].append({func_name: in_func})
+        self.all_initial_data_functions[var_type].append(
+            (initial_data_id, func_name, in_func))
+
+    def generate_initial_data_code(self, var_type="general", dtype="double"):
+
+        # first we need to get the functions
+        all_init_funcs = self.all_initial_data_functions.get(var_type, [])
+
+        if len(all_init_funcs) == 0:
+            # if there's nothing we need to just return an empty string, nothing to generate
+            return ""
+
+        outstr = ""
+
+        # now we iterate through all functions
+        for init_data_id, func_name, init_func in all_init_funcs:
+
+            outstr += f"void {func_name}(const {dtype} x, const {dtype} y, const {dtype} x, {dtype} *var){{\n"
+
+            # then we have to generate the code
+
+            outstr += "}"
+
+            print(init_data_id, func_name)
+
+        pass
 
     def find_derivatives(self, var_type):
         """This method finds other derivatives
@@ -1150,6 +1173,24 @@ class DendroConfiguration:
         if len(found_derivatives) == 0:
             return outstr + "// NO INTERMEDIATE DERIVATIVES FOUND\n", ""
 
+        # add a declaration for computing the boundaries based on the boundary flag
+        outstr += "// initializing start and end points for the grids\n"
+        outstr += "unsigned int kstart = 0, jstart = 0, istart = 0;\n"
+        outstr += "unsigned int kend = nz, jend = ny, iend = nx;\n\n"
+
+        outstr += "if (bflag & (1u << OCT_DIR_LEFT)) {\n    "
+        outstr += "istart += PW;\n}\n\n"
+        outstr += "if (bflag & (1u << OCT_DIR_RIGHT)) {\n    "
+        outstr += "iend -= PW;\n}\n\n"
+        outstr += "if (bflag & (1u << OCT_DIR_DOWN)) {\n    "
+        outstr += "jstart += PW;\n}\n\n"
+        outstr += "if (bflag & (1u << OCT_DIR_UP)) {\n    "
+        outstr += "jend -= PW;\n}\n\n"
+        outstr += "if (bflag & (1u << OCT_DIR_BACK)) {\n    "
+        outstr += "kstart += PW;\n}\n\n"
+        outstr += "if (bflag & (1u << OCT_DIR_FRONT)) {\n    "
+        outstr += "kend -= PW;\n}\n\n"
+
         out_dealloc = ""
 
         allocate_str = "// Allocating memory for STAGED variables\n"
@@ -1167,16 +1208,16 @@ class DendroConfiguration:
 
         calculation_str = "/**\n * CALCULATING INTERMEDIATE EXPRESSIONS\n" \
             + " */\n"
-        calculation_str += "for (unsigned int k = PW; k < nz - PW; k++)\n"
+        calculation_str += "for (unsigned int k = kstart; k < kend; k++)\n"
         calculation_str += t + "{\n"
-        calculation_str += t + "for (unsigned int j = PW; j < ny - PW; j++)\n"
+        calculation_str += t + "for (unsigned int j = jstart; j < jend; j++)\n"
         calculation_str += t + "{\n"
         calculation_str += t * 2 + \
-            "for (unsigned int i = PW; i < nx - PW; i++)\n"
+            "for (unsigned int i = istart; i < iend; i++)\n"
         calculation_str += t * 2 + "{\n"
         calculation_str += t * 3 + f"const {dtype} x = pmin[0] + i * hx;\n"
-        calculation_str += t * 3 + f"const {dtype} y = pmin[0] + j * hy;\n"
-        calculation_str += t * 3 + f"const {dtype} z = pmin[0] + k * hz;\n\n"
+        calculation_str += t * 3 + f"const {dtype} y = pmin[1] + j * hy;\n"
+        calculation_str += t * 3 + f"const {dtype} z = pmin[2] + k * hz;\n\n"
         calculation_str += t * 3 + \
             "const unsigned int pp = i + nx * (j + ny * k);\n\n"
         # TODO: add eta check????

@@ -179,9 +179,9 @@ def get_variant_text(namespaces: list,
     paramc_str += ";\n"
 
     # now we update the param_read string
-    param_read = f"{TAB * base_t}if(file.contains(\""
+    param_read = f"{TAB * base_t}if (file.contains(\""
     param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += f"\"))\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
+    param_read += f"\")) {{\n{TAB * base_t}\n{TAB * (base_t + 1)}"
 
     if (vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'd'
             or vinfo["dtype"] == "enum") and vinfo["dtype"][-2] != '[':
@@ -339,9 +339,9 @@ def get_semivariant_text(namespaces: list,
     paramc_str += "\";\n" if vinfo["dtype"][0] == 's' else ";\n"
 
     # then the parameter reading chunk
-    param_read += f"{TAB*3}if(file.contains(\""
+    param_read += f"{TAB*3}if (file.contains(\""
     param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += f"\"))\n{TAB*base_t}{{\n{TAB*(base_t+1)}"
+    param_read += f"\")) {{\n{TAB*base_t}\n{TAB*(base_t+1)}"
 
     if (vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'd'
             or vinfo["dtype"] == "enum") and vinfo["dtype"][-2] != '[':
@@ -611,6 +611,79 @@ def get_dependent_text(namespaces: list,
     return paramh_str, param_bcast
 
 
+def get_string_broadcast_info(table_name: str, vname: str,
+                              curr_namespace_list_ph: str):
+    """Create the names needed for string broadcasting
+    
+    OpenMP cannot handle sending strings over easily, to mitigate
+    that we use temporary variables to help pass that information
+    easily to all other processes.
+    """
+
+    full_name = get_full_vname(curr_namespace_list_ph, table_name, vname)
+
+    lower_name = full_name.lower().replace(":", "_")
+
+    return lower_name + "_temp", lower_name + "_len", full_name
+
+
+def get_string_broadcast(list_temp_names, list_len_names, list_full_names,
+                         base_t):
+    """Generate broadcast code for all string variables
+    
+    OpenMP cannot handle sending strings over easily, to mitigate
+    that we use temporary variables to help pass that information
+    easily to all other processes. This takes in the pre-collected
+    source from the previous function above and generates
+    all of the strings necessary.
+    """
+
+    first_piece = f"{TAB * base_t}unsigned int "
+    second_piece = f"\n{TAB * base_t}if (!rank){{\n"
+    third_piece = ""
+    fourth_piece = ""
+    fifth_piece = f"\n{TAB * base_t}if (!rank){{\n"
+    sixth_piece = ""
+    seventh_piece = ""
+
+    for ii in range(len(list_temp_names)):
+        temp_name = list_temp_names[ii]
+        len_name = list_len_names[ii]
+        full_name = list_full_names[ii]
+
+        # declare the temporary names for the string lengths
+        first_piece += f"{len_name}" + (", " if ii < len(list_temp_names) - 1
+                                        else ";\n")
+
+        # get the size of the string
+        second_piece += f"{TAB * (base_t + 1)}{len_name} = "
+        second_piece += f"{full_name}.size();\n"
+
+        # broadcast the length
+        third_piece += f"{TAB * base_t}par::Mpi_Bcast(&"
+        third_piece += f"{len_name}, 1, 0, comm);\n"
+
+        # then create the character arrays
+        fourth_piece += f"{TAB * base_t}char "
+        fourth_piece += f"{temp_name}[{len_name} + 1];\n"
+
+        fifth_piece += f"{TAB * (base_t + 1)}strcpy("
+        fifth_piece += f"{temp_name}, {full_name}.c_str());\n"
+
+        sixth_piece += f"{TAB * base_t}MPI_Bcast("
+        sixth_piece += f"{temp_name}, {len_name} + 1,"
+        sixth_piece += "MPI_CHAR, 0, comm);\n"
+
+        seventh_piece += f"{TAB * base_t}{full_name} = "
+        seventh_piece += f"std::string({temp_name});\n"
+
+    second_piece += f"{TAB * base_t}}}\n\n"
+    fifth_piece += f"{TAB * base_t}}}\n\n"
+
+    return (first_piece + second_piece + third_piece + "\n" + fourth_piece +
+            fifth_piece + seventh_piece + "\n")
+
+
 def get_broadcast(table_name: str,
                   vname: str,
                   vinfo: toml.table,
@@ -660,12 +733,15 @@ def get_broadcast(table_name: str,
 
     # if it's a string
     elif vinfo["dtype"][0] == "s":
+
+        return ""
+
         bcasts += "MPI_Bcast(const_cast<char*>("
         bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
         bcasts += ".c_str()), "
         bcasts += get_full_vname(curr_namespace_list_ph, table_name, vname)
         bcasts += ".size() + 1, MPI_CHAR, 0, comm);"
-    
+
     # if it's one of our enums, we have to cast it
     elif vinfo["dtype"] == "enum":
         bcasts += "par::Mpi_Bcast((int*)&"
@@ -888,6 +964,11 @@ def generate_all_parameter_text(project_short: str, filename: str):
     # start by putting the setup dict on the stack
     # with the empty names and namespace list
     stack.append((setup_dict, table_names, namespace_list))
+
+    # store string information for the broadcasting of parameters
+    str_param_len_names = []
+    str_param_temp_names = []
+    str_param_full_names = []
 
     # as long as we aren't empty, we iterate
     while stack:
@@ -1186,7 +1267,7 @@ def generate_all_parameter_text(project_short: str, filename: str):
                                 curr_namespace_list_ph, 3)
 
                             paramh_str += temp_ph
-                            # add a "bcast" string because it's easy to slot here
+                            # add a "bcast" string
                             bcasts.insert(0, temp_bcast)
 
                         # now, for all but invariant, we write broadcast code
@@ -1194,6 +1275,14 @@ def generate_all_parameter_text(project_short: str, filename: str):
                             bcasts.append(
                                 get_broadcast(table_names, k, v,
                                               curr_namespace_list_ph, 2))
+
+                            if v["dtype"].startswith("s"):
+                                (str_temp_name, str_len_name,
+                                 str_param_name) = get_string_broadcast_info(
+                                     table_names, k, curr_namespace_list_ph)
+                                str_param_len_names.append(str_len_name)
+                                str_param_temp_names.append(str_temp_name)
+                                str_param_full_names.append(str_param_name)
 
                         # now update indent_ph and indent_pc
                         indent_ph = indent_ph[:-len(TAB)]
@@ -1235,8 +1324,13 @@ def generate_all_parameter_text(project_short: str, filename: str):
     param_read += f"{TAB*2}}}\n\n"
 
     # combine the brodcasts to the param_read
-    param_read += f"{TAB*2}// Broadcast code to send parameters to other processes\n"
+    param_read += f"{TAB*2}// Broadcast code " \
+        + "to send parameters to other processes\n"
     param_read += "\n".join(bcasts)
+    param_read += "\n\n"
+    param_read += get_string_broadcast(str_param_temp_names,
+                                       str_param_len_names,
+                                       str_param_full_names, 2)
     param_read += f"\n{TAB*1}}}\n"
 
     # then add param_read to the c file
@@ -1433,7 +1527,8 @@ def generate_sample_config_file_text(project_short: str, filename: str):
         " file or make copies for individual runs.\n"
     out_str += "#\n# Each of the parameters listed in this file should" + \
         " contain information about the parameter according to the template.\n"
-    out_str += "#\n# Please note that all \"invariant\", \"dependent\", and " + \
+    out_str += "#\n# Please note that all \"invariant\"," + \
+        " \"dependent\", and " + \
         "\"hyperinvariant\" parameters were not included.\n"
     out_str += "#\n# NOTE: What follows is an explanation on parameter types:"
     out_str += "\n# A variant parameter is required for execution."
