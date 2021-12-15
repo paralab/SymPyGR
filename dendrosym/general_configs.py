@@ -1332,7 +1332,7 @@ class DendroConfiguration:
 
         # allocate memory string addition
         allocate_str = f"{dtype} *{var_name_no_idx}" + \
-            f" = ({dtype} *) malloc(bytes);\n"
+            f" = ({dtype} *)malloc(bytes);\n"
 
         # if intervar name isn't set, then we need to include it for
         # calculations
@@ -1340,7 +1340,7 @@ class DendroConfiguration:
             inter_var_name = var_name_no_idx + "_intermediate"
             # intermediate allocation string addition
             allocate_tmp_str = f"{dtype} *{inter_var_name}" \
-                + f" = ({dtype} *) malloc(bytes);\n"
+                + f" = ({dtype} *)malloc(bytes);\n"
 
             # then the calculation string addition
             calculation_str = t * 3 + inter_var_name \
@@ -1563,7 +1563,7 @@ class DendroConfiguration:
                     else:
                         # then we need to add to the allocation string
                         # a temporary variable
-                        out_alloc += f"{dtype} *{first_dir_name} = ({dtype} *) malloc(bytes);\n"
+                        out_alloc += f"{dtype} *{first_dir_name} = ({dtype} *)malloc(bytes);\n"
                         out_dealloc += f"free({first_dir_name});\n"
 
                         # then the calculation string
@@ -1588,7 +1588,7 @@ class DendroConfiguration:
                     agrad_var + str(direction) + ", bflag);\n"
 
             # grad allocation
-            alloc_str = f"{dtype} *{grad_name} = ({dtype} *) malloc(bytes);\n"
+            alloc_str = f"{dtype} *{grad_name} = ({dtype} *)malloc(bytes);\n"
 
             # grad deallocation
             dealloc_str = f"free({grad_name});\n"

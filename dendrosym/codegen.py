@@ -1243,7 +1243,7 @@ def generate_memory_alloc(var_names: list,
         return_text = ""
 
     for va in var_names:
-        return_text += f"{var_type} *{va} = ({var_type} *) malloc(bytes);\n"
+        return_text += f"{var_type} *{va} = ({var_type} *)malloc(bytes);\n"
 
     return return_text
 
