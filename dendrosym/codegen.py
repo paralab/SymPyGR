@@ -1530,7 +1530,7 @@ def generate_update_sym_mat_extract(vname,
     # triangle, so get those first
     midx = [[0, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 2]]
     # that leaves the remaining three of
-    midx_exc = [[1, 0], [0, 2], [2, 1]]
+    midx_exc = [[1, 0], [2, 0], [2, 1]]
 
     # so we need to generate a quick matrix for them and extract it out
     return_str = f"{dtype} {vname}[3][3];\n\n"
