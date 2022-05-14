@@ -5,31 +5,39 @@ It helps us make sure that everything is ready to roll
 """
 
 # the datatypes that includes all of the sympy pieces
-import dendrosym.dtypes
+from . import dtypes
+
 # numerical relativity functions
-import dendrosym.nr
+from . import nr
 
 # code generation
-import dendrosym.codegen
+from . import codegen
+
 # parameter information
-import dendrosym.params
+from . import params
 
 # ==== MISC. FUNCTIONS AND OPERATIONS ====
 # the basic memory manager
-import dendrosym.memoryManager
+from . import memoryManager
+
 # nxgraph generation
-import dendrosym.nxgraph
+from . import nxgraph
+
 # reference element information
-import dendrosym.refEl
+from . import refEl
+
 # sympy cache simulations
-import dendrosym.sympy_cachesim
+from . import sympy_cachesim
 
-import dendrosym.utils
+from . import utils
 
-import dendrosym.params
+from . import params
 
 # base configuration class
-from dendrosym.general_configs import DendroConfiguration
+from .general_configs import DendroConfiguration
 
 # and then the numerical relativity class
-from dendrosym.nr_configs import NRConfig
+from .nr_configs import NRConfig
+
+
+from . import gw

@@ -3,3 +3,5 @@ networkx
 sympy
 pycachesim
 tomlkit
+numpy-quaternion
+spherical-functions

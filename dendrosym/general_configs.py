@@ -464,13 +464,28 @@ class DendroConfiguration:
 
         orig_vars = self.all_var_names.get(var_type, [])
 
-        out_enum_names = []
         enum_prefix = self.enum_prefixes.get(var_type, "")
 
-        for orig_var in orig_vars:
-            out_enum_names.append(f"{enum_prefix}_{orig_var.upper()}")
+        return self._generate_enum_var_names(orig_vars, enum_prefix)
+
+    def _generate_enum_var_names(self, list_vars, enum_prefix):
+
+        out_enum_names = []
+        for the_var in list_vars:
+            out_enum_names.append(f"{enum_prefix}_{the_var.upper()}")
 
         return out_enum_names
+
+    def _gen_enum_var_names_from_sympy_vars(self, list_vars, enum_prefix):
+
+        # first need to conver them
+        list_vars_clean = []
+        for one_var in list_vars:
+            tmp = self.clean_var_names([one_var])
+
+            list_vars_clean += tmp
+
+        return self._generate_enum_var_names(list_vars_clean, enum_prefix)
 
     def set_rhs_equation_function(self, var_type: str, rhs_func):
 
@@ -924,6 +939,28 @@ class DendroConfiguration:
         self.all_initial_data_functions[var_type].append(
             (initial_data_id, func_name, in_func))
 
+    def generate_initial_data_declaration(self, var_type="general", dtype="double"):
+
+        # first we need to get the functions
+        all_init_funcs = self.all_initial_data_functions.get(var_type, [])
+
+        if len(all_init_funcs) == 0:
+            # if there's nothing we need to just return an empty string, nothing to generate
+            return ""
+
+        outstr = ""
+
+        for init_data_id, func_name, init_func in all_init_funcs:
+            outstr += f"/**\n * @brief {func_name} initialization function\n"
+            outstr += " *\n * @param x : x coord (octree coord)\n"
+            outstr += " * @param y : y coord (octree coord)\n"
+            outstr += " * @param z : z coord (octree coord)\n"
+            outstr += " * @param var : initialized dsolve variable pointer for grid points\n"
+            outstr += " */\n"
+            outstr += f"void {func_name}(const {dtype} x, const {dtype} y, const {dtype} z, {dtype} *var);\n\n"
+
+        return outstr
+
     def generate_initial_data_code(self, var_type="general", dtype="double"):
 
         # first we need to get the functions
@@ -935,18 +972,67 @@ class DendroConfiguration:
 
         outstr = ""
 
+        named_enums = self.get_enum_var_names(var_type)
+
+        if var_type in ["evolution", "general"]:
+            enum_name = "VAR"
+        elif var_type == "constraint":
+            enum_name = "VAR_CONSTRAINT"
+        else:
+            raise NotImplementedError("Not yet implemented")
+
+        enum_extraction_str = dendrosym.codegen.gen_var_info(
+            self.all_var_names.get(var_type, []),
+            zip_var_name="var",
+            use_const=False,
+            enum_name=enum_name,
+            enum_var_names=named_enums,
+            dtype=dtype,
+            offset_name="",
+            num_spaces=4)
+
         # now we iterate through all functions
         for init_data_id, func_name, init_func in all_init_funcs:
 
-            outstr += f"void {func_name}(const {dtype} x, const {dtype} y, const {dtype} x, {dtype} *var){{\n"
+            outstr += f"void {func_name}(const {dtype} x, const {dtype} y, const {dtype} z, {dtype} *var){{\n"
+            outstr += f"    const unsigned int {self.idx_str[1:-1]} = 0;\n"
+            outstr += enum_extraction_str
 
             # then we have to generate the code
+            expressions, variables = init_func()
+            # # need to sympify the expressions in the list first:
+            # # just in case they are constants!
+            # expressions = [sym.sympify(expr) for expr in expressions]
+
+            # convert the variables to clean variables
+            tmp_vars = []
+            for the_var in variables:
+                tmp_vars += self.clean_var_names([the_var])
+            variables = tmp_vars
+
+            # then convert the expressions to be extracted
+            tmp_expressions = []
+            original_number_expressions = 0
+            for expr in expressions:
+                list_expressions, num_e = dendrosym.codegen.extract_expression(
+                    expr)
+                tmp_expressions += list_expressions
+                original_number_expressions += num_e
+            
+            expressions = tmp_expressions
+
+            # then construct the cse from the list
+            cse_exp = dendrosym.codegen.construct_cse_from_list(expressions)
+
+            # TODO: modify this call (or use a separate function?)
+            # NOTE: this needs to be redone because we're generating full extraction vars but var is already at the coords we want
+            outstr += "    "
+            outstr += "    ".join(dendrosym.codegen.generate_cpu_preextracted(
+                cse_exp, variables, "[0]", original_number_expressions).splitlines(True))
 
             outstr += "}"
 
-            print(init_data_id, func_name)
-
-        pass
+        return outstr
 
     def find_derivatives(self, var_type):
         """This method finds other derivatives

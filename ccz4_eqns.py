@@ -622,3 +622,6 @@ dendroConfigs.set_bhs_falloff_and_asymptotic(
 dendroConfigs.add_evolution_constraint(At, "trace_zero")
 dendroConfigs.add_evolution_constraint(phi, "pos_floor")
 dendroConfigs.add_evolution_constraint(alpha, "pos_floor")
+
+
+print(dendroConfigs.generate_rhs_separate("evolution"))

@@ -681,7 +681,7 @@ def get_string_broadcast(list_temp_names, list_len_names, list_full_names,
     fifth_piece += f"{TAB * base_t}}}\n\n"
 
     return (first_piece + second_piece + third_piece + "\n" + fourth_piece +
-            fifth_piece + seventh_piece + "\n")
+            fifth_piece + sixth_piece + seventh_piece + "\n")
 
 
 def get_broadcast(table_name: str,
