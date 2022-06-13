@@ -7,7 +7,6 @@ Dendro framework. The numerical relativity class inherits
 many of the classes and methods of those in this file.
 """
 
-import enum
 import re
 import sys
 
@@ -445,6 +444,19 @@ class DendroConfiguration:
             enum_names, self.project_upper, enum_name)
 
         return return_str
+    
+    def gen_enum_iterable_list(self, var_type: str, enum_name: str = "VAR"):
+        if var_type == "parameter":
+            raise ValueError("This function can't handle parameter enum names")
+
+        enum_names = self.get_enum_var_names(var_type)
+
+        return_str = dendrosym.codegen.gen_var_iterable_list(
+            enum_names, self.project_upper, enum_name
+        )
+
+        return return_str
+
 
     def gen_parameter_code(self, var_type="evolution"):
 
@@ -1060,10 +1072,6 @@ class DendroConfiguration:
         all_exp, all_rhs_names, orig_n_exp = self._extract_rhs_expressions(
             var_type)
 
-        # the list of all derivatives that we've found that will need to be
-        # precalculated
-        found_derivatives = []
-
         # collection of "new" (modified) expressions for each of the variables
         new_exprs = []
 
@@ -1075,15 +1083,36 @@ class DendroConfiguration:
 
             # call the find and replace complicated derivatives function
             # this will update and modify the collection of derivatives
-            new_expr, found_derivatives = self.find_and_replace_complex_ders(
-                expr, found_derivatives, 0, self.idx_str)
+            new_expr = self.find_and_replace_complex_ders(
+                expr, self.every_var_name, 0, self.idx_str)
 
             # add these new expressions to our list
             new_exprs.append(new_expr)
 
+        # go again with the original method
+        # collection of "new" (modified) expressions for each of the variables
+        new_exprs_again = []
+        # the list of all derivatives that we've found that will need to be
+        # precalculated
+        found_derivatives = []
+
+        for ii, expr in enumerate(new_exprs):
+
+            print(str(all_rhs_names[ii]) +
+                  f" {ii+1}/{len(all_exp)} : {(ii+1)/len(all_exp):.2%}",
+                  file=sys.stderr)
+
+            # call the find and replace complicated derivatives function
+            # this will update and modify the collection of derivatives
+            new_expr, found_derivatives = self.find_and_replace_complex_ders_staged(
+                expr, found_derivatives, 0, self.idx_str)
+
+            # add these new expressions to our list
+            new_exprs_again.append(new_expr)
+
         # store them internally so we don't lose them
         self.stored_rhs_function[var_type] = {
-            "exprs": new_exprs,
+            "exprs": new_exprs_again,
             "all_rhs_names": all_rhs_names,
             "found_derivatives": found_derivatives,
             "orig_n_exp": orig_n_exp
@@ -1095,7 +1124,7 @@ class DendroConfiguration:
         return new_exprs, all_rhs_names, found_derivatives, orig_n_exp
 
     @staticmethod
-    def find_and_replace_complex_ders(expr,
+    def find_and_replace_complex_ders_staged(expr,
                                       found_derivatives,
                                       depth=0,
                                       idx_str="[pp]"):
@@ -1127,7 +1156,7 @@ class DendroConfiguration:
 
                 if needs_to_go_deeper:
                     (mini_expr, found_derivatives
-                     ) = DendroConfiguration.find_and_replace_complex_ders(
+                     ) = DendroConfiguration.find_and_replace_complex_ders_staged(
                          term_differentiate,
                          found_derivatives,
                          depth + 1,
@@ -1205,6 +1234,199 @@ class DendroConfiguration:
                 expr, funcs_to_find)
 
         return expr, found_derivatives
+
+
+    @staticmethod
+    def find_and_replace_complex_ders(expr,
+                                      var_names,
+                                      depth=0,
+                                      idx_str="[pp]"):
+        funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
+
+        # start by finding all expressions using the atoms funcion
+        all_funcs = DendroConfiguration.find_and_sort_atoms(
+            expr, funcs_to_find)
+
+        something_changed = False
+
+        while len(all_funcs) > 0:
+
+            # get the first element in the functions list
+            func = all_funcs.pop(0)
+
+            term_differentiate = func.args[-1]
+
+            if isinstance(term_differentiate, sym.Symbol):
+                if not term_differentiate.name.startswith("DENDRO_STAGED_"):
+                    continue
+
+            elif isinstance(term_differentiate, sym.Function) or len(
+                    term_differentiate.atoms(*funcs_to_find)) > 0:
+
+                # if there are any sub expressions in this one, then we need
+                # otherwise, we need to store the operation here and move on
+                needs_to_go_deeper = False
+                if len(term_differentiate.atoms(*funcs_to_find)) > 0:
+                    needs_to_go_deeper = True
+
+                if needs_to_go_deeper:
+                    mini_expr = DendroConfiguration.find_and_replace_complex_ders(
+                         term_differentiate,
+                         var_names,
+                         depth + 1,
+                         idx_str=idx_str)
+
+                    # replace it within the expression
+                    expr = expr.xreplace({term_differentiate: mini_expr})
+
+                    # then reupdate the all functions and continue
+                    all_funcs = DendroConfiguration.find_and_sort_atoms(
+                        expr, funcs_to_find)
+
+                    continue
+            
+            # symbols we need and will replace
+            x, y, z = sym.symbols('xtem ytem ztem')
+            d_order = (x, y, z) # the index goes in this order
+
+            symbols_find = [sym.Symbol(xx + idx_str) for xx in var_names]
+            symbols_replace = [sym.Function(sym.Symbol(xx))(x,y,z) for xx in var_names]
+            all_repl = dict(zip(symbols_find, symbols_replace))
+            reverse_repl = dict(zip(symbols_replace, symbols_find))
+
+            # otherwise we're good to check if this already exists in our list
+            if func.name == "grad":
+                # FIRST ORDER DERIVATIVE
+                # remember: grad(x, y) is what's incoming here...
+                # x is the "dimension" over which it is being differentiated
+                # y is the actual term to differentiate
+
+                func_args = func.args
+                term_to_differentiate = func_args[1]
+                index_order = func_args[0]
+                
+                # also need to find pre-existing derivatives that have been replaced
+                term_to_differentiate = term_to_differentiate.subs(all_repl)
+
+                # then take the derivate of that term over the index_order
+                diff_term = sym.diff(term_to_differentiate, d_order[index_order])
+
+            elif func.name == "grad2":
+                # generate a staged gradient name for it
+                func_args = func.args
+                term_to_differentiate = func_args[2]
+                index_order = (func_args[0], func_args[1])
+
+                term_to_differentiate = term_to_differentiate.subs(all_repl)
+
+                # then take the second order derivative in that direction
+                diff_term = sym.diff(term_to_differentiate, d_order[index_order[0]], d_order[index_order[1]])
+
+            elif func.name == "agrad":
+                print("    WARNING: AN EXPRESSION USING AGRAD WAS FOUND "+"AND CANNOT BE SIMPLIFIED, PLEASE CONSIDER REWRITING")
+                continue
+
+            else:
+                # anything else we'll continue
+                continue
+
+            # go ahead and replace the found function with the piece that we found
+            expr = expr.xreplace({func: diff_term})
+
+            something_changed = True
+
+            # refresh the list of functions we're interested in finding
+            all_funcs = DendroConfiguration.find_and_sort_atoms(
+                expr, funcs_to_find)
+
+        if depth == 0:
+            # now need to replace the sympy derivatives with the grad and grad2 functions again for code gen
+            expr = DendroConfiguration.replace_sympy_derivatives(expr, var_names, idx_str)
+
+            if something_changed:
+                # make sure everything else is replaced in the expression
+                expr = expr.xreplace(reverse_repl)
+
+        return expr
+
+
+    @staticmethod
+    def replace_sympy_derivatives(expr, var_names, idx_str):
+
+        # symbols we need and will replace
+        x, y, z = sym.symbols('xtem ytem ztem')
+        d_order = (x, y, z) # the index goes in this order
+
+        symbols_find = [sym.Symbol(xx + idx_str) for xx in var_names]
+        symbols_replace = [sym.Function(sym.Symbol(xx))(x,y,z) for xx in var_names]
+        all_repl = dict(zip(symbols_find, symbols_replace))
+        reverse_repl = dict(zip(symbols_replace, symbols_find))
+
+        # we need to replace all derivative terms with variables
+        all_derivatives = expr.atoms(sym.Derivative)
+
+        while len(all_derivatives) > 0:
+            print("len of derivatives", len(all_derivatives))
+
+            curr_deriv = all_derivatives.pop()
+
+            if len(curr_deriv.args) == 2:
+                # this is only in one single direction, so what will matter is the "diff_dir"
+                diff_term, diff_dir = curr_deriv.args
+
+                if diff_dir[1] > 2:
+                    raise NotImplemented("A 3rd or higher order derivative was found after expanding!")
+                idx_use = -1
+
+                for ii, val in enumerate(d_order):
+                    if diff_dir[0] == val:
+                        idx_use = ii
+
+                if diff_dir[1] == 1:
+                    new_expr = dendrosym.nr.d(idx_use, diff_term)
+                else:
+                    new_expr = dendrosym.nr.d2s(idx_use, idx_use, diff_term)
+
+
+            elif len(curr_deriv.args) == 3:
+                # this is a multi-directional derivative, so we use grad2 in replacement
+                diff_term, diff_dir1, diff_dir2 = curr_deriv.args
+
+                if diff_dir1[1] > 1 or diff_dir2[1] > 1:
+                    raise NotImplemented("A 3rd or higher order derivative was found after expanding!")
+
+                idx_1 = -1
+                for ii, val in enumerate(d_order):
+                    if diff_dir1[0] == val:
+                        idx_1 = ii
+                
+                idx_2 = -1
+                for ii, val in enumerate(d_order):
+                    if diff_dir2[0] == val:
+                        idx_2 = ii
+                
+                # swap them if they're out of order, idx_1 should be smaller for efficiency
+                idxtmp = 0
+                if idx_1 > idx_2:
+                    print("Swapping the indices of derivatives:", idx_1, idx_2)
+                    idxtmp = idx_1
+                    idx_1 = idx_2
+                    idx_2 = idxtmp
+
+                new_expr = dendrosym.nr.d2s(idx_1, idx_2, diff_term)
+                
+
+            else:
+                raise NotImplemented("A more complicated derivative was found requiring 3rd or higher order!")
+
+            new_expr = new_expr.subs(reverse_repl)
+
+            expr = expr.xreplace({curr_deriv: new_expr})
+
+            all_derivatives = expr.atoms(sym.Derivative)
+
+        return expr
+
 
     @staticmethod
     def find_and_sort_atoms(expr, objs: list):
@@ -1706,12 +1928,35 @@ class DendroConfiguration:
             all_current_grad2s = eqn.atoms(funcs_to_find[1])
             all_current_agrads = eqn.atoms(funcs_to_find[2])
 
+            print(all_current_grad2s)
+
+            # for grad2s, we need to make sure the args are in the right order
+            updated_grad2s = set()
+            for the_grad2 in all_current_grad2s:
+                idx1, idx2, symbol = the_grad2.args
+                if idx1 > idx2:
+                    idxtmp = idx1
+                    idx2 = idx1
+                    idx1 = idxtmp
+                updated_grad2s.update({dendrosym.nr.d2s(idx1, idx2, symbol),})
+
+            print(updated_grad2s)
+
             # then add them to our set which forces uniqueness, but not order
             grad_list.update(all_current_grads)
-            grad2_list.update(all_current_grad2s)
+            grad2_list.update(updated_grad2s)
             agrad_list.update(all_current_agrads)
 
         return grad_list, grad2_list, agrad_list
+    
+    @property
+    def every_var_name(self):
+        all_vars = []
+        for key, the_vars in self.all_var_names.items():
+            # ignore parameters
+            if key == "parameter": pass
+            all_vars += the_vars
+        return all_vars
 
     # def add_initial_data(init_func, name="", desc=""):
     #     # NOTE: just like the RHS function part, we need the

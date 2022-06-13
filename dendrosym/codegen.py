@@ -387,13 +387,30 @@ def change_deriv_names(in_str: str) -> str:
         key = deriv + r"\(\d, \d, \w+\[pp\]\)"
         slist = regex.findall(key, c_str)
         for s in slist:
-            # print(s)
+            print(s)
+            # split into "grad2", "0, 1, symbol)"
             w1 = s.split("(")
+            # split second part into "0", " 1", " symbol"
             w2 = w1[1].split(")")[0].split(",")
             # print(w1[0]+'_'+w2[0].strip()+'_'+w2[1].strip()+';')
+            # rep is then "grad2"
             rep = w1[0]
-            for v in w2:
-                rep = rep + "_" + v.strip()
+
+            # w2[0] is first dimension
+            # w2[1] is second dimension
+            # w2[2] is the symbol
+            idx1 = int(w2[0].strip())
+            idx2 = int(w2[1].strip())
+            if idx1 > idx2:
+                tempidx = idx1
+                idx1 = idx2
+                idx2 = tempidx
+            
+            # then stitch it together
+            rep += f"_{idx1}_{idx2}_{w2[2].strip()}"
+
+            # for vidx, v in enumerate(w2):
+            #     rep = rep + "_" + v.strip()
             # rep=rep+';'
             c_str = c_str.replace(s, rep)
     return c_str
@@ -1312,6 +1329,20 @@ def gen_var_name_array(
     return name_array_text + "};\n"
 
 
+def gen_var_iterable_list(
+    enum_names: list, project_name: str = "ccz4", list_name_inner: str = "VAR"
+):
+    name_array_text = f"static const {list_name_inner.upper()} "
+    name_array_text += f"{project_name.upper()}_{list_name_inner}_ITERABLE_LIST"
+    name_array_text += "[] = {"
+
+    for ii, enum_name in enumerate(enum_names):
+        name_array_text += f"{enum_name}"
+        name_array_text += ", " if ii != len(enum_names) - 1 else ""
+    
+    return name_array_text + "};\n"
+
+
 def generate_memory_alloc(
     var_names: list, var_type: str = "double", include_byte_declaration=False
 ):
@@ -1669,3 +1700,5 @@ def generate_variable_always_positive(
         f"{uzip}[{uzip_access}][{node}] = std::max("
         + f"{uzip}[{uzip_access}][{node}], {floor_var});\n"
     )
+
+
