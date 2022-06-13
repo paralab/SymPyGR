@@ -24,6 +24,7 @@ class NRConfig(dendrosym.DendroConfiguration):
     store variables, and then generate the C++ code
     from the symbolic equations.
     """
+
     def __init__(self, project_name: str):
         self.project_name = project_name
         self.project_upper = project_name.upper()
@@ -35,10 +36,7 @@ class NRConfig(dendrosym.DendroConfiguration):
         self.all_vars = {
             "constraint": [],
             "evolution": [],
-            "parameter": {
-                "constraint": [],
-                "evolution": []
-            }
+            "parameter": {"constraint": [], "evolution": []},
         }
 
         # also create the same type of dictionary but
@@ -46,10 +44,7 @@ class NRConfig(dendrosym.DendroConfiguration):
         self.all_var_names = {
             "constraint": [],
             "evolution": [],
-            "parameter": {
-                "constraint": [],
-                "evolution": []
-            }
+            "parameter": {"constraint": [], "evolution": []},
         }
 
         self.enum_prefixes = {"constraint": "C", "evolution": "U"}
@@ -80,9 +75,7 @@ class NRConfig(dendrosym.DendroConfiguration):
     def add_constraint_variables(self, in_vars: list):
         return super().add_variable(in_vars, "constraint")
 
-    def add_parameter_variables(self,
-                                in_vars: list,
-                                eqn_type: str = "evolution"):
+    def add_parameter_variables(self, in_vars: list, eqn_type: str = "evolution"):
         return super().add_parameter_variables(in_vars, eqn_type)
 
     def set_advective_derivative_var(self, in_var):
@@ -90,17 +83,19 @@ class NRConfig(dendrosym.DendroConfiguration):
         if isinstance(in_var, sym.Matrix):
             if in_var.shape[0] != 3:
                 raise ImproperInitalization(
-                    "Invalid type of variable for use as advective derivative")
+                    "Invalid type of variable for use as advective derivative"
+                )
         elif isinstance(in_var, tuple):
             if len(in_var) != 3:
                 raise ImproperInitalization(
-                    "Invalid type of variable for use as advective derivative")
+                    "Invalid type of variable for use as advective derivative"
+                )
         self.advective_der_var = str(in_var[0]).split("[")[0][:-1]
 
     def set_metric(self, in_var):
         assert in_var in self.all_vars.get(
-            "evolution",
-            []), "Incoming metric variable is not in evolution variables"
+            "evolution", []
+        ), "Incoming metric variable is not in evolution variables"
         self.metric_var = in_var
         # also set the metric in the NR code for use there
         dendrosym.nr.set_metric(in_var)
@@ -124,7 +119,8 @@ class NRConfig(dendrosym.DendroConfiguration):
 
         if constraint_info == "trace_zero":
             assert var_adjust in self.all_vars.get(
-                "evolution", []), "Variable not in set evolution variables"
+                "evolution", []
+            ), "Variable not in set evolution variables"
 
             if type(var_adjust) is not sym.Matrix:
                 raise ValueError(
@@ -134,7 +130,8 @@ class NRConfig(dendrosym.DendroConfiguration):
             self.evolution_constraint_info["trace_zero"].append(var_adjust)
         elif constraint_info == "pos_floor":
             assert var_adjust in self.all_vars.get(
-                "evolution", []), "Variable not in set evolution variables"
+                "evolution", []
+            ), "Variable not in set evolution variables"
 
             if type(var_adjust) is not sym.Symbol:
                 raise ValueError(
@@ -144,13 +141,15 @@ class NRConfig(dendrosym.DendroConfiguration):
             self.evolution_constraint_info["pos_floor"].append(var_adjust)
         else:
             raise NotImplementedError(
-                "This type of constraint has not been implemented")
+                "This type of constraint has not been implemented"
+            )
 
     def generate_evolution_constraints(self):
 
         if self.metric_var is None:
             raise ImproperInitalization(
-                "Metric was not set, cannot generate evolution constraints")
+                "Metric was not set, cannot generate evolution constraints"
+            )
 
         return_str = ""
 
@@ -168,11 +167,13 @@ class NRConfig(dendrosym.DendroConfiguration):
         # so we generate that code first
         return_str += "////\n//// CODE TO REQUIRE METRIC DETERMINANT TO BE ONE\n"
         return_str += dendrosym.codegen.generate_update_sym_mat_extract(
-            metric_name, metric_enums)
+            metric_name, metric_enums
+        )
 
         # then we need to generate the determinant code
         return_str += dendrosym.codegen.generate_force_sym_matrix_det_to_one(
-            metric_name, metric_enums)
+            metric_name, metric_enums
+        )
 
         # now we can start adding our other constraints
         for var_use in self.evolution_constraint_info.get("trace_zero", []):
@@ -184,21 +185,22 @@ class NRConfig(dendrosym.DendroConfiguration):
             single_var_name = var_names[0][:-2]
             return_str += single_var_name + "\n"
             # then generate the enums
-            var_enums = [
-                f"VAR::{enum_prefix}_{ivar.upper()}" for ivar in var_names
-            ]
+            var_enums = [f"VAR::{enum_prefix}_{ivar.upper()}" for ivar in var_names]
 
             # then add the code to extract the sym matrix
             return_str += dendrosym.codegen.generate_update_sym_mat_extract(
-                single_var_name, var_enums)
+                single_var_name, var_enums
+            )
 
             # then the code to force the traceless symmat
             return_str += dendrosym.codegen.generate_force_symmat_traceless(
-                single_var_name, metric_name)
+                single_var_name, metric_name
+            )
 
             # then the code to actually update the matrix
             return_str += dendrosym.codegen.generate_update_sym_mat_code(
-                single_var_name, var_enums, include_up=False)
+                single_var_name, var_enums, include_up=False
+            )
             return_str += "//// END APPLICATION OF TRACE ZERO\n////\n\n"
 
         for var_use in self.evolution_constraint_info.get("pos_floor"):
@@ -210,13 +212,15 @@ class NRConfig(dendrosym.DendroConfiguration):
             var_enum = f"VAR::{enum_prefix}_{single_var_name.upper()}"
 
             return_str += dendrosym.codegen.generate_variable_always_positive(
-                var_enum, floor_var=f"{single_var_name.upper()}_FLOOR")
+                var_enum, floor_var=f"{single_var_name.upper()}_FLOOR"
+            )
             return_str += "//// END APPLICATION OF POSITIVE FLOOR\n////\n\n"
 
         # now generate the metric update code
         return_str += "//// NOW UPDATING THE METRIC VALUES\n"
         return_str += dendrosym.codegen.generate_update_sym_mat_code(
-            metric_name, metric_enums)
+            metric_name, metric_enums
+        )
 
         return return_str
 

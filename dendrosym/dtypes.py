@@ -1,4 +1,4 @@
-'''
+"""
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -16,12 +16,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 IN THE SOFTWARE.
-'''
+"""
 
 ##########################################################################
 import sympy as sym
 import re as regex
 import numpy as np
+
 # from import abc import ABC, abstractmethod
 
 # class DType(enum.Enum):
@@ -67,8 +68,8 @@ import numpy as np
 
 
 class ParameterVariable:
-    """For defining parameters used in equations
-    """
+    """For defining parameters used in equations"""
+
     def __init__(self, var_name, dtype="double", num_params=1):
 
         self.var_name = var_name
@@ -79,8 +80,9 @@ class ParameterVariable:
 
         # make the pretty var names
         if self.num_params > 1:
-            self.var_symbols = sym.symbols(' '.join(
-                self.var_name + f"[{ii}]" for ii in range(self.num_params)))
+            self.var_symbols = sym.symbols(
+                " ".join(self.var_name + f"[{ii}]" for ii in range(self.num_params))
+            )
         else:
             self.var_symbols = sym.Symbol(self.var_name)
 
@@ -91,16 +93,16 @@ class ParameterVariable:
     def generate_cpp_line(self, global_param_prefix="", use_const=True):
         global_param_name = self.var_name.upper()
         if global_param_prefix != "":
-            global_param_name = global_param_prefix.upper(
-            ) + "_" + global_param_name
+            global_param_name = global_param_prefix.upper() + "_" + global_param_name
 
         return_str = "const " if use_const else ""
 
         if self.num_params > 1:
             return_str += f"{self.dtype} "
             return_str += f"{self.var_name}[{self.num_params}] = {{"
-            return_str += ", ".join(global_param_name + f"[{ii}]"
-                                    for ii in range(self.num_params))
+            return_str += ", ".join(
+                global_param_name + f"[{ii}]" for ii in range(self.num_params)
+            )
             return_str += "};"
         else:
             return_str += f"{self.dtype} "
@@ -108,7 +110,7 @@ class ParameterVariable:
             return_str += f"{global_param_name};"
 
         return return_str
-    
+
     def __repr__(self):
         return f"<Param '{self.var_name}'>"
 
@@ -127,7 +129,7 @@ def get_name_suffix(name):
     if name.endswith("]"):
         re_match = regex.search(r"\[[^\]]*\]", name)
         suffix = re_match.group(0)
-        name = name[0:re_match.start()]
+        name = name[0 : re_match.start()]
     else:
         suffix = ""
     return name, suffix
@@ -182,7 +184,7 @@ def mat(name, n, m):
 
     for i in range(0, n):
         nameR = name + repr(i)
-        nameC = ' '.join([nameR + repr(j) for j in range(0, m)])
+        nameC = " ".join([nameR + repr(j) for j in range(0, m)])
         vname.append(nameC)
 
     return sym.Matrix([sym.symbols(vname[i]) for i in range(0, n)])
@@ -207,8 +209,8 @@ def sym_mat(name, n):
 
     for i in range(0, n):
         nameR = name + repr(i)
-        nameC = ' '.join([nameR + repr(j) + suffix for j in range(i, n)])
-        vname.append(nameC.split(' '))
+        nameC = " ".join([nameR + repr(j) + suffix for j in range(i, n)])
+        vname.append(nameC.split(" "))
 
     mat_out = sym.zeros(n, n)
 
@@ -244,7 +246,7 @@ def antisym_mat(name, n):
 
     for i in range(0, n):
         nameR = name + repr(i)
-        nameC = ' '.join([nameR + repr(j) for j in range(i, n)])
+        nameC = " ".join([nameR + repr(j) for j in range(i, n)])
         vname.append(nameC)
 
     return sym.Matrix()

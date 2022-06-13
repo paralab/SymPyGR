@@ -405,7 +405,7 @@ def change_deriv_names(in_str: str) -> str:
                 tempidx = idx1
                 idx1 = idx2
                 idx2 = tempidx
-            
+
             # then stitch it together
             rep += f"_{idx1}_{idx2}_{w2[2].strip()}"
 
@@ -1339,7 +1339,7 @@ def gen_var_iterable_list(
     for ii, enum_name in enumerate(enum_names):
         name_array_text += f"{enum_name}"
         name_array_text += ", " if ii != len(enum_names) - 1 else ""
-    
+
     return name_array_text + "};\n"
 
 
@@ -1700,5 +1700,3 @@ def generate_variable_always_positive(
         f"{uzip}[{uzip_access}][{node}] = std::max("
         + f"{uzip}[{uzip_access}][{node}], {floor_var});\n"
     )
-
-

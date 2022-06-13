@@ -31,7 +31,7 @@ IN THE SOFTWARE.
 import sympy as sym
 from sympy.functions.special.tensor_functions import KroneckerDelta
 
-undef = sym.symbols('undefined')
+undef = sym.symbols("undefined")
 
 metric = undef
 inv_metric = undef
@@ -50,8 +50,8 @@ ad = undef
 # Kreiss-Oliger dissipation operator
 kod = undef
 
-one = sym.symbols('one_')
-negone = sym.symbols('negone_')
+one = sym.symbols("one_")
+negone = sym.symbols("negone_")
 
 e_i = [0, 1, 2]
 e_ij = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
@@ -85,7 +85,7 @@ def d2(i, j, a):
         The symbolic representation of the function being applied
     """
     global d2s
-    if (i > j):
+    if i > j:
         return d2s(j, i, a)
     else:
         return d2s(i, j, a)
@@ -303,13 +303,14 @@ def DiDj(a):
     if d == undef:
         raise ValueError("First derivative was not defined, please define.")
     if C3 == undef:
-        raise ValueError(
-            "Third Christoffel symbols were not defined, please define.")
+        raise ValueError("Third Christoffel symbols were not defined, please define.")
 
-    m = sym.Matrix([
-        d2(ii, jj, a) - sum([C3[ll, ii, jj] * d(ll, a) for ll in e_i])
-        for ii, jj in e_ij
-    ])
+    m = sym.Matrix(
+        [
+            d2(ii, jj, a) - sum([C3[ll, ii, jj] * d(ll, a) for ll in e_i])
+            for ii, jj in e_ij
+        ]
+    )
     return m.reshape(3, 3)
 
 
@@ -349,14 +350,15 @@ def _Di_Dj(a):
         raise ValueError("First derivative was not defined, please define.")
 
     if C2 == undef:
-        raise ValueError(
-            "Second Christoffel symbols were not defined, please define.")
+        raise ValueError("Second Christoffel symbols were not defined, please define.")
     # global d, d2, C3
 
-    m = sym.Matrix([
-        d2(ii, jj, a) - sum([C2[ll, ii, jj] * d(ll, a) for ll in e_i])
-        for ii, jj in e_ij
-    ])
+    m = sym.Matrix(
+        [
+            d2(ii, jj, a) - sum([C2[ll, ii, jj] * d(ll, a) for ll in e_i])
+            for ii, jj in e_ij
+        ]
+    )
 
     return m.reshape(3, 3)
 
@@ -392,12 +394,14 @@ def up_up(A):
     if A.shape != (3, 3):
         raise ValueError("Input matrix into UP UP needs to be 3x3 in shape.")
 
-    m = sym.Matrix([
-        sum([
-            inv_metric[ii, kk] * inv_metric[jj, ll] * A[kk, ll]
-            for kk, ll in e_ij
-        ]) for ii, jj in e_ij
-    ])
+    m = sym.Matrix(
+        [
+            sum(
+                [inv_metric[ii, kk] * inv_metric[jj, ll] * A[kk, ll] for kk, ll in e_ij]
+            )
+            for ii, jj in e_ij
+        ]
+    )
 
     return m.reshape(3, 3)
 
@@ -423,9 +427,9 @@ def up_down(A):
     # One index rasing
     global inv_metric
 
-    m = sym.Matrix([
-        sum([inv_metric[ii, kk] * A[kk, jj] for kk in e_i]) for ii, jj in e_ij
-    ])
+    m = sym.Matrix(
+        [sum([inv_metric[ii, kk] * A[kk, jj] for kk in e_i]) for ii, jj in e_ij]
+    )
 
     return m.reshape(3, 3)
 
@@ -472,35 +476,50 @@ def lie(b, a, weight=0, use_advective=False):
 
     elif type(b) != tuple:
         raise ValueError(
-            'Dendro: The field wrt which the Lie derivative is calculated'
-            ' needs to be vec3.')
+            "Dendro: The field wrt which the Lie derivative is calculated"
+            " needs to be vec3."
+        )
 
     if type(a) == sym.Symbol:
-        return sum([b[ii] * ad_use(ii, a) for ii in e_i
-                    ]) + weight * a * sum([d(ii, b[ii]) for ii in e_i])
+        return sum([b[ii] * ad_use(ii, a) for ii in e_i]) + weight * a * sum(
+            [d(ii, b[ii]) for ii in e_i]
+        )
 
     # if it's a 3-vector, this is what we calculate
     elif type(a) == tuple or (type(a) == sym.Matrix and a.shape == (3, 1)):
         return [
-            sum([
-                b[jj] * ad_use(jj, a[ii]) - a[jj] * d(jj, b[ii]) +
-                weight * a[ii] * d(jj, b[jj]) for jj in e_i
-            ]) for ii in e_i
+            sum(
+                [
+                    b[jj] * ad_use(jj, a[ii])
+                    - a[jj] * d(jj, b[ii])
+                    + weight * a[ii] * d(jj, b[jj])
+                    for jj in e_i
+                ]
+            )
+            for ii in e_i
         ]
 
     elif type(a) == sym.Matrix:
-        m = sym.Matrix([
-            sum([
-                b[kk] * ad_use(kk, a[ii, jj]) + a[ii, kk] * d(jj, b[kk]) +
-                a[kk, jj] * d(ii, b[kk]) + weight * a[ii, jj] * d(kk, b[kk])
-                for kk in e_i
-            ]) for ii, jj in e_ij
-        ])
+        m = sym.Matrix(
+            [
+                sum(
+                    [
+                        b[kk] * ad_use(kk, a[ii, jj])
+                        + a[ii, kk] * d(jj, b[kk])
+                        + a[kk, jj] * d(ii, b[kk])
+                        + weight * a[ii, jj] * d(kk, b[kk])
+                        for kk in e_i
+                    ]
+                )
+                for ii, jj in e_ij
+            ]
+        )
         return m.reshape(3, 3)
 
     else:
         raise ValueError(
-            'Dendro: Unknown type for input field to compute Lie derivative.')
+            "Dendro: Unknown type for input field to compute Lie derivative."
+        )
 
 
 def kodiss(a):
@@ -531,12 +550,12 @@ def kodiss(a):
         return [sum([kod(ii, a[jj]) for ii in e_i]) for jj in e_i]
 
     elif type(a) == sym.Matrix:
-        return sym.Matrix([
-            sum([kod(kk, a[ii, jj]) for kk in e_i]) for ii, jj in e_ij
-        ]).reshape(3, 3)
+        return sym.Matrix(
+            [sum([kod(kk, a[ii, jj]) for kk in e_i]) for ii, jj in e_ij]
+        ).reshape(3, 3)
 
     else:
-        raise ValueError('Dendro: Unknown type for input to compute kodiss.')
+        raise ValueError("Dendro: Unknown type for input to compute kodiss.")
 
 
 def laplacian(a, chi):
@@ -563,15 +582,17 @@ def laplacian(a, chi):
     global d, metric, C3
 
     full_metric = metric / chi
-    inv_full_metric = sym.simplify(full_metric.inv('ADJ'))
+    inv_full_metric = sym.simplify(full_metric.inv("ADJ"))
 
     # return sum([(inv_full_metric[i, j] * d2(i, j, a) -
     #            sum([C3[l, i, j] * d(l, a) for l in e_i])) for i, j in e_ij])
-    return sum([
-        inv_full_metric[ii, jj] *
-        (d2(ii, jj, a) - sum([C3[ll, ii, jj] * d(ll, a) for ll in e_i]))
-        for ii, jj in e_ij
-    ])
+    return sum(
+        [
+            inv_full_metric[ii, jj]
+            * (d2(ii, jj, a) - sum([C3[ll, ii, jj] * d(ll, a) for ll in e_i]))
+            for ii, jj in e_ij
+        ]
+    )
 
 
 def laplacian_conformal(a):
@@ -607,11 +628,13 @@ def laplacian_conformal(a):
     # ewh3
     # return sum([(inv_metric[i, j] * d2(i, j, a) - sum([C2[l, i, j]\
     #     * d(l, a) for l in e_i])) for i, j in e_ij])
-    return sum([
-        inv_metric[ii, jj] *
-        (d2(ii, jj, a) - sum([C2[ll, ii, jj] * d(ll, a) for ll in e_i]))
-        for ii, jj in e_ij
-    ])
+    return sum(
+        [
+            inv_metric[ii, jj]
+            * (d2(ii, jj, a) - sum([C2[ll, ii, jj] * d(ll, a) for ll in e_i]))
+            for ii, jj in e_ij
+        ]
+    )
 
 
 def sqr(A):
@@ -636,12 +659,19 @@ def sqr(A):
     if inv_metric == undef:
         inv_metric = get_inverse_metric()
 
-    return sum([
-        A[ii, jj] * sum([
-            inv_metric[ii, kk] * inv_metric[jj, ll] * A[kk, ll] for kk in e_i
-            for ll in e_i
-        ]) for ii, jj in e_ij
-    ])
+    return sum(
+        [
+            A[ii, jj]
+            * sum(
+                [
+                    inv_metric[ii, kk] * inv_metric[jj, ll] * A[kk, ll]
+                    for kk in e_i
+                    for ll in e_i
+                ]
+            )
+            for ii, jj in e_ij
+        ]
+    )
 
 
 def trace(A):
@@ -696,8 +726,7 @@ def trace_free(A):
 
     # X_{ab} - 1/3 gt_{ab} X.
     # tf = sym.Matrix([x[i, j] - 1/3*metric[i,j]*trace for i, j in e_ij])
-    tf = sym.Matrix(
-        [A[ii, jj] - metric[ii, jj] * trace / 3 for ii, jj in e_ij])
+    tf = sym.Matrix([A[ii, jj] - metric[ii, jj] * trace / 3 for ii, jj in e_ij])
 
     return tf.reshape(3, 3)
 
@@ -768,8 +797,9 @@ def calc_symmetric_part_rank2(M):
         The newly-symmetric tensor (3x3 matrix)
     """
 
-    return (1 / 2) * sym.Matrix([M[ii, jj] + M[jj, ii]
-                                 for ii, jj in e_ij]).reshape(3, 3)
+    return (1 / 2) * sym.Matrix([M[ii, jj] + M[jj, ii] for ii, jj in e_ij]).reshape(
+        3, 3
+    )
 
 
 ##########################################################################
@@ -822,11 +852,11 @@ def get_inverse_metric():
     global metric, inv_metric, undef
 
     if metric == undef:
-        raise ValueError('Dendro: Metric not defined.')
+        raise ValueError("Dendro: Metric not defined.")
 
     if inv_metric == undef:
         # method : ('GE', 'LU', or 'ADJ')
-        inv_metric = sym.simplify(metric.inv('ADJ'))
+        inv_metric = sym.simplify(metric.inv("ADJ"))
 
     return inv_metric
 
@@ -865,8 +895,11 @@ def get_first_christoffel():
                     # C1[k, i,
                     #    j] = 1/2 * (d(j, metric[k, i]) + d(i, metric[k, j]) -
                     #                  d(k, metric[i, j]))
-                    C1[kk, ii, jj] = 0.5 * (d(jj, metric[kk, ii]) + d(
-                        ii, metric[kk, jj]) - d(kk, metric[ii, jj]))
+                    C1[kk, ii, jj] = 0.5 * (
+                        d(jj, metric[kk, ii])
+                        + d(ii, metric[kk, jj])
+                        - d(kk, metric[ii, jj])
+                    )
 
     return C1
 
@@ -903,7 +936,8 @@ def get_second_christoffel():
 
         igt_t = sym.Array(inv_metric, (3, 3))
         C2 = sym.tensor.array.tensorcontraction(
-            sym.tensor.array.tensorproduct(igt_t, C1), (1, 2))
+            sym.tensor.array.tensorproduct(igt_t, C1), (1, 2)
+        )
 
     return C2
 
@@ -951,9 +985,11 @@ def get_complete_christoffel(chi):
                     # C3[i, j, k] = C2[i, j, k] - \
                     # 1/(2*chi)*(KroneckerDelta(i, j) * d(k, chi) +
                     C3[ii, jj, kk] = C2[ii, jj, kk] - 0.5 / (chi) * (
-                        KroneckerDelta(ii, jj) * d(kk, chi) +
-                        KroneckerDelta(ii, kk) * d(jj, chi) - metric[jj, kk] *
-                        sum([inv_metric[ii, mm] * d(mm, chi) for mm in e_i]))
+                        KroneckerDelta(ii, jj) * d(kk, chi)
+                        + KroneckerDelta(ii, kk) * d(jj, chi)
+                        - metric[jj, kk]
+                        * sum([inv_metric[ii, mm] * d(mm, chi) for mm in e_i])
+                    )
 
     return C3
 
@@ -1017,26 +1053,35 @@ def compute_ricci(Gt, chi):
 
     # print('done with DKchi') # simplify(DKchiDkchi))
 
-    CalGt = [
-        sum(inv_metric[kk, ll] * C2[ii, kk, ll] for kk, ll in e_ij)
-        for ii in e_i
-    ]
+    CalGt = [sum(inv_metric[kk, ll] * C2[ii, kk, ll] for kk, ll in e_ij) for ii in e_i]
 
-    Rt = sym.Matrix([
-        -0.5 * sum([
-            inv_metric[ll, mm] * d2(ll, mm, metric[ii, jj]) for ll, mm in e_ij
-        ]) + 0.5 * sum([
-            metric[kk, ii] * d(jj, Gt[kk]) + metric[kk, jj] * d(ii, Gt[kk])
-            for kk in e_i
-        ]) + 0.5 *
-        sum([CalGt[kk] * (C1[ii, jj, kk] + C1[jj, ii, kk]) for kk in e_i]) +
-        sum([
-            inv_metric[ll, mm] *
-            (C2[kk, ll, ii] * C1[jj, kk, mm] +
-             C2[kk, ll, jj] * C1[ii, kk, mm] + C2[kk, ii, mm] * C1[kk, ll, jj])
-            for kk in e_i for ll, mm in e_ij
-        ]) for ii, jj in e_ij
-    ])
+    Rt = sym.Matrix(
+        [
+            -0.5
+            * sum([inv_metric[ll, mm] * d2(ll, mm, metric[ii, jj]) for ll, mm in e_ij])
+            + 0.5
+            * sum(
+                [
+                    metric[kk, ii] * d(jj, Gt[kk]) + metric[kk, jj] * d(ii, Gt[kk])
+                    for kk in e_i
+                ]
+            )
+            + 0.5 * sum([CalGt[kk] * (C1[ii, jj, kk] + C1[jj, ii, kk]) for kk in e_i])
+            + sum(
+                [
+                    inv_metric[ll, mm]
+                    * (
+                        C2[kk, ll, ii] * C1[jj, kk, mm]
+                        + C2[kk, ll, jj] * C1[ii, kk, mm]
+                        + C2[kk, ii, mm] * C1[kk, ll, jj]
+                    )
+                    for kk in e_i
+                    for ll, mm in e_ij
+                ]
+            )
+            for ii, jj in e_ij
+        ]
+    )
 
     # print('done with Rt') #simplify(Rt))
 
@@ -1054,18 +1099,31 @@ def compute_ricci(Gt, chi):
     #         DKchiDkchi.reshape(3, 3)
     # dwn    Rphi = -0.5*_Di_Dj(chi)/chi - Rphi_tmp.reshape(3, 3) - \
     #        DKchiDkchi.reshape(3, 3)
-    xRphi = sym.Matrix([
-        1 / (2 * chi) * (d2(ii, jj, chi) - sum(C2[kk, jj, ii] * d(kk, chi)
-                                               for kk in e_i)) - 1 /
-        (4 * chi * chi) * d(ii, chi) * d(jj, chi) for ii, jj in e_ij
-    ]).reshape(3, 3)
+    xRphi = sym.Matrix(
+        [
+            1
+            / (2 * chi)
+            * (d2(ii, jj, chi) - sum(C2[kk, jj, ii] * d(kk, chi) for kk in e_i))
+            - 1 / (4 * chi * chi) * d(ii, chi) * d(jj, chi)
+            for ii, jj in e_ij
+        ]
+    ).reshape(3, 3)
 
-    Rphi = xRphi + sym.Matrix([
-        1 / (2 * chi) * metric[ii, jj] *
-        (sum(inv_metric[kk, ll] * (d2(kk, ll, chi) - 3 /
-                                   (2 * chi) * d(kk, chi) * d(ll, chi))
-             for kk, ll in e_ij) - sum(CalGt[mm] * d(mm, chi) for mm in e_i))
-        for ii, jj in e_ij
-    ]).reshape(3, 3)
+    Rphi = xRphi + sym.Matrix(
+        [
+            1
+            / (2 * chi)
+            * metric[ii, jj]
+            * (
+                sum(
+                    inv_metric[kk, ll]
+                    * (d2(kk, ll, chi) - 3 / (2 * chi) * d(kk, chi) * d(ll, chi))
+                    for kk, ll in e_ij
+                )
+                - sum(CalGt[mm] * d(mm, chi) for mm in e_i)
+            )
+            for ii, jj in e_ij
+        ]
+    ).reshape(3, 3)
 
     return Rt.reshape(3, 3) + Rphi, Rt.reshape(3, 3), Rphi, CalGt

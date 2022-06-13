@@ -23,6 +23,7 @@ IN THE SOFTWARE.
 """
 
 import cachesim
+
 """
 (base) [xxxxxxx@kingspeak1 ~]$ cat kp_lscpu
 Architecture:          x86_64
@@ -81,20 +82,12 @@ class SympyCacheSim:
         self.__mem__.store_from(self.__l3__)
 
         # NOTE: these values aren't the same as the example
-        self.__l2__ = cachesim.Cache("L2",
-                                     256,
-                                     8,
-                                     64,
-                                     "LRU",
-                                     store_to=self.__l3__,
-                                     load_from=self.__l3__)  # 256KB
-        self.__l1__ = cachesim.Cache("L1",
-                                     32,
-                                     8,
-                                     64,
-                                     "LRU",
-                                     store_to=self.__l2__,
-                                     load_from=self.__l2__)  # 32KB
+        self.__l2__ = cachesim.Cache(
+            "L2", 256, 8, 64, "LRU", store_to=self.__l3__, load_from=self.__l3__
+        )  # 256KB
+        self.__l1__ = cachesim.Cache(
+            "L1", 32, 8, 64, "LRU", store_to=self.__l2__, load_from=self.__l2__
+        )  # 32KB
         self.__cs__ = cachesim.CacheSimulator(self.__l1__, self.__mem__)
 
     def get_cachesim(self):

@@ -15,7 +15,7 @@ def unique(in_list):
 
 def find_derivtype_in_text(in_text, search_prefix="grad_"):
 
-    re_search = r'\b' + search_prefix + r'\w+'
+    re_search = r"\b" + search_prefix + r"\w+"
 
     found_instances = re.findall(re_search, in_text)
 

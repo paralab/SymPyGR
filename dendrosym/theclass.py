@@ -11,10 +11,8 @@ import dendrosym
 
 
 class DendroGRCodeGen:
-    """Class for generating code files for Dendro computations
+    """Class for generating code files for Dendro computations"""
 
-
-    """
     def __init__(self, project_short: str):
 
         # project short is for namespace info, basically like an abbreviation
@@ -51,7 +49,8 @@ class DendroGRCodeGen:
             # generate for the CPU
 
             return_str = dendrosym.codegen.generate_cpu(
-                *self.functions["other"](), '[pp]')
+                *self.functions["other"](), "[pp]"
+            )
 
             pass
 
@@ -67,27 +66,29 @@ class DendroGRCodeGen:
         # start with the constraints
         return_str = ""
 
-        return_str += dendrosym.codegen.gen_enum_info(
-            self.constraint_var_names, "VAR_CONSTRAINT", "C") + "\n"
+        return_str += (
+            dendrosym.codegen.gen_enum_info(
+                self.constraint_var_names, "VAR_CONSTRAINT", "C"
+            )
+            + "\n"
+        )
 
-        return_str += dendrosym.codegen.gen_enum_info(self.other_var_names,
-                                                      "VAR", "U")
+        return_str += dendrosym.codegen.gen_enum_info(self.other_var_names, "VAR", "U")
 
         return return_str
 
     def generate_var_name_array(self):
-        """Method that generates the var name array
-
-        """
+        """Method that generates the var name array"""
 
         return_str = ""
 
         return_str += dendrosym.codegen.gen_var_name_array(
-            self.constraint_var_names, self.project_short, "C",
-            "CONSTRAINT_VAR")
+            self.constraint_var_names, self.project_short, "C", "CONSTRAINT_VAR"
+        )
 
         return_str += dendrosym.codegen.gen_var_name_array(
-            self.other_var_names, self.project_short, "U", "VAR")
+            self.other_var_names, self.project_short, "U", "VAR"
+        )
 
         return return_str
 
@@ -101,14 +102,13 @@ class DendroGRCodeGen:
         func = self.functions.get(var_type, None)
 
         if func is None:
-            raise NotImplementedError(
-                "Function for this var type not assigned")
+            raise NotImplementedError("Function for this var type not assigned")
 
         # get all of the possible gradient variables as uniques
         # TODO: I'm thinking we just save the text file of results
         # and then read that in to find the gradient vars
         # TODO: fix this!
-        with open("test1.txt", 'r') as fh:
+        with open("test1.txt", "r") as fh:
             in_text = fh.read()
 
         grad_list = dendrosym.utils.find_derivtype_in_text(in_text, "grad_")
@@ -120,7 +120,8 @@ class DendroGRCodeGen:
         return_str += dendrosym.codegen.generate_deriv_comp(grad_list)
         return_str += dendrosym.codegen.generate_deriv_comp(grad2_list)
         return_str += dendrosym.codegen.generate_deriv_comp(
-            agrad_list, self.advective_der_var)
+            agrad_list, self.advective_der_var
+        )
 
         return return_str
 
@@ -128,9 +129,7 @@ class DendroGRCodeGen:
 
         self.functions[var_type] = func
 
-    def generate_rhs_vars(self,
-                          var_type: str = "other",
-                          zip_var_name="unzipVarsRHS"):
+    def generate_rhs_vars(self, var_type: str = "other", zip_var_name="unzipVarsRHS"):
 
         return_str = ""
 
@@ -142,7 +141,8 @@ class DendroGRCodeGen:
         if var_type == "other":
             expre, var_names = func()
             _, exp_names, _ = dendrosym.codegen.construct_expression_list(
-                expre, var_names, "")
+                expre, var_names, ""
+            )
 
             # now I gotta match up the lists to be sure
             other_var_names = self.other_var_names.copy()
@@ -157,23 +157,24 @@ class DendroGRCodeGen:
                 enum_name="VAR",
                 enum_prefix="U",
                 use_const=False,
-                enum_var_names=other_var_names)
+                enum_var_names=other_var_names,
+            )
         else:
             raise NotImplementedError("Fix this")
 
         return return_str
 
-    def generate_variable_extraction(self,
-                                     var_type="other",
-                                     use_const=False,
-                                     zip_var_name="uZipVars"):
+    def generate_variable_extraction(
+        self, var_type="other", use_const=False, zip_var_name="uZipVars"
+    ):
         return_str = ""
         if var_type == "other":
             return_str += dendrosym.codegen.gen_var_info(
                 self.other_var_names,
                 zip_var_name=zip_var_name,
                 enum_prefix="U",
-                use_const=use_const)
+                use_const=use_const,
+            )
         else:
             raise NotImplementedError("Not yet implemented")
 
@@ -189,7 +190,8 @@ class DendroGRCodeGen:
             zip_var_name="uZipConVars",
             enum_name="VAR_CONSTRAINT",
             enum_prefix="C",
-            use_const=False)
+            use_const=False,
+        )
 
         return return_str
 
@@ -199,15 +201,15 @@ class DendroGRCodeGen:
 
         for param in self.parameter_vars:
             return_str += param.generate_cpp_line(
-                global_param_prefix=self.upper_project_short)
+                global_param_prefix=self.upper_project_short
+            )
             return_str += "\n"
 
         return return_str
 
-    def generate_ko_calculations(self,
-                                 var_type="other",
-                                 ko_sigma_name="sigma",
-                                 idx="pp"):
+    def generate_ko_calculations(
+        self, var_type="other", ko_sigma_name="sigma", idx="pp"
+    ):
 
         return_str = ""
 
@@ -215,8 +217,9 @@ class DendroGRCodeGen:
             for var_name in self.other_var_names:
                 temp_str = f"{var_name}_rhs[{idx}]"
                 temp_str += f" += {ko_sigma_name} * ("
-                temp_str += " + ".join(f"grad_{ii}_{var_name}[{idx}]"
-                                       for ii in range(3))
+                temp_str += " + ".join(
+                    f"grad_{ii}_{var_name}[{idx}]" for ii in range(3)
+                )
                 temp_str += ");\n"
 
                 return_str += temp_str
@@ -283,9 +286,7 @@ class DendroGRCodeGen:
 
     @staticmethod
     def clean_var_names(in_vars):
-        """Create list of strings for the input variables
-
-        """
+        """Create list of strings for the input variables"""
         # first find all strings that correspond to the vars
         all_var_names = []
         for the_var in in_vars:
@@ -301,8 +302,7 @@ class DendroGRCodeGen:
             elif type(the_var) is sym.Symbol:
                 all_var_names.append(str(the_var))
             else:
-                raise NotImplementedError(
-                    "That variable type isn't implemented yet")
+                raise NotImplementedError("That variable type isn't implemented yet")
 
         # now we clean away potential [idx] information
         for ii in range(len(all_var_names)):

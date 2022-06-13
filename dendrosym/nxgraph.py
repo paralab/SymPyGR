@@ -29,7 +29,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 
 
-class ExpressionGraph():
+class ExpressionGraph:
     def __init__(self):
         self._nx_graphs = dict()
         self._sympy_expr = dict()
@@ -43,7 +43,7 @@ class ExpressionGraph():
         if isinstance(expr.func, sympy.core.function.UndefinedFunction):
             sym_name = str(expr.func)
             for a in expr.args:
-                sym_name = sym_name + '_' + str(a)
+                sym_name = sym_name + "_" + str(a)
 
             node_list.append(sympy.Symbol(sym_name))
         else:
@@ -54,7 +54,7 @@ class ExpressionGraph():
                 f = arg.func
                 sym_name = str(f)
                 for a in arg.args:
-                    sym_name = sym_name + '_' + str(a)
+                    sym_name = sym_name + "_" + str(a)
 
                 node_list.append(sympy.Symbol(sym_name))
                 edge_list.append((expr, sympy.Symbol(sym_name)))
@@ -80,7 +80,7 @@ class ExpressionGraph():
                 f = arg.func
                 sym_name = str(f)
                 for a in arg.args:
-                    sym_name = sym_name + '_' + str(a)
+                    sym_name = sym_name + "_" + str(a)
 
                 node_list.append(sympy.Symbol(sym_name))
                 edge_list.append((expr, sympy.Symbol(sym_name)))
@@ -142,7 +142,7 @@ class ExpressionGraph():
 
     def add_expressions(self, outs, vnames, suffix_idx="[pp]"):
         mi = [0, 1, 2, 4, 5, 8]
-        midx = ['00', '01', '02', '11', '12', '22']
+        midx = ["00", "01", "02", "11", "12", "22"]
 
         num_e = 0
         for i, e in enumerate(outs):
@@ -150,15 +150,17 @@ class ExpressionGraph():
                 num_e = num_e + len(e)
                 for j, ev in enumerate(e):
                     expr_name = vnames[i] + "" + str(j) + str(suffix_idx)
-                    print("processing expr : %d var name %s[%s]" %
-                          (i, vnames[i], str(j)))
+                    print(
+                        "processing expr : %d var name %s[%s]" % (i, vnames[i], str(j))
+                    )
                     self.add_expression(ev, expr_name)
             elif type(e) == sympy.Matrix:
                 num_e = num_e + len(e)
                 for j, k in enumerate(mi):
                     expr_name = vnames[i] + "" + str(midx[j]) + str(suffix_idx)
-                    print("processing expr : %d var name %s[%s]" %
-                          (i, vnames[i], midx[j]))
+                    print(
+                        "processing expr : %d var name %s[%s]" % (i, vnames[i], midx[j])
+                    )
                     self.add_expression(e[k], expr_name)
             else:
                 num_e = num_e + 1
