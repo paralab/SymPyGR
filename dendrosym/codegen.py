@@ -9,9 +9,6 @@ currently unused functions. They will be added soon.
 """
 
 # import enum
-import enum
-from math import exp
-from os import replace
 import re as regex
 import sys
 from typing import List, Tuple, Union
