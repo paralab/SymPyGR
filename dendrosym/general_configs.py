@@ -336,8 +336,12 @@ class DendroConfiguration:
                             asymptotic = var_info[idxs[0]][1]
                         else:
                             # print(clean_var, file=sys.stderr)
-                            falloff = var_info[idxs[0]][idxs[1]][0]
-                            asymptotic = var_info[idxs[0]][idxs[1]][1]
+                            try:
+                                falloff = var_info[idxs[0]][idxs[1]][0]
+                                asymptotic = var_info[idxs[0]][idxs[1]][1]
+                            except:
+                                print(f"FAILURE {var_info}")
+                                raise Exception
 
                     return_str += dendrosym.codegen.generate_bcs_function_call(
                         rhs_var[0],
@@ -1080,7 +1084,7 @@ class DendroConfiguration:
 
         return outstr
 
-    def find_derivatives(self, var_type):
+    def find_derivatives(self, var_type, do_extra_check=False):
         """This method finds other derivatives
 
         This is particularly useful for when a user uses an
@@ -1129,29 +1133,33 @@ class DendroConfiguration:
             # add these new expressions to our list
             new_exprs.append(new_expr)
 
-        # go again with the original method
-        # collection of "new" (modified) expressions for each of the variables
-        new_exprs_again = []
-        # the list of all derivatives that we've found that will need to be
-        # precalculated
-        found_derivatives = []
+        if do_extra_check:
+            # go again with the original method
+            # collection of "new" (modified) expressions for each of the variables
+            new_exprs_again = []
+            # the list of all derivatives that we've found that will need to be
+            # precalculated
+            found_derivatives = []
 
-        for ii, expr in enumerate(new_exprs):
+            for ii, expr in enumerate(new_exprs):
 
-            print(
-                str(all_rhs_names[ii])
-                + f" {ii+1}/{len(all_exp)} : {(ii+1)/len(all_exp):.2%}",
-                file=sys.stderr,
-            )
+                print(
+                    str(all_rhs_names[ii])
+                    + f" {ii+1}/{len(all_exp)} : {(ii+1)/len(all_exp):.2%}",
+                    file=sys.stderr,
+                )
 
-            # call the find and replace complicated derivatives function
-            # this will update and modify the collection of derivatives
-            new_expr, found_derivatives = self.find_and_replace_complex_ders_staged(
-                expr, found_derivatives, 0, self.idx_str
-            )
+                # call the find and replace complicated derivatives function
+                # this will update and modify the collection of derivatives
+                new_expr, found_derivatives = self.find_and_replace_complex_ders_staged(
+                    expr, found_derivatives, 0, self.idx_str
+                )
 
-            # add these new expressions to our list
-            new_exprs_again.append(new_expr)
+                # add these new expressions to our list
+                new_exprs_again.append(new_expr)
+        else:
+            new_exprs_again = new_exprs
+            found_derivatives = []
 
         # store them internally so we don't lose them
         self.stored_rhs_function[var_type] = {
@@ -1488,6 +1496,7 @@ class DendroConfiguration:
 
     @staticmethod
     def find_and_sort_atoms(expr, objs: list):
+        # TODO: fix this if expression isn't a sympy object
 
         # find the atoms
         atoms = np.array(list(expr.atoms(*objs)))
