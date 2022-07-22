@@ -181,9 +181,8 @@ def construct_cse(
     return _v, sym.count_ops(lexp)
 
 
-def construct_cse_from_list(expression_list):
+def construct_cse_from_list(expression_list, temp_var_prefix="DENDRO_"):
 
-    temp_var_prefix = "DENDRO_"
     temp_var_gen = custom_numbered_symbols(temp_var_prefix)
 
     print("Now generating cse!", file=sys.stderr)
@@ -241,7 +240,7 @@ def generate_cpu_preextracted(
 
         # extract the c-generated code for the expression
         ccode_text = sym.ccode(
-            e, assign_to=rhs_var_names[i] + idx, user_functions=custom_functions
+            e, assign_to=str(rhs_var_names[i]) + idx, user_functions=custom_functions
         )
         # then we need to pass it through the changing of derivative names
         ccode_text = change_deriv_names(ccode_text)

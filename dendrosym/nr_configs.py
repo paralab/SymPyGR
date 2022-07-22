@@ -26,6 +26,7 @@ class NRConfig(dendrosym.DendroConfiguration):
     """
 
     def __init__(self, project_name: str):
+        super().__init__(project_name=project_name)
         self.project_name = project_name
         self.project_upper = project_name.upper()
 

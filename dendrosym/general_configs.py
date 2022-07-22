@@ -57,6 +57,8 @@ class DendroConfiguration:
 
         self.stored_rhs_function = {}
 
+        self.stored_staged_exprs = {}
+
     def set_idx_str(self, idx_str):
         """Store the string used for indexing into the variables
 
@@ -195,24 +197,52 @@ class DendroConfiguration:
                     all_rhs_names_tmp.append(rhs_name.replace("_rhs", ""))
                 all_rhs_names = all_rhs_names_tmp
             orig_n_exp = temp_funcs["orig_n_exp"]
+
+            staged_exp = temp_funcs["staged_exprs"]
+            staged_exprs_names = temp_funcs["staged_exprs_names"]
             print("Found stored RHS info", file=sys.stderr)
         else:
             # so now we can get started by getting the rhs information
-            all_exp, all_rhs_names, orig_n_exp = self._extract_rhs_expressions(
+            (
+                all_exp,
+                all_rhs_names,
+                staged_exp,
+                staged_names,
+                orig_n_exp,
+            ) = self._extract_rhs_expressions(
                 var_type, append_rhs_to_var=include_rhs_in_name
             )
 
+        # start with the staged expressions
+        if len(staged_exp) > 0:
+            orig_n_ops = sym.count_ops(staged_exp)
+            cse_exp = dendrosym.codegen.construct_cse_from_list(
+                staged_exp, temp_var_prefix="DENDRO_STAGED_VAR_"
+            )
+
+            # NO INDEX STRING HERE, WE AREN'T INDEXING INTO THEM
+            output_str = dendrosym.codegen.generate_cpu_preextracted(
+                cse_exp, staged_exprs_names, "", orig_n_ops
+            )
+        else:
+            orig_n_ops = 0
+            output_str = ""
+
         # count the number of original operations on the expressions
-        orig_n_ops = sym.count_ops(all_exp)
+        orig_n_ops += sym.count_ops(all_exp)
 
         # construct cse from the list
         cse_exp = dendrosym.codegen.construct_cse_from_list(all_exp)
 
         if arc_type == "cpu":
             # then we're to send this information to the cpu gen function
-            return dendrosym.codegen.generate_cpu_preextracted(
+
+            main_output_str = dendrosym.codegen.generate_cpu_preextracted(
                 cse_exp, all_rhs_names, self.idx_str, orig_n_ops
             )
+
+            output_str += main_output_str
+            return output_str
 
         else:
             raise NotImplementedError(
@@ -225,7 +255,13 @@ class DendroConfiguration:
             raise ValueError(f"'{var_type}' is not a valid RHS type")
 
         # get the expressions from the rhs info
-        all_exp, all_rhs_names, orig_n_exp = self._extract_rhs_expressions(var_type)
+        (
+            all_exp,
+            all_rhs_names,
+            staged_exprs,
+            staged_vars,
+            original_number_expressions,
+        ) = self._extract_rhs_expressions(var_type)
 
         # now we iterate through all of them individually to get their new code
 
@@ -641,8 +677,37 @@ class DendroConfiguration:
         # for ii in range(len(all_expressions)):
         #     print(all_rhs_var_names[ii], "=", all_expressions[ii])
 
+        # now add the staged variables, which are used by the user to simplify things by hand
+        if self.stored_staged_exprs.get(var_type, None) is None:
+            staged_vars = []
+            staged_exprs = []
+        else:
+            # run the function, and assume it's the only one
+            staged_exprs, staged_vars = self.stored_staged_exprs.get(var_type)()
+
+            # now we can make sure they have the same number
+            if len(staged_exprs) != len(staged_vars):
+                raise ImproperInitalization(
+                    f"The staged expression function for {var_type}"
+                )
+
+            # quick check on the staged expressions, make sure they're not in a sympy matrix
+            for expr in staged_exprs:
+                if isinstance(expr, sym.Matrix):
+                    raise ImproperInitalization(
+                        "Staged expressions must not be vectors or matrices, ensure that each staged variable is its own single expression"
+                    )
+
+            # otherwise we're good to continue
+
         # okay, now that we have them we can return them
-        return all_expressions, all_rhs_var_names, original_number_expressions
+        return (
+            all_expressions,
+            all_rhs_var_names,
+            staged_exprs,
+            staged_vars,
+            original_number_expressions,
+        )
 
     def gen_grad_memory_alloc(
         self, var_type: str, grad_type: str = "grad", include_byte_declaration=False
@@ -1111,7 +1176,13 @@ class DendroConfiguration:
             raise ValueError(f"Unfortunately {var_type} doesn't work yet")
 
         # so now we can get started by getting the rhs information
-        all_exp, all_rhs_names, orig_n_exp = self._extract_rhs_expressions(var_type)
+        (
+            all_exp,
+            all_rhs_names,
+            staged_exp,
+            staged_names,
+            orig_n_exp,
+        ) = self._extract_rhs_expressions(var_type)
 
         # collection of "new" (modified) expressions for each of the variables
         new_exprs = []
@@ -1132,6 +1203,17 @@ class DendroConfiguration:
 
             # add these new expressions to our list
             new_exprs.append(new_expr)
+
+        # iterate through the staged ones as well
+        new_staged_exprs = []
+        print("Now replacing derivatives in the staged expressions if there are any")
+        for ii, expr in enumerate(staged_exp):
+            new_expr = self.find_and_replace_complex_ders(
+                expr, self.every_var_name, 0, self.idx_str
+            )
+
+            # these new expressions are then "replaced"
+            new_staged_exprs.append(new_expr)
 
         if do_extra_check:
             # go again with the original method
@@ -1157,6 +1239,9 @@ class DendroConfiguration:
 
                 # add these new expressions to our list
                 new_exprs_again.append(new_expr)
+
+            # TODO: implement extra check for staged expressions
+
         else:
             new_exprs_again = new_exprs
             found_derivatives = []
@@ -1167,12 +1252,21 @@ class DendroConfiguration:
             "all_rhs_names": all_rhs_names,
             "found_derivatives": found_derivatives,
             "orig_n_exp": orig_n_exp,
+            "staged_exprs": new_staged_exprs,
+            "staged_exprs_names": staged_names,
         }
 
         # return the new expressions with the replacements, the names of the
         # expressions in order, and the found derivatives as well
         # as number of operations
-        return new_exprs, all_rhs_names, found_derivatives, orig_n_exp
+        return (
+            new_exprs_again,
+            all_rhs_names,
+            found_derivatives,
+            orig_n_exp,
+            new_staged_exprs,
+            staged_names,
+        )
 
     @staticmethod
     def find_and_replace_complex_ders_staged(
@@ -1429,7 +1523,7 @@ class DendroConfiguration:
         all_derivatives = expr.atoms(sym.Derivative)
 
         while len(all_derivatives) > 0:
-            print("len of derivatives", len(all_derivatives))
+            print("    Length of Remaining Derivatives: ", len(all_derivatives))
 
             curr_deriv = all_derivatives.pop()
 
@@ -1538,9 +1632,14 @@ class DendroConfiguration:
         self, var_type, dtype="double", include_byte_declaration=False
     ):
 
-        (exprs, all_rhs_names, found_derivatives, orig_n_exp) = self.find_derivatives(
-            var_type
-        )
+        (
+            exprs,
+            all_rhs_names,
+            found_derivatives,
+            orig_n_exp,
+            new_staged_exprs,
+            staged_names,
+        ) = self.find_derivatives(var_type)
 
         if include_byte_declaration:
             # get the number of bytes we need for allocation
@@ -2073,7 +2172,7 @@ class DendroConfiguration:
             all_current_grad2s = eqn.atoms(funcs_to_find[1])
             all_current_agrads = eqn.atoms(funcs_to_find[2])
 
-            print(all_current_grad2s)
+            # print(all_current_grad2s)
 
             # for grad2s, we need to make sure the args are in the right order
             updated_grad2s = set()
@@ -2089,7 +2188,7 @@ class DendroConfiguration:
                     }
                 )
 
-            print(updated_grad2s)
+            # print(updated_grad2s)
 
             # then add them to our set which forces uniqueness, but not order
             grad_list.update(all_current_grads)
@@ -2122,3 +2221,15 @@ class DendroConfiguration:
     #     # consider that
 
     #     pass
+
+    def add_staged_function(self, var_type, expr_func):
+
+        staged_var_names, exprs = expr_func()
+
+        if len(staged_var_names) != len(exprs):
+            raise ImproperInitalization(
+                "The staged expression function does not have the same number"
+                + " of expressions as variables"
+            )
+
+        self.stored_staged_exprs.update({var_type: expr_func})
