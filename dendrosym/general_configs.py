@@ -732,9 +732,11 @@ class DendroConfiguration:
 
         grad_vars = self.create_grad_var_names(orig_vars, grad_type, 3)
 
-        return_text = dendrosym.codegen.generate_memory_alloc(
-            grad_vars, "double", include_byte_declaration
+        return_text, current_index = dendrosym.codegen.generate_memory_alloc(
+            grad_vars, "double", include_byte_declaration, start_id=self.current_index
         )
+
+        self.current_index = current_index
 
         return return_text
 
@@ -1960,7 +1962,7 @@ class DendroConfiguration:
         return found_derivatives
 
     def generate_deriv_allocation_and_calc(
-        self, var_type="evolution", include_byte_declaration=False
+        self, var_type="evolution", include_byte_declaration=False, use_old_method=False
     ):
         """Generates all of the C++ code for allocation and calculation of derivatives"""
 
@@ -1969,6 +1971,8 @@ class DendroConfiguration:
         grad_list, grad2_list, agrad_list = self.find_all_unique_ders(
             temp_funcs["exprs"], temp_funcs["all_rhs_names"]
         )
+
+        self.current_index = 0
 
         # then we need to convert them
         if var_type == "evolution":
@@ -1986,7 +1990,11 @@ class DendroConfiguration:
                 grad_dealloc,
                 grad_calc,
                 grad_grad_names,
-            ) = self.create_func_list_code(grad_list, self.idx_str)
+                start_index,
+            ) = self.create_func_list_code(
+                grad_list, self.idx_str, start_index=self.current_index
+            )
+            self.current_index = start_index
 
         # grad 2
         (
@@ -1994,9 +2002,14 @@ class DendroConfiguration:
             grad2_dealloc,
             grad2_calc,
             grad2_grad_names,
+            start_index,
         ) = self.create_func_list_code(
-            grad2_list, self.idx_str, grad1_list=grad_grad_names
+            grad2_list,
+            self.idx_str,
+            grad1_list=grad_grad_names,
+            start_index=self.current_index,
         )
+        self.current_index = start_index
 
         # agrad
         (
@@ -2004,22 +2017,34 @@ class DendroConfiguration:
             agrad_dealloc,
             agrad_calc,
             agrad_grad_names,
+            start_index,
         ) = self.create_func_list_code(
             agrad_list,
             self.idx_str,
             agrad_var=getattr(self, "advective_der_var", "NONE"),
+            start_index=self.current_index,
         )
+        self.current_index = start_index
 
         # stitch them together and return the strings
         all_alloc = grad_alloc + grad2_alloc + agrad_alloc
         all_calc = grad_calc + grad2_calc + agrad_calc
         all_dealloc = grad_dealloc + grad2_dealloc + agrad_dealloc
 
+        if not use_old_method:
+            all_dealloc = "// NO DEALLOCATION REQUIRED DUE TO DERIVATIVE BASE"
+
         return all_alloc, all_calc, all_dealloc
 
     @staticmethod
     def create_func_list_code(
-        input_funcs, idx_str, dtype="double", grad1_list=[], agrad_var="beta"
+        input_funcs,
+        idx_str,
+        dtype="double",
+        grad1_list=[],
+        agrad_var="beta",
+        use_old_method=False,
+        start_index=0,
     ):
 
         # if it's not an input
@@ -2089,10 +2114,13 @@ class DendroConfiguration:
                     else:
                         # then we need to add to the allocation string
                         # a temporary variable
-                        out_alloc += (
-                            f"{dtype} *{first_dir_name} = ({dtype} *)malloc(bytes);\n"
-                        )
-                        out_dealloc += f"free({first_dir_name});\n"
+                        # NOTE: this is a fallback in case it wasn't actually made
+                        if use_old_method:
+                            out_alloc += f"{dtype} *{first_dir_name} = ({dtype} *)malloc(bytes);\n"
+                            out_dealloc += f"free({first_dir_name});\n"
+                        else:
+                            out_alloc += f"{dtype} *{first_dir_name} = deriv_base + {start_index} * BLK_SZ;\n"
+                            start_index += 1
 
                         # then the calculation string
                         calc_str = (
@@ -2140,16 +2168,23 @@ class DendroConfiguration:
                 )
 
             # grad allocation
-            alloc_str = f"{dtype} *{grad_name} = ({dtype} *)malloc(bytes);\n"
+            if use_old_method:
+                alloc_str = f"{dtype} *{grad_name} = ({dtype} *)malloc(bytes);\n"
 
-            # grad deallocation
-            dealloc_str = f"free({grad_name});\n"
+                # grad deallocation
+                dealloc_str = f"free({grad_name});\n"
+            else:
+                alloc_str = (
+                    f"{dtype} *{grad_name} = deriv_base + {start_index} * BLK_SZ;\n"
+                )
+                start_index += 1
+                dealloc_str = ""
 
             out_alloc += alloc_str
             out_dealloc += dealloc_str
             out_calc += calc_str
 
-        return out_alloc, out_dealloc, out_calc, all_grad_names
+        return out_alloc, out_dealloc, out_calc, all_grad_names, start_index
 
     # TODO: potentially remove this from static and make it real
     @staticmethod

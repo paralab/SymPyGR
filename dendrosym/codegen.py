@@ -1340,18 +1340,31 @@ def gen_var_iterable_list(
 
 
 def generate_memory_alloc(
-    var_names: list, var_type: str = "double", include_byte_declaration=False
+    var_names: list,
+    var_type: str = "double",
+    use_old_method=False,
+    include_byte_declaration=False,
+    start_id: int = 0,
 ):
 
-    if include_byte_declaration:
-        return_text = f"const unsigned int bytes = n * sizeof({var_type});\n"
+    if use_old_method:
+
+        if include_byte_declaration:
+            return_text = f"const unsigned int bytes = n * sizeof({var_type});\n"
+        else:
+            return_text = ""
+
+        for va in var_names:
+            return_text += f"{var_type} *{va} = ({var_type} *)malloc(bytes);\n"
+
+        last_id = 0
     else:
         return_text = ""
+        for ii, va in enumerate(var_names):
+            return_text += f"{var_type} *{va} = deriv_base + {start_id} * BLK_SZ;\n"
+            start_id += 1
 
-    for va in var_names:
-        return_text += f"{var_type} *{va} = ({var_type} *)malloc(bytes);\n"
-
-    return return_text
+    return return_text, start_id
 
 
 def generate_memory_dealloc(var_names: list):
