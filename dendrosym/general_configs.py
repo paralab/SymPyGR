@@ -623,6 +623,47 @@ class DendroConfiguration:
         # if that's all good, then we're good to add the function to our list
         self.all_rhs_functions.update({var_type: rhs_func})
 
+    def get_rhs_eqns(self, var_type: str):
+        """Get the plain output from the RHS equation"""
+        rhs_func = self.all_rhs_functions.get(var_type, None)
+
+        rhs_list, var_list = rhs_func()
+
+        return rhs_list, var_list
+        
+    def get_rhs_eqns_flat(self, var_type: str):
+
+        rhs_func = self.all_rhs_functions.get(var_type, None)
+
+        rhs_list, var_list = rhs_func()
+
+        mi = [0, 1, 2, 4, 5, 8]
+
+        lexp = []
+        lname = []
+
+        num_e = 0
+
+        # flatten the expressions to lists with corresponding names
+        for i, e in enumerate(rhs_list):
+            if type(e) == list:
+                num_e = num_e + len(e)
+                for j, ev in enumerate(e):
+                    lexp.append(ev)
+                    lname.append(str(var_list[i][j]))
+            elif type(e) == sym.Matrix:
+                num_e = num_e + np.prod(e.shape)
+                for j, k in enumerate(mi):
+                    lexp.append(e[k])
+                    lname.append(str(var_list[i][j]))
+            else:
+                num_e = num_e + 1
+                lexp.append(e)
+                lname.append(str(var_list[i]))
+
+        return lexp, lname
+
+
     def _extract_rhs_expressions(self, var_type: str, append_rhs_to_var=True):
         """An internal function that extracts the expressions for a variable type
 
@@ -1406,7 +1447,7 @@ class DendroConfiguration:
             term_differentiate = func.args[-1]
 
             if isinstance(term_differentiate, sym.Symbol):
-                if not term_differentiate.name.startswith("DENDRO_STAGED_"):
+                if term_differentiate.name.startswith("DENDRO_STAGED_"):
                     continue
 
             elif (
