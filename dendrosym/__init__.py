@@ -41,6 +41,8 @@ from .general_configs import DendroConfiguration
 # and then the numerical relativity class
 from .nr_configs import NRConfig
 
+from .dendro_generator import DendroGenerator
+
 # TODO: the package that is used with gw is not currently supported!
 # from . import gw
 

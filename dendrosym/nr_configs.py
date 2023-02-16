@@ -57,7 +57,7 @@ class NRConfig(dendrosym.DendroConfiguration):
         # initialize the advective derivative variable as well
         self.advective_der_var = None
 
-        self.idx_str = ""
+        self.idx_str = "[pp]"
 
         self.bcs_info = {"constraint": {}, "evolution": {}}
 

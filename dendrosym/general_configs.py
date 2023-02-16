@@ -51,7 +51,7 @@ class DendroConfiguration:
 
         self.all_initial_data_functions = {"general": []}
 
-        self.idx_str = ""
+        self.idx_str = "[pp]"
 
         self.bcs_info = {"general": {}}
 
@@ -124,6 +124,8 @@ class DendroConfiguration:
             var_names_clean = self.clean_var_names([one_var])
 
             for vname_clean in var_names_clean:
+                if not vname_clean.endswith(self.idx_str):
+                    vname_clean += self.idx_str
                 if not self.check_repeat_items_ignore_case(
                     vname_clean, self.all_var_names[eqn_type]
                 ):
@@ -630,8 +632,12 @@ class DendroConfiguration:
         rhs_list, var_list = rhs_func()
 
         return rhs_list, var_list
-        
+
     def get_rhs_eqns_flat(self, var_type: str):
+        """This function gets the RHS equations and makes them "flat"
+
+        Useful for evaluating each possible variable.
+        """
 
         rhs_func = self.all_rhs_functions.get(var_type, None)
 
