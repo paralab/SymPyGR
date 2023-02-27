@@ -7,6 +7,9 @@ import networkx as nx
 idx = ""
 iters = 1000
 
+
+dendroConfigs.replace_derivatives_with_stencil("evolution")
+
 eqns, vnames = dendroConfigs.get_rhs_eqns_flat("evolution")
 
 # now build up the actual expression graph

@@ -1218,6 +1218,8 @@ class DendroConfiguration:
                 temp_funcs["all_rhs_names"],
                 temp_funcs["found_derivatives"],
                 temp_funcs["orig_n_exp"],
+                temp_funcs["staged_exprs"],
+                temp_funcs["staged_exprs_names"]
             )
 
         # then check the stored data for the functions
@@ -1316,6 +1318,59 @@ class DendroConfiguration:
             new_staged_exprs,
             staged_names,
         )
+    
+    def replace_derivatives_with_stencil(self, var_type, stencil_order = 5):
+        # FIXME: there's an issue here with the derivatives not actually coming out
+        # I have been puzzling over this for a while, need to straight debug it (maybe reduce equations in)
+
+        # pull the derivatives out
+        exprs, rhs_names, found_derivatives, orig_n_exp, staged_exprs, staged_exprs_names = self.find_derivatives(var_type)
+
+
+        print(found_derivatives)
+        # then go ahead and go through them and replace them
+
+        new_exprs = []
+
+        for ii, expr in enumerate(exprs):
+
+            print("On expression ", ii)
+
+            new_expr = self.find_and_replace_derivatives_with_stencil(expr, self.every_var_name, found_derivatives, stencil_order, self.idx_str)
+
+            new_exprs.append(new_expr)
+
+    @staticmethod
+    def find_and_replace_derivatives_with_stencil(expr, var_names, derivatives, stencil_order=5, idx_str="[pp]"):
+
+        funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
+
+        print(expr)
+
+        # start by finding all expressions using the atoms funcion
+        all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
+
+        print(all_funcs)
+
+        while len(all_funcs) > 0:
+
+            func = all_funcs.pop(0)
+
+            term_differentiate = func.args[-1]
+
+            print(term_differentiate)
+
+            if isinstance(term_differentiate, sym.Symbol):
+
+
+                if func.name == "grad":
+
+                    print(term_differentiate, term_differentiate.name)
+
+                pass
+            else:
+                pass
+
 
     @staticmethod
     def find_and_replace_complex_ders_staged(
@@ -1442,6 +1497,8 @@ class DendroConfiguration:
 
         # start by finding all expressions using the atoms funcion
         all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
+
+        print("found", all_funcs)
 
         something_changed = False
 
