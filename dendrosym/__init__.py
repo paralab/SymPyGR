@@ -48,3 +48,6 @@ from .nr_configs import NRConfig
 
 
 # TODO: quaternion and cachesym are not working on MaryLou currently
+
+
+from . import graph_coarsening

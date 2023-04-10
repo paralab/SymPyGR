@@ -70,7 +70,9 @@ class DendroConfiguration:
         """
         self.idx_str = idx_str
 
-    def add_parameter_variables(self, in_vars: list, eqn_type: str = "general"):
+    def add_parameter_variables(
+        self, in_vars: list, eqn_type: str = "general"
+    ):
         """Add a parameter variable to the list
 
         Use this function when there is a constant parameter variable
@@ -94,9 +96,13 @@ class DendroConfiguration:
             if not self.check_repeat_items_ignore_case(
                 var_names_clean, self.all_var_names["parameter"][eqn_type]
             ):
-                self.all_var_names["parameter"][eqn_type].append(var_names_clean)
+                self.all_var_names["parameter"][eqn_type].append(
+                    var_names_clean
+                )
             else:
-                raise Exception(f"Parameter '{one_var}' has already been added")
+                raise Exception(
+                    f"Parameter '{one_var}' has already been added"
+                )
             # then append the paramter to the list
             self.all_vars["parameter"][eqn_type].append(one_var)
 
@@ -328,7 +334,12 @@ class DendroConfiguration:
         self.bcs_info.update({var_type: {"vars": var_list, "info": var_info}})
 
     def generate_bcs_calculations(
-        self, var_type="general", pmin="pmin", pmax="pmax", sz="sz", bflag="bflag"
+        self,
+        var_type="general",
+        pmin="pmin",
+        pmax="pmax",
+        sz="sz",
+        bflag="bflag",
     ):
         """Generate the BCS calculation functions
 
@@ -359,7 +370,9 @@ class DendroConfiguration:
                 for clean_var in cleaned_var_name:
                     rhs_var = self.generate_rhs_var_names([clean_var])
 
-                    grad_vars = self.create_grad_var_names([clean_var], "grad", 3)
+                    grad_vars = self.create_grad_var_names(
+                        [clean_var], "grad", 3
+                    )
 
                     if len(var_info) == 2 and (
                         type(var_info[0]) is int or type(var_info[0]) is float
@@ -399,7 +412,9 @@ class DendroConfiguration:
             else:
                 rhs_var = self.generate_rhs_var_names(cleaned_var_name)
 
-                grad_vars = self.create_grad_var_names(cleaned_var_name, "grad", 3)
+                grad_vars = self.create_grad_var_names(
+                    cleaned_var_name, "grad", 3
+                )
                 return_str += dendrosym.codegen.generate_bcs_function_call(
                     rhs_var[0],
                     cleaned_var_name[0],
@@ -658,17 +673,26 @@ class DendroConfiguration:
                     lexp.append(ev)
                     lname.append(str(var_list[i][j]))
             elif type(e) == sym.Matrix:
-                num_e = num_e + np.prod(e.shape)
-                for j, k in enumerate(mi):
-                    lexp.append(e[k])
-                    lname.append(str(var_list[i][j]))
+                if len(e.shape) == 2:
+                    first_dim, second_dim = e.shape
+                    print(var_list[i])
+                    for j in range(first_dim):
+                        for k in range(second_dim):
+                            if var_list[i][j, k] not in lname:
+                                lexp.append(e[j, k])
+                                lname.append(var_list[i][j, k])
+                                num_e += 1
+                else:
+                    num_e = num_e + np.prod(e.shape)
+                    for j, k in enumerate(mi):
+                        lexp.append(e[k])
+                        lname.append(str(var_list[i][j]))
             else:
                 num_e = num_e + 1
                 lexp.append(e)
                 lname.append(str(var_list[i]))
 
         return lexp, lname
-
 
     def _extract_rhs_expressions(self, var_type: str, append_rhs_to_var=True):
         """An internal function that extracts the expressions for a variable type
@@ -708,12 +732,16 @@ class DendroConfiguration:
             expression = rhs_list[ii]
             the_var = var_list[ii]
 
-            list_expressions, num_e = dendrosym.codegen.extract_expression(expression)
+            list_expressions, num_e = dendrosym.codegen.extract_expression(
+                expression
+            )
 
             # note: if we have a sym.Matrix as our variable, we need to then
             # keep in mind the indexing so we can build the RHS variables
             if append_rhs_to_var:
-                rhs_vars = self.generate_rhs_var_names(self.clean_var_names([the_var]))
+                rhs_vars = self.generate_rhs_var_names(
+                    self.clean_var_names([the_var])
+                )
             else:
                 rhs_vars = self.clean_var_names([the_var])
 
@@ -730,7 +758,9 @@ class DendroConfiguration:
             staged_exprs = []
         else:
             # run the function, and assume it's the only one
-            staged_exprs, staged_vars = self.stored_staged_exprs.get(var_type)()
+            staged_exprs, staged_vars = self.stored_staged_exprs.get(
+                var_type
+            )()
 
             # now we can make sure they have the same number
             if len(staged_exprs) != len(staged_vars):
@@ -757,7 +787,10 @@ class DendroConfiguration:
         )
 
     def gen_grad_memory_alloc(
-        self, var_type: str, grad_type: str = "grad", include_byte_declaration=False
+        self,
+        var_type: str,
+        grad_type: str = "grad",
+        include_byte_declaration=False,
     ):
         """Generates memory allocation code
 
@@ -780,7 +813,10 @@ class DendroConfiguration:
         grad_vars = self.create_grad_var_names(orig_vars, grad_type, 3)
 
         return_text, current_index = dendrosym.codegen.generate_memory_alloc(
-            grad_vars, "double", include_byte_declaration, start_id=self.current_index
+            grad_vars,
+            "double",
+            include_byte_declaration,
+            start_id=self.current_index,
         )
 
         self.current_index = current_index
@@ -811,7 +847,9 @@ class DendroConfiguration:
             in_text = fh.read()
 
         # first get the grad list from the "find deriv type in text" function
-        grad_list = dendrosym.utils.find_derivtype_in_text(in_text, grad_type + "_")
+        grad_list = dendrosym.utils.find_derivtype_in_text(
+            in_text, grad_type + "_"
+        )
 
         # sort it for clarity
         grad_list.sort()
@@ -826,7 +864,9 @@ class DendroConfiguration:
 
         # then we can create the grad variable names directly
         return_text = dendrosym.codegen.generate_memory_alloc(
-            grad_list, var_type=dtype, include_byte_declaration=include_byte_declaration
+            grad_list,
+            var_type=dtype,
+            include_byte_declaration=include_byte_declaration,
         )
 
         return return_text
@@ -845,13 +885,17 @@ class DendroConfiguration:
         return return_text
 
     @staticmethod
-    def gen_grad_memory_dealloc_from_code(filename: str, grad_type: str = "grad"):
+    def gen_grad_memory_dealloc_from_code(
+        filename: str, grad_type: str = "grad"
+    ):
 
         with open(filename, "r") as fh:
             in_text = fh.read()
 
         # first get the grad list from the "find deriv type in text" function
-        grad_list = dendrosym.utils.find_derivtype_in_text(in_text, grad_type + "_")
+        grad_list = dendrosym.utils.find_derivtype_in_text(
+            in_text, grad_type + "_"
+        )
 
         # sort it for clarity
         grad_list.sort()
@@ -1025,7 +1069,9 @@ class DendroConfiguration:
             elif type(the_var) is dendrosym.dtypes.ParameterVariable:
                 all_var_names
             else:
-                raise NotImplementedError("That variable type isn't implemented yet")
+                raise NotImplementedError(
+                    "That variable type isn't implemented yet"
+                )
 
         # now we clean away potential [idx] information
         for ii in range(len(all_var_names)):
@@ -1054,7 +1100,9 @@ class DendroConfiguration:
 
         if initial_data_id is None:
             initial_data_id = 0
-            initial_data_funcs = self.all_initial_data_functions.get(var_type, [])
+            initial_data_funcs = self.all_initial_data_functions.get(
+                var_type, []
+            )
 
             for _ in initial_data_funcs:
                 initial_data_id += 1
@@ -1090,15 +1138,20 @@ class DendroConfiguration:
 
         if len(temp_vars) != 0:
             raise ImproperInitalization(
-                "Not all assigned variables to '" + var_type + "' were included"
-                " in Initial Data function. Remaining variables were:" + repr(temp_vars)
+                "Not all assigned variables to '"
+                + var_type
+                + "' were included"
+                " in Initial Data function. Remaining variables were:"
+                + repr(temp_vars)
             )
 
         self.all_initial_data_functions[var_type].append(
             (initial_data_id, func_name, in_func)
         )
 
-    def generate_initial_data_declaration(self, var_type="general", dtype="double"):
+    def generate_initial_data_declaration(
+        self, var_type="general", dtype="double"
+    ):
 
         # first we need to get the functions
         all_init_funcs = self.all_initial_data_functions.get(var_type, [])
@@ -1114,9 +1167,7 @@ class DendroConfiguration:
             outstr += " *\n * @param x : x coord (octree coord)\n"
             outstr += " * @param y : y coord (octree coord)\n"
             outstr += " * @param z : z coord (octree coord)\n"
-            outstr += (
-                " * @param var : initialized dsolve variable pointer for grid points\n"
-            )
+            outstr += " * @param var : initialized dsolve variable pointer for grid points\n"
             outstr += " */\n"
             outstr += f"void {func_name}(const {dtype} x, const {dtype} y, const {dtype} z, {dtype} *var);\n\n"
 
@@ -1176,7 +1227,9 @@ class DendroConfiguration:
             tmp_expressions = []
             original_number_expressions = 0
             for expr in expressions:
-                list_expressions, num_e = dendrosym.codegen.extract_expression(expr)
+                list_expressions, num_e = dendrosym.codegen.extract_expression(
+                    expr
+                )
                 tmp_expressions += list_expressions
                 original_number_expressions += num_e
 
@@ -1219,7 +1272,7 @@ class DendroConfiguration:
                 temp_funcs["found_derivatives"],
                 temp_funcs["orig_n_exp"],
                 temp_funcs["staged_exprs"],
-                temp_funcs["staged_exprs_names"]
+                temp_funcs["staged_exprs_names"],
             )
 
         # then check the stored data for the functions
@@ -1257,7 +1310,9 @@ class DendroConfiguration:
 
         # iterate through the staged ones as well
         new_staged_exprs = []
-        print("Now replacing derivatives in the staged expressions if there are any")
+        print(
+            "Now replacing derivatives in the staged expressions if there are any"
+        )
         for ii, expr in enumerate(staged_exp):
             new_expr = self.find_and_replace_complex_ders(
                 expr, self.every_var_name, 0, self.idx_str
@@ -1284,7 +1339,10 @@ class DendroConfiguration:
 
                 # call the find and replace complicated derivatives function
                 # this will update and modify the collection of derivatives
-                new_expr, found_derivatives = self.find_and_replace_complex_ders_staged(
+                (
+                    new_expr,
+                    found_derivatives,
+                ) = self.find_and_replace_complex_ders_staged(
                     expr, found_derivatives, 0, self.idx_str
                 )
 
@@ -1318,14 +1376,20 @@ class DendroConfiguration:
             new_staged_exprs,
             staged_names,
         )
-    
-    def replace_derivatives_with_stencil(self, var_type, stencil_order = 5):
+
+    def replace_derivatives_with_stencil(self, var_type, stencil_order=5):
         # FIXME: there's an issue here with the derivatives not actually coming out
         # I have been puzzling over this for a while, need to straight debug it (maybe reduce equations in)
 
         # pull the derivatives out
-        exprs, rhs_names, found_derivatives, orig_n_exp, staged_exprs, staged_exprs_names = self.find_derivatives(var_type)
-
+        (
+            exprs,
+            rhs_names,
+            found_derivatives,
+            orig_n_exp,
+            staged_exprs,
+            staged_exprs_names,
+        ) = self.find_derivatives(var_type)
 
         print(found_derivatives)
         # then go ahead and go through them and replace them
@@ -1336,19 +1400,29 @@ class DendroConfiguration:
 
             print("On expression ", ii)
 
-            new_expr = self.find_and_replace_derivatives_with_stencil(expr, self.every_var_name, found_derivatives, stencil_order, self.idx_str)
+            new_expr = self.find_and_replace_derivatives_with_stencil(
+                expr,
+                self.every_var_name,
+                found_derivatives,
+                stencil_order,
+                self.idx_str,
+            )
 
             new_exprs.append(new_expr)
 
     @staticmethod
-    def find_and_replace_derivatives_with_stencil(expr, var_names, derivatives, stencil_order=5, idx_str="[pp]"):
+    def find_and_replace_derivatives_with_stencil(
+        expr, var_names, derivatives, stencil_order=5, idx_str="[pp]"
+    ):
 
         funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
 
         print(expr)
 
         # start by finding all expressions using the atoms funcion
-        all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
+        all_funcs = DendroConfiguration.find_and_sort_atoms(
+            expr, funcs_to_find
+        )
 
         print(all_funcs)
 
@@ -1362,7 +1436,6 @@ class DendroConfiguration:
 
             if isinstance(term_differentiate, sym.Symbol):
 
-
                 if func.name == "grad":
 
                     print(term_differentiate, term_differentiate.name)
@@ -1371,7 +1444,6 @@ class DendroConfiguration:
             else:
                 pass
 
-
     @staticmethod
     def find_and_replace_complex_ders_staged(
         expr, found_derivatives, depth=0, idx_str="[pp]"
@@ -1379,7 +1451,9 @@ class DendroConfiguration:
         funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
 
         # start by finding all expressions using the atoms funcion
-        all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
+        all_funcs = DendroConfiguration.find_and_sort_atoms(
+            expr, funcs_to_find
+        )
 
         while len(all_funcs) > 0:
 
@@ -1428,7 +1502,9 @@ class DendroConfiguration:
             if func.name == "grad":
                 # generate a staged gradient name for it
                 temp_var_name = sym.Symbol(
-                    "DENDRO_STAGED_GRAD_" + f"{len(found_derivatives):03d}" + idx_str
+                    "DENDRO_STAGED_GRAD_"
+                    + f"{len(found_derivatives):03d}"
+                    + idx_str
                 )
 
                 func_args = func.args
@@ -1438,7 +1514,9 @@ class DendroConfiguration:
             elif func.name == "grad2":
                 # generate a staged gradient name for it
                 temp_var_name = sym.Symbol(
-                    "DENDRO_STAGED_GRAD2_" + f"{len(found_derivatives):03d}" + idx_str
+                    "DENDRO_STAGED_GRAD2_"
+                    + f"{len(found_derivatives):03d}"
+                    + idx_str
                 )
 
                 func_args = func.args
@@ -1448,7 +1526,9 @@ class DendroConfiguration:
             elif func.name == "agrad":
                 # generate a staged gradient name for it
                 temp_var_name = sym.Symbol(
-                    "DENDRO_STAGED_AGRAD_" + f"{len(found_derivatives):03d}" + idx_str
+                    "DENDRO_STAGED_AGRAD_"
+                    + f"{len(found_derivatives):03d}"
+                    + idx_str
                 )
 
                 func_args = func.args
@@ -1464,7 +1544,10 @@ class DendroConfiguration:
                 already_exists,
                 found_var_name,
             ) = DendroConfiguration.find_repeat_derivative_terms(
-                found_derivatives, term_to_differentiate, index_order, func.name
+                found_derivatives,
+                term_to_differentiate,
+                index_order,
+                func.name,
             )
 
             if not already_exists:
@@ -1487,16 +1570,22 @@ class DendroConfiguration:
             expr = expr.xreplace({func: temp_var_name})
 
             # refresh the list of functions we're interested in finding
-            all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
+            all_funcs = DendroConfiguration.find_and_sort_atoms(
+                expr, funcs_to_find
+            )
 
         return expr, found_derivatives
 
     @staticmethod
-    def find_and_replace_complex_ders(expr, var_names, depth=0, idx_str="[pp]"):
+    def find_and_replace_complex_ders(
+        expr, var_names, depth=0, idx_str="[pp]"
+    ):
         funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
 
         # start by finding all expressions using the atoms funcion
-        all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
+        all_funcs = DendroConfiguration.find_and_sort_atoms(
+            expr, funcs_to_find
+        )
 
         print("found", all_funcs)
 
@@ -1525,8 +1614,13 @@ class DendroConfiguration:
                     needs_to_go_deeper = True
 
                 if needs_to_go_deeper:
-                    mini_expr = DendroConfiguration.find_and_replace_complex_ders(
-                        term_differentiate, var_names, depth + 1, idx_str=idx_str
+                    mini_expr = (
+                        DendroConfiguration.find_and_replace_complex_ders(
+                            term_differentiate,
+                            var_names,
+                            depth + 1,
+                            idx_str=idx_str,
+                        )
                     )
 
                     # replace it within the expression
@@ -1565,7 +1659,9 @@ class DendroConfiguration:
                 term_to_differentiate = term_to_differentiate.subs(all_repl)
 
                 # then take the derivate of that term over the index_order
-                diff_term = sym.diff(term_to_differentiate, d_order[index_order])
+                diff_term = sym.diff(
+                    term_to_differentiate, d_order[index_order]
+                )
 
             elif func.name == "grad2":
                 # generate a staged gradient name for it
@@ -1599,7 +1695,9 @@ class DendroConfiguration:
             something_changed = True
 
             # refresh the list of functions we're interested in finding
-            all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
+            all_funcs = DendroConfiguration.find_and_sort_atoms(
+                expr, funcs_to_find
+            )
 
         if depth == 0:
             # now need to replace the sympy derivatives with the grad and grad2 functions again for code gen
@@ -1621,7 +1719,9 @@ class DendroConfiguration:
         d_order = (x, y, z)  # the index goes in this order
 
         symbols_find = [sym.Symbol(xx + idx_str) for xx in var_names]
-        symbols_replace = [sym.Function(sym.Symbol(xx))(x, y, z) for xx in var_names]
+        symbols_replace = [
+            sym.Function(sym.Symbol(xx))(x, y, z) for xx in var_names
+        ]
         all_repl = dict(zip(symbols_find, symbols_replace))
         reverse_repl = dict(zip(symbols_replace, symbols_find))
 
@@ -1629,7 +1729,9 @@ class DendroConfiguration:
         all_derivatives = expr.atoms(sym.Derivative)
 
         while len(all_derivatives) > 0:
-            print("    Length of Remaining Derivatives: ", len(all_derivatives))
+            print(
+                "    Length of Remaining Derivatives: ", len(all_derivatives)
+            )
 
             curr_deriv = all_derivatives.pop()
 
@@ -1779,7 +1881,9 @@ class DendroConfiguration:
         allocate_str = "// Allocating memory for STAGED variables\n"
         # allocation for temporary intermediate steps that need to be
         # calculated before calculating the derivatives
-        allocate_tmp_str = "// " + "Allocating memory for intermediate calculations\n"
+        allocate_tmp_str = (
+            "// " + "Allocating memory for intermediate calculations\n"
+        )
 
         deallocate_str = "// Deallocating memory for STAGED variables\n"
         # TODO: do we really want to deallocate right after calculating?
@@ -1789,17 +1893,23 @@ class DendroConfiguration:
 
         t = "    "
 
-        calculation_str = "/**\n * CALCULATING INTERMEDIATE EXPRESSIONS\n" + " */\n"
+        calculation_str = (
+            "/**\n * CALCULATING INTERMEDIATE EXPRESSIONS\n" + " */\n"
+        )
         calculation_str += "for (unsigned int k = kstart; k < kend; k++)\n"
         calculation_str += t + "{\n"
         calculation_str += t + "for (unsigned int j = jstart; j < jend; j++)\n"
         calculation_str += t + "{\n"
-        calculation_str += t * 2 + "for (unsigned int i = istart; i < iend; i++)\n"
+        calculation_str += (
+            t * 2 + "for (unsigned int i = istart; i < iend; i++)\n"
+        )
         calculation_str += t * 2 + "{\n"
         calculation_str += t * 3 + f"const {dtype} x = pmin[0] + i * hx;\n"
         calculation_str += t * 3 + f"const {dtype} y = pmin[1] + j * hy;\n"
         calculation_str += t * 3 + f"const {dtype} z = pmin[2] + k * hz;\n\n"
-        calculation_str += t * 3 + "const unsigned int pp = i + nx * (j + ny * k);\n\n"
+        calculation_str += (
+            t * 3 + "const unsigned int pp = i + nx * (j + ny * k);\n\n"
+        )
         # TODO: add eta check????
 
         # then create the string for calculating the derivatives
@@ -1836,7 +1946,10 @@ class DendroConfiguration:
                 if deriv_info["depth"] != curr_depth:
                     continue
 
-                already_included, inter_var_name = self.find_if_inter_processed(
+                (
+                    already_included,
+                    inter_var_name,
+                ) = self.find_if_inter_processed(
                     already_calculated_inters, deriv_info, self.idx_str
                 )
 
@@ -1923,7 +2036,9 @@ class DendroConfiguration:
         var_name_no_idx = var_name.replace(self.idx_str, "")
 
         # allocate memory string addition
-        allocate_str = f"{dtype} *{var_name_no_idx}" + f" = ({dtype} *)malloc(bytes);\n"
+        allocate_str = (
+            f"{dtype} *{var_name_no_idx}" + f" = ({dtype} *)malloc(bytes);\n"
+        )
 
         # if intervar name isn't set, then we need to include it for
         # calculations
@@ -1931,7 +2046,8 @@ class DendroConfiguration:
             inter_var_name = var_name_no_idx + "_intermediate"
             # intermediate allocation string addition
             allocate_tmp_str = (
-                f"{dtype} *{inter_var_name}" + f" = ({dtype} *)malloc(bytes);\n"
+                f"{dtype} *{inter_var_name}"
+                + f" = ({dtype} *)malloc(bytes);\n"
             )
 
             # then the calculation string addition
@@ -2012,9 +2128,9 @@ class DendroConfiguration:
                     deriv_str = f"TODO: {deriv_info['index_order']}, {inter_var_name}\n"
 
         elif deriv_info["operation"] == "agrad":
-            adv_der_var_use = getattr(self, "advective_der_var", "UNDEF") + str(
-                deriv_info["index_order"]
-            )
+            adv_der_var_use = getattr(
+                self, "advective_der_var", "UNDEF"
+            ) + str(deriv_info["index_order"])
 
             func = f"adv_deriv_{idx_to_dir[deriv_info['index_order']]}("
             deriv_str = func + var_name_no_idx
@@ -2038,7 +2154,12 @@ class DendroConfiguration:
     def find_if_inter_processed(curr_list, incoming_der_info, idx_str):
 
         for curr_test in curr_list:
-            if sym.simplify(curr_test["orig_exp"] - incoming_der_info["orig_exp"]) == 0:
+            if (
+                sym.simplify(
+                    curr_test["orig_exp"] - incoming_der_info["orig_exp"]
+                )
+                == 0
+            ):
                 inter_var_name = str(curr_test["temp_var_name"])
                 inter_var_name = inter_var_name.replace(idx_str, "")
                 return True, inter_var_name + "_intermediate"
@@ -2066,7 +2187,10 @@ class DendroConfiguration:
         return found_derivatives
 
     def generate_deriv_allocation_and_calc(
-        self, var_type="evolution", include_byte_declaration=False, use_old_method=False
+        self,
+        var_type="evolution",
+        include_byte_declaration=False,
+        use_old_method=False,
     ):
         """Generates all of the C++ code for allocation and calculation of derivatives"""
 
@@ -2081,7 +2205,9 @@ class DendroConfiguration:
         # then we need to convert them
         if var_type == "evolution":
             grad_alloc = self.gen_grad_memory_alloc(
-                var_type, "grad", include_byte_declaration=include_byte_declaration
+                var_type,
+                "grad",
+                include_byte_declaration=include_byte_declaration,
             )
             grad_calc = self.gen_grad_calculations(var_type, "grad")
             grad_dealloc = self.gen_grad_memory_dealloc(var_type, "grad")
@@ -2152,7 +2278,9 @@ class DendroConfiguration:
     ):
 
         # if it's not an input
-        if not isinstance(input_funcs, set) and not isinstance(input_funcs, list):
+        if not isinstance(input_funcs, set) and not isinstance(
+            input_funcs, list
+        ):
             input_funcs = [input_funcs]
 
         out_alloc = ""
@@ -2273,14 +2401,14 @@ class DendroConfiguration:
 
             # grad allocation
             if use_old_method:
-                alloc_str = f"{dtype} *{grad_name} = ({dtype} *)malloc(bytes);\n"
+                alloc_str = (
+                    f"{dtype} *{grad_name} = ({dtype} *)malloc(bytes);\n"
+                )
 
                 # grad deallocation
                 dealloc_str = f"free({grad_name});\n"
             else:
-                alloc_str = (
-                    f"{dtype} *{grad_name} = deriv_base + {start_index} * BLK_SZ;\n"
-                )
+                alloc_str = f"{dtype} *{grad_name} = deriv_base + {start_index} * BLK_SZ;\n"
                 start_index += 1
                 dealloc_str = ""
 

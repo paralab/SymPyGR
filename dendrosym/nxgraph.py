@@ -97,11 +97,16 @@ class ExpressionGraph:
         self.__pre_traversal_2(expr, expr_list, edge_list)
         return [expr_list, edge_list]
 
-    def add_expression(self, expr, expr_name):
+    def add_expression(self, expr, expr_name, simplify=False, verbose=False):
         """Generate a networkx graph for a given expression"""
 
         G = nx.DiGraph(vname=str(expr_name))
         G.name = str(expr_name)
+
+        if simplify:
+            if verbose:
+                print(f"  Now simplifying {str(expr_name)}")
+            expr = sympy.simplify(expr)
 
         # total nodes on the graph.
         [node_list, edge_list] = self.__preorder_traversal__(expr)
@@ -112,7 +117,7 @@ class ExpressionGraph:
         self._nx_graphs[str(expr_name)] = G
         self._sympy_expr[str(expr_name)] = expr
 
-    def add_expressions(self, outs, vnames, suffix_idx="", verbose=False):
+    def add_expressions(self, outs, vnames, suffix_idx="", verbose=False, simplify=False):
         """Adds list of sympy expressions"""
         mi = [0, 1, 2, 4, 5, 8]
         midx = ["00", "01", "02", "11", "12", "22"]
@@ -128,7 +133,7 @@ class ExpressionGraph:
                             "processing expr : %d var name %s[%s]"
                             % (i, vnames[i], str(j))
                         )
-                    self.add_expression(ev, expr_name)
+                    self.add_expression(ev, expr_name, simplify=simplify, verbose=verbose)
             elif type(e) == sympy.Matrix:
                 num_e = num_e + len(e)
                 for j, k in enumerate(mi):
@@ -138,13 +143,13 @@ class ExpressionGraph:
                             "processing expr : %d var name %s[%s]"
                             % (i, vnames[i], midx[j])
                         )
-                    self.add_expression(e[k], expr_name)
+                    self.add_expression(e[k], expr_name, simplify=simplify, verbose=verbose)
             else:
                 num_e = num_e + 1
                 if verbose:
                     print("processing expr : %d var name %s" % (i, vnames[i]))
-                expr_name = vnames[i] + str(suffix_idx)
-                self.add_expression(e, expr_name)
+                expr_name = str(vnames[i]) + str(suffix_idx)
+                self.add_expression(e, expr_name, simplify=simplify, verbose=verbose)
 
     def composed_graph(self, verbose=False):
         """Calculates and computes the composed graph
@@ -244,3 +249,7 @@ class ExpressionGraph:
         if g is None:
             raise NameError(f"Graph by name {expr_name} not found!")
         return g
+
+
+
+

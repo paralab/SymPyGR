@@ -1,6 +1,6 @@
 import sympy as sym
 import dendrosym
-from bssn_eqns import dendroConfigs
+from emda_configs import dendroConfigs
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -23,7 +23,7 @@ k = 5
 kmax = int(3 * k)
 max_depth = 3
 
-coordSaveName = "bssn_coords.npy"
+coordSaveName = "emda_coords.npy"
 
 eqns, vnames = dendroConfigs.get_rhs_eqns_flat("evolution")
 
@@ -38,8 +38,6 @@ print(f"The composed graph has {len(g1.nodes)} nodes, {len(g1.edges)} edges")
 
 g1_sparse_directed = nx.to_scipy_sparse_array(g1)
 
-g1_sparse = nx.to_scipy_sparse_array(g1)
-
 g1_undirected = g1.to_undirected()
 g1_sparse = nx.to_scipy_sparse_array(g1_undirected)
 
@@ -49,11 +47,11 @@ g1_pygsp = pygsp.graphs.Graph(g1_sparse)
 # PLOT
 plt.figure()
 plt.spy(g1_pygsp.W, markersize=1.0)
-plt.savefig("BSSN_composed_undirected.png")
+plt.savefig("EMDA_composed_undirected.png")
 
 plt.figure()
 plt.spy(g1_sparse_directed, markersize=1.0)
-plt.savefig("BSSN_composed_directed.png")
+plt.savefig("EMDA_composed_directed.png")
 
 print(f"pygsp graph: {g1_pygsp.N} nodes, {g1_pygsp.Ne} edges")
 
@@ -62,9 +60,10 @@ print(f"pygsp graph: {g1_pygsp.N} nodes, {g1_pygsp.Ne} edges")
 coordfile = pathlib.Path(coordSaveName)
 
 if coordfile.exists():
+    print("Found coordinate file, now loading...")
     coords = np.load(coordfile)
-    print(coords.shape)
 else:
+    print("Calculating coordinates...")
     pos = nx.nx_agraph.graphviz_layout(g1, prog="sfdp")
     coords = np.array(list(pos.values()))
     np.save(coordfile, coords)
@@ -76,6 +75,43 @@ g1_pygsp.set_coordinates(coords)
 # =========
 # graph coarsening
 C, Gc, Call, Gall = graph_coarsening.coarsen(g1_pygsp, K=k, r=r, method=method)
+
+plt.figure()
+plt.spy(Gc.W, markersize=1.0)
+plt.savefig("EMDA_coarsened.png")
+
+fig = graph_coarsening.plot_coarsening(Gall, Call, size=5, title=method)
+fig.savefig("EMDA_coarsened_nodeview.png")
+
+
+g1_pygsp.compute_fourier_basis()
+N = g1_pygsp.N
+L = g1_pygsp.L.toarray()
+S = graph_coarsening.graph_utils.get_S(g1_pygsp).T
+
+metrics = graph_coarsening.coarsening_quality(g1_pygsp, C, kmax=kmax)
+n = Gc.N
+
+print("Now making error figure")
+plt.figure()
+size = 2.04; fig, axes = plt.subplots(1, 3, figsize=(4*size*3, 3*size)); lineWidth = 1
+
+axes[0].plot(np.arange(kmax), np.abs(metrics['error_subspace']), 'or-') 
+axes[0].set_xlabel('$k$'); axes[0].set_ylabel('$\epsilon$')
+axes[0].plot( [k, k], [0, max(metrics['error_subspace'])], ':k') 
+
+axes[1].boxplot(np.abs(metrics['error_eigenvalue'])) 
+axes[1].set_ylabel('relative eigenvalue error')
+
+axes[2].imshow(abs(metrics['angle_matrix'][:,0:kmax]) )
+axes[2].plot( [k, k], [0, kmax], ':w') 
+axes[2].plot( [0, kmax], [k, k], ':w') 
+axes[2].plot( [0, N], [n-1, n-1], ':w') 
+axes[2].set_xlim([0, kmax-1])
+axes[2].set_ylim([0, kmax-1])
+axes[2].set_xlabel('Lc eigenvectors lifted'); axes[2].set_ylabel('L eigenvectors');
+plt.savefig("EMDA_graph_stats.png")
+
 
 # get the number of levels
 n_levels = len(Gall) - 1
