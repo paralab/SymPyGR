@@ -59,6 +59,9 @@ class DendroConfiguration:
 
         self.stored_staged_exprs = {}
 
+        # by default we want to replace and or expand the derivatives
+        self.replace_and_expand_derivatives = True
+
     def set_idx_str(self, idx_str):
         """Store the string used for indexing into the variables
 
@@ -69,6 +72,16 @@ class DendroConfiguration:
         for if someone wants to use something *other* than "[pp]".
         """
         self.idx_str = idx_str
+
+    def override_derivative_expansion(self):
+        """This function enables the override for replacing and expanding derivatives
+
+        This should **not** be called unless you know for a fact that you have no nested
+        derivatives that should be expanded or computed before hand. In the BSSN case,
+        we know this to be true so we can skip these calculations. But other theories
+        or even ways to express the theory can be different.
+        """
+        self.replace_and_expand_derivatives = False
 
     def add_parameter_variables(
         self, in_vars: list, eqn_type: str = "general"
@@ -130,8 +143,8 @@ class DendroConfiguration:
             var_names_clean = self.clean_var_names([one_var])
 
             for vname_clean in var_names_clean:
-                if not vname_clean.endswith(self.idx_str):
-                    vname_clean += self.idx_str
+                # if not vname_clean.endswith(self.idx_str):
+                #     vname_clean += self.idx_str
                 if not self.check_repeat_items_ignore_case(
                     vname_clean, self.all_var_names[eqn_type]
                 ):
@@ -1067,7 +1080,7 @@ class DendroConfiguration:
             elif type(the_var) is sym.Symbol:
                 all_var_names.append(str(the_var))
             elif type(the_var) is dendrosym.dtypes.ParameterVariable:
-                all_var_names
+                all_var_names.append(the_var.var_name)
             else:
                 raise NotImplementedError(
                     "That variable type isn't implemented yet"
@@ -1291,69 +1304,84 @@ class DendroConfiguration:
         # collection of "new" (modified) expressions for each of the variables
         new_exprs = []
 
-        for ii, expr in enumerate(all_exp):
+        if self.replace_and_expand_derivatives:
 
             print(
-                str(all_rhs_names[ii])
-                + f" {ii+1}/{len(all_exp)} : {(ii+1)/len(all_exp):.2%}",
-                file=sys.stderr,
+                "... Now finding derivatives to attempt chain rule expansion or staging..."
             )
 
-            # call the find and replace complicated derivatives function
-            # this will update and modify the collection of derivatives
-            new_expr = self.find_and_replace_complex_ders(
-                expr, self.every_var_name, 0, self.idx_str
-            )
-
-            # add these new expressions to our list
-            new_exprs.append(new_expr)
-
-        # iterate through the staged ones as well
-        new_staged_exprs = []
-        print(
-            "Now replacing derivatives in the staged expressions if there are any"
-        )
-        for ii, expr in enumerate(staged_exp):
-            new_expr = self.find_and_replace_complex_ders(
-                expr, self.every_var_name, 0, self.idx_str
-            )
-
-            # these new expressions are then "replaced"
-            new_staged_exprs.append(new_expr)
-
-        if do_extra_check:
-            # go again with the original method
-            # collection of "new" (modified) expressions for each of the variables
-            new_exprs_again = []
-            # the list of all derivatives that we've found that will need to be
-            # precalculated
-            found_derivatives = []
-
-            for ii, expr in enumerate(new_exprs):
+            for ii, expr in enumerate(all_exp):
 
                 print(
-                    str(all_rhs_names[ii])
-                    + f" {ii+1}/{len(all_exp)} : {(ii+1)/len(all_exp):.2%}",
+                    "    "
+                    + str(all_rhs_names[ii])
+                    + f"  - prog. {ii+1}/{len(all_exp)} : {(ii+1)/len(all_exp):.2%}",
                     file=sys.stderr,
                 )
 
                 # call the find and replace complicated derivatives function
                 # this will update and modify the collection of derivatives
-                (
-                    new_expr,
-                    found_derivatives,
-                ) = self.find_and_replace_complex_ders_staged(
-                    expr, found_derivatives, 0, self.idx_str
+                new_expr = self.find_and_replace_complex_ders(
+                    expr, self.every_var_name, 0, self.idx_str
                 )
 
                 # add these new expressions to our list
-                new_exprs_again.append(new_expr)
+                new_exprs.append(new_expr)
 
-            # TODO: implement extra check for staged expressions
+            # iterate through the staged ones as well
+            new_staged_exprs = []
+            print(
+                "    Finding derivitaves in staged expressions if there are any"
+            )
+            for ii, expr in enumerate(staged_exp):
+                new_expr = self.find_and_replace_complex_ders(
+                    expr, self.every_var_name, 0, self.idx_str
+                )
+
+                # these new expressions are then "replaced"
+                new_staged_exprs.append(new_expr)
+
+            if do_extra_check:
+                # go again with the original method
+                # collection of "new" (modified) expressions for each of the variables
+                new_exprs_again = []
+                # the list of all derivatives that we've found that will need to be
+                # precalculated
+                found_derivatives = []
+
+                for ii, expr in enumerate(new_exprs):
+
+                    print(
+                        str(all_rhs_names[ii])
+                        + f" {ii+1}/{len(all_exp)} : {(ii+1)/len(all_exp):.2%}",
+                        file=sys.stderr,
+                    )
+
+                    # call the find and replace complicated derivatives function
+                    # this will update and modify the collection of derivatives
+                    (
+                        new_expr,
+                        found_derivatives,
+                    ) = self.find_and_replace_complex_ders_staged(
+                        expr, found_derivatives, 0, self.idx_str
+                    )
+
+                    # add these new expressions to our list
+                    new_exprs_again.append(new_expr)
+
+                # TODO: implement extra check for staged expressions
+
+            else:
+                new_exprs_again = new_exprs
+                found_derivatives = []
 
         else:
-            new_exprs_again = new_exprs
+            print(
+                "NOTE: Override for finding and replacing derivatives was set!"
+            )
+            new_exprs_again = all_exp
             found_derivatives = []
+            new_staged_exprs = staged_exp
 
         # store them internally so we don't lose them
         self.stored_rhs_function[var_type] = {
@@ -1378,8 +1406,6 @@ class DendroConfiguration:
         )
 
     def replace_derivatives_with_stencil(self, var_type, stencil_order=5):
-        # FIXME: there's an issue here with the derivatives not actually coming out
-        # I have been puzzling over this for a while, need to straight debug it (maybe reduce equations in)
 
         # pull the derivatives out
         (
@@ -1587,7 +1613,8 @@ class DendroConfiguration:
             expr, funcs_to_find
         )
 
-        print("found", all_funcs)
+        # print("found", all_funcs)
+        print(f"        found {len(all_funcs)} to assess...")
 
         something_changed = False
 

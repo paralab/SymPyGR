@@ -874,42 +874,45 @@ dendroConfigs.add_evolution_constraint(chi, "pos_floor")
 dendroConfigs.add_evolution_constraint(a, "pos_floor")
 
 # # TODO: REMOVE THIS BEFORE GENERATING THE REAL C++ CODE
-# evolution_var_extraction = dendroConfigs.generate_variable_extraction(
-#     "evolution", use_const=True
-# )
-# evolution_var_rhs_extraction = dendroConfigs.generate_rhs_var_extraction(
-#     "evolution", zip_var_name="unzipVarsRHS"
-# )
+evolution_var_extraction = dendroConfigs.generate_variable_extraction(
+    "evolution", use_const=True
+)
+evolution_var_rhs_extraction = dendroConfigs.generate_rhs_var_extraction(
+    "evolution", zip_var_name="unzipVarsRHS"
+)
 
-# print("// EVOLUTION VARIABLE EXTRACTION CODE")
-# print(evolution_var_extraction)
-# print(evolution_var_rhs_extraction)
+print("// EVOLUTION VARIABLE EXTRACTION CODE")
+print(evolution_var_extraction)
+print(evolution_var_rhs_extraction)
 
-# evolution_parameters = dendroConfigs.gen_parameter_code("evolution")
-# print()
-# print("// PARAMETER EXTRACTION")
-# print(evolution_parameters)
+evolution_parameters = dendroConfigs.gen_parameter_code("evolution")
+print()
+print("// PARAMETER EXTRACTION")
+print(evolution_parameters)
+
+# we know that BSSN doesn't have "nested" derivatives
+dendroConfigs.override_derivative_expansion()
 
 
-# (
-#     intermediate_grad_str,
-#     deallocate_intermediate_grad_str,
-# ) = dendroConfigs.generate_pre_necessary_derivatives(
-#     "evolution", dtype="double", include_byte_declaration=False
-# )
+(
+    intermediate_grad_str,
+    deallocate_intermediate_grad_str,
+) = dendroConfigs.generate_pre_necessary_derivatives(
+    "evolution", dtype="double", include_byte_declaration=False
+)
 
-# print()
-# # print(intermediate_grad_str)
+print()
+# print(intermediate_grad_str)
 
-# (
-#     deriv_alloc,
-#     deriv_calc,
-#     deriv_dealloc,
-# ) = dendroConfigs.generate_deriv_allocation_and_calc(
-#     "evolution", include_byte_declaration=False
-# )
+(
+    deriv_alloc,
+    deriv_calc,
+    deriv_dealloc,
+) = dendroConfigs.generate_deriv_allocation_and_calc(
+    "evolution", include_byte_declaration=False
+)
 
-# evolution_rhs_code = dendroConfigs.generate_rhs_code("evolution")
+evolution_rhs_code = dendroConfigs.generate_rhs_code("evolution")
 
-# with open("temporary_rhs_output.cpp", "w") as f:
-#     f.write(evolution_rhs_code)
+with open("temporary_rhs_output.cpp", "w") as f:
+    f.write(evolution_rhs_code)

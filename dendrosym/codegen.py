@@ -383,7 +383,7 @@ def change_deriv_names(in_str: str) -> str:
         key = deriv + r"\(\d, \d, \w+\[pp\]\)"
         slist = regex.findall(key, c_str)
         for s in slist:
-            print(s)
+            # print(s)
             # split into "grad2", "0, 1, symbol)"
             w1 = s.split("(")
             # split second part into "0", " 1", " symbol"
@@ -1295,7 +1295,7 @@ def gen_var_info(
 
         phys_con_line = "".join(" " for i in range(num_spaces))
         # NOTE: before I had it without the ` const `
-        phys_con_line += f"{'const ' if use_const else ''}{dtype} * const "
+        phys_con_line += f"{'const ' if use_const else ''}{dtype} *const "
         phys_con_line += f"{var_name} = &"
         phys_con_line += f"{zip_var_name}["
         phys_con_line += f"{enum_name}::{enum_prefix_use}{enum_entry}"
