@@ -26,7 +26,6 @@ dendroConfigs.set_idx_str(idx_str)
 lambda_param = dendrosym.dtypes.ParameterVariable(
     "lambda", dtype="unsigned int", num_params=4
 )
-
 lambda1, lambda2, lambda3, lambda4 = lambda_param.get_symbolic_repr()
 
 l1 = lambda1
@@ -872,6 +871,18 @@ dendroConfigs.set_bhs_falloff_and_asymptotic(
 dendroConfigs.add_evolution_constraint(At, "trace_zero")
 dendroConfigs.add_evolution_constraint(chi, "pos_floor")
 dendroConfigs.add_evolution_constraint(a, "pos_floor")
+
+dendroConfigs.replace_derivatives_with_stencil("evolution", 6)
+
+dendroConfigs.replace_derivatives_with_stencil("constraint", 6)
+
+with open("output.cpp", "w") as f:
+    generated_code = dendroConfigs.generate_rhs_code("evolution")
+    f.write(generated_code)
+
+with open("output_constraint.cpp", "w") as f:
+    generated_code = dendroConfigs.generate_rhs_code("constraint")
+    f.write(generated_code)
 
 # # TODO: REMOVE THIS BEFORE GENERATING THE REAL C++ CODE
 evolution_var_extraction = dendroConfigs.generate_variable_extraction(

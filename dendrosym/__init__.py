@@ -34,6 +34,8 @@ from . import utils
 
 from . import params
 
+from . import derivs
+
 # ====== DENDRO CONFIGURATION ======
 # base configuration class
 from .general_configs import DendroConfiguration
