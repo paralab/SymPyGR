@@ -34,15 +34,11 @@ l3 = lambda3
 l4 = lambda4
 
 # sets the lambda f parameters which are also involved with the gauge.
-lf_param = dendrosym.dtypes.ParameterVariable(
-    "lf", dtype="double", num_params=2
-)
+lf_param = dendrosym.dtypes.ParameterVariable("lf", dtype="double", num_params=2)
 lf0, lf1 = lf_param.get_symbolic_repr()
 
 # sets the eta parameters which come in with the constraint damping
-eta_param = dendrosym.dtypes.ParameterVariable(
-    "eta", dtype="double", num_params=1
-)
+eta_param = dendrosym.dtypes.ParameterVariable("eta", dtype="double", num_params=1)
 eta = eta_param.get_symbolic_repr()
 
 # damping parameters
@@ -95,8 +91,8 @@ Gt = dendrosym.dtypes.vec3("Gt" + idx_str)
 b = dendrosym.dtypes.vec3("beta" + idx_str)
 B = dendrosym.dtypes.vec3("B" + idx_str)
 
-gt = dendrosym.dtypes.sym_3x3("gt" + idx_str)
-At = dendrosym.dtypes.sym_3x3("At" + idx_str)
+gt = dendrosym.dtypes.sym_3x3("gt_mat" + idx_str)
+At = dendrosym.dtypes.sym_3x3("At_mat" + idx_str)
 
 # Gt_rhs  = dendrosym.dtypes.vec3("Gt_rhs" + idx_str)
 
@@ -142,11 +138,7 @@ R, Rt, Rphi, CalGt = dendrosym.nr.compute_ricci(Gt, chi)
 # define eta_func
 eta_func = (
     R0
-    * sqrt(
-        sum(
-            [igt[i, j] * d_(i, chi) * d_(j, chi) for i, j in dendrosym.nr.e_ij]
-        )
-    )
+    * sqrt(sum([igt[i, j] * d_(i, chi) * d_(j, chi) for i, j in dendrosym.nr.e_ij]))
     / ((1 - chi**ep1) ** ep2)
 )
 
@@ -161,9 +153,7 @@ elif ETA_SELECTION == "eta_func":
 
 
 def bssn_puncture_gauge():
-
     if not IS_STAGED:
-
         a_rhs = l1 * dendrosym.nr.lie(b, a) - 2 * a * K
 
         b_rhs = [
@@ -176,9 +166,7 @@ def bssn_puncture_gauge():
 
         gt_rhs = dendrosym.nr.lie(b, gt, weight) - 2 * a * At
 
-        chi_rhs = dendrosym.nr.lie(b, chi, weight) + Rational(2, 3) * (
-            chi * a * K
-        )
+        chi_rhs = dendrosym.nr.lie(b, chi, weight) + Rational(2, 3) * (chi * a * K)
 
         AikAkj = sym.Matrix(
             [
@@ -489,7 +477,6 @@ dendroConfigs.set_rhs_equation_function("evolution", bssn_puncture_gauge)
 
 
 def bssn_constraint_func():
-
     # Define coordinates
     x, y, z = sym.symbols("x, y, z")
 
@@ -598,25 +585,18 @@ def bssn_constraint_func():
     )
     NN = NN.reshape(3, 3)
     MR = sym.Matrix(
-        [
-            m_np_real[i] * r_np[j] - m_np_real[j] * r_np[i]
-            for i, j in dendrosym.nr.e_ij
-        ]
+        [m_np_real[i] * r_np[j] - m_np_real[j] * r_np[i] for i, j in dendrosym.nr.e_ij]
     )
     MR = MR.reshape(3, 3)
     NR = sym.Matrix(
-        [
-            m_np_img[i] * r_np[j] - m_np_img[j] * r_np[i]
-            for i, j in dendrosym.nr.e_ij
-        ]
+        [m_np_img[i] * r_np[j] - m_np_img[j] * r_np[i] for i, j in dendrosym.nr.e_ij]
     )
     NR = NR.reshape(3, 3)
 
     # Additional intermediate variables
     # A_vec = Matrix([[sum([At[j,0]*r_np[j] for j in dendro.e_i]), sum([At[j,1]*r_np[j] for j in dendro.e_i]),sum([At[j,2]*r_np[j] for j in dendro.e_i])]])
     A_vec = [
-        sum([At[i, j] * r_np[j] for j in dendrosym.nr.e_i])
-        for i in dendrosym.nr.e_i
+        sum([At[i, j] * r_np[j] for j in dendrosym.nr.e_i]) for i in dendrosym.nr.e_i
     ]
 
     Uu = sym.Matrix(
@@ -626,9 +606,7 @@ def bssn_constraint_func():
                     m_np_real[k]
                     * (
                         d_(j, At[k, i])
-                        + sum(
-                            [C2[m, k, i] * At[m, j] for m in dendrosym.nr.e_i]
-                        )
+                        + sum([C2[m, k, i] * At[m, j] for m in dendrosym.nr.e_i])
                     )
                     for k in dendrosym.nr.e_i
                 ]
@@ -644,9 +622,7 @@ def bssn_constraint_func():
                     m_np_img[k]
                     * (
                         d_(j, At[k, i])
-                        + sum(
-                            [C2[m, k, i] * At[m, j] for m in dendrosym.nr.e_i]
-                        )
+                        + sum([C2[m, k, i] * At[m, j] for m in dendrosym.nr.e_i])
                     )
                     for k in dendrosym.nr.e_i
                 ]
@@ -676,61 +652,37 @@ def bssn_constraint_func():
 
     # Calculate Psi4
 
-    psi4_1_real = sum(
-        [R[i, i] * MM[i, i] for i in dendrosym.nr.e_i]
-    ) + 2 * sum(
-        [
-            sum([R[i, j] * MM[i, j] for j in range(i + 1, 3)])
-            for i in range(0, 2)
-        ]
+    psi4_1_real = sum([R[i, i] * MM[i, i] for i in dendrosym.nr.e_i]) + 2 * sum(
+        [sum([R[i, j] * MM[i, j] for j in range(i + 1, 3)]) for i in range(0, 2)]
     )
     psi4_1_img = sum([R[i, i] * NN[i, i] for i in dendrosym.nr.e_i]) + 2 * sum(
-        [
-            sum([R[i, j] * NN[i, j] for j in range(i + 1, 3)])
-            for i in range(0, 2)
-        ]
+        [sum([R[i, j] * NN[i, j] for j in range(i + 1, 3)]) for i in range(0, 2)]
     )
 
     psi4_2_real = A_temp * (
         sum([At[i, i] * MM[i, i] for i in dendrosym.nr.e_i])
         + 2
         * sum(
-            [
-                sum([At[i, j] * MM[i, j] for j in range(i + 1, 3)])
-                for i in range(0, 2)
-            ]
+            [sum([At[i, j] * MM[i, j] for j in range(i + 1, 3)]) for i in range(0, 2)]
         )
     )
     psi4_2_img = A_temp * (
         sum([At[i, i] * NN[i, i] for i in dendrosym.nr.e_i])
         + 2
         * sum(
-            [
-                sum([At[i, j] * NN[i, j] for j in range(i + 1, 3)])
-                for i in range(0, 2)
-            ]
+            [sum([At[i, j] * NN[i, j] for j in range(i + 1, 3)]) for i in range(0, 2)]
         )
     )
 
     psi4_3_real = inv_chi * sum(
         [
-            sum(
-                [
-                    MR[i, j] * Uu[i, j] - NR[i, j] * Vv[i, j]
-                    for i in dendrosym.nr.e_i
-                ]
-            )
+            sum([MR[i, j] * Uu[i, j] - NR[i, j] * Vv[i, j] for i in dendrosym.nr.e_i])
             for j in dendrosym.nr.e_i
         ]
     )
     psi4_3_img = inv_chi * sum(
         [
-            sum(
-                [
-                    NR[i, j] * Uu[i, j] + MR[i, j] * Vv[i, j]
-                    for i in dendrosym.nr.e_i
-                ]
-            )
+            sum([NR[i, j] * Uu[i, j] + MR[i, j] * Vv[i, j] for i in dendrosym.nr.e_i])
             for j in dendrosym.nr.e_i
         ]
     )
@@ -779,10 +731,7 @@ def bssn_constraint_func():
                         igt[j, k]
                         * (
                             d_(k, At[i, j])
-                            - sum(
-                                C2[m, k, i] * At[j, m]
-                                for m in dendrosym.nr.e_i
-                            )
+                            - sum(C2[m, k, i] * At[j, m] for m in dendrosym.nr.e_i)
                         )
                         for j, k in dendrosym.nr.e_ij
                     ]
@@ -832,7 +781,7 @@ a_f_and_a = [1.0, 1.0]
 
 chi_f_and_a = [1.0, 1.0]
 
-K_f_and_a = [1.0, 1.0]
+K_f_and_a = [1.0, 0.0]
 
 b_f_and_a = [[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]]
 
@@ -872,18 +821,8 @@ dendroConfigs.add_evolution_constraint(At, "trace_zero")
 dendroConfigs.add_evolution_constraint(chi, "pos_floor")
 dendroConfigs.add_evolution_constraint(a, "pos_floor")
 
-dendroConfigs.replace_derivatives_with_stencil("evolution", 6)
 
-dendroConfigs.replace_derivatives_with_stencil("constraint", 6)
-
-with open("output.cpp", "w") as f:
-    generated_code = dendroConfigs.generate_rhs_code("evolution")
-    f.write(generated_code)
-
-with open("output_constraint.cpp", "w") as f:
-    generated_code = dendroConfigs.generate_rhs_code("constraint")
-    f.write(generated_code)
-
+# ==========================================
 # # TODO: REMOVE THIS BEFORE GENERATING THE REAL C++ CODE
 evolution_var_extraction = dendroConfigs.generate_variable_extraction(
     "evolution", use_const=True
@@ -902,8 +841,11 @@ print("// PARAMETER EXTRACTION")
 print(evolution_parameters)
 
 # we know that BSSN doesn't have "nested" derivatives
-dendroConfigs.override_derivative_expansion()
+# dendroConfigs.override_derivative_expansion()
 
+# could replace derivative with stencil code
+# dendroConfigs.replace_derivatives_with_stencil("evolution", 6)
+# dendroConfigs.replace_derivatives_with_stencil("constraint", 6)
 
 (
     intermediate_grad_str,
@@ -923,7 +865,26 @@ print()
     "evolution", include_byte_declaration=False
 )
 
+with open("deriv_alloc.cpp", "w") as f:
+    f.write(deriv_alloc)
+
+with open("deriv_calc.cpp", "w") as f:
+    f.write(deriv_calc)
+
+with open("deriv_dealloc.cpp", "w") as f:
+    f.write(deriv_dealloc)
+
 evolution_rhs_code = dendroConfigs.generate_rhs_code("evolution")
 
 with open("temporary_rhs_output.cpp", "w") as f:
     f.write(evolution_rhs_code)
+
+with open("boundary_conds.cpp", "w") as f:
+    f.write(dendroConfigs.generate_bcs_calculations("evolution"))
+
+
+with open("koderivs.cpp", "w") as f:
+    f.write(dendroConfigs.generate_ko_derivs("evolution"))
+
+with open("kocalc.cpp", "w") as f:
+    f.write(dendroConfigs.generate_ko_calculations("evolution"))
