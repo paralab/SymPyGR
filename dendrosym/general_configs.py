@@ -62,6 +62,9 @@ class DendroConfiguration:
         # by default we want to replace and or expand the derivatives
         self.replace_and_expand_derivatives = True
 
+        # by default we also want to pull the derivatives from the derivative workspace
+        self.use_deriv_workspace = True
+
     def set_idx_str(self, idx_str):
         """Store the string used for indexing into the variables
 
@@ -800,6 +803,7 @@ class DendroConfiguration:
         return_text, current_index = dendrosym.codegen.generate_memory_alloc(
             grad_vars,
             "double",
+            not self.use_deriv_workspace,
             include_byte_declaration,
             start_id=self.current_index,
         )
@@ -901,6 +905,8 @@ class DendroConfiguration:
             orig_vars = self.all_var_names.get(var_type, [])
 
             grad_vars = self.create_grad_var_names(orig_vars, grad_type, 3)
+
+            grad_vars.sort()
 
             return_text = dendrosym.codegen.generate_deriv_comp(grad_vars)
 
@@ -1687,6 +1693,7 @@ class DendroConfiguration:
 
     @staticmethod
     def replace_sympy_derivatives(expr, var_names, idx_str):
+        print("  Now attempting to replace derivatives...")
         # symbols we need and will replace
         x, y, z = sym.symbols("xtem ytem ztem")
         d_order = (x, y, z)  # the index goes in this order
@@ -1700,7 +1707,7 @@ class DendroConfiguration:
         all_derivatives = expr.atoms(sym.Derivative)
 
         while len(all_derivatives) > 0:
-            print("    Length of Remaining Derivatives: ", len(all_derivatives))
+            # print("    Length of Remaining Derivatives: ", len(all_derivatives))
 
             curr_deriv = all_derivatives.pop()
 
@@ -2147,8 +2154,10 @@ class DendroConfiguration:
 
         self.current_index = 0
 
-        # then we need to convert them
+        # gradient level 1
         if var_type == "evolution":
+            # NOTE: for evolution, we need every derivitive **no matter what**
+            # this is because we need to calculate KO diss.
             grad_alloc = self.gen_grad_memory_alloc(
                 var_type,
                 "grad",
@@ -2361,13 +2370,18 @@ class DendroConfiguration:
 
     # TODO: potentially remove this from static and make it real
     @staticmethod
-    def find_all_unique_ders(rhs_funcs, rhs_names):
+    def find_all_unique_ders(rhs_funcs, rhs_names, sort=True):
         # NOTE: this is assumed to be after the complicated ones are
         # gathered
         # this will then help us keep track of all of the different derivatives
         # we have to calculate
 
         funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
+
+        # if the grad and agrad are the "same", then we should ignore them
+        if funcs_to_find[0].name == funcs_to_find[2].name:
+            # setting it to a random string that we will certainly never find!
+            funcs_to_find[2] = sym.Function("7OobSHkNgRuNhk7M01yu")
 
         grad_list = set()
         grad2_list = set()
@@ -2401,6 +2415,17 @@ class DendroConfiguration:
             grad_list.update(all_current_grads)
             grad2_list.update(updated_grad2s)
             agrad_list.update(all_current_agrads)
+
+        # then let's sort them
+        if sort:
+            grad_list = list(grad_list)
+            grad_list.sort(key=lambda x: x.args[1].name)
+
+            grad2_list = list(grad2_list)
+            grad2_list.sort(key=lambda x: x.args[2].name)
+
+            agrad_list = list(agrad_list)
+            agrad_list.sort(key=lambda x: x.args[1].name)
 
         return grad_list, grad2_list, agrad_list
 
