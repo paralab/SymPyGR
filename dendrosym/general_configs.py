@@ -76,6 +76,8 @@ class DendroConfiguration:
         """
         self.idx_str = idx_str
 
+        dendrosym.derivs.idx_str = idx_str
+
     def override_derivative_expansion(self):
         """This function enables the override for replacing and expanding derivatives
 
@@ -153,6 +155,13 @@ class DendroConfiguration:
                     )
             # then append the paramter to the list
             self.all_vars[eqn_type].append(one_var)
+        
+        # then update the global variables names in derivatives for good measure
+        flattened_list = []
+        for tt, vars in self.all_var_names.items():
+            flattened_list += vars
+
+        dendrosym.derivs.variable_strs = flattened_list
 
     def get_rhs_var_names(self, var_type: str = "general"):
         """Creates the RHS variable names for a variable type

@@ -47,6 +47,14 @@ d2s = undef
 # advective derivative
 ad = undef
 
+# OLD VERSIONS OF THE DERIVATIVE CODE
+# first derivative
+d_old = sym.Function("grad")
+# second derivative
+d2s_old = sym.Function("grad2")
+# advective derivative
+ad_old = sym.Function("agrad")
+
 # Kreiss-Oliger dissipation operator
 kod = undef
 
@@ -122,7 +130,10 @@ def set_first_derivative(g):
 
     global d
 
-    d = sym.Function(g)
+    if type(g) is sym.Symbol:
+        d = sym.Function(g)
+    else:
+        d = g
 
     return d
 
@@ -158,7 +169,10 @@ def set_second_derivative(g):
 
     global d2s
 
-    d2s = sym.Function(g)
+    if type(g) is sym.Symbol:
+        d2s = sym.Function(g)
+    else:
+        d2s = g
 
     return d2s
 
