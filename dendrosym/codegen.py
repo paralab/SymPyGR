@@ -19,6 +19,7 @@ import sympy as sym
 # from sympy.core.symbol import var
 # from sympy.utilities.iterables import uniq
 from dendrosym import nr
+import dendrosym
 
 
 def extract_expression(expression):
@@ -38,7 +39,6 @@ def extract_expression(expression):
         for ii, exp_individual in enumerate(expression):
             list_expressions.append(exp_individual)
     elif type(expression) == sym.Matrix:
-
         # 1D matrix from sympy using our 3vec notation
         if expression.shape[1] == 1:
             num_e += len(expression)
@@ -46,7 +46,6 @@ def extract_expression(expression):
                 list_expressions.append(expression[ii])
         # otherwise it's a matrix
         else:
-
             num_e += len(expression)
 
             # NOTE: original method, does *not* check for symmetry
@@ -85,7 +84,6 @@ def extract_expression(expression):
 def construct_expression_list(
     ex: Union[list, sym.Matrix, sym.Expr], vnames: List[str], idx: str = "[pp]"
 ):
-
     # NOTE: there seems to be an issue with the symmetric stuff
     mi = [0, 1, 2, 4, 5, 8]
     midx = ["00", "01", "02", "11", "12", "22"]
@@ -133,7 +131,6 @@ def construct_expression_list(
 
 
 def custom_numbered_symbols(prefix="DENDRO_", start=0, num_digits=4):
-
     while True:
         num_str = str(start).zfill(num_digits)
         name = f"{prefix}{num_str}"
@@ -181,12 +178,16 @@ def construct_cse(
     return _v, sym.count_ops(lexp)
 
 
-def construct_cse_from_list(expression_list, temp_var_prefix="DENDRO_"):
-
+def construct_cse_from_list(
+    expression_list, temp_var_prefix="DENDRO_", ignore_symbols=[]
+):
     temp_var_gen = custom_numbered_symbols(temp_var_prefix)
 
     print("Now generating cse!", file=sys.stderr)
-    cse_out = sym.cse(expression_list, symbols=temp_var_gen, optimizations="basic")
+    # cse_out = sym.cse(expression_list, symbols=temp_var_gen, optimizations="basic", order="none")
+    cse_out = sym.cse(
+        expression_list, symbols=temp_var_gen, order="none", ignore=ignore_symbols
+    )
     print("Finished generating cse!", file=sys.stderr)
 
     return cse_out
@@ -201,7 +202,6 @@ def generate_cpu_preextracted(
     use_const=False,
     return_stats=False,
 ):
-
     custom_functions = {
         "grad": "grad",
         "grad2": "grad2",
@@ -209,18 +209,24 @@ def generate_cpu_preextracted(
         "kograd": "kograd",
     }
 
+    cprinter = dendrosym.code_printer.DendroCPrinter(
+        additional_user_funcs=custom_functions
+    )
+
     output_str = "// Dendro: C++ Equation Code Generation {{{{ \n"
 
     reduced_ops = 0
     output_str += "// Dendro: TEMPORARY VARIABLES\n"
-    for (v1, v2) in cse_list[0]:
+    for v1, v2 in cse_list[0]:
         temp_str = f'{"const " if use_const else ""}{dtype} '
 
         # replace powers with multiplication if possible
         v2 = replace_pow(v2)
 
         # extract the c-generated code for the expression
-        ccode_text = sym.ccode(v2, assign_to=v1, user_functions=custom_functions)
+        # ccode_text = sym.ccode(v2, assign_to=v1, user_functions=custom_functions)
+        ccode_text = cprinter.doprint(v2, assign_to=v1)
+
         # then we need to pass it through the changing of derivative names
         ccode_text = change_deriv_names(ccode_text)
 
@@ -239,9 +245,11 @@ def generate_cpu_preextracted(
         e = replace_pow(e)
 
         # extract the c-generated code for the expression
-        ccode_text = sym.ccode(
-            e, assign_to=str(rhs_var_names[i]) + idx, user_functions=custom_functions
-        )
+        ccode_text = cprinter.doprint(e, assign_to=str(rhs_var_names[i]) + idx)
+        # ccode_text = sym.ccode(
+        #     e, assign_to=str(rhs_var_names[i]) + idx, user_functions=custom_functions
+        # )
+
         # then we need to pass it through the changing of derivative names
         ccode_text = change_deriv_names(ccode_text)
 
@@ -254,7 +262,6 @@ def generate_cpu_preextracted(
     output_str += "// Dendro: END MAIN VARIABLES\n\n"
 
     if not return_stats:
-
         output_str += "// Dendro: INFORMATION\n"
         output_str += "// Dendro: number of original operations: %d \n" % (orig_ops)
         output_str += "// Dendro: number of reduced operations: %d \n" % (reduced_ops)
@@ -267,7 +274,6 @@ def generate_cpu_preextracted(
         return output_str
 
     else:
-
         return output_str, reduced_ops
 
 
@@ -314,14 +320,19 @@ def generate_cpu(
         "kograd": "kograd",
     }
 
+    cprinter = dendrosym.code_printer.DendroCPrinter(
+        additional_user_funcs=custom_functions
+    )
+
     rops = 0
     output_string += "// Dendro: printing temp variables\n"
-    for (v1, v2) in _v[0]:
+    for v1, v2 in _v[0]:
         # TODO: add the potential for const???? They're not going to be modified, but might not be necessary
         temp_str = "double "
 
         temp_str += change_deriv_names(
-            sym.ccode(v2, assign_to=v1, user_functions=custom_functions)
+            cprinter.doprint(v2, assign_to=v1)
+            # sym.ccode(v2, assign_to=v1, user_functions=custom_functions)
         )
         output_string += temp_str + "\n"
         rops = rops + sym.count_ops(v2)
@@ -330,7 +341,8 @@ def generate_cpu(
     for i, e in enumerate(_v[1]):
         output_string += "\n//--\n"
         output_string += change_deriv_names(
-            sym.ccode(e, assign_to=lname[i], user_functions=custom_functions)
+            cprinter.doprint(e, assign_to=lname[i])
+            # sym.ccode(e, assign_to=lname[i], user_functions=custom_functions)
         )
         output_string += "\n"
         rops = rops + sym.count_ops(e)
@@ -484,7 +496,7 @@ def generate_fpcore(ex, vnames, idx):
 
     # print('// Dendro: printing temp variables')
     tmp_vars = list()
-    for (v1, v2) in _v[0]:
+    for v1, v2 in _v[0]:
         tmp_vars.append(str(v1))
         sym_sub = dict()
         srep = sym.srepr(v2)
@@ -651,7 +663,7 @@ def generate_avx(ex, vnames, idx):
     print("// Dendro vectorized code: {{{")
     oper = {"mul": "dmul", "add": "dadd", "load": "*"}
     prevdefvars = set()
-    for (v1, v2) in _v[0]:
+    for v1, v2 in _v[0]:
         vv = sym.utilities.numbered_symbols("v")
         vlist = []
         gen_vector_code(v2, vv, vlist, oper, prevdefvars, idx)
@@ -838,14 +850,19 @@ def generate_separate(ex, vnames, idx, prefix=""):
         "kograd": "kograd",
     }
 
+    cprinter = dendrosym.code_printer.DendroCPrinter(
+        additional_user_funcs=custom_functions
+    )
+
     rops = 0
     print("// Dendro: printing temp variables", file=c_file)
-    for (v1, v2) in _v[0]:
+    for v1, v2 in _v[0]:
         # print("double %s = %s;" % (v1, v2)) # replace_pow(v2)))
         print("double ", end="", file=c_file)
         print(
             change_deriv_names(
-                sym.ccode(v2, assign_to=v1, user_functions=custom_functions)
+                cprinter.doprint(v2, assign_to=v1)
+                # sym.ccode(v2, assign_to=v1, user_functions=custom_functions)
             ),
             file=c_file,
         )
@@ -860,7 +877,8 @@ def generate_separate(ex, vnames, idx, prefix=""):
         f.close()
         print(
             change_deriv_names(
-                sym.ccode(e, assign_to=lname[i], user_functions=custom_functions)
+                cprinter.doprint(e, assign_to=lname[i])
+                # sym.ccode(e, assign_to=lname[i], user_functions=custom_functions)
             ),
             file=c_file,
         )
@@ -899,7 +917,6 @@ def replace_pow(exp_in):
     """
 
     if isinstance(exp_in, sym.Expr):
-
         pows = list(exp_in.atoms(sym.Pow))
 
         # if it didn't find any, just go ahead and return the original expression
@@ -910,14 +927,14 @@ def replace_pow(exp_in):
         for b, e in (i.as_base_exp() for i in pows):
             if not e.is_integer:
                 print(
-                    "WARNING: pow function with non-integer will be called",
+                    f"WARNING: pow function with non-integer {e} will be called",
                     file=sys.stderr,
                 )
                 return exp_in
             elif e.is_real:
                 if e < 0:
                     print(
-                        "WARNING: pow function with negative value will be called",
+                        f"WARNING: pow function with negative value {e} will be called",
                         file=sys.stderr,
                     )
                     return exp_in
@@ -938,7 +955,6 @@ def replace_pow(exp_in):
         return exp_in.xreplace(dict(repl))
 
     else:
-
         # TODO: this will require some kind of recursive parsing...
 
         return exp_in
@@ -1312,7 +1328,6 @@ def gen_var_info(
 def gen_var_name_array(
     enum_names: list, project_name: str = "ccz4", list_name_inner: str = "VAR"
 ):
-
     name_array_text = "static const char *"
     name_array_text += f"{project_name.upper()}_{list_name_inner}_NAMES"
 
@@ -1346,9 +1361,7 @@ def generate_memory_alloc(
     include_byte_declaration=False,
     start_id: int = 0,
 ):
-
     if use_old_method:
-
         if include_byte_declaration:
             return_text = f"const unsigned int bytes = n * sizeof({var_type});\n"
         else:
@@ -1377,7 +1390,6 @@ def generate_memory_dealloc(var_names: list):
 
 
 def generate_deriv_comp(var_names: list, adv_der_var: str = "beta"):
-
     # map dir
     dir_map = {"0": "x", "1": "y", "2": "z"}
 
@@ -1465,7 +1477,6 @@ def generate_bcs_function_call(
     sz="sc",
     bflag="bflag",
 ):
-
     if deriv_names:
         assert len(deriv_names) == 3, "Not enough entries in the deriv names"
 
@@ -1489,7 +1500,6 @@ def generate_bcs_function_call(
 def generate_force_sym_matrix_det_to_one(
     vname, unzip_access, uzip="uiVar", node="node", dtype="double"
 ):
-
     # NOTE: the function already should have `one_third` defined
 
     return_str = ""
@@ -1593,7 +1603,6 @@ def generate_force_sym_matrix_det_to_one(
 
 
 def generate_force_symmat_traceless(vname, metric_vname, dtype="double"):
-
     return_str = ""
 
     # calculate one third of the trace
@@ -1653,7 +1662,6 @@ def generate_force_symmat_traceless(vname, metric_vname, dtype="double"):
 def generate_update_sym_mat_extract(
     vname, unzip_access, uzip="uiVar", dtype="double", node="node"
 ):
-
     # NOTE: all of the symmetric matrices grab the indexing based on the upper
     # triangle, so get those first
     midx = [[0, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 2]]
@@ -1679,7 +1687,6 @@ def generate_update_sym_mat_extract(
 def generate_update_sym_mat_code(
     vname, unzip_access, uzip="uiVar", node="node", include_up=True
 ):
-
     return_str = ""
 
     # NOTE: all of the symmetric matrices grab the indexing based on the upper
@@ -1701,7 +1708,6 @@ def generate_update_sym_mat_code(
 def generate_variable_always_positive(
     uzip_access, floor_var=None, uzip="uiVar", node="node"
 ):
-
     if floor_var is None:
         floor_var = "1.0e-6"
 

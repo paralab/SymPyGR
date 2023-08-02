@@ -1,5 +1,6 @@
 import sympy as sym
 
+
 import dendrosym
 
 i = "i"
@@ -17,6 +18,7 @@ xx, yy, zz = sym.symbols("xx_temp yy_temp zz_temp")
 
 symbols_find = None
 symbols_replace = None
+
 
 def first_der(dir, expr):
     global variable_strs, xx, yy, zz, idx_str, symbols_find, symbols_replace
@@ -87,7 +89,6 @@ def second_der(dir1, dir2, expr):
 
 
 def get_derivs():
-
     dendrosym.nr.set_first_derivative(first_der)
     dendrosym.nr.set_second_derivative(second_der)
 
@@ -113,10 +114,15 @@ def restore_original_derivatives(expr):
 
     # now we want it all with no repeats!!!!!
     symbols_find_norep = [sym.Symbol(xr + idx_str) for xr in variable_strs]
-    symbols_replace_norep = [sym.Function(sym.Symbol(xr))(xx, yy, zz) for xr in variable_strs]
+    symbols_replace_norep = [
+        sym.Function(sym.Symbol(xr))(xx, yy, zz) for xr in variable_strs
+    ]
     reverse_repl = dict(zip(symbols_replace_norep, symbols_find_norep))
 
     all_derivatives = expr.atoms(sym.Derivative)
+
+    if len(all_derivatives) == 0:
+        return expr
 
     # print(all_derivatives)
 
@@ -179,10 +185,24 @@ def restore_original_derivatives(expr):
 
         new_expr = new_expr.subs(reverse_repl)
 
-
         expr = expr.xreplace({curr_deriv: new_expr})
 
         all_derivatives = expr.atoms(sym.Derivative)
+
+    return expr
+
+
+def restore_only_symbols(expr):
+    d_order = (xx, yy, zz)
+
+    # now we want it all with no repeats!!!!!
+    symbols_find_norep = [sym.Symbol(xr + idx_str) for xr in variable_strs]
+    symbols_replace_norep = [
+        sym.Function(sym.Symbol(xr))(xx, yy, zz) for xr in variable_strs
+    ]
+    reverse_repl = dict(zip(symbols_replace_norep, symbols_find_norep))
+
+    expr = expr.xreplace(reverse_repl)
 
     return expr
 

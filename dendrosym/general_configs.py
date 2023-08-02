@@ -155,7 +155,7 @@ class DendroConfiguration:
                     )
             # then append the paramter to the list
             self.all_vars[eqn_type].append(one_var)
-        
+
         # then update the global variables names in derivatives for good measure
         flattened_list = []
         for tt, vars in self.all_var_names.items():
@@ -239,6 +239,31 @@ class DendroConfiguration:
             ) = self._extract_rhs_expressions(
                 var_type, append_rhs_to_var=include_rhs_in_name
             )
+
+        # now to restore the 'symbols' inside the derivitaves to their original functionality
+        if (
+            type(dendrosym.nr.d) is not sym.core.function.UndefinedFunction
+            or type(dendrosym.nr.d2s) is not sym.core.function.UndefinedFunction
+        ):
+            print(".... Now restoring some of the symbols from derivatives...")
+            temp_exprs = []
+            for ii, expr in enumerate(staged_exp):
+                expr_temp = dendrosym.derivs.restore_only_symbols(expr)
+                temp_exprs.append(expr_temp)
+
+            staged_exp = temp_exprs
+
+            temp_exprs = []
+
+            for ii, expr in enumerate(all_exp):
+                print(f"     on expr... {ii+1}/{len(all_exp)}")
+                expr_temp = dendrosym.derivs.restore_only_symbols(expr)
+                temp_exprs.append(expr_temp)
+
+            all_exp = temp_exprs
+            temp_exprs = None
+
+            print("... finished replacing the derivatives")
 
         # start with the staged expressions
         if len(staged_exp) > 0:
@@ -1567,6 +1592,10 @@ class DendroConfiguration:
         # start by finding all expressions using the atoms funcion
         all_funcs = DendroConfiguration.find_and_sort_atoms(expr, funcs_to_find)
 
+        if len(all_funcs) == 0:
+            print(f"        no derivatives to assess here!")
+            return expr
+
         # print("found", all_funcs)
         print(f"        found {len(all_funcs)} to assess...")
 
@@ -2386,11 +2415,25 @@ class DendroConfiguration:
         # we have to calculate
 
         funcs_to_find = [dendrosym.nr.d, dendrosym.nr.d2s, dendrosym.nr.ad]
+        uses_orig_deriv = True
+        uses_orig_deriv2 = True
 
-        # if the grad and agrad are the "same", then we should ignore them
-        if funcs_to_find[0].name == funcs_to_find[2].name:
-            # setting it to a random string that we will certainly never find!
-            funcs_to_find[2] = sym.Function("7OobSHkNgRuNhk7M01yu")
+        if type(dendrosym.nr.d) is not sym.core.function.UndefinedFunction:
+            # if we're using the built-in derivative stuff, we need to check for that
+            funcs_to_find[0] = sym.Derivative
+            uses_orig_deriv = False
+        else:
+            # if it's not a derivative, we want to check for advective derivative
+            # and derivative being the same
+            if funcs_to_find[0].name == funcs_to_find[2].name:
+                # setting it to a random string that we will certainly never find!
+                funcs_to_find[2] = sym.Function("7OobSHkNgRuNhk7M01yu")
+
+        # also need to replace d2s
+        if type(dendrosym.nr.d2s) is not sym.core.function.UndefinedFunction:
+            # if we're using the built-in derivative stuff, we need to check for that
+            funcs_to_find[1] = sym.Derivative
+            uses_orig_deriv2 = False
 
         grad_list = set()
         grad2_list = set()
@@ -2404,26 +2447,68 @@ class DendroConfiguration:
 
             # print(all_current_grad2s)
 
-            # for grad2s, we need to make sure the args are in the right order
-            updated_grad2s = set()
-            for the_grad2 in all_current_grad2s:
-                idx1, idx2, symbol = the_grad2.args
-                if idx1 > idx2:
-                    idxtmp = idx1
-                    idx2 = idx1
-                    idx1 = idxtmp
-                updated_grad2s.update(
-                    {
-                        dendrosym.nr.d2s(idx1, idx2, symbol),
-                    }
+            if not uses_orig_deriv and not uses_orig_deriv2:
+                updated_grads = set()
+                updated_grad2s = set()
+
+                for the_grad in all_current_grads:
+                    temp = dendrosym.derivs.restore_original_derivatives(the_grad)
+
+                    if temp.name == "grad":
+                        updated_grads.update(
+                            {
+                                temp,
+                            }
+                        )
+                    elif temp.name == "grad2":
+                        idx1, idx2, symbol = temp.args
+                        if idx1 > idx2:
+                            idxtmp = temp.args[1]
+                            temp.args[1] = temp.args[0]
+                            temp.args[0] = idxtmp
+                        updated_grad2s.update(
+                            {
+                                temp,
+                            }
+                        )
+                    else:
+                        raise ValueError("Invalid type of derivative coming in!")
+
+                grad_list.update(updated_grads)
+                grad2_list.update(updated_grad2s)
+                agrad_list.update(all_current_agrads)
+
+            elif uses_orig_deriv and not uses_orig_deriv2:
+                raise NotImplementedError(
+                    "Mixed derivative types is not currently allowed,"
+                    + " make sure both are either sym.Derivative or 'original' function"
                 )
+            elif not uses_orig_deriv and uses_orig_deriv2:
+                raise NotImplementedError(
+                    "Mixed derivative types is not currently allowed,"
+                    + " make sure both are either sym.Derivative or 'original' function"
+                )
+            else:
+                # for grad2s, we need to make sure the args are in the right order
+                updated_grad2s = set()
+                for the_grad2 in all_current_grad2s:
+                    idx1, idx2, symbol = the_grad2.args
+                    if idx1 > idx2:
+                        idxtmp = idx1
+                        idx2 = idx1
+                        idx1 = idxtmp
+                    updated_grad2s.update(
+                        {
+                            dendrosym.nr.d2s(idx1, idx2, symbol),
+                        }
+                    )
 
-            # print(updated_grad2s)
+                # print(updated_grad2s)
 
-            # then add them to our set which forces uniqueness, but not order
-            grad_list.update(all_current_grads)
-            grad2_list.update(updated_grad2s)
-            agrad_list.update(all_current_agrads)
+                # then add them to our set which forces uniqueness, but not order
+                grad_list.update(all_current_grads)
+                grad2_list.update(updated_grad2s)
+                agrad_list.update(all_current_agrads)
 
         # then let's sort them
         if sort:
