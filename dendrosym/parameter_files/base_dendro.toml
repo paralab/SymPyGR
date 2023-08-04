@@ -1,0 +1,193 @@
+# ======= REQUIRED PARAMETERS FOR A DENDRO PROJECT =======
+# Note, this does *not* include any parameters specifically for GR projects.
+# for the projects requiring GR stuff, be sure to check out gr_dendro.toml in the
+# same directory.
+
+[dsolve-NMSPC]
+
+## Select Initial Data #
+# Initial data selection, see the initial data source file for more information
+DSOLVER_ID_TYPE = { class = "variant", dtype = "unsigned int", default = 0, min = 0, max = 80, description = "The initial data function that should be used to populate the initial grid" }
+
+# @brief: Output frequency for the solution, for saving to VTU file
+DSOLVER_IO_OUTPUT_FREQ = { class = "variant", dtype = "unsigned int", default = 1000, min = 0, max = 2000, desc = "Output frequency for the solution, for saving to VTU file" }
+
+# @brief: Frequency for performing remeshing test based on wavelets
+DSOLVER_REMESH_TEST_FREQ = { class = "variant", dtype = "unsigned int", default = 10, min = 0, max = 20, desc = "Frequency for performing remeshing test based on wavelets" }
+
+# @brief: Frequency for checkpoint saving
+DSOLVER_CHECKPT_FREQ = { class = "variant", dtype = "unsigned int", default = 5000, min = 0, max = 10000, desc = "Frequency for checkpoint saving" }
+
+# @brief: File prefix for the VTU files that will be saved
+DSOLVER_VTU_FILE_PREFIX = { class = "variant", dtype = "string", default = "vtu/emda_gr", desc = "File prefix for the VTU files that will be saved" }
+
+# @brief: Whether to output only the z slice in the VTU file
+DSOLVER_VTU_Z_SLICE_ONLY = { class = "semivariant", dtype = "bool", default = "true", desc = "Whether to output only the z slice in the VTU file" }
+
+# @brief: File prefix for the checkpoint files
+DSOLVER_CHKPT_FILE_PREFIX = { class = "variant", dtype = "string", default = "cp/emda_cp", desc = "File prefix for the checkpoint files" }
+
+# @brief: File prefix for the intermediate profile files
+DSOLVER_PROFILE_FILE_PREFIX = { class = "variant", dtype = "string", default = "emda_prof", desc = "File prefix for the intermediate profile files" }
+
+# @brief: Simulation time begin
+DSOLVER_RK_TIME_BEGIN = { class = "variant", dtype = "unsigned int", default = 0, desc = "Simulation time begin" }
+
+# @brief: Simulation time end
+DSOLVER_RK_TIME_END = { class = "variant", dtype = "unsigned int", default = 800, desc = "Simulation time end" }
+
+# @brief: Option for restoring from a checkpoint (will restore if set to 1)
+DSOLVER_RESTORE_SOLVER = { class = "variant", dtype = "unsigned int", default = 0, min = 0, max = 1, desc = "Option for restoring from a checkpoint (will restore if set to 1)" }
+
+# @brief: Physical coordinates for grid of interest
+DSOLVER_GRID_MIN_X = { class = "variant", dtype = "double", default = -400.0 }
+DSOLVER_GRID_MAX_X = { class = "variant", dtype = "double", default = 400.0 }
+DSOLVER_GRID_MIN_Y = { class = "variant", dtype = "double", default = -400.0 }
+DSOLVER_GRID_MAX_Y = { class = "variant", dtype = "double", default = 400.0 }
+DSOLVER_GRID_MIN_Z = { class = "variant", dtype = "double", default = -400.0 }
+DSOLVER_GRID_MAX_Z = { class = "variant", dtype = "double", default = 400.0 }
+
+# @brief: Disable AMR and enable block adaptivity
+DSOLVER_ENABLE_BLOCK_ADAPTIVITY = { class = "variant", dtype = "unsigned int", default = 0, min = 0, max = 1, desc = "Disable AMR and enable block adaptivity" }
+
+# @brief: Maximum and minimum levels of refinement of the mesh
+DSOLVER_MAXDEPTH = { class = "variant", dtype = "unsigned int", default = 16, min = 0, max = 32, desc = "Maximum and minimum levels of refinement of the mesh" }
+DSOLVER_MINDEPTH = { class = "variant", dtype = "unsigned int", default = 3, min = 0, max = 16 }
+
+# @brief: Number of grid iterations untill the grid converges
+DSOLVER_INIT_GRID_ITER = { class = "semivariant", dtype = "unsigned int", default = 10, min = 0, max = 20, desc = "Number of grid iterations untill the grid converges" }
+
+# @brief: Element order for the computations
+DSOLVER_ELE_ORDER = { class = "variant", dtype = "unsigned int", default = 6, min = 0, max = 20, desc = "Element order for the computations. This is 2x the padding width" }
+
+# Kreiss-Oliger dissipation
+KO_DISS_SIGMA = { class = "variant", dtype = "double", default = 4e-1, min = 0.0, max = 8e-1 }
+
+# @brief: Wavelet tolerance
+DSOLVER_WAVELET_TOL = { class = "variant", dtype = "double", default = 1e-5, min = 0.0, max = 1.0, desc = "Wavelet tolerance" }
+
+# @brief: Set wavelet tolerance using a function (default 0)
+DSOLVER_USE_WAVELET_TOL_FUNCTION = { class = "variant", dtype = "unsigned int", default = 3, desc = "Set wavelet tolerance using a function (default 0)" }
+
+# @brief: The maximum value of the wavelet tolerance
+DSOLVER_WAVELET_TOL_MAX = { class = "variant", dtype = "double", default = 1e-3, min = 0.0, max = 2e-3, desc = "The maximum value of the wavelet tolerance" }
+
+# @brief: Grain size N/p, Where N number of total octants, p number of active cores
+DSOLVER_DENDRO_GRAIN_SZ = { class = "variant", dtype = "unsigned int", default = 50, min = 0, max = 100, desc = " Grain size N/p, Where N number of total octants, p number of active cores" }
+
+# == LOAD BALANCING & MESH ==
+# @brief: Variable group size for the asynchronous unzip operation. This is an async communication. (Upper bound should be DSOLVER_NUM_VARS)
+DSOLVER_ASYNC_COMM_K = { class = "variant", dtype = "unsigned int", default = 4, min = 0, max = "DSOLVER_NUM_VARS", desc = "Variable group size for the asynchronous unzip operation. This is an async communication. (Upper bound should be DSOLVER_NUM_VARS)" }
+
+# @brief: Dendro load imbalance tolerance for flexible partitioning
+DSOLVER_LOAD_IMB_TOL = { class = "variant", dtype = "double", default = 0.1, min = 0.0, max = 0.2, desc = "Dendro load imbalance tolerance for flexible partitioning" }
+
+# @brief: Dendro coarsening factor, if computed wavelet tol < DSOLVER_DENDRO_AMR_FAC*DSOLVER_WAVELET_TOL
+DSOLVER_DENDRO_AMR_FAC = { class = "variant", dtype = "double", default = 0.1, min = 0.0, max = 0.2, desc = "Dendro coarsening factor, if computed wavelet tol < DSOLVER_DENDRO_AMR_FAC*DSOLVER_WAVELET_TOL" }
+
+# @brief: RK method to use (0 -> RK3 , 1 -> RK4, 2 -> RK45)
+DSOLVER_RK_TYPE = { class = "semivariant", dtype = "unsigned int", default = 1, min = 0, max = 3, desc = "RK method to use (0 -> RK3 , 1 -> RK4, 2 -> RK45)" }
+
+# @brief: The Courant factor: CFL stability number (specifies how dt=DSOLVER_CFL_FACTOR*dx)
+DSOLVER_CFL_FACTOR = { class = "semivariant", dtype = "double", default = 0.25, min = 0.0, max = 1.0, desc = "The Courant factor: CFL stability number (specifies how dt=DSOLVER_CFL_FACTOR*dx)" }
+
+# @brief: Prefered time step size (this is overwritten with the specified CFL factor, not recommended to use this)
+DSOLVER_RK45_TIME_STEP_SIZE = { class = "semivariant", dtype = "double", default = 0.01, min = 0.0, max = 0.02, desc = "Prefered time step size (this is overwritten with the specified CFL factor, not recommended to use this)" }
+
+# @brief: Desired tolerance value for the RK45 method (with adaptive time stepping), NOT CURRENTLY USED
+DSOLVER_RK45_DESIRED_TOL = { class = "semivariant", dtype = "double", default = 1e-3, min = 0.0, max = 2e-3, desc = "Desired tolerance value for the RK45 method (with adaptive time stepping), NOT CURRENTLY USED" }
+
+# @brief: Dimensionality of the _, (meshing is supported only for 3D)
+DSOLVER_DIM = { class = "semivariant", dtype = "unsigned int", default = 3, min = 0, max = 6, desc = "Dimensionality of the octree, (meshing is supported only for 3D)" }
+
+
+## BLOCK Adaptivity (Not Recommended use AMR) ##
+DSOLVER_BLK_MIN_X = { class = "semivariant", dtype = "double", default = -6.0, min = -12.0, max = 0.0 }
+DSOLVER_BLK_MIN_Y = { class = "semivariant", dtype = "double", default = -6.0, min = -12.0, max = 0.0 }
+DSOLVER_BLK_MIN_Z = { class = "semivariant", dtype = "double", default = -1.0, min = -12.0, max = 0.0 }
+DSOLVER_BLK_MAX_X = { class = "semivariant", dtype = "double", default = 6.0, min = 0.0, max = 12.0 }
+DSOLVER_BLK_MAX_Y = { class = "semivariant", dtype = "double", default = 6.0, min = 0.0, max = 12.0 }
+DSOLVER_BLK_MAX_Z = { class = "semivariant", dtype = "double", default = 1.0, min = 0.0, max = 12.0 }
+
+
+# @brief: Dendro version number, usually 5.0 especially for this project
+DENDRO_VERSION = { class = "invariant", dtype = "double", default = 5.0, desc = "Dendro version number, usually 5.0 especially for this project" }
+
+# @brief: Padding width for each of the blocks
+DSOLVER_PADDING_WIDTH = { class = "dependent", dtype = "unsigned int", default = "DSOLVER_ELE_ORDER >> 1u", min = 0, max = 5, desc = "Padding width for each of the blocks" }
+
+# @brief: Number of RK45 stages that should be performed
+DSOLVER_RK45_STAGES = { class = "invariant", dtype = "unsigned int", default = 6, desc = "Number of RK45 stages that should be performed" }
+
+# @brief: Number of RK4 stages that should be performed
+DSOLVER_RK4_STAGES = { class = "invariant", dtype = "unsigned int", default = 4, desc = "Number of RK4 stages that should be performed" }
+
+# @brief: Number of RK3 stages that should be performed
+DSOLVER_RK3_STAGES = { class = "invariant", dtype = "unsigned int", default = 3, desc = "Number of RK3 stages that should be performed" }
+
+# @brief: Adaptive time step update safety factor
+DSOLVER_SAFETY_FAC = { class = "invariant", dtype = "double", default = 0.8, desc = "Adaptive time step update safety factor" }
+
+# @brief: Number of internal variables
+DSOLVER_NUM_VARS_INTENL = { class = "invariant", dtype = "unsigned int", default = "(DSOLVER_RK45_STAGES + 1) * DSOLVER_NUM_VARS", desc = "Number of internal variables" }
+
+
+# @brief: Minimum black hole domain, to be added to the parameter file for running!
+DSOLVER_COMPD_MIN = { class = "dependent", dtype = "double[]", default = [
+    "dsolve::DSOLVER_GRID_MIN_X",
+    "dsolve::DSOLVER_GRID_MIN_Y",
+    "dsolve::DSOLVER_GRID_MIN_Z",
+], size = 3, desc = "Computational domain, used in various places instead of GRID_MIN, but should be the same value" }
+
+# @brief: Maximum black hole domain, to be added to the parameter file for running!
+DSOLVER_COMPD_MAX = { class = "dependent", dtype = "double[]", default = [
+    "dsolve::DSOLVER_GRID_MAX_X",
+    "dsolve::DSOLVER_GRID_MAX_Y",
+    "dsolve::DSOLVER_GRID_MAX_Z",
+], size = 3, desc = "Computational domain, used in various places instead of GRID_MIN, but should be the same value" }
+
+# @brief: Minimum coordinates of the OCTREE
+DSOLVER_OCTREE_MIN = { class = "semivariant", dtype = "double[]", default = [
+    0.0,
+    0.0,
+    0.0,
+], size = 3, desc = "Minimum coordinates of the OCTREE used internally for Dendro (should always start at zero)" }
+
+# @brief: Maximum coordinates of the OCTREE
+DSOLVER_OCTREE_MAX = { class = "dependent", dtype = "double[]", default = [
+    "(double)(1u << dsolve::DSOLVER_MAXDEPTH)",
+    "(double)(1u << dsolve::DSOLVER_MAXDEPTH)",
+    "(double)(1u << dsolve::DSOLVER_MAXDEPTH)",
+], size = 3, desc = "Maximum coordinates of the OCTREE used internally for Dendro (should always be related to Max Depth)" }
+
+# @brief: Timestep output frequency
+DSOLVER_TIME_STEP_OUTPUT_FREQ = { class = "semivariant", dtype = "unsigned int", default = 10, min = 0, max = 1000000, desc = "Frequency for outputting an update on the solver's progress" }
+
+# @brief: Solution output gap (instead of frequency, we can use to output the solution if currentTime > lastIOOutputTime + DSOLVER_IO_OUTPUT_GAP)
+# Another comment: VTU file output gap. (Not currently used. Might be usefull in adaptive timestepping)
+DSOLVER_IO_OUTPUT_GAP = { class = "semivariant", dtype = "unsigned int", default = 1, min = 0, max = 2, desc = "Solution output gap (instead of frequency, we can use to output the solution if currentTime > lastIOOutputTime + DSOLVER_IO_OUTPUT_GAP). This is only used with Adaptive Time Steppers." }
+
+
+# @brief: Splitter fix value
+DSOLVER_SPLIT_FIX = { class = "semivariant", dtype = "unsigned int", default = 2, min = 0, max = 4, desc = "Splitter fix value" }
+
+# @brief: The dissipation type to be used
+DISSIPATION_TYPE = { class = "semivariant", dtype = "unsigned int", default = 0, min = 0, max = 10000, desc = "The dissipation type to be used. 0 is KO dissipation, this is not currently used!" }
+
+# # @brief: The dissipation "NC", note this is only called in a comment for "artificial dissipation" which appears to not be defined anywhere
+# # TODO: @david can you please add some comeents for these parameters.
+# DSOLVER_DISSIPATION_NC = {class = "semivariant", dtype = "unsigned int", default = 0, min = 0, max = 1, desc="The dissipation \"NC\", note this is only called in a comment for \"artificial dissipation\" which appears to not be defined anywhere"}
+
+# # @breif: The dissipation "S:, note this is only called in a comment for "artificial dissipation" which appears to not be defined anywhere
+# # TODO: @david can you please add some comeents for these parameters.
+# DSOLVER_DISSIPATION_S = {class = "semivariant", dtype = "unsigned int", default = 0, min = 10, max = 20, desc="The dissipation \"S\", note this is only called in a comment for \"artificial dissipation\" which appears to not be defined anywhere"}
+
+
+# @brief: The TS offset for LTS in DSOLVER
+DSOLVER_LTS_TS_OFFSET = { class = "semivariant", dtype = "unsigned int", default = 0, min = 4, max = 8, desc = "The TS offset for LTS in DSOLVER", settable_by_user = false }
+
+# # @brief: Fd intergrid transfer enable or disable
+# DSOLVER_USE_FD_GRID_TRANSFER = {class = "semivariant", dtype = "bool", default = false, desc="Fd intergrid transfer enable or disable"}
+
+# @brief: Refinement mode: 0 -> WAMR , 1 -> EH, 2 -> EH_WAMR 3 -> BH_loc based
+DSOLVER_REFINEMENT_MODE = { class = "semivariant", dtype = "enum", enum_name = "RefinementMode", default = 0, min = 0, max = 10000, desc = "Refinement mode to be used. This will depend on the implementation of the program." }

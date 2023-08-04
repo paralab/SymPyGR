@@ -15,6 +15,7 @@ file to be used during runtime.
 
 import os
 import tomlkit as toml
+from pathlib import Path
 
 TAB = "    "
 
@@ -91,7 +92,7 @@ def get_variant_text(namespaces: list,
     This function will create the different pieces of text
     that are required for a variant parameter. A variant
     parameter is one that is declared as an external variable
-    in the header file, initialilzed in the source file, but
+    in the header file, initialized in the source file, and
     required to be read in at run time.
 
     This returns three different output strings that define
@@ -179,9 +180,12 @@ def get_variant_text(namespaces: list,
     paramc_str += ";\n"
 
     # now we update the param_read string
-    param_read = f"{TAB * base_t}if (file.contains(\""
+    # NOTE: we have it in an if statement so we can actually error out properly
+    # the toml library in C++ gives a very unspecific error
+    param_read = f"{TAB * base_t}/* REQUIRED READ IN FOR PARAMETER " + get_full_vname(namespaces, table_name, vname) + " */\n"
+    param_read += f"{TAB * base_t}if (file.contains(\""
     param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += f"\")) {{\n{TAB * base_t}\n{TAB * (base_t + 1)}"
+    param_read += f"\")) {{\n{TAB * (base_t + 1)}"
 
     if (vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'd'
             or vinfo["dtype"] == "enum") and vinfo["dtype"][-2] != '[':
@@ -219,9 +223,9 @@ def get_variant_text(namespaces: list,
     if vinfo["dtype"][-2] == '[':
         param_read += f";\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
     else:
-        param_read += f";\n{TAB * base_t}}}\n\n"
+        param_read += f";\n{TAB * base_t}}} "
 
-    param_read += f"{TAB * base_t}else\n{TAB * base_t}{{\n{TAB * (base_t + 1)}"
+    param_read += f"else {{\n{TAB * (base_t + 1)}"
     param_read += "std::cerr << R\"(No value for \""
     param_read += table_name + vname
     param_read += "\"; \""
@@ -246,7 +250,14 @@ def get_semivariant_text(namespaces: list,
     that are required for a semivariant parameter. A semivariant
     parameter is one that is declared as an external variable
     in the header file, initialilzed in the source file, and
-    able to be modified through an input parameter file at runtime.
+    may be modified at runtime via user or program.
+
+    An exception can be made where it will not be included in
+    the parameter reading section if vinfo has a flag named
+    "settable_by_user". This is to avoid writing another function
+    and creating another class of variables. This option would
+    be desirable if it's a parameter that needs to be kept
+    track of and will be edited by the program.
 
     This returns three different output strings that define
     the behavior for each of those different files.
@@ -338,48 +349,49 @@ def get_semivariant_text(namespaces: list,
 
     paramc_str += "\";\n" if vinfo["dtype"][0] == 's' else ";\n"
 
-    # then the parameter reading chunk
-    param_read += f"{TAB*3}if (file.contains(\""
-    param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += f"\")) {{\n{TAB*base_t}\n{TAB*(base_t+1)}"
+    if vinfo.get("settable_by_user", True):
+        # then the parameter reading chunk
+        param_read += f"{TAB*3}if (file.contains(\""
+        param_read += get_full_vname(namespaces, table_name, vname)
+        param_read += f"\")) {{\n{TAB*base_t}\n{TAB*(base_t+1)}"
 
-    if (vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'd'
-            or vinfo["dtype"] == "enum") and vinfo["dtype"][-2] != '[':
-        param_read += get_bound_text(namespaces, table_name, vname, vinfo)
+        if (vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'd'
+                or vinfo["dtype"] == "enum") and vinfo["dtype"][-2] != '[':
+            param_read += get_bound_text(namespaces, table_name, vname, vinfo)
 
-    # only for arrays, we need to write a loop to assign values
-    if vinfo["dtype"][-2] == '[':
-        param_read += get_array_assignment_start(vinfo)
+        # only for arrays, we need to write a loop to assign values
+        if vinfo["dtype"][-2] == '[':
+            param_read += get_array_assignment_start(vinfo)
 
-    param_read += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        param_read += get_full_vname(curr_namespace_list_ph, table_name, vname)
 
-    # add the read definition
-    param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
-    param_read += " = "
-    if vinfo["dtype"] == "enum":
-        param_read += "static_cast<" + vinfo["enum_name"] + ">("
-    param_read += "file[\""
-    param_read += get_full_vname(namespaces, table_name, vname)
-    param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
-    param_read += ".as_"
-    if vinfo["dtype"][0] == 'd':
-        param_read += "floating"
-    elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u' or vinfo[
-            "dtype"] == "enum":
-        param_read += "integer"
-    elif vinfo["dtype"][0] == 's':
-        param_read += "string"
-    else:
-        param_read += "boolean"
+        # add the read definition
+        param_read += "[i]" if vinfo["dtype"][-2] == '[' else ""
+        param_read += " = "
+        if vinfo["dtype"] == "enum":
+            param_read += "static_cast<" + vinfo["enum_name"] + ">("
+        param_read += "file[\""
+        param_read += get_full_vname(namespaces, table_name, vname)
+        param_read += "\"][i]" if vinfo["dtype"][-2] == '[' else "\"]"
+        param_read += ".as_"
+        if vinfo["dtype"][0] == 'd':
+            param_read += "floating"
+        elif vinfo["dtype"][0] == 'i' or vinfo["dtype"][0] == 'u' or vinfo[
+                "dtype"] == "enum":
+            param_read += "integer"
+        elif vinfo["dtype"][0] == 's':
+            param_read += "string"
+        else:
+            param_read += "boolean"
 
-    param_read += "()"
-    if vinfo["dtype"] == "enum":
-        param_read += ")"
+        param_read += "()"
+        if vinfo["dtype"] == "enum":
+            param_read += ")"
 
-    if vinfo["dtype"][-2] == "[":
-        param_read += f";\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
-    else:
-        param_read += f";\n{TAB * base_t}}}\n\n"
+        if vinfo["dtype"][-2] == "[":
+            param_read += f";\n{TAB * (base_t + 1)}}}\n{TAB * base_t}}}\n\n"
+        else:
+            param_read += f";\n{TAB * base_t}}}\n\n"
 
     return paramh_str, paramc_str, param_read
 
@@ -592,21 +604,27 @@ def get_dependent_text(namespaces: list,
     paramh_str += ';\n\n'
 
     # now the "broadcast" parameter text to add
-    param_bcast = f"\n{TAB*3}/* NOTE: this is not a broadcast," + \
+    param_bcast = f"{TAB*2}/* NOTE: this is not a broadcast," + \
         " but an assignment due to previous dependencies! */\n"
-    param_bcast += f"{TAB*3}"
+    
 
     # only for arrays, we need to write a loop to assign values
     if vinfo["dtype"][-2] == '[':
-        raise NotImplementedError("Dependent arrays are not yet supported")
+        for ii in range(vinfo["size"]):
+            param_bcast += f"{TAB*2}"
+            param_bcast += get_full_vname(curr_namespace_list_ph, table_name, vname)
+            param_bcast += f"[{ii}] = "
+            param_bcast += f"{vinfo['default'][ii]};\n"
+        
+    else:
+        param_bcast += f"{TAB*2}"
+        param_bcast += get_full_vname(curr_namespace_list_ph, table_name, vname)
 
-    param_bcast += get_full_vname(curr_namespace_list_ph, table_name, vname)
+        # add the read definition
+        param_bcast += " = "
+        param_bcast += vinfo["default"]
 
-    # add the read definition
-    param_bcast += " = "
-    param_bcast += vinfo["default"]
-
-    param_bcast += ";\n"
+        param_bcast += ";\n"
 
     return paramh_str, param_bcast
 
@@ -722,6 +740,10 @@ def get_broadcast(table_name: str,
         The broadcasting source string
     """
     bcasts = f"{TAB * base_t}"
+
+    if not vinfo.get("settable_by_user", True):
+        # don't broadcast a value if it isn't settable by the user
+        return ""
 
     # if we have an array
     if vinfo["dtype"][-1] == ']':
@@ -842,6 +864,10 @@ def get_bound_text(namespaces, table_name, vname, vinfo, base_t=4):
     str
         The output code that checks the input against the bounds
     """
+
+    if not "min" in vinfo.keys() or not "max" in vinfo.keys():
+        return ""
+
     out_str = "if (" + str(vinfo["min"]) + " > file[\""
     out_str += get_full_vname(namespaces, table_name, vname)
     out_str += "\"].as_"
@@ -867,7 +893,53 @@ def get_bound_text(namespaces, table_name, vname, vinfo, base_t=4):
     return out_str + f"{TAB * base_t}"
 
 
-def generate_all_parameter_text(project_short: str, filename: str):
+def generate_requirements_for_read_in(requirement_list):
+    """Generate code that has some requirements for various parameters
+
+    Parameters
+    ----------
+    requirement_list : list
+        The list of requirements, each is a dict with keys 'cond' and
+        'message', but containing strings.
+
+    Returns
+    -------
+    str
+        The generated code that satisfies all requirements
+    """
+
+    out_str = ""
+
+    for ii, req in enumerate(requirement_list):
+        out_str += f"{TAB}// requirement {ii}\n"
+        out_str += f"{TAB}if ({req['cond']}) {{\n"
+        out_str += f"{TAB*2}std::cerr << \"{req['message']}\" << std::endl;\n"
+        out_str += f"{TAB*2}MPI_Abort(comm, 0);\n"
+        out_str += f"{TAB}}}\n\n"
+    
+    return out_str
+
+
+def get_all_parameter_data(filename: str, is_gr: bool):
+
+    # start by loading in the custom data from the user
+    param_data = get_toml_data(filename)
+
+    # then update the param data with the base dendro params
+    current_dir = Path(__file__).parent.resolve()
+    base_dendro_param_data = get_toml_data(str(current_dir / "parameter_files" / "base_dendro.toml"))
+
+    param_data.update(base_dendro_param_data)
+    
+    if is_gr:
+        base_gr_param_data = get_toml_data(str(current_dir / "parameter_files" / "gr_dendro.toml"))
+
+        param_data.update(base_gr_param_data)
+
+    return param_data
+
+
+def generate_all_parameter_text(project_short: str, filename: str, is_gr: bool = True, additional_data={}):
     """Generate all of the C++ code for parameters
 
     This function takes a project "short", which is just a short
@@ -902,7 +974,8 @@ def generate_all_parameter_text(project_short: str, filename: str):
     ps = project_short.lower()
     ps_u = project_short.upper()
 
-    setup_dict = get_toml_data(filename)
+    setup_dict = get_all_parameter_data(filename, is_gr=is_gr)
+    additional_settings = setup_dict.pop("additional_settings", {})
     # tab delimiter
     t = TAB
 
@@ -912,9 +985,13 @@ def generate_all_parameter_text(project_short: str, filename: str):
         "MPI_Comm comm);\n"
     paramh_str += f"{t}void dumpParamFile(std::ostream& sout, int" + \
         " root, MPI_Comm comm);\n\n"
-    paramh_str += f"{t}extern mem::memory_pool<double> {ps_u}_MEM_POOL;\n"
+    paramh_str += f"{t}extern mem::memory_pool<double> {ps_u}_MEM_POOL;\n\n"
     paramh_str += f"{t}extern BH BH1;\n{t}extern BH BH2;\n"
-    paramh_str += f"{t}extern Point {ps_u}_BH_LOC[2];\n"
+    paramh_str += f"{t}extern Point {ps_u}_BH_LOC[2];\n\n"
+    paramh_str += f"{t}extern double {ps_u}_CURRENT_RK_COORD_TIME;\n"
+    paramh_str += f"{t}extern double {ps_u}_CURRENT_RK_STEP;\n\n"
+    paramh_str += f"{t}extern double* {ps_u}_DERIV_WORKSPACE;\n"
+    paramh_str += f"{t}const unsigned int {ps_u}_NUM_DERIVATIVES = {additional_data.get('num_derivs', 9)};\n"
     paramh_str += f"{t}//extern RefinementMode {ps_u}_REFINEMENT_MODE;\n}}\n"
 
     paramc_str = f"namespace {ps}\n{{\n"
@@ -955,11 +1032,14 @@ def generate_all_parameter_text(project_short: str, filename: str):
     indent_ph = ""
     indent_pc = ""
     bcasts = []  # code for mpi broadcasts for the parameter
+    dependency_code = []
     first_ph = True  # indicates if we're in the first namespace for params_h
     first_pc = True  # indicates if we're in the first namespace for params_c
     PNIP = False  # previous non-invariant parameter in curr namespace
     CNS_ph = False  # see if we've changed namespaces in params_h
     CNS_pc = False  # see if we've chanced namespaces in params_c
+
+    
 
     # start by putting the setup dict on the stack
     # with the empty names and namespace list
@@ -1268,7 +1348,7 @@ def generate_all_parameter_text(project_short: str, filename: str):
 
                             paramh_str += temp_ph
                             # add a "bcast" string
-                            bcasts.insert(0, temp_bcast)
+                            dependency_code.append(temp_bcast)
 
                         # now, for all but invariant, we write broadcast code
                         if v["class"][0] != "i":
@@ -1320,6 +1400,11 @@ def generate_all_parameter_text(project_short: str, filename: str):
         else:
             param_read += ");\n\n"
 
+    # now we add in any code for requirements, like certain parameters
+    # must be related to others
+    param_read += TAB * 2 + "/* === REQUIREMENTS THAT MUST BE MET WHEN READING IN === */\n"
+    param_read += generate_requirements_for_read_in(additional_settings.get("requirements", []))
+
     # then we close out of rank0-only code that reads things in
     param_read += f"{TAB*2}}}\n\n"
 
@@ -1328,9 +1413,24 @@ def generate_all_parameter_text(project_short: str, filename: str):
         + "to send parameters to other processes\n"
     param_read += "\n".join(bcasts)
     param_read += "\n\n"
+
+    
+    # then make sure we get the code that generates the broadcast for strings
     param_read += get_string_broadcast(str_param_temp_names,
                                        str_param_len_names,
                                        str_param_full_names, 2)
+    
+    # make sure dependency code goes **after** broadcast, because it can just be calc'd
+    param_read += TAB * 2 + "/* === PARAMETERS THAT ARE DEPENDENT ON OTHER PARAMETERS === */\n"
+    param_read += "\n".join(dependency_code)
+    param_read += "\n\n"
+
+    # now we add in any code for requirements, like certain parameters
+    # must be related to others
+    param_read += TAB * 2 + "/* === REQUIREMENTS THAT MUST BE MET WHEN READING IN === */\n"
+    param_read += generate_requirements_for_read_in(additional_settings.get("post_broadcast_requirements", []))
+
+    # close out the parameter reading file
     param_read += f"\n{TAB*1}}}\n"
 
     # then add param_read to the c file
@@ -1438,7 +1538,12 @@ def get_toml_lines(var_name: str, in_dict: dict, namespaces: list,
     # basic parameter information
     out_str = "# @brief: "
     out_str += in_dict.get("desc", "No description given.")
-    out_str += f"\n# param type: {in_dict['class']} "
+
+    if in_dict['class'] == "semivariant":
+        out_str += "\n# OPTIONAL parameter "
+    else:
+        out_str += "\n# REQUIRED parameter "
+    
     out_str += f"| data type: {in_dict['dtype']} "
 
     if "default" in in_dict.keys():
@@ -1472,7 +1577,7 @@ def get_toml_lines(var_name: str, in_dict: dict, namespaces: list,
     return out_str
 
 
-def generate_sample_config_file_text(project_short: str, filename: str):
+def generate_sample_config_file_text(project_short: str, filename: str, is_gr: bool = True):
     """Generate TOML file text from the template Parameters
 
     This function will take the template parameter file
@@ -1512,7 +1617,8 @@ def generate_sample_config_file_text(project_short: str, filename: str):
     ps = project_short.lower()
     ps_u = project_short.upper()
 
-    setup_dict = get_toml_data(filename)
+    setup_dict = get_all_parameter_data(filename, is_gr=is_gr)
+    additional_settings = setup_dict.pop("additional_settings", {})
 
     # start with the output string
     out_str = ""

@@ -1,0 +1,182 @@
+
+[dendrogr-NMSPC]
+
+# == IO Parameters ==
+
+# @brief: Wavelet tolerance for GW extraction (after merger)
+DENDROGR_GW_REFINE_WTOL = { class = "semivariant", dtype = "double", default = 1e-4, min = 0.0, max = 2e-4, desc = "Wavelet tolerance for GW extraction (after merger)" }
+
+# @brief: Radius R0 for the wavelet tolerance function
+DENDROGR_WAVELET_TOL_FUNCTION_R0 = { class = "semivariant", dtype = "double", default = 30.0, min = 0.0, max = 60.0, desc = "Radius R0 for the wavelet tolerance function" }
+
+# @brief: Radius R1 for the wavelet tolerance function
+DENDROGR_WAVELET_TOL_FUNCTION_R1 = { class = "semivariant", dtype = "double", default = 220.0, min = 0.0, max = 440.0, desc = "Radius R1 for the wavelet tolerance function" }
+
+# @brief: Tolerance for refinement based on EH
+DENDROGR_EH_REFINE_VAL = { class = "semivariant", dtype = "double", default = 0.4, min = 0.0, max = 1.0, desc = "Tolerance for refinement based on EH" }
+# @brief: Tolerance for coarsening based on EH
+DENDROGR_EH_COARSEN_VAL = { class = "semivariant", dtype = "double", default = 0.6, min = 0.0, max = 1.2, desc = "Tolerance for coarsening based on EH" }
+
+
+# @brief: Gravitational wave extraction frequency
+DENDROGR_GW_EXTRACT_FREQ = { class = "semivariant", dtype = "unsigned int", default = 10, min = 0, max = 2, desc = "Gravitational wave extraction frequency" }
+
+# @brief: Gravitational wave extraction frequency after the merger
+DENDROGR_GW_EXTRACT_FREQ_AFTER_MERGER = { class = "semivariant", dtype = "unsigned int", default = 10, min = 0, max = 20, desc = "Gravitational wave extraction frequency after the merger" }
+
+# @brief: Frequency for performing remeshing test based on wavelets after the merger
+DENDROGR_REMESH_TEST_FREQ_AFTER_MERGER = { class = "semivariant", dtype = "unsigned int", default = 10, min = 0, max = 20, desc = "Frequency for performing remeshing test based on wavelets after the merger" }
+
+# @brief: Global parameter to track if a merged checkpoint file is written.
+DENDROGR_MERGED_CHKPT_WRITTEN = { class = "semivariant", dtype = "bool", default = false, desc = "Global parameter to track if a merged checkpoint file is written.", editable = false }
+
+# == Black Hole Parameters ==
+
+# @brief: AMR radius for the BH location based refinement for the first black hole.
+DENDROGR_BH1_AMR_R = { class = "semivariant", dtype = "double", default = 0.07, min = 0.0, max = 0.14, desc = "AMR radius for the BH location based refinement for the first black hole." }
+# @brief: skip grid point distance from bh < DENDROGR_BH1_CONSTRAINT_R when computing the constraint norms for BH1
+DENDROGR_BH1_CONSTRAINT_R = { class = "semivariant", dtype = "unsigned int", default = 5, min = 0, max = 10, desc = "Skip grid point distance from bh < DENDROGR_BH1_CONSTRAINT_R when computing the constraint norms for BH1" }
+# @brief: Maximum refinement level for BH1
+DENDROGR_BH1_MAX_LEV = { class = "semivariant", dtype = "unsigned int", default = 16, min = 0, max = 24, desc = "Maximum refinement level for BH1" }
+
+# @brief: AMR radius for the BH location based refinement for the second black hole.
+DENDROGR_BH2_AMR_R = { class = "semivariant", dtype = "double", default = 1.3, min = 0.0, max = 3.0, desc = "AMR radius for the BH location based refinement for the second black hole." }
+# @brief: Skip grid point distance from bh < DENDROGR_BH2_CONSTRAINT_R when computing the constraint norms  for BH2
+DENDROGR_BH2_CONSTRAINT_R = { class = "semivariant", dtype = "unsigned int", default = 5, min = 0, max = 10, desc = "Skip grid point distance from bh < DENDROGR_BH2_CONSTRAINT_R when computing the constraint norms  for BH2" }
+# @brief: Maximum refinement level for BH2
+DENDROGR_BH2_MAX_LEV = { class = "semivariant", dtype = "unsigned int", default = 15, min = 0, max = 24, desc = "Maximum refinement level for BH2" }
+
+
+# NESTED PARAMETERS FOR BLACK HOLE 1
+[dendrogr-NMSPC.DENDROGR_BH1]
+MASS = { class = "semivariant", dtype = "double", default = 0.3171512710491704, min = 0.0, max = 0.7 }
+X = { class = "semivariant", dtype = "double", default = 5.3238269436091761, min = -6.0, max = 6.0 }
+Y = { class = "semivariant", dtype = "double", default = 0.0, min = -6.0, max = 6.0 }
+Z = { class = "semivariant", dtype = "double", default = 0.0, min = -6.0, max = 6.0 }
+V_X = { class = "semivariant", dtype = "double", default = -1.7777739959719536e-3, min = -4.0, max = 4.0 }
+V_Y = { class = "semivariant", dtype = "double", default = 0.10049503227336423, min = -4.0, max = 4.0 }
+V_Z = { class = "semivariant", dtype = "double", default = 0.0, min = -4.0, max = 4.0 }
+SPIN = { class = "semivariant", dtype = "double", default = 0.0, min = 0.0, max = 3.0 }
+SPIN_THETA = { class = "semivariant", dtype = "double", default = 0.0, min = 0.0, max = 3.0 }
+SPIN_PHI = { class = "semivariant", dtype = "double", default = 0.0, min = 0.0, max = 3.0 }
+
+# NESTED PARAMETERS FOR BLACK HOLE 2
+[dendrogr-NMSPC.DENDROGR_BH2]
+MASS = { class = "semivariant", dtype = "double", default = 0.6515011227547999, min = -6.0, max = 6.0 }
+X = { class = "semivariant", dtype = "double", default = -2.6761730563908261, min = -6.0, max = 6.0 }
+Y = { class = "semivariant", dtype = "double", default = 0.0, min = -6.0, max = 6.0 }
+Z = { class = "semivariant", dtype = "double", default = 0.0, min = -6.0, max = 6.0 }
+V_X = { class = "semivariant", dtype = "double", default = -0.0017777739959719536, min = -4.0, max = 0 }
+V_Y = { class = "semivariant", dtype = "double", default = -0.10049503227336423, min = -4.0, max = 4.0 }
+V_Z = { class = "semivariant", dtype = "double", default = 0.0, min = -4.0, max = 4.0 }
+SPIN = { class = "semivariant", dtype = "double", default = 0.0, min = 0.0, max = 3.0 }
+SPIN_THETA = { class = "semivariant", dtype = "double", default = 0.0, min = 0.0, max = 3.0 }
+SPIN_PHI = { class = "semivariant", dtype = "double", default = 0.0, min = 0.0, max = 3.0 }
+
+# ========
+# TWO PUNCTURE PARAMETERS
+[TPID-NMSPC]
+FILE_PREFIX = { class = "semivariant", dtype = "string", default = "rit_q2" }
+
+## Two Punction Initial Data Parameters ##
+TP_epsilon = { class = "invariant", dtype = "double", default = 1.0e-6, min = 0, max = 2.0e-6 }
+swap_xz = { class = "invariant", dtype = "int", default = 0, min = -1, max = 1 }
+use_sources = { class = "invariant", dtype = "int", default = 0, min = -1, max = 1 }
+rescale_sources = { class = "invariant", dtype = "int", default = 0, min = -1, max = 1 }
+use_external_initial_guess = { class = "invariant", dtype = "int", default = 0, min = -1, max = 1 }
+do_residuum_debug_output = { class = "invariant", dtype = "int", default = 1, min = 0, max = 2 }
+do_initial_debug_output = { class = "invariant", dtype = "int", default = 1, min = 0, max = 2 }
+multiply_old_lapse = { class = "invariant", dtype = "int", default = 0, min = -1, max = 1 }
+TP_Tiny = { class = "invariant", dtype = "double", default = 1.0e-15, min = 0, max = 2.0e-15 }
+TP_Extend_Radius = { class = "invariant", dtype = "double", default = 0.0, min = -1.0, max = 1.0 }
+Newton_maxit = { class = "invariant", dtype = "int", default = 5, min = 0, max = 10 }
+
+# 1/2 coordinate separation between black holes
+par_b = { class = "semivariant", dtype = "double", default = 4.0, min = 0, max = 8.0 }
+
+par_m_plus = { class = "semivariant", dtype = "double", default = 0.3171512710491704, min = 0, max = 2.0 }
+par_m_minus = { class = "semivariant", dtype = "double", default = 0.6515011227547999, min = 0, max = 2.0 }
+
+target_M_plus = { class = "semivariant", dtype = "double", default = 0.3171512710491704, min = 0, max = 2.0 }
+target_M_minus = { class = "semivariant", dtype = "double", default = 0.6515011227547999, min = 0, max = 2.0 }
+
+# Momentum
+par_P_plus = { class = "semivariant", dtype = "double[]", default = [
+    -1.7777739959719536e-3,
+    1.0049503227336423e-1,
+    0.0,
+], size = 3 }
+par_P_minus = { class = "semivariant", dtype = "double[]", default = [
+    1.7777739959719536e-3,
+    -1.0049503227336423e-1,
+    0.0,
+], size = 3 }
+
+# Spin
+par_S_plus = { class = "semivariant", dtype = "double[]", default = [
+    0.0,
+    0.0,
+    0.0,
+], size = 3 }
+par_S_minus = { class = "semivariant", dtype = "double[]", default = [
+    0.0,
+    0.0,
+    0.0,
+], size = 3 }
+
+center_offset = { class = "semivariant", dtype = "double[]", default = [
+    1.323826943609176,
+    0.0,
+    0.0,
+], size = 3 }
+
+# 0-Use ADM mass and iteratively solve for bare mass, 1-Use bare mass
+give_bare_mass = { class = "semivariant", dtype = "unsigned int", default = 1, min = 0, max = 1 }
+# Select lapse: 0-antisymmetric, 1-averaged, 2-psi^n, 3-Brownsville
+initial_lapse = { class = "semivariant", dtype = "int", default = 2, min = 0, max = 3 }
+
+# Grid Setup Method: 0-Taylor expansion, 1-Evaluation
+grid_setup_method = { class = "semivariant", dtype = "unsigned int", default = 1, min = 0, max = 1 }
+
+# Deprecated
+solve_momentum_constraint = { class = "semivariant", dtype = "int", default = 1, min = 0, max = 2 }
+verbose = { class = "semivariant", dtype = "unsigned int", default = 1, min = 0, max = 1 }
+adm_tol = { class = "semivariant", dtype = "double", default = 1.0e-10, min = 0, max = 2.0e-10 }
+Newton_tol = { class = "semivariant", dtype = "double", default = 1.0e-10, min = 0, max = 2.0e-10 }
+
+# Exponent n for INITIAL_LAPSE=2, where alpha=psi^n
+initial_lapse_psi_exponent = { class = "semivariant", dtype = "double", default = -2.0, min = -4.0, max = 4.0 }
+
+# Grid points for spectral grid
+npoints_A = { class = "semivariant", dtype = "unsigned int", default = 60, min = 0, max = 120 }
+npoints_B = { class = "semivariant", dtype = "unsigned int", default = 60, min = 0, max = 120 }
+npoints_phi = { class = "semivariant", dtype = "unsigned int", default = 60, min = 0, max = 120 }
+
+# ======
+# == BLACK HOLE LOCATION PARAMETERS
+[BHLOC-NMSPC]
+EXTRACTION_VAR_ID = { class = "semivariant", dtype = "unsigned int", default = 0, min = 0, max = 10 }
+EXTRACTION_TOL = { class = "semivariant", dtype = "double", default = 0.3, min = -1.0, max = 1.0 }
+
+# ======
+# == Gravitational wave PARAMETERS
+[GW-NMSPC]
+DENDROGR_GW_NUM_RADAII = { class = "semivariant", dtype = "unsigned int", default = 6, min = 0, max = 10 }
+DENDROGR_GW_NUM_LMODES = { class = "semivariant", dtype = "unsigned int", default = 3, min = 0, max = 10 }
+# size should be DENDROGR_GW_NUM_RADAII
+DENDROGR_GW_RADAII = { class = "semivariant", dtype = "unsigned int[]", default = [
+    50,
+    60,
+    70,
+    80,
+    90,
+    100,
+], size = 6 }
+# size should be DENDROGR_GW_NUM_LMODES
+DENDROGR_GW_L_MODES = { class = "semivariant", dtype = "unsigned int[]", default = [
+    2,
+    3,
+    4,
+], size = 3 }
+# @brief: GW output precision in .dat files
+DENDROGR_GW_OUTPUT_PRECISION = { class = "invariant", dtype = "unsigned int", default = 10, min = 0, max = 20 }
