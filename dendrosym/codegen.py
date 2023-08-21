@@ -22,7 +22,7 @@ from dendrosym import nr
 import dendrosym
 
 
-def extract_expression(expression):
+def extract_expression(expression, is_symmetric_matrix=True):
     """This extracts out individual expressions
 
     This is meant to be used with other functions to try and pull out
@@ -46,14 +46,20 @@ def extract_expression(expression):
                 list_expressions.append(expression[ii])
         # otherwise it's a matrix
         else:
-            num_e += len(expression)
 
-            # NOTE: original method, does *not* check for symmetry
-            for (
-                j,
-                k,
-            ) in enumerate(mi):
-                list_expressions.append(sym.sympify(expression[k]))
+            if is_symmetric_matrix:
+
+                # NOTE: original method, does *not* check for symmetry
+                for (
+                    j,
+                    k,
+                ) in enumerate(mi):
+                    list_expressions.append(sym.sympify(expression[k]))
+                    num_e += 1
+            else:
+                for (j, k) in expression.shape:
+                    list_expressions.append(sym.sympify(expression[j,k]))
+                    num_e += 1
 
             # NOTE: my implementation if there's symmetry is currently
             # really slow and broken, need to consider more info...
@@ -179,14 +185,18 @@ def construct_cse(
 
 
 def construct_cse_from_list(
-    expression_list, temp_var_prefix="DENDRO_", ignore_symbols=[]
+    expression_list, temp_var_prefix="DENDRO_", ignore_symbols=[], optimizations=None
 ):
     temp_var_gen = custom_numbered_symbols(temp_var_prefix)
 
     print("Now generating cse!", file=sys.stderr)
+
+    if optimizations is not None:
+        print("    WARNING: Optimizations are set, this could take a while!", file=sys.stderr)
+
     # cse_out = sym.cse(expression_list, symbols=temp_var_gen, optimizations="basic", order="none")
     cse_out = sym.cse(
-        expression_list, symbols=temp_var_gen, order="none", ignore=ignore_symbols
+        expression_list, symbols=temp_var_gen, optimizations='basic', order="none", ignore=ignore_symbols
     )
     print("Finished generating cse!", file=sys.stderr)
 

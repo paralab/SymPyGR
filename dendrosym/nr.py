@@ -64,6 +64,8 @@ negone = sym.symbols("negone_")
 e_i = [0, 1, 2]
 e_ij = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2), (2, 0), (2, 1), (2, 2)]
 
+e_ij_offdiag = [(0, 1), (0, 2), (1, 2)]
+
 Ricci = undef
 
 
@@ -130,7 +132,7 @@ def set_first_derivative(g):
 
     global d
 
-    if type(g) is sym.Symbol:
+    if type(g) is sym.Symbol or type(g) is str:
         d = sym.Function(g)
     else:
         d = g
@@ -169,7 +171,7 @@ def set_second_derivative(g):
 
     global d2s
 
-    if type(g) is sym.Symbol:
+    if type(g) is sym.Symbol or type(g) is str:
         d2s = sym.Function(g)
     else:
         d2s = g
@@ -207,7 +209,12 @@ def set_advective_derivative(g):
     """
 
     global ad
-    ad = sym.Function(g)
+
+    if type(g) is sym.Symbol or type(g) is str:
+        ad = sym.Function(g)
+    else:
+        ad = g
+
     return ad
 
 

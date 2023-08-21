@@ -9,11 +9,16 @@ many of the classes and methods of those in this file.
 
 import re
 import sys
+import hashlib
+from pathlib import Path
+import dill as pickle
 
 import sympy as sym
 import numpy as np
 
 import dendrosym
+
+# pickle.detect.trace(True)
 
 
 class ImproperInitalization(Exception):
@@ -38,9 +43,11 @@ class DendroConfiguration:
 
     """
 
-    def __init__(self, project_name: str):
+    def __init__(self, project_name: str, project_description: str = ""):
         self.project_name = project_name
         self.project_upper = project_name.upper()
+
+        self.project_description = project_description
 
         self.all_vars = {"general": [], "parameter": {"general": {}}}
         self.all_var_names = {"general": [], "parameter": {"general": {}}}
@@ -55,6 +62,7 @@ class DendroConfiguration:
 
         self.bcs_info = {"general": {}}
 
+        # NOTE: stored_rhs_function is the only thing that is restored by the pickle!
         self.stored_rhs_function = {}
 
         self.stored_staged_exprs = {}
@@ -64,6 +72,316 @@ class DendroConfiguration:
 
         # by default we also want to pull the derivatives from the derivative workspace
         self.use_deriv_workspace = True
+
+        # attempt to restore from pickle
+        self.load_all_rhs_from_pickle()
+
+    def create_project_config(self, config_file=""):
+        output_dict = {}
+
+        output_dict["project_name"] = self.project_name
+        output_dict["project_description"] = self.project_description
+
+        output_dict["all_var_names"] = self.all_var_names
+
+        output_dict["var_counts"] = {}
+        for key, item in self.all_var_names.items():
+            if key == "parameter":
+                continue
+            output_dict["var_counts"][key] = len(item)
+
+        output_dict["dendrosym_version"] = dendrosym.__version__
+
+        if config_file != "":
+            config_file_hash = dendrosym.utils.calculate_sha256(config_file)
+        else:
+            config_file_hash = ""
+
+        output_dict["config_file_hash"] = config_file_hash
+
+        output_dict["unique_deriv_counts"] = {}
+        largest_num_derivs = 0
+        for var_type in self.all_var_names.keys():
+            if var_type == "parameter":
+                continue
+            print(
+                f"Now calculating the number of found unique derivatives for var type {var_type}..."
+            )
+            uq_deriv_count = self.get_num_unique_derivs(var_type)
+            print("  ...done")
+
+            if uq_deriv_count > largest_num_derivs:
+                largest_num_derivs = uq_deriv_count
+            output_dict["unique_deriv_counts"][var_type] = uq_deriv_count
+
+        output_dict["num_derivs"] = largest_num_derivs
+
+        return output_dict
+
+    def create_parameter_variable_config(self):
+        # gather all parameters
+        pars = self.all_vars["parameter"]
+
+        all_params = {}
+
+        for typ, additional_pars in pars.items():
+            # print(typ, additional_pars)
+            for par in additional_pars:
+                if par.num_params > 1:
+                    dtype = par.dtype + "[]"
+                else:
+                    dtype = par.dtype
+
+                par_name = self.project_upper + "_" + par.var_name.upper()
+
+                all_params[par_name] = {
+                    "class": "variant",
+                    "dtype": dtype,
+                    "desc": par.description,
+                    "default": par.default,
+                }
+
+                if par.num_params > 1:
+                    all_params[par_name]["size"] = par.num_params
+
+        # now we add in the constraint info
+        # TODO: might want to update the naming here
+        for key, items in self.evolution_constraint_info.items():
+            if key == "trace_zero":
+                continue
+            elif key == "pos_floor":
+                # generate params for each of these
+                for symb in items:
+                    var_name = str(symb)
+                    if var_name.endswith(self.idx_str):
+                        var_name = var_name.replace(self.idx_str, "")
+                    par_name = self.project_upper + "_" + var_name.upper() + "_FLOOR"
+                    all_params[par_name] = {
+                        "class": "variant",
+                        "dtype": "double",
+                        "desc": "Positive floor value for variable " + var_name,
+                        "default": 1e-5
+                    }
+
+        dsolve_additional_params = {}
+
+        # print(all_params)
+        all_params = {self.project_name + "-NMSPC": all_params}
+
+        # then we also need the base dendro additional parameters for
+
+        all_params["requirements"] = []
+
+        for var_type in self.all_var_names.keys():
+            if len(self.all_var_names[var_type]) == 0:
+                continue
+            if var_type == "parameter":
+                continue
+
+            num_vars = len(self.all_var_names[var_type])
+
+            dsolve_additional_params["DSOLVER_" + var_type.upper() + "_NUM_VARS"] = {
+                "class": "invariant",
+                "dtype": "unsigned int",
+                "default": num_vars,
+                "desc": "Number of " + var_type + " variables.",
+            }
+
+            dsolve_additional_params[
+                "DSOLVER_VTU_OUTPUT_NUM_" + var_type.upper() + "_VARS"
+            ] = {
+                "class": "semivariant",
+                "dtype": "unsigned int",
+                "default": num_vars,
+                "desc": "The number of "
+                + var_type
+                + " variables to be written to the VTU output. Corresponds to the output indices parameter.",
+            }
+
+            dsolve_additional_params[
+                "DSOLVER_VTU_OUTPUT_" + var_type.upper() + "_INDICES"
+            ] = {
+                "class": "semivariant",
+                "dtype": "unsigned int[]",
+                "size": num_vars,
+                "default": [ii for ii in range(num_vars)],
+                "desc": "The indices of the variables you wish to have as output. The numbers are: "
+                + ", ".join(
+                    [
+                        f"{ii} -> {var}"
+                        for ii, var in enumerate(self.all_var_names[var_type])
+                    ]
+                ),
+            }
+
+            all_params["requirements"].append(
+                {
+                    "cond": "DSOLVER_VTU_OUTPUT_NUM_"
+                    + var_type.upper()
+                    + "_VARS <= DSOLVER_NUM_"
+                    + var_type.upper()
+                    + "_NUM_VARS",
+                    "message": "Number of VTU "
+                    + var_type
+                    + " output variables must be less than or equal to the number of variables!",
+                }
+            )
+
+            if var_type == "evolution" or var_type == "general":
+                all_params["requirements"].append(
+                    {
+                        "cond": "DSOLVER_NUM_REFINE_VARS <= DSOLVER_"
+                        + var_type.upper()
+                        + "_NUM_VARS",
+                        "message": "Number of refinement variables must be less than or equal to the number of variables!",
+                    }
+                )
+
+                dsolve_additional_params["DSOLVER_NUM_REFINE_VARS"] = {
+                    "class": "semivariant",
+                    "dtype": "unsigned int",
+                    "default": num_vars,
+                    "desc": "The number of "
+                    + var_type
+                    + " variables to used during refinement. Corresponds to the refine variable indices parameter.",
+                }
+
+                dsolve_additional_params["DSOLVER_REFINE_VARIABLE_INDICES"] = {
+                    "class": "semivariant",
+                    "dtype": "unsigned int[]",
+                    "size": num_vars,
+                    "default": [ii for ii in range(num_vars)],
+                    "desc": "The indices of the variables for use in refinement. Be sure to update DSOLVER_NUM_REFINE_VARS. The numbers are: "
+                    + ", ".join(
+                        [
+                            f"{ii} -> {var}"
+                            for ii, var in enumerate(self.all_var_names[var_type])
+                        ]
+                    ),
+                }
+
+        # if constraint is in our variables...
+        if "constraint" in self.all_var_names.keys():
+            num_constraint = len(self.all_var_names["constraint"])
+            dsolve_additional_params["DSOLVER_CONSTRAINT_NUM_VARS"] = {
+                "class": "invariant",
+                "dtype": "unsigned int",
+                "default": num_constraint,
+                "desc": "Number of constraint variables",
+            }
+            dsolve_additional_params["DSOLVER_NUM_CONST_VARS_VTU_OUTPUT"] = {
+                "class": "semivariant",
+                "dtype": "unsigned int",
+                "default": num_constraint,
+                "desc": "The number of constraint variables to be written to the VTU output. Corresponds to the output indices parameter.",
+            }
+
+        all_params["dsolve-NMSPC"] = dsolve_additional_params
+
+        return all_params
+
+    def save_rhs_to_pickle(self, var_type: str):
+        """Saves a RHS set of functions to a Pickle
+
+        Parameters
+        ----------
+        var_type : str
+            _description_
+        """
+        (
+            all_exp,
+            all_rhs_names,
+            staged_exp,
+            staged_names,
+            orig_n_exp,
+        ) = self.get_rhs_functions_all(var_type, include_rhs_in_name=False)
+
+        collection = {
+            "all_exp": all_exp,
+            "all_rhs_names": all_rhs_names,
+            "staged_exp": staged_exp,
+            "staged_names": staged_names,
+            "orig_n_exp": orig_n_exp,
+        }
+
+        # get the dendro folder from working directory
+        dendroFolder = Path.cwd() / ".dendro"
+        # make the directory, if it doesn't exist
+        dendroFolder.mkdir(exist_ok=True)
+
+        rhsPickleFile = dendroFolder / f"{var_type}_rhs.pkl"
+
+        # print(rhsPickleFile)
+
+        with open(rhsPickleFile, "wb") as f:
+            pickle.dump(collection, f, recurse=True)
+
+    def load_rhs_from_pickle(self, var_type: str):
+        # get the dendro folder from working directory
+        dendroFolder = Path.cwd() / ".dendro"
+
+        if not dendroFolder.exists():
+            # raise a directory error, then that can be handled in a try-except block
+            raise NotADirectoryError(
+                "The dendro folder does not exist. Cannot load RHS from pickle"
+            )
+
+        rhsPickleFile = dendroFolder / f"{var_type}_rhs.pkl"
+
+        print("loading", rhsPickleFile)
+
+        if not rhsPickleFile.exists():
+            print(f"WARNING: Could not find RHS pickle file for '{var_type}'")
+            return
+
+        # then load it if it works
+        with open(rhsPickleFile, "rb") as f:
+            collection = pickle.load(f)
+
+        print("loaded", rhsPickleFile)
+
+        temp_dict = self.stored_rhs_function.get(var_type, {})
+
+        # load it in then
+        temp_dict["exprs"] = collection["all_exp"]
+        temp_dict["all_rhs_names"] = collection["all_rhs_names"]
+        temp_dict["staged_exprs"] = collection["staged_exp"]
+        temp_dict["staged_exprs_names"] = collection["staged_names"]
+        temp_dict["orig_n_exp"] = collection["orig_n_exp"]
+
+        self.stored_rhs_function[var_type] = temp_dict
+        # and done!
+
+    def load_all_rhs_from_pickle(self):
+        # get the dendro folder from working directory
+        dendroFolder = Path.cwd() / ".dendro"
+
+        if not dendroFolder.exists():
+            # if the folder doesn't exist, there's nothing to restore :(
+            return
+
+        print("Found the Dendro folder, attempting to load saved pickles")
+        # find all of the pickle files that end in _rhs
+        for file in dendroFolder.glob("*_rhs.pkl"):
+            print("   attempting ", file)
+            var_name = file.name[:-8]
+
+            self.load_rhs_from_pickle(var_name)
+
+            print("    Loaded - ", var_name)
+
+        # and done!
+
+    def save_all_rhs_to_pickle(self):
+        for var_name in self.all_rhs_functions.keys():
+            if var_name == "parameters" or self.all_rhs_functions[var_name] is None:
+                continue
+
+            print("Saving", var_name, "to a pickle file to save work...")
+
+            self.save_rhs_to_pickle(var_name)
+
+        # and done!
 
     def set_idx_str(self, idx_str):
         """Store the string used for indexing into the variables
@@ -616,54 +934,57 @@ class DendroConfiguration:
 
         return self._generate_enum_var_names(list_vars_clean, enum_prefix)
 
-    def set_rhs_equation_function(self, var_type: str, rhs_func):
+    def set_rhs_equation_function(
+        self, var_type: str, rhs_func, override_checks: bool = False
+    ):
         if var_type == "parameter":
             raise ValueError("Cannot set RHS function to parameters")
 
-        # first we need to check that the function gives us what we want
-        # so we need to evaluate it first
-        rhs_list, var_list = rhs_func()
+        if not override_checks:
+            # first we need to check that the function gives us what we want
+            # so we need to evaluate it first
+            rhs_list, var_list = rhs_func()
 
-        if len(rhs_list) != len(var_list):
-            raise ImproperInitalization(
-                "The RHS function does not have the same number"
-                + " of expressions as variables"
-            )
-
-        # so, now we make a copy of our variables for this variable type
-        temp_vars = self.all_vars.get(var_type, []).copy()
-
-        if len(temp_vars) == 0:
-            raise ImproperInitalization(
-                f"{var_type} does not have variables assigned to it."
-            )
-
-        # we can't change the order, but we need to make sure they're all there
-        # so we traverse the variable list
-        for ii, var_ in enumerate(var_list):
-            found_match = False
-
-            # iterate through our temp_vars list and find a match
-            for temp_var in temp_vars:
-                if temp_var == var_:
-                    # say we found a match, and then remove it
-                    found_match = True
-                    temp_vars.remove(temp_var)
-                    break
-
-            if not found_match:
+            if len(rhs_list) != len(var_list):
                 raise ImproperInitalization(
-                    f"Couldn't find identical variable {var_} in stored list"
+                    "The RHS function does not have the same number"
+                    + " of expressions as variables"
                 )
 
-        # now make sure that we've cleared both lists
-        if len(temp_vars) != 0:
-            raise ImproperInitalization(
-                "Not all assigned variables to '"
-                + var_type
-                + "' were included in RHS function. Remaining variables were:"
-                + repr(temp_vars)
-            )
+            # so, now we make a copy of our variables for this variable type
+            temp_vars = self.all_vars.get(var_type, []).copy()
+
+            if len(temp_vars) == 0:
+                raise ImproperInitalization(
+                    f"{var_type} does not have variables assigned to it."
+                )
+
+            # we can't change the order, but we need to make sure they're all there
+            # so we traverse the variable list
+            for ii, var_ in enumerate(var_list):
+                found_match = False
+
+                # iterate through our temp_vars list and find a match
+                for temp_var in temp_vars:
+                    if temp_var == var_:
+                        # say we found a match, and then remove it
+                        found_match = True
+                        temp_vars.remove(temp_var)
+                        break
+
+                if not found_match:
+                    raise ImproperInitalization(
+                        f"Couldn't find identical variable {var_} in stored list"
+                    )
+
+            # now make sure that we've cleared both lists
+            if len(temp_vars) != 0:
+                raise ImproperInitalization(
+                    "Not all assigned variables to '"
+                    + var_type
+                    + "' were included in RHS function. Remaining variables were:"
+                    + repr(temp_vars)
+                )
 
         # if that's all good, then we're good to add the function to our list
         self.all_rhs_functions.update({var_type: rhs_func})
@@ -722,6 +1043,38 @@ class DendroConfiguration:
 
         return lexp, lname
 
+    def get_rhs_functions_all(self, var_type: str, include_rhs_in_name: bool = True):
+        """A more advanced version of getting RHS functions, returns 5 things"""
+
+        if self.stored_rhs_function.get(var_type, None) is not None:
+            temp_funcs = self.stored_rhs_function[var_type]
+            all_exp = temp_funcs["exprs"]
+            all_rhs_names = temp_funcs["all_rhs_names"]
+            if not include_rhs_in_name:
+                all_rhs_names_tmp = []
+                for rhs_name in all_rhs_names:
+                    # replace/remove the _rhs side
+                    all_rhs_names_tmp.append(rhs_name.replace("_rhs", ""))
+                all_rhs_names = all_rhs_names_tmp
+            orig_n_exp = temp_funcs["orig_n_exp"]
+
+            staged_exp = temp_funcs["staged_exprs"]
+            staged_names = temp_funcs["staged_exprs_names"]
+            print("Found stored RHS info", file=sys.stderr)
+        else:
+            # so now we can get started by getting the rhs information
+            (
+                all_exp,
+                all_rhs_names,
+                staged_exp,
+                staged_names,
+                orig_n_exp,
+            ) = self._extract_rhs_expressions(
+                var_type, append_rhs_to_var=include_rhs_in_name
+            )
+
+        return all_exp, all_rhs_names, staged_exp, staged_names, orig_n_exp
+
     def _extract_rhs_expressions(self, var_type: str, append_rhs_to_var=True):
         """An internal function that extracts the expressions for a variable type
 
@@ -760,7 +1113,21 @@ class DendroConfiguration:
             expression = rhs_list[ii]
             the_var = var_list[ii]
 
-            list_expressions, num_e = dendrosym.codegen.extract_expression(expression)
+            # check if var is symmetric
+            is_sym = False
+            if type(the_var) == sym.Matrix:
+                if the_var.shape == (3, 3):
+                    # check if sym 3x3
+                    if (
+                        the_var[0, 1] == the_var[1, 0]
+                        and the_var[0, 2] == the_var[2, 0]
+                        and the_var[1, 2] == the_var[2, 1]
+                    ):
+                        is_sym = True
+
+            list_expressions, num_e = dendrosym.codegen.extract_expression(
+                expression, is_symmetric_matrix=is_sym
+            )
 
             # note: if we have a sym.Matrix as our variable, we need to then
             # keep in mind the indexing so we can build the RHS variables
@@ -787,7 +1154,7 @@ class DendroConfiguration:
             # now we can make sure they have the same number
             if len(staged_exprs) != len(staged_vars):
                 raise ImproperInitalization(
-                    f"The staged expression function for {var_type}"
+                    f"The staged expression function for {var_type} has an invalid number of outputs"
                 )
 
             # quick check on the staged expressions, make sure they're not in a sympy matrix
@@ -2406,6 +2773,44 @@ class DendroConfiguration:
 
         return out_alloc, out_dealloc, out_calc, all_grad_names, start_index
 
+    def get_unique_ders_from_var_type(self, var_type):
+        (
+            all_exp,
+            all_rhs_names,
+            staged_exp,
+            staged_names,
+            orig_n_exp,
+        ) = self.get_rhs_functions_all(var_type, True)
+
+        # now that we have them, we find all unique derivatives below
+
+        grad_list, grad2_list, agrad_list = self.find_all_unique_ders(
+            all_exp, all_rhs_names
+        )
+
+        (
+            grad_list_staged,
+            grad2_list_staged,
+            agrad_list_staged,
+        ) = self.find_all_unique_ders(staged_exp, all_rhs_names)
+
+        # count all of the unique ones
+        uq_grads = set(grad_list)
+        uq_grads.update(grad_list_staged)
+
+        uq_grad2s = set(grad2_list)
+        uq_grad2s.update(grad2_list_staged)
+
+        uq_agrads = set(agrad_list)
+        uq_agrads.update(agrad_list_staged)
+
+        return uq_grads, uq_grad2s, uq_agrads
+
+    def get_num_unique_derivs(self, var_type):
+        uq_grads, uq_grad2s, uq_agrads = self.get_unique_ders_from_var_type(var_type)
+
+        return len(uq_grads) + len(uq_grad2s) + len(uq_agrads)
+
     # TODO: potentially remove this from static and make it real
     @staticmethod
     def find_all_unique_ders(rhs_funcs, rhs_names, sort=True):
@@ -2549,12 +2954,4 @@ class DendroConfiguration:
     #     pass
 
     def add_staged_function(self, var_type, expr_func):
-        staged_var_names, exprs = expr_func()
-
-        if len(staged_var_names) != len(exprs):
-            raise ImproperInitalization(
-                "The staged expression function does not have the same number"
-                + " of expressions as variables"
-            )
-
         self.stored_staged_exprs.update({var_type: expr_func})

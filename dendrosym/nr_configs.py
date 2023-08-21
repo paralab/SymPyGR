@@ -25,10 +25,10 @@ class NRConfig(dendrosym.DendroConfiguration):
     from the symbolic equations.
     """
 
-    def __init__(self, project_name: str):
-        super().__init__(project_name=project_name)
-        self.project_name = project_name
-        self.project_upper = project_name.upper()
+    def __init__(self, project_name: str, project_description: str = ""):
+        super().__init__(
+            project_name=project_name, project_description=project_description
+        )
 
         # make all vars a dictionary in case there are
         # other types to store, but by default we will have
@@ -65,7 +65,8 @@ class NRConfig(dendrosym.DendroConfiguration):
 
         self.evolution_constraint_info = {"trace_zero": [], "pos_floor": []}
 
-        self.stored_rhs_function = {}
+        # NOTE: stored_rhs_function is the only thing that is restored by the pickle!
+        # self.stored_rhs_function = {}
 
         # and initialize the intial data functions
         self.all_initial_data_functions = {"general": [], "evolution": []}
@@ -146,7 +147,6 @@ class NRConfig(dendrosym.DendroConfiguration):
             )
 
     def generate_evolution_constraints(self):
-
         if self.metric_var is None:
             raise ImproperInitalization(
                 "Metric was not set, cannot generate evolution constraints"
@@ -178,7 +178,6 @@ class NRConfig(dendrosym.DendroConfiguration):
 
         # now we can start adding our other constraints
         for var_use in self.evolution_constraint_info.get("trace_zero", []):
-
             return_str += "////\n////APPLYING TRACE ZERO TO "
             # for trace of zero, we need to get all of the variables
             var_names = self.clean_var_names([var_use])
@@ -205,7 +204,6 @@ class NRConfig(dendrosym.DendroConfiguration):
             return_str += "//// END APPLICATION OF TRACE ZERO\n////\n\n"
 
         for var_use in self.evolution_constraint_info.get("pos_floor"):
-
             return_str += "////\n////APPLYING POSITIVE FLOOR TO "
             single_var_name = self.clean_var_names([var_use])[0]
             return_str += single_var_name + "\n"

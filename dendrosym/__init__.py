@@ -56,3 +56,5 @@ from . import code_printer
 
 
 # from . import graph_coarsening
+
+__version__ = "0.0.1"

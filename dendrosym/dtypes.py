@@ -70,13 +70,34 @@ import numpy as np
 class ParameterVariable:
     """For defining parameters used in equations"""
 
-    def __init__(self, var_name, dtype="double", num_params=1):
+    def __init__(self, var_name, dtype="double", num_params=1, description="", default=1.0):
 
         self.var_name = var_name
         self.dtype = dtype
         # list size is how many different parameters belong to
         # this one
         self.num_params = num_params
+
+        self.description = description
+
+        if "int" in dtype:
+            if num_params == 1:
+                self.default = int(default)
+            else:
+                if type(default) is not list:
+                    self.default = [int(default) for x in range(num_params)]
+                else:
+                    self.default = [int(x) for x in default]
+        elif "double" in dtype or "float" in dtype:
+            if num_params == 1:
+                self.default = float(default)
+            else:
+                if type(default) is not list:
+                    self.default = [float(default) for x in range(num_params)]
+                else:
+                    self.default = [float(x) for x in default]
+        else:
+            self.default = default
 
         # make the pretty var names
         if self.num_params > 1:

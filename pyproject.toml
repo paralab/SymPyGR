@@ -14,6 +14,8 @@ pycachesim = "^0.3.1"
 tomlkit = "^0.11.8"
 numpy-quaternion = "^2022.4.3"
 
+[tool.poetry.scripts]
+dendro-build = "dendrosym.cli:main"
 
 [build-system]
 requires = ["poetry-core"]
