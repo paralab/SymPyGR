@@ -1581,6 +1581,21 @@ class DendroConfiguration:
             # # need to sympify the expressions in the list first:
             # # just in case they are constants!
             # expressions = [sym.sympify(expr) for expr in expressions]
+            if (
+                type(dendrosym.nr.d) is not sym.core.function.UndefinedFunction
+                or type(dendrosym.nr.d2s) is not sym.core.function.UndefinedFunction
+            ):
+                print(".... Now restoring some of the symbols from derivatives...")
+                temp_exprs = []
+                for ii, expr in enumerate(expressions):
+                    expr_temp = dendrosym.derivs.restore_only_symbols(expr)
+                    temp_exprs.append(expr_temp)
+
+                expressions = temp_exprs
+
+                temp_exprs = None
+
+                print("... finished replacing the derivatives")
 
             # convert the variables to clean variables
             tmp_vars = []
