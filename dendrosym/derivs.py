@@ -23,6 +23,9 @@ symbols_replace = None
 def first_der(dir, expr):
     global variable_strs, xx, yy, zz, idx_str, symbols_find, symbols_replace
 
+    if expr == 0:
+        return 0
+
     d_order = (xx, yy, zz)
 
     if symbols_find is None or symbols_replace is None:
@@ -56,6 +59,9 @@ def first_der(dir, expr):
 
 def second_der(dir1, dir2, expr):
     global variable_strs, xx, yy, zz, idx_str, symbols_find, symbols_replace
+
+    if expr == 0:
+        return 0
 
     d_order = (xx, yy, zz)
 

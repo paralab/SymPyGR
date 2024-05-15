@@ -34,6 +34,38 @@ BHOLE_VARS = [
 ]
 
 
+def generate_param_text_new(param_data: dict):
+    # first start by sorting the list by namespaces
+
+    # each one should have only a few options:
+    # name: name of parameter
+    # namespace: what namespace to throw it in, if it doesn't exist it's just dsolve
+    # dtype: data type (use C standard)
+    # desc: description of the parameter
+    # optional: bool on whether it's optional or not
+    # internal: bool on whether it's internal only (not used as much any more)
+
+    # start by sorting into sub lists
+    param_divided = {"dsolve": []}
+
+    for name, param_data in param_data.items():
+        temp_list = param_divided.get(param_data.get("namespace", "dsolve"), [])
+        param_data["name"] = name
+        temp_list.append(param_data)
+
+        param_divided[param_data.get("namespace", "dsolve")] = temp_list
+
+    # then sort them
+    # for namespace in param_divided:
+    #     param_divided[namespace].sort()
+
+    from pprint import pprint
+
+    pprint(param_divided)
+
+    pass
+
+
 def get_rank_npes(n_tabs=2, tab_char="    "):
     """Generates the code for getting MPI rank and size
 
@@ -1014,7 +1046,6 @@ def generate_all_parameter_text(project_short: str, filename: str, is_gr: bool =
 
             setup_dict[key] = curr_data
 
-
     # start with the namespace block
     paramh_str = f"namespace dsolve\n{{\n"
     paramh_str += f"{t}void readParamFile(const char* inFile, " + "MPI_Comm comm);\n"
@@ -1037,7 +1068,8 @@ def generate_all_parameter_text(project_short: str, filename: str, is_gr: bool =
     )
     paramc_str += f"{t}BH BH1;\n{t}BH BH2;\n"
     paramc_str += (
-        f"{t}//RefinementMode DSOLVER_ID_TYPE_REFINEMENT_MODE = " + "RefinementMode::WAMR;\n"
+        f"{t}//RefinementMode DSOLVER_ID_TYPE_REFINEMENT_MODE = "
+        + "RefinementMode::WAMR;\n"
     )
     paramc_str += f"{t}Point DSOLVER_ID_TYPE_BH_LOC[2];\n"
     paramc_str += f"{t}unsigned int DSOLVER_CURRENT_RK_STEP = 0;\n"
@@ -1696,7 +1728,6 @@ def generate_sample_config_file_text(
     additional_settings = setup_dict.pop("additional_parameters", {})
     requirements = additional_settings.pop("requirements", [])
     additional_data = setup_dict.pop("additional_data", {})
-
 
     # start with the output string
     out_str = ""
