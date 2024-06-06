@@ -501,17 +501,6 @@ docs = ["furo", "olefile", "sphinx (>=2.4)", "sphinx-copybutton", "sphinx-inline
 tests = ["check-manifest", "coverage", "defusedxml", "markdown2", "olefile", "packaging", "pyroma", "pytest", "pytest-cov", "pytest-timeout"]
 
 [[package]]
-name = "pycachesim"
-version = "0.3.1"
-description = "Python Cache Hierarchy Simulator"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "pycachesim-0.3.1.tar.gz", hash = "sha256:1d84977a2b8873e537b9e589f484faec42a9323bb6526ce279d0798a54f35c5a"},
-]
-
-[[package]]
 name = "pyparsing"
 version = "3.0.9"
 description = "pyparsing module - Classes and methods to define and execute parsing grammars"

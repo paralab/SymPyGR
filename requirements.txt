@@ -1,7 +1,7 @@
 matplotlib
 networkx
 sympy
-pycachesim
+dill
 tomlkit
 numpy-quaternion
 cogapp
