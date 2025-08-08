@@ -98,6 +98,9 @@ def get_derivs():
     dendrosym.nr.set_first_derivative(first_der)
     dendrosym.nr.set_second_derivative(second_der)
 
+    # set advective to first_der just in case
+    dendrosym.nr.set_advective_derivative(first_der)
+
     return first_der, second_der
 
 

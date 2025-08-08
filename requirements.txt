@@ -3,5 +3,4 @@ networkx
 sympy
 dill
 tomlkit
-numpy-quaternion
 cogapp

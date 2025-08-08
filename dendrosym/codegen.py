@@ -57,8 +57,8 @@ def extract_expression(expression, is_symmetric_matrix=True):
                     list_expressions.append(sym.sympify(expression[k]))
                     num_e += 1
             else:
-                for (j, k) in expression.shape:
-                    list_expressions.append(sym.sympify(expression[j,k]))
+                for j, k in expression.shape:
+                    list_expressions.append(sym.sympify(expression[j, k]))
                     num_e += 1
 
             # NOTE: my implementation if there's symmetry is currently
@@ -192,11 +192,18 @@ def construct_cse_from_list(
     print("Now generating cse!", file=sys.stderr)
 
     if optimizations is not None:
-        print("    WARNING: Optimizations are set, this could take a while!", file=sys.stderr)
+        print(
+            "    WARNING: Optimizations are set, this could take a while!",
+            file=sys.stderr,
+        )
 
     # cse_out = sym.cse(expression_list, symbols=temp_var_gen, optimizations="basic", order="none")
     cse_out = sym.cse(
-        expression_list, symbols=temp_var_gen, optimizations='basic', order="none", ignore=ignore_symbols
+        expression_list,
+        symbols=temp_var_gen,
+        optimizations="basic",
+        order="none",
+        ignore=ignore_symbols,
     )
     print("Finished generating cse!", file=sys.stderr)
 
