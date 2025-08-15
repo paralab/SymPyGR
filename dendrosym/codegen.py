@@ -46,9 +46,7 @@ def extract_expression(expression, is_symmetric_matrix=True):
                 list_expressions.append(expression[ii])
         # otherwise it's a matrix
         else:
-
             if is_symmetric_matrix:
-
                 # NOTE: original method, does *not* check for symmetry
                 for (
                     j,
@@ -235,7 +233,7 @@ def generate_cpu_preextracted(
     reduced_ops = 0
     output_str += "// Dendro: TEMPORARY VARIABLES\n"
     for v1, v2 in cse_list[0]:
-        temp_str = f'{"const " if use_const else ""}{dtype} '
+        temp_str = f"{'const ' if use_const else ''}{dtype} "
 
         # replace powers with multiplication if possible
         v2 = replace_pow(v2)
@@ -283,7 +281,7 @@ def generate_cpu_preextracted(
         output_str += "// Dendro: number of original operations: %d \n" % (orig_ops)
         output_str += "// Dendro: number of reduced operations: %d \n" % (reduced_ops)
         output_str += "// Dendro: preprocessing reduced the "
-        output_str += f"number of operations by {orig_ops-reduced_ops}\n"
+        output_str += f"number of operations by {orig_ops - reduced_ops}\n"
         percent_reduction = (orig_ops - reduced_ops) / orig_ops
         output_str += f"// Dendro: a {percent_reduction:0.5%}% reduction\n"
         output_str += "// Dendro: }}}} End Code Generation \n"
@@ -767,7 +765,7 @@ def generate_separate_cpu(
     output_str += "// Dendro: number of original operations: %d \n" % (orig_ops)
     output_str += "// Dendro: number of reduced operations: %d \n" % (total_reduced_ops)
     output_str += "// Dendro: preprocessing reduced the "
-    output_str += f"number of operations by {orig_ops-reduced_ops}\n"
+    output_str += f"number of operations by {orig_ops - reduced_ops}\n"
     percent_reduction = (orig_ops - total_reduced_ops) / orig_ops
     output_str += f"// Dendro: a {percent_reduction:0.5%}% reduction\n"
     output_str += "// Dendro: }}}} End Code Generation \n"
@@ -933,48 +931,38 @@ def replace_pow(exp_in):
         multiplication.
     """
 
-    if isinstance(exp_in, sym.Expr):
-        pows = list(exp_in.atoms(sym.Pow))
+    # recursive call for expressions that are lists/tuples
+    if isinstance(exp_in, (list, tuple)):
+        return type(exp_in)(replace_pow(e) for e in expr)
 
-        # if it didn't find any, just go ahead and return the original expression
-        if len(pows) == 0:
-            return exp_in
-
-        # do a quick check for non-integer power, we'll keep it as is and let C++ use the pow function here
-        for b, e in (i.as_base_exp() for i in pows):
-            if not e.is_integer:
-                print(
-                    f"WARNING: pow function with non-integer {e} will be called",
-                    file=sys.stderr,
-                )
-                return exp_in
-            elif e.is_real:
-                if e < 0:
-                    print(
-                        f"WARNING: pow function with negative value {e} will be called",
-                        file=sys.stderr,
-                    )
-                    return exp_in
-            else:
-                # otherwise we're good to continue forward
-                pass
-
-        # otherwise the new replacement needs to be generated
-        repl = zip(
-            pows,
-            (
-                sym.Mul(*[b] * e, evaluate=False)
-                for b, e in (i.as_base_exp() for i in pows)
-            ),
-        )
-
-        # and return with the replacement
-        return exp_in.xreplace(dict(repl))
-
-    else:
-        # TODO: this will require some kind of recursive parsing...
-
+    # make sure we only work on sympy expressions
+    if not isinstance(exp_in, sym.Expr):
         return exp_in
+
+    pows = exp_in.atoms(sym.Pow)
+    if not pows:
+        return exp_in
+
+    replacement_map = {}
+    for p in pows:
+        b, e = p.as_base_exp()
+
+        if e.is_integer:
+            e_int = int(e)
+
+            if e_int == 0:
+                replacement_map[p] = sym.Integer(1)
+            elif e_int == 1:
+                replacement_map[p] = b
+            elif e_int > 1:
+                # replace with multiplication directly to avoid pow, could help with simplification
+                replacement_map[p] = sym.Mul(*[b] * e_int, evaluate=False)
+            else:
+                denominator = sym.Mul(*[b] * abs(e_int), evaluate=False)
+                replacement_map[p] = sym.Integer(1) / denominator
+    # NOTE: all non-integer powers are left alone!
+
+    return exp_in.xreplace(replacement_map)
 
 
 def generate_debug(ex, vnames):
@@ -1312,9 +1300,9 @@ def gen_var_info(
     """
 
     if enum_var_names:
-        assert len(var_names) == len(
-            enum_var_names
-        ), "The input list sizes do not match"
+        assert len(var_names) == len(enum_var_names), (
+            "The input list sizes do not match"
+        )
 
     physcon_text = ""
 

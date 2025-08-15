@@ -2,6 +2,9 @@ import sys
 from pathlib import Path
 import argparse
 import importlib
+import shutil
+import tempfile
+import git
 
 import dendrosym
 
@@ -72,7 +75,25 @@ def extract_user_additions(dendroconfig_file):
     return whole_str.split(_edit_str)[-1]
 
 
+def get_remote_head_hash(repo_url, branch):
+    """Get the HEAD commit hash from a remote repository without cloning."""
+    try:
+        g = git.cmd.Git()
+        # Get the remote HEAD reference
+        head_ref = g.ls_remote(repo_url, heads=True).split("\n")
+        for ref in head_ref:
+            if branch in ref:
+                return ref.split("\t")[0]
+        return None
+    except Exception:
+        return None
+
+
 def main():
+    SOLVER_REPO_URL = "https://github.com/dfvankomen/dendrosolverbase.git"
+    MAIN_BRANCH = "main"
+    BETA_BRANCH = "beta"
+
     # === Set up Command Line Arguments ===
     parser = argparse.ArgumentParser(
         description="Dendro Generator Script", usage=__usage__
@@ -80,48 +101,113 @@ def main():
 
     parser.add_argument("setup_file")
     parser.add_argument("-f", "--force", dest="force_generation", action="store_true")
+    parser.add_argument("--beta", dest="use_beta_branch", action="store_true")
 
     args = parser.parse_args()
 
+    # determine branch
+    repo_branch = BETA_BRANCH if args.use_beta_branch else MAIN_BRANCH
+
     # ===== BEGIN ACTUAL SCRIPT =====
     cwd = Path.cwd()
-
     setup_file = cwd / args.setup_file
     dendroconfig_file = cwd / "dendro_config.toml"
 
     find_user_additions = False
 
     # see if the dendroconfig file exists
+    if not args.force_generation and dendroconfig_file.exists():
+        try:
+            # if it does, read it in with tomlkit
+            toml_data = dendrosym.utils.get_toml_data(dendroconfig_file)
+
+            if toml_data["python_config_file"] != args.setup_file:
+                print(
+                    "It appears that code has been generated but for a different parameter"
+                    + f' file "{toml_data["python_config_file"]}", which does not match "{args.setup_file}".'
+                    + " To continue generating for this new file, please use the --force option."
+                )
+                sys.exit(1)
+
+            # then calculate the sha of the file
+            curr_config_hash = dendrosym.utils.calculate_sha256(setup_file)
+            stored_config_hash = toml_data.get("config_file_hash")
+
+            # check the Git commit hash as well
+            stored_git_hash = toml_data.get("git_commit_hash_base")
+            remote_head_hash = get_remote_head_hash(SOLVER_REPO_URL, repo_branch)
+
+            if (
+                curr_config_hash == stored_config_hash
+                and remote_head_hash is not None
+                and remote_head_hash == stored_git_hash
+            ):
+                print(
+                    f'It appears code has already been generated for "{args.setup_file}" and the solver base repository is up to date with the remote. Exiting...'
+                )
+                sys.exit()
+        except Exception as e:
+            print(
+                f"Warning: could not perform integrity checks on generation due to error: {e}"
+            )
+
+    # slower operations only if check succeeds
+    current_commit_hash = None
+
+    # check if a local git repository exists
+    if not (cwd / ".git").is_dir():
+        print(
+            f"Cloning '{SOLVER_REPO_URL}' into the current directory (branch: '{repo_branch}')..."
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            try:
+                repo = git.Repo.clone_from(
+                    SOLVER_REPO_URL, temp_dir, branch=repo_branch, depth=1
+                )
+                current_commit_hash = repo.head.commit.hexsha
+                print(f"Successfully cloned from commit: {current_commit_hash}")
+
+                temp_path = Path(temp_dir)
+                for item in temp_path.iterdir():
+                    if item.name == ".git":
+                        continue
+
+                    dest_path = cwd / item.name
+
+                    if item.is_dir():
+                        # Copy directory
+                        if dest_path.exists():
+                            shutil.rmtree(dest_path)
+                        shutil.copytree(item, dest_path)
+                    else:
+                        # Copy file
+                        shutil.copy2(item, dest_path)
+
+            except git.GitCommandError as e:
+                print(f"Git command failed: {e}")
+                sys.exit(1)
+
+    # TODO: update the repository's code from remote upstream
+
+    # now load in dendroconf
+    try:
+        spec = importlib.util.spec_from_file_location("dendroconf", setup_file)
+        dendroconf = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = dendroconf
+        spec.loader.exec_module(dendroconf)
+    except Exception as e:
+        print(f"Error loading configuration from '{setup_file}': {e}")
+        sys.exit(1)
+
+    find_user_additions = False
+
     if dendroconfig_file.exists():
-        # if it does, read it in with tomlkit
         toml_data = dendrosym.utils.get_toml_data(dendroconfig_file)
-
-        if toml_data["python_config_file"] != args.setup_file:
-            print(
-                "It appears that code has been generated but for a different parameter"
-                + f' file "{toml_data["python_config_file"]}", which does not match "{args.setup_file}".'
-                + " To continue generating for this new file, please use the --force option."
-            )
-
-        # then calculate the sha of the file
-        curr_sha256 = dendrosym.utils.calculate_sha256(setup_file)
-
-        if not args.force_generation and toml_data["config_file_hash"] == curr_sha256:
+        if args.force_generation:
             print(
                 f'It appears code has already been generated for "{args.setup_file}".\n'
-                + "You can override this with --force. Exiting..."
-            )
-            sys.exit()
-        elif toml_data["config_file_hash"] == curr_sha256 and args.force_generation:
-            print(
-                f'It appears code has already been generated for "{args.setup_file}".\n'
-                + "Everything will be force overwritten due to --force flag.\n"
-            )
-            find_user_additions = True
-        elif toml_data["config_file_hash"] != curr_sha256:
-            print(
-                f'It appears code has already been generated for "{args.setup_file}".\n'
-                + "However, the source config file is different, so everything will be regenerated.\n"
+                + "Everything will be force overwritten due to --force flag, but user additions will be identified.\n"
             )
             find_user_additions = True
 
@@ -129,12 +215,6 @@ def main():
         user_additions = extract_user_additions(dendroconfig_file)
     else:
         user_additions = "\n"
-
-    # load in dendro configs and save the config file
-    spec = importlib.util.spec_from_file_location("dendroconf", setup_file)
-    dendroconf = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = dendroconf
-    spec.loader.exec_module(dendroconf)
 
     output_dict = {"python_config_file": setup_file.name}
 
@@ -144,9 +224,10 @@ def main():
     all_params = dendroconf.dendroConfigs.create_parameter_variable_config()
 
     # then remove the requirements and stick it inside our outdict
-    output_dict.update({"additional_parameters": {"requirements": all_params["requirements"]}})
+    output_dict.update(
+        {"additional_parameters": {"requirements": all_params["requirements"]}}
+    )
     all_params.pop("requirements", None)
-
 
     with open(dendroconfig_file, "w") as f:
         f.write(_config_header + "\n")
@@ -154,8 +235,7 @@ def main():
         f.write("\n\n")
         f.write(
             dendrosym.utils.write_inline_toml_dicts(
-                all_params["dsolve-NMSPC"],
-                "additional_parameters.dsolve-NMSPC"
+                all_params["dsolve-NMSPC"], "additional_parameters.dsolve-NMSPC"
             )
         )
         f.write("\n\n")
@@ -179,6 +259,8 @@ def main():
     dendroconf.dendroConfigs.save_all_rhs_to_pickle()
 
     # now we generate all of the small things
+
+    # ...
 
     pass
 

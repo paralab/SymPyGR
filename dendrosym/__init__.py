@@ -36,6 +36,8 @@ from . import params
 
 from . import derivs
 
+from . import helpers
+
 # ====== DENDRO CONFIGURATION ======
 # base configuration class
 from .general_configs import DendroConfiguration
@@ -46,7 +48,7 @@ from .nr_configs import NRConfig
 # the code printer also needs to be imported
 from . import code_printer
 
-#from .dendro_generator import DendroGenerator
+# from .dendro_generator import DendroGenerator
 
 # TODO: the package that is used with gw is not currently supported!
 # from . import gw
