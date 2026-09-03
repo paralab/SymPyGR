@@ -743,6 +743,23 @@ def build_template_map(ctx):
     return template_map
 
 
+def build_jax_template_map(ctx):
+    """Output path -> template, DendroJAX backend.
+
+    Much smaller than the C++ map: driver, BCs, initial data and integration
+    are NOT generated -- they come from the dendrojax package.
+    """
+    name = ctx["project_name"]
+    return {
+        f"{name}/__init__.py": "jax/init.py.j2",
+        f"{name}/{name}_rhs.py": "jax/rhs.py.j2",
+        f"{name}/{name}_params.py": "jax/params.py.j2",
+        "pyproject.toml": "jax/pyproject.toml.j2",
+        "README.md": "jax/readme.md.j2",
+        "CUSTOMIZE.md": "jax/customize.md.j2",
+    }
+
+
 class DendroProjectGenerator:
     """Generates a complete Dendro-based solver project from a configuration.
 
@@ -767,7 +784,7 @@ class DendroProjectGenerator:
     # ------------------------------------------------------------------
 
     def generate(self, output_dir: str, *, skip_gencode: bool = False,
-                 gencode_only: bool = False):
+                 gencode_only: bool = False, emit: str = "cpp"):
         """Generate the full solver project into *output_dir*.
 
         Parameters
@@ -826,12 +843,14 @@ class DendroProjectGenerator:
         if not gencode_only:
             # 3. Render templates -> src/ and include/
             print("Rendering templates...", file=sys.stderr)
-            self._render_templates(output, ctx)
-            self._render_once_templates(output, ctx)
+            for backend in (["cpp", "jax"] if emit == "both" else [emit]):
+                self._render_templates(output, ctx, emit=backend)
+                if backend == "cpp":
+                    self._render_once_templates(output, ctx)
 
-            # 4. Copy static files (derivs, etc.)
-            print("Copying static files...", file=sys.stderr)
-            self._copy_static_files(output)
+                    # 4. Static files -- C++ only; JAX gets these from dendrojax.
+                    print("Copying static files...", file=sys.stderr)
+                    self._copy_static_files(output)
         else:
             print("Skipping templates (gencode_only=True)", file=sys.stderr)
 
@@ -1263,10 +1282,59 @@ class DendroProjectGenerator:
     # Template rendering
     # ------------------------------------------------------------------
 
-    def _render_templates(self, output: Path, ctx: dict):
+    def _build_jax_context(self, ctx: dict):
+        """Emit each var_type's RHS through the JAX backend into ctx["jax"].
+
+        generate_rhs_code memoises per var_type, so --emit=both derives once.
+        """
+        import types
+
+        from dendrosym.codegen_jax import classify_leaves
+
+        c = self.config
+        field_names = []
+        for vt in ctx["var_types"]:
+            field_names += list(ctx.get(f"{vt}_var_names", []))
+        param_names = [pp["var_name"] for pp in ctx.get("physics_params", [])]
+
+        jax_ctx, active = {}, []
+        for vt in ctx["var_types"]:
+            if c.all_rhs_functions.get(vt) is None:
+                continue
+            body = c.generate_rhs_code(vt, arc_type="jax")
+            leaves = classify_leaves(body, field_names, param_names)
+            deriv_names = (leaves["grad"] + leaves["agrad"]
+                           + leaves["grad2"] + leaves["kograd"])
+            jax_ctx[vt] = types.SimpleNamespace(
+                body=body.render(indent="    "),
+                outputs=body.outputs,
+                leaves=types.SimpleNamespace(**leaves),
+                deriv_names=deriv_names,
+            )
+            active.append(vt)
+            print(f"  [jax] {vt}: {len(body.statements)} statements, "
+                  f"{len(deriv_names)} derivative buffers", file=sys.stderr)
+            if leaves["unknown"]:
+                print(f"  [jax] {vt}: {len(leaves['unknown'])} undeclared "
+                      f"input(s) -> EXTRA_INPUTS: {leaves['unknown'][:6]}",
+                      file=sys.stderr)
+
+        ctx["jax"] = jax_ctx
+        ctx["jax_var_types"] = active
+
+        # `lambda` is declared by bssn/ccz4/emda
+        from dendrosym.jax_printer import safe_name
+        for pp in ctx.get("physics_params", []):
+            pp["py_name"] = safe_name(pp["var_name"])
+
+    def _render_templates(self, output: Path, ctx: dict, emit: str = "cpp"):
         """Render all Jinja2 templates into the output directory."""
 
-        template_map = build_template_map(ctx)
+        if emit == "jax":
+            self._build_jax_context(ctx)
+            template_map = build_jax_template_map(ctx)
+        else:
+            template_map = build_template_map(ctx)
 
         for out_rel, tmpl_name in template_map.items():
             tmpl_path = _TEMPLATES_DIR / tmpl_name

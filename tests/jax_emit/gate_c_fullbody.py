@@ -1,27 +1,19 @@
 #!/usr/bin/env python
-"""gate_c_fullbody.py -- Gate C', the full-body differential.
+"""Gate C' -- full-body differential.
 
     python tests/jax_emit/gate_c_fullbody.py [config.py ...]
 
-Emits a real solver's RHS through the JAX backend and checks every emitted
-statement against the sympy expression it was printed FROM, at random leaf
-values. Gate B (run_all.py) does this on a 14-expression battery; this runs the
-actual population -- BSSN is ~537 temporaries plus 24 outputs -- so it catches
-whatever the battery does not contain.
+Checks every emitted statement of a real solver's RHS against the sympy
+expression it was printed from. Gate B does this on a 14-expression battery;
+this runs the actual population (BSSN: 537 temps + 24 outputs).
 
-The two sides share only the leaf VALUES: one side evaluates the emitted text,
-the other evaluates the original sympy tree with its grad() applications atomized
-to the same identifiers. Re-parsing the emitted text with sympy instead would be
-checking the text against itself and could not detect a printer defect.
+The two sides share only leaf VALUES -- re-parsing the emitted text with sympy
+would just check it against itself. CPU-only; numpy stands in for jnp.
 
-Why no byte-diff against a reference: the DendroJAX hand-written RHS descends
-from bssneqs_SSL_HD_dxsq.cpp, which predates the current generator by five
-measurable differences (537 vs 826 temps, DENDRO_0000 vs DENDRO_0, gt_mat00 vs
-gt0, in.-struct addressing, named vs inlined derivative loads). It validated the
-transliteration RULES -- which run_all.py encodes -- but it is not a
-regeneration target.
-
-CPU-only: numpy stands in for jnp. No GPU, no jax install needed.
+No byte-diff against DendroJAX's hand-written RHS: it descends from
+bssneqs_SSL_HD_dxsq.cpp, which predates the current generator (537 vs 826
+temps, different naming and addressing). It fixed the transliteration rules
+run_all.py encodes, but is not a regeneration target.
 """
 
 import argparse
@@ -48,10 +40,10 @@ SCRATCH = os.environ.get("JAX_GATE_SCRATCH", "/tmp/dendro_jax_gate")
 
 
 def load_config(path):
-    """Import a config module, tolerating its scratch side effects.
+    """Import a config, tolerating its scratch writes.
 
-    Several configs write fragment files into cwd at import (bssn_eqns.py has no
-    dendrosym.run entry point at all), so run them from a scratch directory.
+    bssn_eqns.py has no dendrosym.run entry point and writes fragments to cwd,
+    so import from a scratch dir.
     """
     path = os.path.abspath(path)          # cwd moves below; resolve first
     os.makedirs(SCRATCH, exist_ok=True)
@@ -82,7 +74,7 @@ def find_config_object(mod):
 
 
 def source_names(src):
-    """Every bare identifier the emitted source reads (jnp excluded)."""
+    """Bare identifiers the emitted source reads, jnp excluded."""
     names = set()
     for node in ast.walk(ast.parse(src, mode="eval")):
         if isinstance(node, ast.Name):
@@ -99,18 +91,12 @@ _TWO_INDEX = re.compile(r"^([A-Za-z_]+?)(\d)(\d)$")
 
 
 def leaf_value(name, rng):
-    """A physically-shaped random leaf.
+    """Physically-shaped random leaf: perturb around flat space.
 
-    Uniform random values put the conformal metric far from any physical state:
-    its determinant can go negative or near-zero, the first sqrt/inverse blows
-    up, and the NaN propagates through every downstream statement -- silently
-    gutting the gate's coverage rather than failing it. Perturb around flat
-    space instead: metric diagonal and lapse near 1, everything else small but
-    bounded away from exactly 0 so no inverse is accidentally singular.
-
-    Detection is structural, not a name list -- BSSN packs its metric as
-    gt0..gt5 while CCZ4 writes gt00..gt22, and a hardcoded list silently
-    mis-seeds whichever convention it was not written for.
+    Uniform values make the metric determinant negative, the first sqrt NaNs,
+    and the NaN eats every downstream statement -- gutting coverage rather than
+    failing. Diagonals detected structurally, not by name: BSSN packs gt0..gt5,
+    CCZ4 writes gt00..gt22.
     """
     if name.startswith(("grad", "agrad", "kograd", "d2", "mixed")):
         return rng.uniform(-0.02, 0.02)                 # small gradients
@@ -150,10 +136,9 @@ def check_var_type(cfg, vt, trials, tol, seed):
     # ---- atomize the source expressions to the emitter's own leaf names ----
     atom = [atomize_derivs(e) for e in body.exprs]
 
-    # Leaves come from the atomized sympy side, which is authoritative: the
-    # source was printed from these expressions, so its identifiers are exactly
-    # these names. A leaf like `lf[1]` is one symbol on the sympy side but a
-    # SUBSCRIPT of an array on the source side -- both must see the same value.
+    # Leaves come from the atomized sympy side (authoritative: the source was
+    # printed from it). `lf[1]` is one symbol there but an array subscript in
+    # the source; both must see the same value.
     defined, leaves = set(), set()
     for (lhs, _rhs), a in zip(body.statements, atom):
         for s in a.free_symbols:
@@ -219,10 +204,8 @@ def check_var_type(cfg, vt, trials, tol, seed):
           f"({cover:.1%}), worst rel {worst:.3e}"
           + (f" at {worst_at}" if worst_at else ""))
 
-    # A non-finite output is a property of the random point, not of the
-    # emitter -- psi4 carries 1/r factors that blow up off the physical
-    # manifold. Report it, but let COVERAGE be the thing that fails: if NaNs
-    # were really eating the body, checked/expected would collapse.
+    # Non-finite is a property of the random point (psi4 carries 1/r), not the
+    # emitter. Report it; let coverage be what fails.
     if nonfinite:
         print(f"      note: {len(nonfinite)} output(s) non-finite at the random "
               f"point, e.g. {sorted(nonfinite)[:4]}")

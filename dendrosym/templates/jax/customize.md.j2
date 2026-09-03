@@ -1,0 +1,44 @@
+# Customizing {{ project_name }} (DendroJAX backend)
+
+## What regeneration overwrites
+
+`{{ project_name }}/*.py`, `pyproject.toml` and `README.md` are rewritten on
+every `--emit=jax`. Edit the config, not these. Anything you add outside the
+`{{ project_name }}/` package is left alone.
+
+## Wiring the RHS into a DendroJAX step
+
+`dendrojax.sim.physics_step_classical_rk_global_optimized` calls its RHS as
+
+```python
+rhs_func(f_block, elem_id, bflag, level, key, b_id, atlas, state, dt)
+```
+
+returning `(num_vars, E, E, E)`. The generated `{{ jax_var_types[0] }}_rhs` is the
+algebra only, so a driver closure has to: take derivatives of the synced block
+(`dendrojax.derivs.compute_deriv_xyz`), build the `d` mapping using
+`{{ jax_var_types[0]|upper }}_DERIVS` as the key list, call the generated
+function, then stack the outputs in `{{ jax_var_types[0]|upper }}_OUTPUTS` order.
+
+Two rules from DendroJAX that the driver must honor and this package cannot
+enforce for you:
+
+- **No recompiles across remeshes.** Any `jit` in the driver keys only on
+  remesh-stable statics (element order, flags) -- never on a per-mesh count.
+  Check with `JAX_LOG_COMPILES=1`: zero compile events after the warmup remesh.
+- **float64.** `import dendrojax` before any JAX op. The generated
+  `__init__.py` already does this.
+
+## Parameters
+
+`{{ project_upper }}Params` is a NamedTuple with the C++ defaults. `from_toml`
+reads the same parameter file the C++ solver uses and ignores keys it does not
+own, so one file can drive both.
+
+## Feature flags
+
+These are set on the config object, not here:
+
+{% for flag, value, doc in solver_features %}
+- `{{ flag }}` = `{{ value }}` -- {{ doc }}
+{% endfor %}

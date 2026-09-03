@@ -1,18 +1,11 @@
 """JAX emission -- the jnp twin of the scalar C++ path in :mod:`dendrosym.codegen`.
 
-The important property: this consumes the **same** ``cse_list`` the C++ path
-consumes. ``construct_expression_list`` / ``construct_cse_from_list`` are
-backend-agnostic, so the ``DENDRO_n`` numbering and statement order are identical
-between the two backends by construction. The physics is never re-derived and
-never re-CSE'd for JAX.
+Consumes the same ``cse_list`` the C++ path does, so DENDRO_n numbering and
+order match between backends and the physics is never re-CSE'd.
 
-Two string passes the C++ path runs are deliberately skipped here:
-``apply_input_struct`` (there is no ``in.`` struct in JAX -- the array is the
-value) and the output-struct rewrite. The derivative rename is *reimplemented*
-rather than reused: ``codegen.change_deriv_names`` requires a literal ``[pp]``
-in both of its patterns, which this backend has stripped by then, so calling it
-would silently leave ``grad(0, alpha)`` in the output as a call to a
-nonexistent function.
+Skips the C++ string passes ``apply_input_struct`` and the output-struct
+rewrite (JAX has neither). The derivative rename is reimplemented below because
+``codegen.change_deriv_names`` requires a literal ``[pp]``.
 """
 
 import heapq
@@ -23,13 +16,10 @@ import sympy as sym
 
 from dendrosym.jax_printer import DendroJaxPrinter, jax_symbol_name
 
-# the derivative call forms the printer emits
 DERIV_FUNCS = {"grad": "grad", "grad2": "grad2", "agrad": "agrad", "kograd": "kograd"}
 
-# codegen.change_deriv_names hardcodes `\[pp\]` in both patterns, so it matches
-# nothing here -- the JAX printer strips the point index. Same rewrite, index
-# optional. Kept local rather than loosening the shared C patterns, which are
-# under the byte-identity gate.
+# Same rewrite as codegen.change_deriv_names, index optional. Local rather than
+# loosening the shared C patterns, which are under the byte-identity gate.
 _DERIV1_JAX = re.compile(r"\b(agrad|grad|kograd)\((\d),\s*(\w+)\)")
 _DERIV2_JAX = re.compile(r"\bgrad2\((\d),\s*(\d),\s*(\w+)\)")
 
@@ -51,14 +41,11 @@ def change_deriv_names_jax(src: str) -> str:
 
 
 class JaxBody(NamedTuple):
-    """An emitted RHS body, kept structured so gates can evaluate it.
+    """Emitted body, kept structured so gates can evaluate it.
 
-    ``statements`` is every assignment in dependency order -- CSE temporaries
-    then outputs -- as ``(lhs identifier, rhs source)``. ``outputs`` names the
-    subset that are RHS outputs, in registered order. ``exprs`` is the sympy
-    expression each statement was printed *from*, in the same order: a gate that
-    re-parses the emitted text is checking the text against itself, so the only
-    honest differential compares the text against these.
+    statements: (lhs, rhs source) in dependency order, temps then outputs.
+    exprs: the sympy expression each was printed from -- a gate that re-parses
+    the emitted text is only checking it against itself.
     """
 
     statements: List[Tuple[str, str]]
@@ -74,11 +61,7 @@ class JaxBody(NamedTuple):
 
 
 def _identifier(name) -> str:
-    """Normalise an emitted assignment target to a bare Python identifier.
-
-    Strips a C declaration (``double x``), a struct qualifier (``out.alpha``)
-    and the point index, then keyword-mangles what is left.
-    """
+    """``double x`` / ``out.alpha`` / ``alpha[pp]`` -> a bare identifier."""
     name = str(name).strip()
     if " " in name:                       # "double DENDRO_STAGED_VAR_0"
         name = name.split()[-1]
@@ -88,12 +71,10 @@ def _identifier(name) -> str:
 
 
 def atomize_derivs(expr, printer=None):
-    """Replace ``grad``/``grad2``/``agrad``/``kograd`` applications with Symbols
-    named exactly as the emitter names them.
+    """Derivative applications -> Symbols named as the emitter names them.
 
-    Lets a differential gate evaluate the ORIGINAL sympy tree using the same leaf
-    names the emitted source reads, so the two sides share only the leaf values
-    -- not the printed text.
+    Lets a gate evaluate the original sympy tree against the emitted source
+    sharing only leaf values, not text.
     """
     if printer is None:
         printer = DendroJaxPrinter(additional_user_funcs=DERIV_FUNCS)
@@ -104,18 +85,60 @@ def atomize_derivs(expr, printer=None):
     return expr.xreplace(repl) if repl else expr
 
 
+_DERIV_LEAF = re.compile(r"^(agrad|grad|kograd)_(\d)_(\w+)$")
+_DERIV2_LEAF = re.compile(r"^grad2_(\d)_(\d)_(\w+)$")
+
+
+def classify_leaves(body, field_names=(), param_names=()):
+    """Split what a body reads into fields / derivs / params / unknown.
+
+    `unknown` is what matters: anything the equations use but the config never
+    declared, surfaced here instead of as a NameError inside a jitted kernel.
+    """
+    fields = {str(f).split("[")[0] for f in field_names}
+    fields = {jax_symbol_name(f) for f in fields}
+    params = {jax_symbol_name(str(p)) for p in param_names}
+
+    defined = set()
+    read = []
+    for (lhs, _rhs), e in zip(body.statements, body.exprs or []):
+        for s in atomize_derivs(e).free_symbols:
+            n = jax_symbol_name(s.name)
+            if n not in defined:
+                read.append(n)
+        defined.add(lhs)
+    read = sorted(set(read))
+
+    out = {"field": [], "grad": [], "grad2": [], "agrad": [], "kograd": [],
+           "param": [], "unknown": []}
+    for n in read:
+        base = n.split("[")[0]
+        m2 = _DERIV2_LEAF.match(base)
+        m1 = _DERIV_LEAF.match(base)
+        if m2:
+            out["grad2"].append(n)
+        elif m1:
+            out[m1.group(1)].append(n)
+        elif base in fields:
+            out["field"].append(n)
+        elif base in params:
+            out["param"].append(base)
+        else:
+            out["unknown"].append(n)
+    out["param"] = sorted(set(out["param"]))
+    return out
+
+
 def build_jax_body(
     cse_list,
     rhs_var_names,
     fields=None,
     interleave_outputs: bool = False,
 ) -> JaxBody:
-    """Turn a ``(cse_temps, output_exprs)`` pair into JAX statements.
+    """``(cse_temps, output_exprs)`` -> JAX statements.
 
-    ``interleave_outputs`` mirrors the C++ path: a staged block defines its
-    quantities in terms of each other, so temporaries can reference outputs and
-    the temps-then-outputs layout would emit a read above its definition. Emit
-    in dependency order instead.
+    interleave_outputs: staged blocks define quantities in terms of each other,
+    so emit in dependency order or a temp lands above the output it reads.
     """
     printer = DendroJaxPrinter(additional_user_funcs=DERIV_FUNCS, fields=fields)
 
@@ -181,7 +204,7 @@ def generate_jax_preextracted(
     interleave_outputs: bool = False,
     return_stats: bool = False,
 ):
-    """Text-emitting wrapper, shaped like ``generate_cpu_preextracted``."""
+    """Text wrapper, shaped like ``generate_cpu_preextracted``."""
     body = build_jax_body(
         cse_list, rhs_var_names, fields=fields, interleave_outputs=interleave_outputs
     )

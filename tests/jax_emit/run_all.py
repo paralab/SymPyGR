@@ -1,18 +1,12 @@
 #!/usr/bin/env python
-"""run_all.py -- self-checks for the JAX emitter backend.
+"""Gate B -- JAX printer self-checks.
 
     python tests/jax_emit/run_all.py
 
-Gate B of the DendroJAX emitter work: checks the printer's own machinery, not
-any solver. The properties worth defending are that printed source is
-numerically faithful to the sympy expression it came from, that it is valid
-Python, and that the four transliteration rules recovered from the
-bssneqs_SSL_HD_dxsq.cpp / bssn_solver.py diff actually fire. Plain asserts, no
-pytest -- same shape as tests/numgate/run_all.py.
-
-Runs against numpy standing in for jnp: the printer's output is module-agnostic
-source, and numpy is the reference semantics jnp promises for these ops. That
-keeps the gate CPU-only and GPU-free.
+Printer machinery only, not any solver: printed source must be numerically
+faithful to its sympy expression, valid Python, and must fire the four
+transliteration rules recovered from the bssneqs_SSL_HD_dxsq.cpp diff. Plain
+asserts, same shape as tests/numgate/run_all.py. numpy stands in for jnp.
 """
 
 import ast
@@ -71,14 +65,14 @@ def _battery():
 
 
 def test_numeric_fidelity():
-    """Printed source, evaluated, must equal sympy's own evaluation."""
+    """Printed source, evaluated, must equal sympy's evaluation."""
     p = DendroJaxPrinter()
     rng = np.random.default_rng(20260903)
     syms = sorted({s for _, e in _battery() for s in e.free_symbols}, key=str)
     worst = 0.0
     for trial in range(8):
-        # positive values: chi/alpha are positive-definite in BSSN, and log/sqrt
-        # of a negative would compare nan to nan.
+        # positive: chi/alpha are positive-definite; sqrt/log of a negative
+        # would compare nan to nan.
         vals = {s: float(rng.uniform(0.25, 2.0)) for s in syms}
         env = {"jnp": np, **{jax_symbol_name(s.name): v for s, v in vals.items()}}
         for name, expr in _battery():
@@ -106,7 +100,7 @@ def test_output_is_valid_python():
 
 
 def test_no_numpy_leakage():
-    """NumPyPrinter bakes 'numpy.' into 29 function targets; none may survive."""
+    """NumPyPrinter bakes 'numpy.' into 29 targets; none may survive."""
     p = DendroJaxPrinter()
     leaked = {k: v for k, v in p.known_functions.items()
               if isinstance(v, str) and "numpy." in v}
@@ -124,7 +118,7 @@ def test_point_index_stripped():
 
 
 def test_keyword_mangling():
-    """R3: `lambda` is declared by bssn, ccz4 AND emda -- a hard SyntaxError."""
+    """R3: `lambda` is declared by bssn, ccz4 and emda."""
     assert safe_name("lambda") == "lambda_param"
     assert safe_name("alpha") == "alpha"
     # the point index goes, a real subscript stays, identifier gets mangled
@@ -138,7 +132,7 @@ def test_keyword_mangling():
 
 
 def test_keyword_scan_covers_every_config():
-    """The guard must be general, not a special case for `lambda`."""
+    """General guard, not a `lambda` special case."""
     import keyword
     for kw in ("lambda", "class", "is", "in", "and", "not", "None", "True"):
         assert keyword.iskeyword(kw)
@@ -147,20 +141,20 @@ def test_keyword_scan_covers_every_config():
 
 
 def test_integer_pow_lowering():
-    """R1: no ** and no pow() for the exponent ranges the C printer lowers."""
+    """R1: no ** or pow() in the ranges the C printer lowers."""
     p = DendroJaxPrinter()
     b = sym.Symbol("chi[pp]")
     for e in list(range(2, 7)) + list(range(-6, 0)):
         src = p.doprint(b ** e)
         assert "**" not in src, f"exp {e} kept a power operator: {src!r}"
         assert "pow" not in src, f"exp {e} emitted a pow call: {src!r}"
-    # non-integer exponents legitimately fall through to the base printer
+    # non-integer exponents fall through to the base printer
     src = p.doprint(b ** sym.Symbol("p_expo"))
     assert "**" in src or "power" in src, src
 
 
 def test_max_min_are_binary():
-    """NumPyPrinter's amax(asarray([...])) form allocates; must not appear."""
+    """The inherited amax(asarray([...])) form allocates."""
     p = DendroJaxPrinter()
     src = p.doprint(sym.Max(sym.Symbol("chi[pp]"), sym.Float(1e-4)))
     assert "jnp.maximum" in src, src
@@ -177,7 +171,7 @@ def test_rational_prints_float_pair():
 
 
 def test_grad2_mixed_indices_do_not_collapse():
-    """Regression guard for the grad2 index swap fixed in 015339c."""
+    """Guard for the grad2 index swap fixed in 015339c."""
     p = DendroJaxPrinter()
     f = sym.Function("alpha")(dendrosym.derivs.xx,
                               dendrosym.derivs.yy,
@@ -202,10 +196,9 @@ def test_first_derivative_form():
 
 
 def test_matches_c_printer_where_it_should():
-    """Both printers must agree on structure once the known deltas are undone.
+    """Printers agree once the known rule deltas are undone.
 
-    This is the same normalization the Phase 0 oracle diff used, applied to a
-    small battery -- it is what makes the statement-level parity gate legal.
+    Same normalization the oracle diff used.
     """
     import re
     from dendrosym.code_printer import DendroCPrinter

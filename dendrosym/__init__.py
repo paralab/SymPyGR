@@ -108,6 +108,9 @@ def run(config, default_output_dir=None, argv=None):
     ap.add_argument("--grad-set", dest="grad_set", action="store_true", default=None,
                     help="emit planned per-variable derivative sets (DendroDerivatives::grad_set)")
     ap.add_argument("--no-grad-set", dest="grad_set", action="store_false")
+    ap.add_argument("--emit", choices=("cpp", "jax", "both"), default=None,
+                    help="backend to render: 'cpp' (default), 'jax' (a DendroJAX "
+                         "package importing dendrojax from pip), or 'both'")
     from dendrosym.cascade.options import CascadeOptions
     CascadeOptions.add_argparse_args(ap, prefix="cascade-")
     ns, unknown = ap.parse_known_args(argv)
@@ -150,8 +153,15 @@ def run(config, default_output_dir=None, argv=None):
 
     print(f"Generating {config.project_name} solver into: {output_dir}",
           file=_sys.stderr)
+    # --emit wins; otherwise the config's enable_jax_emit picks the backend, so
+    # a solver can opt in without every invocation carrying the flag.
+    emit = ns.emit
+    if emit is None:
+        emit = "both" if getattr(config, "enable_jax_emit", False) else "cpp"
+
     gen = DendroProjectGenerator(config)
-    gen.generate(output_dir, skip_gencode=skip, gencode_only=gencode_only)
+    gen.generate(output_dir, skip_gencode=skip, gencode_only=gencode_only,
+                 emit=emit)
 
 
 __version__ = "0.0.1"

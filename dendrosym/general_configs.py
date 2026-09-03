@@ -102,6 +102,12 @@ SOLVER_FEATURES = {
         "binary, and the TwoPunctures sources from dendrolib. Pair it with "
         "tpid_writer, naming the project's PunctureVarsWriter.",
     ),
+    "enable_jax_emit": (
+        False,
+        "Also render the DendroJAX backend (a Python package importing "
+        "dendrojax from pip) alongside the C++ solver. Equivalent to "
+        "--emit=both; --emit on the command line overrides it.",
+    ),
 }
 
 
