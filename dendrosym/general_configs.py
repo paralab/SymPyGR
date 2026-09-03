@@ -411,12 +411,40 @@ class DendroConfiguration:
 
         # group output assignment targets under the output struct: alpha_rhs ->
         # out.alpha, so the generated equations read `out.alpha[pp] = ...`.
-        struct = self.output_struct_name(var_type)
+        # JAX has no output struct (nor an `in.` one) -- the array IS the value,
+        # so the jax backend keeps the bare `alpha_rhs` names.
+        struct = self.output_struct_name(var_type) if arc_type != "jax" else None
         if struct is not None:
             all_rhs_names = [
                 f"{struct}.{n[:-4] if n.endswith('_rhs') else n}"
                 for n in all_rhs_names
             ]
+
+        if arc_type == "jax":
+            # same cse_exp the cpu branch consumes -- identical DENDRO_n
+            # numbering and order, by construction.
+            import dendrosym.codegen_jax as cgj
+
+            fields = dendrosym.derivs.variable_strs
+            main = cgj.build_jax_body(cse_exp, all_rhs_names, fields=fields)
+            if len(staged_exp) == 0:
+                return main
+            # a staged block defines its quantities in terms of each other, so
+            # it emits dependency-ordered and must precede the main body. The
+            # `output_str` built above is the CPU rendering of this same block;
+            # rebuild it for jax rather than dropping it.
+            staged_cse = dendrosym.codegen.construct_cse_from_list(
+                staged_exp, temp_var_prefix="DENDRO_STAGED_VAR_"
+            )
+            staged = cgj.build_jax_body(
+                staged_cse,
+                [str(n) for n in staged_exprs_names],
+                fields=fields,
+                interleave_outputs=True,
+            )
+            return cgj.JaxBody(
+                staged.statements + main.statements, main.outputs
+            )
 
         if arc_type == "cpu":
             # group evolution input reads under `in.` (both evolution + constraint
