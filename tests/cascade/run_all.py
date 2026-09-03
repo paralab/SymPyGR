@@ -364,10 +364,12 @@ def t_template_off_render():
     fon = env.get_template("gr/rhs.cpp.j2").render(**ctx, evolution_cascade={
         **casc, "fused": True, "body_fused": "bf.inc", "body_fused_tail": "bft.inc",
         "deriv_calc_fused": "dcf.inc"})
-    assert fon.count("if (bflag == 0)") == 2 and '#include "../gencode/dcf.inc"' in fon
+    # the guard carries the compile-time fused flag ("bflag == 0 && __cascade_fused"),
+    # so match the open paren only -- the closing one moved.
+    assert fon.count("if (bflag == 0") == 2 and '#include "../gencode/dcf.inc"' in fon
     assert '#include "../gencode/bf.inc"' in fon and '#include "../gencode/bft.inc"' in fon
     assert fon.count('#include "../gencode/b.inc"') == 1 and "DERIVTYPE_FIRST" in fon
-    assert "if (bflag == 0)" not in on
+    assert "if (bflag == 0" not in on  # same open-paren match, or this passes vacuously
     # the flat loop text is identical whether or not the cascade is present
     flat_loop = off[off.index("    for (unsigned int k = PW;"):off.index("    toy::timer::t_rhs.stop()")]
     assert flat_loop.endswith("    }\n") and flat_loop in on
