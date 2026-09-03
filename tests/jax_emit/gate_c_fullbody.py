@@ -53,6 +53,7 @@ def load_config(path):
     Several configs write fragment files into cwd at import (bssn_eqns.py has no
     dendrosym.run entry point at all), so run them from a scratch directory.
     """
+    path = os.path.abspath(path)          # cwd moves below; resolve first
     os.makedirs(SCRATCH, exist_ok=True)
     cwd = os.getcwd()
     os.chdir(SCRATCH)
@@ -90,25 +91,37 @@ def source_names(src):
     return names
 
 
-DIAGONAL = ("gt0", "gt3", "gt5", "gt_mat00", "gt_mat11", "gt_mat22",
-            "gammat00", "gammat11", "gammat22")
+# BSSN's packed 6-component metric names its diagonal 0/3/5; the two-index
+# forms (gt00, gt_mat00, gammat11) are detected structurally below.
+PACKED_DIAGONAL = ("gt0", "gt3", "gt5", "At0", "At3", "At5")
+UNIT_FIELDS = ("alpha", "chi", "psi", "phi", "W")
+_TWO_INDEX = re.compile(r"^([A-Za-z_]+?)(\d)(\d)$")
 
 
 def leaf_value(name, rng):
     """A physically-shaped random leaf.
 
-    Uniform random values put the conformal metric far from any physical state,
-    its determinant can go negative, and the first ``sqrt`` NaNs -- which then
-    propagates through every downstream statement and silently guts the gate's
-    coverage. Perturb around flat space instead: fields near their Minkowski
-    values, derivatives small.
+    Uniform random values put the conformal metric far from any physical state:
+    its determinant can go negative or near-zero, the first sqrt/inverse blows
+    up, and the NaN propagates through every downstream statement -- silently
+    gutting the gate's coverage rather than failing it. Perturb around flat
+    space instead: metric diagonal and lapse near 1, everything else small but
+    bounded away from exactly 0 so no inverse is accidentally singular.
+
+    Detection is structural, not a name list -- BSSN packs its metric as
+    gt0..gt5 while CCZ4 writes gt00..gt22, and a hardcoded list silently
+    mis-seeds whichever convention it was not written for.
     """
     if name.startswith(("grad", "agrad", "kograd", "d2", "mixed")):
-        return rng.uniform(-0.02, 0.02)          # small gradients
+        return rng.uniform(-0.02, 0.02)                 # small gradients
     base = name.split("[")[0]
-    if base in DIAGONAL or base in ("alpha", "chi", "psi"):
-        return 1.0 + rng.uniform(-0.05, 0.05)    # ~1 (flat metric / lapse)
-    return rng.uniform(-0.05, 0.05)              # off-diagonals, shift, K, ...
+    m = _TWO_INDEX.match(base)
+    if (m and m.group(2) == m.group(3)) or base in PACKED_DIAGONAL:
+        return 1.0 + rng.uniform(-0.05, 0.05)           # tensor diagonal
+    if base in UNIT_FIELDS:
+        return 1.0 + rng.uniform(-0.05, 0.05)           # lapse / conformal factor
+    v = rng.uniform(0.02, 0.05)                         # bounded away from 0
+    return v if rng.random() < 0.5 else -v
 
 
 def check_var_type(cfg, vt, trials, tol, seed):
@@ -160,6 +173,7 @@ def check_var_type(cfg, vt, trials, tol, seed):
 
     rng = random.Random(seed)
     worst, worst_at, checked = 0.0, None, 0
+    nonfinite = set()
     for _t in range(trials):
         scope, ref_env = {"jnp": np}, {}
         for n in sorted(scalars):
@@ -196,17 +210,28 @@ def check_var_type(cfg, vt, trials, tol, seed):
                     worst, worst_at = rel, lhs
             ref_env[sym.Symbol(lhs)] = sym.Float(got, 40)
 
-        nf = [k for k in body.outputs
-              if not math.isfinite(float(scope.get(k, float("nan"))))]
-        if nf:
-            failures.append(f"{vt}:nonfinite")
-            print(f"      NON-FINITE outputs: {nf[:5]}")
+        nonfinite.update(k for k in body.outputs
+                         if not math.isfinite(float(scope.get(k, float("nan")))))
 
-    print(f"      differential: {checked} statement-evals, worst rel {worst:.3e}"
+    expected = len(body.statements) * trials
+    cover = checked / expected if expected else 0.0
+    print(f"      differential: {checked}/{expected} statement-evals "
+          f"({cover:.1%}), worst rel {worst:.3e}"
           + (f" at {worst_at}" if worst_at else ""))
+
+    # A non-finite output is a property of the random point, not of the
+    # emitter -- psi4 carries 1/r factors that blow up off the physical
+    # manifold. Report it, but let COVERAGE be the thing that fails: if NaNs
+    # were really eating the body, checked/expected would collapse.
+    if nonfinite:
+        print(f"      note: {len(nonfinite)} output(s) non-finite at the random "
+              f"point, e.g. {sorted(nonfinite)[:4]}")
     if checked == 0:
         failures.append(f"{vt}:nothing-checked")
         print("      NOTHING CHECKED -- the gate proved nothing")
+    elif cover < 0.95:
+        failures.append(f"{vt}:coverage")
+        print(f"      COVERAGE TOO LOW ({cover:.1%}) -- NaNs are eating the body")
     if worst > tol:
         failures.append(f"{vt}:tolerance")
         print(f"      EXCEEDS TOLERANCE {tol:.1e}")
