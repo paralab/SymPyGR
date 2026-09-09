@@ -88,6 +88,15 @@ def synthetic_ctx():
             # a BC gradient the toy RHS never reads -- must still reach DERIVS
             ("chi_rhs", "chi", ("grad_0_chi", "grad_1_chi", "grad_2_chi"), 1.0, 1.0),
         ]},
+        "jax_initial_data": {
+            "entries": [{
+                "id": 1, "name": "Toy", "note": "", "func": "toy_init",
+                "lines": [("alpha", "1.0 + x"), ("chi", "0")],
+                "params": ["eta"], "runtime": ["BH1_mass"], "unknown": [],
+            }],
+            "unavailable": [{"id": 5, "name": "Noise", "reason": "raw C++"}],
+            "symbolic": None, "analytical": None,
+        },
         "jax_enforce": {
             "metric": ("gt00", "gt01", "gt02", "gt11", "gt12", "gt22"),
             "trace_free": (("At00", "At01", "At02", "At11", "At12", "At22"),),
@@ -166,6 +175,44 @@ def test_bc_and_enforcement_tables():
     assert dict(mod["POS_FLOOR_VARS"])["chi"] == "chi_floor"
 
 
+def test_initial_data_is_callable_and_refuses_what_it_cannot_do():
+    """A constant field still has to come back shaped, and a raw-C++ id must
+    refuse rather than return something."""
+    import numpy as np
+
+    try:
+        import jax
+    except ImportError:
+        print("      (skipped: jax not installed)")
+        return
+    jax.config.update("jax_enable_x64", True)   # the emitted code assumes float64
+
+    src = render_all()["toy/toy_initial_data.py"]
+    mod = {}
+    exec(compile(src, "toy_initial_data.py", "exec"), mod)
+
+    x = np.linspace(0.0, 1.0, 4)
+    out = mod["initial_data"](1, x, x, x, types.SimpleNamespace(eta=2.0),
+                              BH1_mass=0.5)
+    assert set(out) == {"alpha", "chi"}, out
+    assert all(v.shape == x.shape for v in out.values()), \
+        {k: v.shape for k, v in out.items()}      # chi is the constant 0
+
+    try:
+        mod["initial_data"](5, x, x, x, None)
+    except NotImplementedError as exc:
+        assert "raw C++" in str(exc), exc
+    else:
+        raise AssertionError("a raw-C++ id_type returned instead of refusing")
+
+    try:
+        mod["initial_data"](1, x, x, x, None)     # BH1_mass withheld
+    except TypeError as exc:
+        assert "BH1_mass" in str(exc), exc
+    else:
+        raise AssertionError("a missing runtime value was silently defaulted")
+
+
 def test_rhs_declares_its_inputs():
     src = render_all()["toy/toy_rhs.py"]
     for token in ("EVOLUTION_OUTPUTS", "EVOLUTION_FIELDS", "EVOLUTION_DERIVS",
@@ -232,6 +279,7 @@ if __name__ == "__main__":
     check("keyword param mangled", test_keyword_param_is_mangled)
     check("from_toml reads [physics]", test_from_toml_reads_the_physics_section)
     check("bc + enforcement tables", test_bc_and_enforcement_tables)
+    check("initial data callable + refuses", test_initial_data_is_callable_and_refuses_what_it_cannot_do)
     check("rhs declares its inputs", test_rhs_declares_its_inputs)
     check("field named u/d/p", test_field_named_like_a_parameter)
     check("rhs body executes", test_rhs_body_is_executable)

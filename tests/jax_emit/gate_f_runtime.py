@@ -85,6 +85,35 @@ def main(pkg_dir):
               + (f", nonfinite {bad}" if bad else ""))
         ok &= good
 
+    # initial data: every entry must produce exactly the evolved fields, shaped
+    if hasattr(m, "INITIAL_DATA"):
+        main = "evolution" if "evolution" in vts else sorted(vts)[0]
+        want = set(getattr(m, f"{main.upper()}_FIELDS"))
+        ax = jnp.linspace(-2.0, 2.0, shape[0])
+        Z, Y, X = jnp.meshgrid(ax, ax, ax, indexing="ij")
+        rt = {n: 0.5 for grp in m.INITIAL_DATA.values() for n in grp[2]}
+        for id_type, (nm, _fn, needs) in sorted(m.INITIAL_DATA.items()):
+            out = jax.jit(m.initial_data, static_argnums=0)(
+                id_type, X, Y, Z, params, **{n: rt[n] for n in needs})
+            fields_ok = set(out) == want
+            shapes_ok = all(v.shape == shape for v in out.values())
+            finite = all(np.isfinite(np.asarray(v)).all() for v in out.values())
+            good = fields_ok and shapes_ok and finite
+            print(f"{'PASS' if good else 'FAIL'}  id {id_type:<3} {nm[:38]:<38} "
+                  f"{len(out)} fields"
+                  + ("" if fields_ok else f", MISMATCH {sorted(set(out) ^ want)}")
+                  + ("" if shapes_ok else ", BAD SHAPE")
+                  + ("" if finite else ", NONFINITE"))
+            ok &= good
+        for id_type, why in sorted(getattr(m, "INITIAL_DATA_UNAVAILABLE", {}).items()):
+            try:
+                m.initial_data(id_type, X, Y, Z, params)
+            except NotImplementedError:
+                print(f"PASS  id {id_type:<3} refused with a reason, as it should")
+            else:
+                print(f"FAIL  id {id_type} silently returned something")
+                ok = False
+
     # constraint enforcement: names only, but they must name real fields
     if hasattr(m, "METRIC_VARS"):
         every = {n for vt in vts for n in getattr(m, f"{vt.upper()}_FIELDS")}

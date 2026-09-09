@@ -6,6 +6,16 @@ dendrojax is imported here because it must precede any JAX op to enable float64.
 import dendrojax  # noqa: F401  -- enables x64
 
 from .{{ project_name }}_params import {{ project_upper }}Params, from_toml
+{% if jax_initial_data %}
+from .{{ project_name }}_initial_data import (
+    initial_data,
+    INITIAL_DATA,
+    INITIAL_DATA_UNAVAILABLE,
+{% if jax_initial_data.analytical %}
+    analytical_solution,
+{% endif %}
+)
+{% endif %}
 from .{{ project_name }}_rhs import (
 {% for vt in jax_var_types %}
     {{ vt }}_rhs,
@@ -26,6 +36,14 @@ from .{{ project_name }}_rhs import (
 __all__ = [
     "{{ project_upper }}Params",
     "from_toml",
+{% if jax_initial_data %}
+    "initial_data",
+    "INITIAL_DATA",
+    "INITIAL_DATA_UNAVAILABLE",
+{% if jax_initial_data.analytical %}
+    "analytical_solution",
+{% endif %}
+{% endif %}
 {% for vt in jax_var_types %}
     "{{ vt }}_rhs",
     "{{ vt|upper }}_OUTPUTS",

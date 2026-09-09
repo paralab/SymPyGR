@@ -50,6 +50,23 @@ get det(g) = 1, the trace-free projection, and a floor. They act on the STATE
 between steps, not on the RHS. `POS_FLOOR_VARS` names the floor *parameter*;
 the driver supplies the value.
 
+## Initial data
+
+`initial_data(id_type, x, y, z, p, **runtime)` dispatches on the same `id_type`
+the C++ solver reads from `[initial_data]`, and returns `{field: array}` — stack
+it in `{{ jax_main_vt|upper }}_FIELDS` order. Every field comes back shaped, including the
+constant ones.
+
+`INITIAL_DATA[id]` gives `(name, function, required runtime values)`. Those
+runtime values — BH masses and positions, which the C++ side reads off the BH
+trackers — are **keyword-only with no default**: supplying the wrong mass
+silently evolves the wrong spacetime, so the emitter refuses to guess.
+
+An `id_type` the config defines as **raw C++** has no Python form and appears in
+`INITIAL_DATA_UNAVAILABLE`; calling it raises `NotImplementedError` naming the
+reason rather than returning something plausible. Write those as a driver-side
+function against the same `FIELDS` contract.
+
 ## Parameters
 
 `{{ project_upper }}Params` is a NamedTuple with the C++ defaults. `from_toml`

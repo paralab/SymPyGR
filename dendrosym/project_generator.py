@@ -17,6 +17,7 @@ Usage:
 import hashlib
 import json
 import os
+import re
 import sys
 import shutil
 from concurrent.futures import ProcessPoolExecutor
@@ -506,6 +507,106 @@ def _jax_meta(config, var_type):
     }
 
 
+def _jax_initial_data(config):
+    """Emit the config's initial data as jnp functions.
+
+    `sympy_exprs` entries translate directly -- same expressions the C++ side
+    prints, through the jax printer. Entries carrying raw `code` are C++ text
+    with no Python form; they are reported, not silently dropped.
+
+    Runtime symbols (`BH1_mass`, ...) become keyword-only arguments with **no
+    defaults**: the C++ side reads them off the BH trackers, and inventing a
+    default here would evolve the wrong spacetime without saying so.
+    """
+    import sympy as sym
+
+    from dendrosym.codegen_jax import change_deriv_names_jax
+    from dendrosym.jax_printer import DendroJaxPrinter, safe_name
+
+    printer = DendroJaxPrinter(fields=[])
+    runtime = getattr(config, "runtime_symbol_map", {}) or {}
+    coords = {"x", "y", "z", "t"}
+
+    # Params need no substitution: the config's symbols already carry the names
+    # the emitted body unpacks, and the printer handles `lambda[0]` ->
+    # `lambda_param[0]`. Substituting (as the C++ path must, to reach
+    # PROJECT_PARAM) would reorder sympy's Mul args for nothing.
+    param_base = {}
+    for plist in config.all_vars.get("parameter", {}).values():
+        for pvar in plist:
+            base = safe_name(pvar.var_name)
+            syms = (pvar.var_symbols if isinstance(pvar.var_symbols, tuple)
+                    else [pvar.var_symbols])
+            for sy in syms:
+                param_base[sy] = base
+
+    def render(exprs, extra_free=()):
+        """{var: expr} -> (assignment lines, params used, runtime used, unknown)."""
+        lines, params, rts, unknown = [], [], [], []
+        for var_sym, expr in exprs.items():
+            name = str(var_sym).replace(config.idx_str, "")
+            expr = sym.sympify(expr)
+            for free in expr.free_symbols:
+                if free in param_base:
+                    if param_base[free] not in params:
+                        params.append(param_base[free])
+                elif free in runtime:
+                    if str(free) not in rts:
+                        rts.append(str(free))
+                elif str(free) not in coords and str(free) not in extra_free:
+                    if str(free) not in unknown:
+                        unknown.append(str(free))
+            src = change_deriv_names_jax(printer.doprint(expr))
+            lines.append((safe_name(name), src))
+        return lines, sorted(params), sorted(rts), sorted(unknown)
+
+    def fn_name(raw, fallback):
+        """camelCase C++ name -> snake_case python, keeping it recognizable."""
+        if not raw:
+            return fallback
+        snake = re.sub(r"(?<!^)(?=[A-Z])", "_", raw).lower()
+        return safe_name(re.sub(r"__+", "_", snake))
+
+    entries, unavailable = [], []
+    for idt in getattr(config, "initial_data_types", []) or []:
+        name = idt.get("name", f"id {idt.get('id')}")
+        if not idt.get("sympy_exprs"):
+            unavailable.append({
+                "id": idt.get("id"),
+                "name": name,
+                "reason": "raw C++ in the config, so it has no Python form",
+            })
+            continue
+        lines, params, rts, unknown = render(idt["sympy_exprs"])
+        entries.append({
+            "id": idt.get("id"),
+            "name": name,
+            "note": idt.get("note", ""),
+            "func": fn_name(idt.get("function"), f"init_{idt.get('id')}"),
+            "lines": lines, "params": params, "runtime": rts, "unknown": unknown,
+        })
+
+    symbolic = None
+    if getattr(config, "symbolic_initial_data", None):
+        lines, params, rts, unknown = render(config.symbolic_initial_data)
+        symbolic = {
+            "func": fn_name(getattr(config, "symbolic_initial_data_name", ""),
+                            "symbolic_init"),
+            "lines": lines, "params": params, "runtime": rts, "unknown": unknown,
+        }
+
+    analytical = None
+    if getattr(config, "symbolic_analytical_solution", None):
+        lines, params, rts, unknown = render(config.symbolic_analytical_solution)
+        analytical = {"lines": lines, "params": params, "runtime": rts,
+                      "unknown": unknown}
+
+    if not (entries or unavailable or symbolic or analytical):
+        return None
+    return {"entries": entries, "unavailable": unavailable,
+            "symbolic": symbolic, "analytical": analytical}
+
+
 def _run_var_type(args):
     """Full per-var_type gencode pipeline: find derivs, allocate, emit RHS.
 
@@ -827,6 +928,7 @@ def build_jax_template_map(ctx):
         f"{name}/__init__.py": "jax/init.py.j2",
         f"{name}/{name}_rhs.py": "jax/rhs.py.j2",
         f"{name}/{name}_params.py": "jax/params.py.j2",
+        f"{name}/{name}_initial_data.py": "jax/initial_data.py.j2",
         "pyproject.toml": "jax/pyproject.toml.j2",
         "README.md": "jax/readme.md.j2",
         "CUSTOMIZE.md": "jax/customize.md.j2",
@@ -1396,6 +1498,17 @@ class DendroProjectGenerator:
         ctx["jax_var_types"] = active
         # the one the docs should talk about; [0] is whichever sorted first
         ctx["jax_main_vt"] = "evolution" if "evolution" in active else active[0]
+
+        ctx["jax_initial_data"] = _jax_initial_data(c)
+        ic = ctx["jax_initial_data"]
+        if ic:
+            print(f"  [jax] initial data: {len(ic['entries'])} emitted"
+                  + (f", {len(ic['unavailable'])} raw-C++ (not translatable)"
+                     if ic["unavailable"] else ""), file=sys.stderr)
+            for e in ic["entries"] + ([ic["symbolic"]] if ic["symbolic"] else []):
+                if e["unknown"]:
+                    print(f"  [jax] {e['func']}: undeclared symbol(s) "
+                          f"{e['unknown']}", file=sys.stderr)
 
         # Tables, not code: the Sommerfeld application and the det/trace/floor
         # algebra are the same everywhere and belong to the driver. Only which
