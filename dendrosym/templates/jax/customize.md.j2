@@ -14,11 +14,15 @@ every `--emit=jax`. Edit the config, not these. Anything you add outside the
 rhs_func(f_block, elem_id, bflag, level, key, b_id, atlas, state, dt)
 ```
 
-returning `(num_vars, E, E, E)`. The generated `{{ jax_var_types[0] }}_rhs` is the
+returning `(num_vars, E, E, E)`. The generated `{{ jax_main_vt }}_rhs` is the
 algebra only, so a driver closure has to: take derivatives of the synced block
 (`dendrojax.derivs.compute_deriv_xyz`), build the `d` mapping using
-`{{ jax_var_types[0]|upper }}_DERIVS` as the key list, call the generated
-function, then stack the outputs in `{{ jax_var_types[0]|upper }}_OUTPUTS` order.
+`{{ jax_main_vt|upper }}_DERIVS` as the key list, call the generated
+function, then stack the outputs in `{{ jax_main_vt|upper }}_OUTPUTS` order.
+
+`{{ jax_main_vt|upper }}_OUTPUTS[i]` is the RHS of
+`{{ jax_main_vt|upper }}_FIELDS[i]`, both in the C++ `VAR` enum order, so
+the two zip directly.
 
 Two rules from DendroJAX that the driver must honor and this package cannot
 enforce for you:
@@ -28,6 +32,23 @@ enforce for you:
   Check with `JAX_LOG_COMPILES=1`: zero compile events after the warmup remesh.
 - **float64.** `import dendrojax` before any JAX op. The generated
   `__init__.py` already does this.
+
+## Boundary conditions and constraint enforcement
+
+These are emitted as **tables, not code**. The Sommerfeld update and the
+det/trace/floor algebra are the same in every conformal formulation, so they
+belong to the driver; only the variable lists and constants are per-solver.
+
+`{{ jax_main_vt|upper }}_BCS` rows are
+`(rhs, field, grad_x, grad_y, grad_z, falloff, asymptotic)` -- exactly the
+arguments of `dendrojax.derivs.compute_sommerfeld_bcs`, so applying them is a
+loop over the table per boundary face. A row may name a gradient the equations
+never read; `{{ jax_main_vt|upper }}_DERIVS` already includes those.
+
+`METRIC_VARS` / `TRACE_FREE_VARS` / `POS_FLOOR_VARS` say which state variables
+get det(g) = 1, the trace-free projection, and a floor. They act on the STATE
+between steps, not on the RHS. `POS_FLOOR_VARS` names the floor *parameter*;
+the driver supplies the value.
 
 ## Parameters
 

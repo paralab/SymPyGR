@@ -30,17 +30,10 @@ import jax.numpy as jnp
 {% endfor %}
 )
 
+#: Every buffer the driver must fill -- the RHS body's, plus any the BC table
+#: needs that the equations themselves do not. Mirrors the C++ `d` struct.
 {{ vt|upper }}_DERIVS = (
-{% for name in jax[vt].leaves.grad %}
-    "{{ name }}",
-{% endfor %}
-{% for name in jax[vt].leaves.agrad %}
-    "{{ name }}",
-{% endfor %}
-{% for name in jax[vt].leaves.grad2 %}
-    "{{ name }}",
-{% endfor %}
-{% for name in jax[vt].leaves.kograd %}
+{% for name in jax[vt].deriv_names %}
     "{{ name }}",
 {% endfor %}
 )
@@ -50,6 +43,20 @@ import jax.numpy as jnp
     "{{ name }}",
 {% endfor %}
 )
+{% if jax_bcs.get(vt) %}
+
+#: Sommerfeld rows: (rhs, field, grad_x, grad_y, grad_z, falloff, asymptotic).
+#: Apply with dendrojax.derivs.compute_sommerfeld_bcs -- one row is its
+#: (f, df_dx, df_dy, df_dz, ..., falloff, asymp) arguments.
+{{ vt|upper }}_BCS = (
+{% for rhs, field, grads, falloff, asymptotic in jax_bcs[vt] %}
+    ("{{ rhs }}", "{{ field }}", "{{ grads[0] }}", "{{ grads[1] }}", "{{ grads[2] }}", {{ falloff|float }}, {{ asymptotic|float }}),
+{% endfor %}
+)
+{% else %}
+
+{{ vt|upper }}_BCS = ()
+{% endif %}
 {% if jax[vt].leaves.unknown %}
 
 # Used by the equations but declared as neither field nor parameter; the caller
@@ -67,17 +74,18 @@ import jax.numpy as jnp
 
 def {{ vt }}_rhs(u, d, p):
     """Returns {{ vt|upper }}_OUTPUTS, in order."""
+    _u, _d, _p = u, d, p           # a field may be named u, d or p
 {% for name in jax[vt].leaves.field %}
-    {{ name }} = u["{{ name }}"]
+    {{ name }} = _u["{{ name }}"]
 {% endfor %}
 {% for name in jax[vt].leaves.unknown %}
-    {{ name }} = u["{{ name }}"]
+    {{ name }} = _u["{{ name }}"]
 {% endfor %}
 {% for name in jax[vt].deriv_names %}
-    {{ name }} = d["{{ name }}"]
+    {{ name }} = _d["{{ name }}"]
 {% endfor %}
 {% for name in jax[vt].leaves.param %}
-    {{ name }} = p.{{ name }}
+    {{ name }} = _p.{{ name }}
 {% endfor %}
 
 {{ jax[vt].body }}
@@ -89,3 +97,31 @@ def {{ vt }}_rhs(u, d, p):
     )
 
 {% endfor %}
+{% if jax_enforce %}
+
+# --- constraint enforcement ------------------------------------------------
+# Applied to the STATE between steps, not to the RHS. Names only: the algebra
+# (det -> 1, trace removal, floors) is identical in every conformal
+# formulation and belongs to the driver, not here.
+
+#: Conformal metric, rescaled to det = 1. Symmetric 3x3 in (00,01,02,11,12,22).
+METRIC_VARS = (
+{% for name in jax_enforce.metric %}
+    "{{ name }}",
+{% endfor %}
+)
+
+#: Each made trace-free with respect to the renormalized metric. Same ordering.
+TRACE_FREE_VARS = (
+{% for group in jax_enforce.trace_free %}
+    ({% for name in group %}"{{ name }}", {% endfor %}),
+{% endfor %}
+)
+
+#: (variable, floor parameter). The driver supplies the value.
+POS_FLOOR_VARS = (
+{% for name, floor in jax_enforce.pos_floor %}
+    ("{{ name }}", "{{ floor }}"),
+{% endfor %}
+)
+{% endif %}

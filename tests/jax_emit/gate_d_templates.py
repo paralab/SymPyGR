@@ -63,7 +63,9 @@ def synthetic_ctx():
         body=body,
         outputs=["alpha_rhs", "chi_rhs"],
         leaves=leaves,
-        deriv_names=(leaves.grad + leaves.agrad + leaves.grad2),
+        # generator-side union: the RHS's buffers plus the BC table's
+        deriv_names=(leaves.grad + leaves.agrad + leaves.grad2
+                     + ["grad_1_alpha", "grad_2_alpha", "grad_0_chi", "grad_2_chi"]),
     )
     return {
         "project_name": "toy",
@@ -72,13 +74,25 @@ def synthetic_ctx():
         "jax_var_types": ["evolution"],
         "jax": {"evolution": jax_ns},
         "physics_params": [
-            {"var_name": "eta", "py_name": "eta", "toml_key": "toy.eta",
+            # bare keys, as the generator emits them (toml_key = var_name)
+            {"var_name": "eta", "py_name": "eta", "toml_key": "eta",
              "default": 2.0, "num_params": 1, "description": "damping"},
             {"var_name": "lambda", "py_name": "lambda_param",
-             "toml_key": "toy.lambda", "default": [1.0, 1.0, 1.0, 1.0],
+             "toml_key": "lambda", "default": [1.0, 1.0, 1.0, 1.0],
              "num_params": 4, "description": "advection switches"},
         ],
         "solver_features": [("enable_jax_emit", True, "render the jax backend")],
+        "jax_bcs": {"evolution": [
+            ("alpha_rhs", "alpha", ("grad_0_alpha", "grad_1_alpha", "grad_2_alpha"),
+             1.0, 1.0),
+            # a BC gradient the toy RHS never reads -- must still reach DERIVS
+            ("chi_rhs", "chi", ("grad_0_chi", "grad_1_chi", "grad_2_chi"), 1.0, 1.0),
+        ]},
+        "jax_enforce": {
+            "metric": ("gt00", "gt01", "gt02", "gt11", "gt12", "gt22"),
+            "trace_free": (("At00", "At01", "At02", "At11", "At12", "At22"),),
+            "pos_floor": (("chi", "chi_floor"), ("alpha", "alpha_floor")),
+        },
     }
 
 
@@ -120,6 +134,38 @@ def test_keyword_param_is_mangled():
     ast.parse(src)
 
 
+def test_from_toml_reads_the_physics_section():
+    """The C++ sample file nests them under [physics]; defaults must not win."""
+    mod = {}
+    exec(compile(render_all()["toy/toy_params.py"], "toy_params.py", "exec"), mod)
+    p = mod["from_toml"]({"physics": {"eta": 9.5, "lambda": [2.0, 2.0, 2.0, 2.0]}})
+    assert p.eta == 9.5, p
+    assert p.lambda_param == (2.0, 2.0, 2.0, 2.0), p
+    assert mod["from_toml"]({"eta": 9.5}).eta == 9.5      # flat still works
+
+
+def test_bc_and_enforcement_tables():
+    """The tables are the whole point of emitting them: they must be usable."""
+    src = render_all()["toy/toy_rhs.py"]
+    mod = {}
+    exec(compile(src, "toy_rhs.py", "exec"), mod)
+
+    bcs = mod["EVOLUTION_BCS"]
+    assert len(bcs) == 2, bcs
+    assert bcs[0] == ("alpha_rhs", "alpha", "grad_0_alpha", "grad_1_alpha",
+                      "grad_2_alpha", 1.0, 1.0), bcs[0]
+    # DERIVS must render from deriv_names, not from the four leaf lists, or the
+    # generator's BC union never reaches the emitted file
+    declared = set(mod["EVOLUTION_DERIVS"])
+    assert {g for r in bcs for g in r[2:5]} <= declared, sorted(declared)
+    assert {r[0] for r in bcs} <= set(mod["EVOLUTION_OUTPUTS"])
+    assert {r[1] for r in bcs} <= set(mod["EVOLUTION_FIELDS"])
+
+    assert len(mod["METRIC_VARS"]) == 6, mod["METRIC_VARS"]
+    assert mod["TRACE_FREE_VARS"][0][0] == "At00"
+    assert dict(mod["POS_FLOOR_VARS"])["chi"] == "chi_floor"
+
+
 def test_rhs_declares_its_inputs():
     src = render_all()["toy/toy_rhs.py"]
     for token in ("EVOLUTION_OUTPUTS", "EVOLUTION_FIELDS", "EVOLUTION_DERIVS",
@@ -130,6 +176,24 @@ def test_rhs_declares_its_inputs():
     tree = ast.parse(src)
     fns = [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
     assert "evolution_rhs" in fns, fns
+
+
+def test_field_named_like_a_parameter():
+    """A field called u/d/p must not shadow the rhs function's own arguments."""
+    ctx = synthetic_ctx()
+    ctx["jax"]["evolution"].leaves.field = ["u", "alpha"]
+    ctx["jax"]["evolution"].body = "    alpha_rhs = u + alpha\n    chi_rhs = u"
+    ctx["jax"]["evolution"].deriv_names = []
+    ctx["jax"]["evolution"].leaves.param = []
+    ctx["jax"]["evolution"].leaves.unknown = []
+    ctx["jax_bcs"] = {}
+    env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)),
+                      trim_blocks=True, lstrip_blocks=True)
+    src = env.get_template("jax/rhs.py.j2").render(**ctx)
+    mod = {}
+    exec(compile(src, "toy_rhs.py", "exec"), mod)
+    out = mod["evolution_rhs"]({"u": 2.0, "alpha": 3.0}, {}, None)
+    assert out == (5.0, 2.0), out
 
 
 def test_rhs_body_is_executable():
@@ -166,7 +230,10 @@ if __name__ == "__main__":
     check("every jax template renders", test_every_template_renders)
     check("emitted .py parses", test_python_files_parse)
     check("keyword param mangled", test_keyword_param_is_mangled)
+    check("from_toml reads [physics]", test_from_toml_reads_the_physics_section)
+    check("bc + enforcement tables", test_bc_and_enforcement_tables)
     check("rhs declares its inputs", test_rhs_declares_its_inputs)
+    check("field named u/d/p", test_field_named_like_a_parameter)
     check("rhs body executes", test_rhs_body_is_executable)
     if len(sys.argv) > 1:
         check(f"generated project {sys.argv[1]}",

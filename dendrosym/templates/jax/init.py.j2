@@ -14,7 +14,13 @@ from .{{ project_name }}_rhs import (
     {{ vt|upper }}_DERIVS,
     {{ vt|upper }}_PARAMS,
     {{ vt|upper }}_EXTRA_INPUTS,
+    {{ vt|upper }}_BCS,
 {% endfor %}
+{% if jax_enforce %}
+    METRIC_VARS,
+    TRACE_FREE_VARS,
+    POS_FLOOR_VARS,
+{% endif %}
 )
 
 __all__ = [
@@ -27,5 +33,11 @@ __all__ = [
     "{{ vt|upper }}_DERIVS",
     "{{ vt|upper }}_PARAMS",
     "{{ vt|upper }}_EXTRA_INPUTS",
+    "{{ vt|upper }}_BCS",
 {% endfor %}
+{% if jax_enforce %}
+    "METRIC_VARS",
+    "TRACE_FREE_VARS",
+    "POS_FLOOR_VARS",
+{% endif %}
 ]

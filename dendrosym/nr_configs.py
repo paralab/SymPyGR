@@ -163,6 +163,28 @@ class NRConfig(dendrosym.DendroConfiguration):
                 "This type of constraint has not been implemented"
             )
 
+    def evolution_constraint_tables(self):
+        """Which variables the enforcement acts on -- names only, no algebra.
+
+        det(metric)=1, trace removal and flooring are the same operations in
+        every conformal formulation, so only the variable lists are per-solver.
+        `pos_floor` names the floor parameter the applier must supply.
+        """
+        def names(var):
+            return tuple(self.clean_var_names([var]))
+
+        metric = names(self.metric_var) if self.metric_var is not None else ()
+        return {
+            "metric": metric,
+            "trace_free": tuple(
+                names(v) for v in self.evolution_constraint_info.get("trace_zero", [])
+            ),
+            "pos_floor": tuple(
+                (names(v)[0], f"{names(v)[0]}_floor")
+                for v in self.evolution_constraint_info.get("pos_floor", [])
+            ),
+        }
+
     def generate_evolution_constraints(self):
         if self.metric_var is None:
             raise ImproperInitalization(
