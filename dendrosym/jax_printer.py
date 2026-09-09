@@ -81,6 +81,17 @@ class DendroJaxPrinter(NumPyPrinter):
             return jax_symbol_name(name)
         return super()._print_Function(expr)
 
+    def _print_Float(self, flt):
+        """17 digits like the C printer; the default drops a ULP."""
+        num = str(flt.evalf(17))
+        if "e" not in num and "." not in num:
+            num += ".0"
+        head, *tail = num.split("e")
+        head = head.rstrip("0")
+        if head.endswith("."):
+            head += "0"
+        return "e".join([head] + tail)
+
     def _print_im(self, expr):
         return "0.0"        # GR quantities are real; sympy just can't prove it
 
