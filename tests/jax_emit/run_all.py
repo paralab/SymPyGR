@@ -225,6 +225,35 @@ def test_matches_c_printer_where_it_should():
     )
 
 
+
+def test_float_keeps_c_precision():
+    """A Float one ULP off a round number must not print as the round number."""
+    from sympy.printing.c import C99CodePrinter
+    f = sym.Float("0.50000000000000011", precision=53)
+    got = DendroJaxPrinter().doprint(f)
+    assert got == C99CodePrinter().doprint(f), got
+    assert got != "0.5", got
+
+
+def test_staged_merge_keeps_exprs():
+    """A staged block used to drop `exprs`, silently emptying every leaf list."""
+    from dendrosym.codegen_jax import JaxBody, build_jax_body, classify_leaves
+
+    a, b = sym.symbols("alpha[pp] chi[pp]")
+    staged = build_jax_body(
+        ([(sym.Symbol("DENDRO_STAGED_VAR_0"), a * b)],
+         [a + sym.Symbol("DENDRO_STAGED_VAR_0")]),
+        ["Rsc"], fields=["alpha", "chi"], interleave_outputs=True)
+    main_b = build_jax_body(
+        ([(sym.Symbol("DENDRO_0000"), sym.Symbol("Rsc") * b)],
+         [sym.Symbol("DENDRO_0000")]),
+        ["chi_rhs"], fields=["alpha", "chi"])
+    merged = JaxBody(staged.statements + main_b.statements, main_b.outputs,
+                     list(staged.exprs) + list(main_b.exprs))
+    leaves = classify_leaves(merged, ["alpha", "chi"], [])
+    assert leaves["field"] == ["alpha", "chi"], leaves
+
+
 if __name__ == "__main__":
     check("numeric fidelity vs sympy", test_numeric_fidelity)
     check("output is valid python", test_output_is_valid_python)
@@ -238,6 +267,8 @@ if __name__ == "__main__":
     check("grad2 mixed indices (015339c)", test_grad2_mixed_indices_do_not_collapse)
     check("first derivative form", test_first_derivative_form)
     check("agrees with C printer mod rules", test_matches_c_printer_where_it_should)
+    check("float keeps 17 digits", test_float_keeps_c_precision)
+    check("staged merge keeps exprs", test_staged_merge_keeps_exprs)
 
     print()
     if FAILURES:

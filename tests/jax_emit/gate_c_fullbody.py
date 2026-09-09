@@ -112,6 +112,7 @@ def leaf_value(name, rng):
 
 def check_var_type(cfg, vt, trials, tol, seed):
     failures = []
+    cfg.find_derivatives(vt)        # else this checks a body the emitter never emits
     body = cfg.generate_rhs_code(vt, arc_type="jax")
     print(f"  {vt:12s} {len(body.statements)} statements "
           f"({body.n_temps} temps, {len(body.outputs)} outputs)")

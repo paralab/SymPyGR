@@ -449,7 +449,9 @@ class DendroConfiguration:
                 interleave_outputs=True,
             )
             return cgj.JaxBody(
-                staged.statements + main.statements, main.outputs
+                staged.statements + main.statements,
+                main.outputs,
+                list(staged.exprs) + list(main.exprs),
             )
 
         if arc_type == "cpu":
@@ -525,6 +527,47 @@ class DendroConfiguration:
 
         self.bcs_info.update({var_type: {"vars": var_list, "info": var_info}})
 
+    def bcs_rows(self, var_type="general"):
+        """One `(rhs, field, (gx, gy, gz), falloff, asymptotic)` row per variable.
+
+        Bare names: the C++ path adds its `in.`/`out.` prefixes on top, the jax
+        path emits them as-is. Single source for the per-variable Sommerfeld
+        data, which is the only part of the BC that is solver-specific.
+        """
+        all_var_info = self.bcs_info.get(var_type, None)
+        if not all_var_info:
+            raise ImproperInitalization(
+                f"BCS information was not initialized for {var_type}."
+            )
+
+        def _pair(var_info, clean_var):
+            if len(var_info) == 2 and type(var_info[0]) in (int, float):
+                return var_info[0], var_info[1]
+            idxs = self.get_indices_from_var_name(clean_var)
+            entry = var_info[idxs[0]] if len(idxs) == 1 else var_info[idxs[0]][idxs[1]]
+            if len(entry) != 2:
+                raise ValueError(
+                    f"no falloff/asymptotic for {clean_var} at {idxs} in {var_info}"
+                )
+            return entry[0], entry[1]
+
+        rows = []
+        for ii, the_var in enumerate(all_var_info["vars"]):
+            var_info = all_var_info["info"][ii]
+            cleaned_var_name = self.clean_var_names([the_var])
+
+            for clean_var in cleaned_var_name:
+                rhs_var = self.generate_rhs_var_names([clean_var])
+                grad_vars = self.create_grad_var_names([clean_var], "grad", 3)
+                if len(cleaned_var_name) > 1:
+                    falloff, asymptotic = _pair(var_info, clean_var)
+                else:
+                    falloff, asymptotic = var_info[0], var_info[1]
+                rows.append(
+                    (rhs_var[0], clean_var, tuple(grad_vars), falloff, asymptotic)
+                )
+        return rows
+
     def generate_bcs_calculations(
         self,
         var_type="general",
@@ -533,27 +576,9 @@ class DendroConfiguration:
         sz="sz",
         bflag="bflag",
     ):
-        """Generate the BCS calculation functions
-
-        This one is tricky as different variables require using
-        """
-
-        # just iterate through the data we have stored
-        all_var_info = self.bcs_info.get(var_type, None)
-
-        if all_var_info is None:
-            raise ImproperInitalization(
-                f"BCS information was not initialized for {var_type}."
-            )
-
-        if not all_var_info:
-            raise ImproperInitalization(
-                f"BCS information was not initialized for {var_type}."
-            )
-
-        # collect one (rhs, field, grads, falloff, asymptotic) row per variable,
-        # then emit a single data-table + loop instead of N unrolled calls.
+        """Emit the C++ Sommerfeld table + loop from :meth:`bcs_rows`."""
         struct = self.output_struct_name(var_type)
+        in_struct = self.input_struct_name()
 
         def _out_name(rhs_name):
             if struct is None:
@@ -561,66 +586,16 @@ class DendroConfiguration:
             base = rhs_name[:-4] if rhs_name.endswith("_rhs") else rhs_name
             return f"{struct}.{base}"
 
-        in_struct = self.input_struct_name()
-
-        def _in_name(field):
-            return f"{in_struct}.{field}" if in_struct else field
-
-        rows = []
-
-        for ii, the_var in enumerate(all_var_info["vars"]):
-            var_info = all_var_info["info"][ii]
-            cleaned_var_name = self.clean_var_names([the_var])
-
-            if len(cleaned_var_name) > 1:
-                for clean_var in cleaned_var_name:
-                    rhs_var = self.generate_rhs_var_names([clean_var])
-
-                    grad_vars = self.create_grad_var_names([clean_var], "grad", 3)
-
-                    if len(var_info) == 2 and (
-                        type(var_info[0]) is int or type(var_info[0]) is float
-                    ):
-                        falloff = var_info[0]
-                        asymptotic = var_info[1]
-                    else:
-                        idxs = self.get_indices_from_var_name(clean_var)
-
-                        if len(idxs) == 1:
-                            falloff = var_info[idxs[0]][0]
-                            asymptotic = var_info[idxs[0]][1]
-                        else:
-                            # print(clean_var, file=sys.stderr)
-                            try:
-                                falloff = var_info[idxs[0]][idxs[1]][0]
-                                asymptotic = var_info[idxs[0]][idxs[1]][1]
-                            except:
-                                print(f"FAILURE {var_info}")
-                                raise Exception
-
-                    rows.append(
-                        (
-                            _out_name(rhs_var[0]),
-                            _in_name(clean_var),
-                            grad_vars,
-                            falloff,
-                            asymptotic,
-                        )
-                    )
-
-            else:
-                rhs_var = self.generate_rhs_var_names(cleaned_var_name)
-
-                grad_vars = self.create_grad_var_names(cleaned_var_name, "grad", 3)
-                rows.append(
-                    (
-                        _out_name(rhs_var[0]),
-                        _in_name(cleaned_var_name[0]),
-                        grad_vars,
-                        var_info[0],
-                        var_info[1],
-                    )
-                )
+        rows = [
+            (
+                _out_name(rhs),
+                f"{in_struct}.{field}" if in_struct else field,
+                list(grads),
+                falloff,
+                asymptotic,
+            )
+            for rhs, field, grads, falloff, asymptotic in self.bcs_rows(var_type)
+        ]
 
         return dendrosym.codegen.generate_bcs_table(
             rows, self.project_name, pmin, pmax, sz, bflag

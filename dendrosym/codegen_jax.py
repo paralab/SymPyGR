@@ -95,8 +95,12 @@ def classify_leaves(body, field_names=(), param_names=()):
     `unknown` is what matters: anything the equations use but the config never
     declared, surfaced here instead of as a NameError inside a jitted kernel.
     """
-    fields = {str(f).split("[")[0] for f in field_names}
-    fields = {jax_symbol_name(f) for f in fields}
+    # declared order, so FIELDS lines up with OUTPUTS and the C++ var enum
+    order = {}
+    for f in field_names:
+        n = jax_symbol_name(str(f).split("[")[0])
+        order.setdefault(n, len(order))
+    fields = set(order)
     params = {jax_symbol_name(str(p)) for p in param_names}
 
     defined = set()
@@ -126,6 +130,10 @@ def classify_leaves(body, field_names=(), param_names=()):
         else:
             out["unknown"].append(n)
     out["param"] = sorted(set(out["param"]))
+    out["field"].sort(key=lambda n: order.get(n.split("[")[0], len(order)))
+    for k in ("grad", "agrad", "kograd", "grad2"):
+        out[k].sort(key=lambda n: (n.rsplit("_", 1)[0],
+                                   order.get(n.rsplit("_", 1)[1], len(order))))
     return out
 
 

@@ -113,6 +113,10 @@ def _emit_deriv_calc(calc: str, use_grad_set: bool, label: str) -> str:
 # Emission is byte-identical; only the key values move.
 _CACHE_SCHEMA_VERSION = "v20"
 
+# Bump on any change to the jax emission. Separate from the schema version so a
+# jax-only change does not force every C++ solver into a cold regen.
+_JAX_META_VERSION = 1
+
 
 def _vt_worker_init(inner_workers):
     """Cap nested process_map worker count to avoid CPU oversubscription."""
@@ -249,6 +253,8 @@ def _try_cache_hit(vt, vt_hash, gencode_dir, prefix):
     }
     if meta.get("cascade"):
         hit[f"{vt}_cascade"] = meta["cascade"]
+    if meta.get("jax", {}).get("version") == _JAX_META_VERSION:
+        hit[f"{vt}_jax"] = meta["jax"]
     return hit
 
 
@@ -270,12 +276,26 @@ def _save_cache(vt, vt_hash, gencode_dir, ctx_update, config=None, expr_hash=Non
     }
     if ctx_update.get(f"{vt}_cascade"):
         meta["cascade"] = ctx_update[f"{vt}_cascade"]
+    if ctx_update.get(f"{vt}_jax"):
+        meta["jax"] = dict(ctx_update[f"{vt}_jax"], version=_JAX_META_VERSION)
     (cache_root / "meta.json").write_text(json.dumps(meta))
     _write_cache_pointer(vt, vt_hash, gencode_dir, config, expr_hash=expr_hash)
 
 
 def _cache_pointer_path(vt, gencode_dir):
     return gencode_dir / ".dendro_cache" / f"last_{vt}.json"
+
+
+def _patch_cached_jax(vt, gencode_dir, jax_meta):
+    """Store a jax meta recomputed by the fallback, so it is paid once."""
+    try:
+        ptr = json.loads(_cache_pointer_path(vt, gencode_dir).read_text())
+        meta_path = gencode_dir / ".dendro_cache" / ptr["hash"] / "meta.json"
+        meta = json.loads(meta_path.read_text())
+        meta["jax"] = dict(jax_meta, version=_JAX_META_VERSION)
+        meta_path.write_text(json.dumps(meta))
+    except Exception:
+        pass
 
 
 def _config_source_sha(config):
@@ -439,6 +459,51 @@ def _load_cached_ctx(vt, gencode_dir, prefix, config=None, allow_stale=False):
     elif not checkable:
         note += "  (config staleness not checkable)"
     return hit, note
+
+
+def _jax_meta(config, var_type):
+    """Emitted jax body + leaf lists as plain data (JSON-able, cacheable).
+
+    Built where `find_derivatives` has already run, so the caller does not
+    have to redo the expansion just to reach the same CSE.
+    """
+    from dendrosym.codegen_jax import classify_leaves
+
+    body = config.generate_rhs_code(var_type, arc_type="jax")
+    fields = [
+        n for vt in config.all_var_names if vt != "parameter"
+        for n in config.all_var_names[vt]
+    ]
+    params, seen = [], set()
+    for plist in config.all_vars.get("parameter", {}).values():
+        for pvar in plist:
+            if pvar.var_name not in seen:
+                seen.add(pvar.var_name)
+                params.append(pvar.var_name)
+    leaves = classify_leaves(body, fields, params)
+
+    # FIELDS is the state this module names, not only what the body happens to
+    # read: wave's `u` appears in no RHS but is still evolved, and a BC row and
+    # the output tuple both refer to it.
+    outputs = list(body.outputs)
+    named = {o[:-4] for o in outputs if o.endswith("_rhs")}
+    declared = [n for n in config.all_var_names.get(var_type, []) if str(n) in named]
+    if declared:
+        fld = [str(n) for n in declared]
+        leaves["field"] = fld + [n for n in leaves["field"] if n not in set(fld)]
+    fld = leaves["field"]
+    # so OUTPUTS[i] is the RHS of FIELDS[i] and a driver can zip them
+    if named == set(fld):
+        outputs.sort(key=lambda o: fld.index(o[:-4]))
+
+    return {
+        "body": body.render(indent="    "),
+        "outputs": outputs,
+        "leaves": leaves,
+        "deriv_names": (leaves["grad"] + leaves["agrad"]
+                        + leaves["grad2"] + leaves["kograd"]),
+        "n_statements": len(body.statements),
+    }
 
 
 def _run_var_type(args):
@@ -639,9 +704,17 @@ def _run_var_type(args):
     except Exception:
         ko_code = ""
 
+    try:                        # never let the jax twin break a C++ regen
+        jax_meta = _jax_meta(config, vt)
+    except Exception as exc:
+        print(f"    WARNING: jax body not emitted ({type(exc).__name__}: {exc})",
+              file=sys.stderr)
+        jax_meta = None
+
     print(f"  {vt} done.", file=sys.stderr)
 
     return {
+        f"{vt}_jax": jax_meta,
         f"{vt}_gencode": {
             "deriv_alloc": alloc_file,
             "deriv_calc": calc_file,
@@ -1282,38 +1355,38 @@ class DendroProjectGenerator:
     # Template rendering
     # ------------------------------------------------------------------
 
-    def _build_jax_context(self, ctx: dict):
+    def _build_jax_context(self, ctx: dict, gencode_dir=None):
         """Emit each var_type's RHS through the JAX backend into ctx["jax"].
 
-        generate_rhs_code memoises per var_type, so --emit=both derives once.
+        The body is built (and cached) by the gencode pass, which already ran
+        the derivative expansion; the fallback here redoes that expansion.
         """
         import types
 
-        from dendrosym.codegen_jax import classify_leaves
-
         c = self.config
-        field_names = []
-        for vt in ctx["var_types"]:
-            field_names += list(ctx.get(f"{vt}_var_names", []))
-        param_names = [pp["var_name"] for pp in ctx.get("physics_params", [])]
-
         jax_ctx, active = {}, []
         for vt in ctx["var_types"]:
             if c.all_rhs_functions.get(vt) is None:
                 continue
-            body = c.generate_rhs_code(vt, arc_type="jax")
-            leaves = classify_leaves(body, field_names, param_names)
-            deriv_names = (leaves["grad"] + leaves["agrad"]
-                           + leaves["grad2"] + leaves["kograd"])
+            meta = ctx.get(f"{vt}_jax")
+            if meta is None:
+                # gencode ran in a subprocess or was skipped, so this config
+                # never got the chain-rule expansion; without it the body emits
+                # derivatives of CSE temps no driver can supply. Memoised.
+                c.find_derivatives(vt)
+                meta = _jax_meta(c, vt)
+                if gencode_dir is not None:
+                    _patch_cached_jax(vt, gencode_dir, meta)
+            leaves = meta["leaves"]
             jax_ctx[vt] = types.SimpleNamespace(
-                body=body.render(indent="    "),
-                outputs=body.outputs,
+                body=meta["body"],
+                outputs=meta["outputs"],
                 leaves=types.SimpleNamespace(**leaves),
-                deriv_names=deriv_names,
+                deriv_names=meta["deriv_names"],
             )
             active.append(vt)
-            print(f"  [jax] {vt}: {len(body.statements)} statements, "
-                  f"{len(deriv_names)} derivative buffers", file=sys.stderr)
+            print(f"  [jax] {vt}: {meta['n_statements']} statements, "
+                  f"{len(meta['deriv_names'])} derivative buffers", file=sys.stderr)
             if leaves["unknown"]:
                 print(f"  [jax] {vt}: {len(leaves['unknown'])} undeclared "
                       f"input(s) -> EXTRA_INPUTS: {leaves['unknown'][:6]}",
@@ -1321,6 +1394,39 @@ class DendroProjectGenerator:
 
         ctx["jax"] = jax_ctx
         ctx["jax_var_types"] = active
+        # the one the docs should talk about; [0] is whichever sorted first
+        ctx["jax_main_vt"] = "evolution" if "evolution" in active else active[0]
+
+        # Tables, not code: the Sommerfeld application and the det/trace/floor
+        # algebra are the same everywhere and belong to the driver. Only which
+        # variables they act on, and with what constants, is per-solver.
+        ctx["jax_bcs"] = {}
+        for vt in active:
+            try:
+                ctx["jax_bcs"][vt] = c.bcs_rows(vt)
+            except Exception:
+                pass
+        try:
+            tables = c.evolution_constraint_tables()
+            ctx["jax_enforce"] = tables if tables["metric"] else None
+        except Exception:
+            ctx["jax_enforce"] = None
+
+        # A BC can need a gradient the equations never read (CCZ4's gaugeB).
+        # The C++ `d` struct carries those; the jax deriv list must too, or the
+        # driver fills exactly what it was told and still KeyErrors on the BCs.
+        for vt, rows in ctx["jax_bcs"].items():
+            have = jax_ctx[vt].deriv_names
+            extra = sorted({g for r in rows for g in r[2]} - set(have))
+            if extra:
+                jax_ctx[vt].deriv_names = have + extra
+                print(f"  [jax] {vt}: +{len(extra)} buffer(s) for the BCs only",
+                      file=sys.stderr)
+            known = set(jax_ctx[vt].leaves.field)
+            for row in rows:
+                if row[1] not in known:
+                    known.add(row[1])
+                    jax_ctx[vt].leaves.field.append(row[1])
 
         # `lambda` is declared by bssn/ccz4/emda
         from dendrosym.jax_printer import safe_name
@@ -1331,7 +1437,7 @@ class DendroProjectGenerator:
         """Render all Jinja2 templates into the output directory."""
 
         if emit == "jax":
-            self._build_jax_context(ctx)
+            self._build_jax_context(ctx, output / "solver" / "gencode")
             template_map = build_jax_template_map(ctx)
         else:
             template_map = build_template_map(ctx)
