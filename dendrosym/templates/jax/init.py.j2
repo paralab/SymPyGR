@@ -9,6 +9,7 @@ from .{{ project_name }}_params import {{ project_upper }}Params, from_toml
 {% if jax_initial_data %}
 from .{{ project_name }}_initial_data import (
     initial_data,
+    register,
     INITIAL_DATA,
     INITIAL_DATA_UNAVAILABLE,
 {% if jax_initial_data.analytical %}
@@ -38,6 +39,7 @@ __all__ = [
     "from_toml",
 {% if jax_initial_data %}
     "initial_data",
+    "register",
     "INITIAL_DATA",
     "INITIAL_DATA_UNAVAILABLE",
 {% if jax_initial_data.analytical %}

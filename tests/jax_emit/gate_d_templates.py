@@ -213,6 +213,30 @@ def test_initial_data_is_callable_and_refuses_what_it_cannot_do():
         raise AssertionError("a missing runtime value was silently defaulted")
 
 
+def test_register_fills_an_id_the_emitter_refused():
+    """The hook a hand-written id uses: raw-C++ entries are a refusal, not a
+    dead end (dendrojax.initial_data supplies CCZ4's Brill-Lindquist)."""
+    import numpy as np
+
+    src = render_all()["toy/toy_initial_data.py"]
+    mod = {}
+    exec(compile(src, "toy_initial_data.py", "exec"), mod)
+
+    x = np.linspace(0.0, 1.0, 4)
+    mod["register"](5, "hand-written", lambda x, y, z, p, **kw:
+                    {"alpha": x * 0 + kw["amp"], "chi": x * 0}, ("amp",))
+    assert 5 not in mod["INITIAL_DATA_UNAVAILABLE"]
+    out = mod["initial_data"](5, x, x, x, None, amp=3.0)
+    assert set(out) == {"alpha", "chi"} and float(out["alpha"][0]) == 3.0, out
+
+    try:
+        mod["initial_data"](5, x, x, x, None)     # amp withheld
+    except TypeError as exc:
+        assert "amp" in str(exc), exc
+    else:
+        raise AssertionError("a registered id defaulted its runtime value")
+
+
 def test_rhs_declares_its_inputs():
     src = render_all()["toy/toy_rhs.py"]
     for token in ("EVOLUTION_OUTPUTS", "EVOLUTION_FIELDS", "EVOLUTION_DERIVS",
@@ -280,6 +304,7 @@ if __name__ == "__main__":
     check("from_toml reads [physics]", test_from_toml_reads_the_physics_section)
     check("bc + enforcement tables", test_bc_and_enforcement_tables)
     check("initial data callable + refuses", test_initial_data_is_callable_and_refuses_what_it_cannot_do)
+    check("register fills a refused id", test_register_fills_an_id_the_emitter_refused)
     check("rhs declares its inputs", test_rhs_declares_its_inputs)
     check("field named u/d/p", test_field_named_like_a_parameter)
     check("rhs body executes", test_rhs_body_is_executable)

@@ -70,6 +70,17 @@ INITIAL_DATA_UNAVAILABLE = {
 }
 
 
+def register(id_type, name, fn, needs=()):
+    """Supply an id this emitter could not translate, or override one.
+
+    ``fn(x, y, z, p, **needs)`` returns ``{field: array}`` in
+    {{ jax_main_vt|upper }}_FIELDS. Clears the entry from
+    INITIAL_DATA_UNAVAILABLE so ``initial_data`` dispatches to it.
+    """
+    INITIAL_DATA[id_type] = (name, fn, tuple(needs))
+    INITIAL_DATA_UNAVAILABLE.pop(id_type, None)
+
+
 def initial_data(id_type, x, y, z, p, **runtime):
     """Dispatch on ``id_type``, passing only the runtime values it asks for."""
     if id_type in INITIAL_DATA_UNAVAILABLE:
