@@ -12,8 +12,12 @@ between two shared faces went unfilled and every MIXED second derivative was
 wrong, silently (2.75e-2 vs 1.95e-17 with the flag on).
 
 Arms:
-  1. Minkowski stays a fixed point on the octree (across a coarse/fine
-     interface too, when the mesh has one -- reported as a GAP when not).
+  1. Minkowski stays a fixed point across a coarse/fine interface. The mesh is
+     built from an OFF-CENTRE puncture, then the state is overwritten with
+     exact flat: a centred puncture is mirror-symmetric and flat data has no
+     structure, so neither refines non-uniformly no matter how good the
+     criterion is. Flat data on an adaptive mesh is the one configuration
+     where a ghost-interpolation error cannot hide behind truncation error.
   2. A puncture (id=6) runs, stays finite, and conserves its enforcement.
   3. A remesh mid-run preserves the state where the mesh did not change.
 """
@@ -71,6 +75,16 @@ def _patch_simulation(post_step=None):
     docstring names BSSN's renormalization as the use case, and Simulation
     forwards that no more than it forwards use_ec_sync.
 
+    ``sync_wavelet`` is the third: the refinement criterion reads
+    ``physics_data``, which is interior-only and gets ZERO-padded to S^3, so
+    every block edge carries a field-value-to-zero cliff. The wavelet then
+    measures the cliff instead of the data -- 4.82e-01 for every field whose
+    flat value is 1, identical on every element at every level, nonzero even
+    on exactly-flat Minkowski. Everything always exceeds the threshold, so
+    refinement is uniform and no coarse/fine interface ever forms. With it on,
+    the same puncture gives 127 elements / 100 non-conforming faces instead of
+    uniformly reaching 4096.
+
     Returns ``(note, extra_simulation_kwargs)``: prefer real kwargs if
     dendrojax grows them, otherwise patch the call.
     """
@@ -93,10 +107,15 @@ def _patch_simulation(post_step=None):
         extra["post_step_func"] = post_step
     base = getattr(dsim.run_n_steps_split, "func", dsim.run_n_steps_split)
     dsim.run_n_steps_split = functools.partial(base, **extra)
-    return ("  step opts: PATCHED use_ec_sync=True"
+
+    rbase = getattr(dsim._remesh, "func", dsim._remesh)
+    dsim._remesh = functools.partial(rbase, sync_wavelet=True)
+
+    return ("  step opts: PATCHED use_ec_sync=True + sync_wavelet=True"
             + (" + post_step_func" if post_step is not None else "")
-            + " -- Simulation forwards neither; without ec_sync every mixed "
-              "2nd derivative is wrong at block boundaries", kw)
+            + " -- Simulation forwards none of them; without ec_sync every "
+              "mixed 2nd derivative is wrong at block boundaries, and without "
+              "sync_wavelet the mesh only ever refines uniformly", kw)
 
 
 def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
@@ -126,48 +145,56 @@ def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
     params = Params(phys=phys, ko_sigma=0.0)
 
     # ---- arm 1: Minkowski on an adaptive mesh --------------------------------
-    print("\n1. Minkowski fixed point on the octree")
-    cb = build_callbacks(mod, domain=DOM, phys=phys, eleorder=ELE, id_type=2)
+    print("\n1. Minkowski fixed point across a coarse/fine interface")
 
-    # Minkowski is constant, so the wavelet criterion would never refine it.
-    # Build the mesh off a bump instead and evolve the flat state on it: any
-    # nonzero RHS is then the mesh (ghost sync across a level jump), not data.
-    from dendrojax.refinement import get_dendro5_criteria
-
-    def bump(x, y, z, t=0.0):
-        return jnp.exp(-(x * x + y * y + z * z) / 4.0)[..., None]
-
-    criteria = get_dendro5_criteria(bump, 1e-3, order=ELE)
-
+    # Flat data has no structure, so a CORRECT wavelet criterion will never
+    # refine it -- arm 1 cannot make its own level jump. Build the mesh from an
+    # off-centre puncture (centred is mirror-symmetric, so it refines
+    # uniformly), then overwrite the state with exact Minkowski: an adaptive
+    # mesh carrying data whose answer is known to the last bit.
+    register_brill_lindquist(mod, chi_floor=1e-4)
+    off = dict(BH1_mass=1.0, BH1_x=3.7, BH1_y=-2.3, BH1_z=1.1, BH1_spin=0.0,
+               BH1_spin_theta=0.0, BH1_spin_phi=0.0,
+               BH2_mass=0.0, BH2_x=0.0, BH2_y=0.0, BH2_z=0.0, BH2_spin=0.0,
+               BH2_spin_theta=0.0, BH2_spin_phi=0.0)
+    cbm = build_callbacks(mod, domain=DOM, phys=phys, eleorder=ELE,
+                          id_type=6, runtime=off)
     sim = dendrojax.Simulation(
-        initial_data=cb.initial_data, rhs=cb.rhs, rhs_interior=cb.rhs_interior,
-        num_vars=cb.num_vars, eleorder=ELE, domain=DOM, params=params,
-        max_depth=5, min_depth=3, wavelet_tol=1e-3, max_blocks=4096,
-        init_grid_iter=5, cfl=0.2, batch_size=32, verbose=False,
-        criteria_fn=criteria, max_active_budget=2048, **ec_kw,
+        initial_data=cbm.initial_data, rhs=cbm.rhs,
+        rhs_interior=cbm.rhs_interior, num_vars=cbm.num_vars, eleorder=ELE,
+        domain=DOM, params=Params(phys=phys, ko_sigma=0.0),
+        max_depth=8, min_depth=2, wavelet_tol=1e-3, max_blocks=4096,
+        init_grid_iter=0, cfl=0.2, batch_size=64, verbose=False,
+        max_active_budget=2048, **ec_kw,
     )
     sim.setup()
-    nc = _nonconforming(sim)
-    if nc == 0:                       # a remesh is what actually refines
-        sim.remesh()
+    for _ in range(6):
         nc = _nonconforming(sim)
+        if nc:
+            break
+        sim.remesh()
+    nc = _nonconforming(sim)
     print(f"  mesh: {sim.active_count} elements, {nc} non-conforming faces, "
           f"dt {sim.dt:.4g}")
     if nc == 0:
         GAPS.append("arm 1 ran on a conforming mesh: ghost interpolation "
                     "across a coarse/fine interface is NOT covered")
 
+    # now make the state exactly flat everywhere
+    flat = jnp.asarray([1.0 if v in ("alpha", "chi", "gt00", "gt11", "gt22")
+                        else 0.0 for v in cbm.fields])
+    pd = jnp.broadcast_to(flat[None, :, None, None, None],
+                          sim.state.physics_data.shape)
+    sim.state = sim.state._replace(physics_data=jnp.asarray(pd))
+
     sim.run(n_steps=2)
     u = np.asarray(sim.state.physics_data[:sim.active_count])
-    flat = np.zeros_like(u)
-    for i, v in enumerate(cb.fields):
-        flat[:, i] = 1.0 if v in ("alpha", "chi", "gt00", "gt11", "gt22") else 0.0
-    check("|state - flat| after 2 steps", np.abs(u - flat).max(), 1e-12)
+    dev = np.abs(u - np.asarray(flat)[None, :, None, None, None]).max()
+    check("|state - flat| after 2 steps", dev, 1e-12)
     check("state finite", float(np.count_nonzero(~np.isfinite(u))), 0.5)
 
     # ---- arm 2: a puncture on the mesh --------------------------------------
     print("\n2. Brill-Lindquist puncture (id=6) on the mesh")
-    register_brill_lindquist(mod, chi_floor=1e-4)
     rt = dict(BH1_mass=1.0, BH1_x=0.0, BH1_y=0.0, BH1_z=0.0, BH1_spin=0.0,
               BH1_spin_theta=0.0, BH1_spin_phi=0.0,
               BH2_mass=0.0, BH2_x=0.0, BH2_y=0.0, BH2_z=0.0, BH2_spin=0.0,
