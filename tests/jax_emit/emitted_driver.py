@@ -48,6 +48,7 @@ class Callbacks(NamedTuple):
     fields: tuple
     enforce: object
     enforce_state: object
+    needs_ec_sync: bool
 
 
 def build_callbacks(mod, *, domain, phys, eleorder=6, id_type=None,
@@ -141,5 +142,10 @@ def build_callbacks(mod, *, domain, phys, eleorder=6, id_type=None,
         return state._replace(
             physics_data=jax.vmap(enforce)(state.physics_data))
 
+    # Whether the edge/corner ghost band must be synced is a property of the
+    # PHYSICS, not a tuning knob: only a mixed second derivative reads it.
+    # BSSN hard-codes use_ec_sync=True and the wave-type solvers never set it;
+    # an emitted package does not have to guess, because the plan says so.
     return Callbacks(initial_data, rhs, rhs_interior, len(fields),
-                     tuple(fields), enforce, enforce_state)
+                     tuple(fields), enforce, enforce_state,
+                     bool(plan.mixed_slots))

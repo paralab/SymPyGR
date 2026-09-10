@@ -94,13 +94,12 @@ def _patch_simulation(post_step=None):
     import dendrojax.simulation as dsim
 
     sig = inspect.signature(dsim.Simulation.__init__).parameters
-    kw = {}
-    if "use_ec_sync" in sig:
-        kw["use_ec_sync"] = True
-    if post_step is not None and "post_step_func" in sig:
-        kw["post_step_func"] = post_step
-    if len(kw) == (1 if post_step is None else 2):
-        return ("  step opts: Simulation exposes them", kw)
+    want = {"use_ec_sync": True, "sync_wavelet": True}
+    if post_step is not None:
+        want["post_step_func"] = post_step
+    kw = {k: v for k, v in want.items() if k in sig}
+    if len(kw) == len(want):
+        return ("  step opts: Simulation exposes " + ", ".join(sorted(kw)), kw)
 
     extra = {"use_ec_sync": True}
     if post_step is not None:
@@ -159,6 +158,12 @@ def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
                BH2_spin_theta=0.0, BH2_spin_phi=0.0)
     cbm = build_callbacks(mod, domain=DOM, phys=phys, eleorder=ELE,
                           id_type=6, runtime=off)
+    # the plan knows whether the edge band is needed; nobody has to guess
+    print(f"  plan needs edge/corner sync: {cbm.needs_ec_sync} "
+          f"(mixed 2nd derivatives present)")
+    if cbm.needs_ec_sync and ec_kw.get("use_ec_sync") is not True \
+            and "PATCHED" not in ec_note:
+        FAILURES.append("mixed derivatives present but ec sync not enabled")
     sim = dendrojax.Simulation(
         initial_data=cbm.initial_data, rhs=cbm.rhs,
         rhs_interior=cbm.rhs_interior, num_vars=cbm.num_vars, eleorder=ELE,
