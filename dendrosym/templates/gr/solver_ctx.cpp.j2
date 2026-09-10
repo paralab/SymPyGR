@@ -773,6 +773,20 @@ int {{ project_upper }}Ctx::terminal_output() {
         const double bh1_cr = {{ namespace }}::{{ project_upper }}_BH1_CONSTRAINT_R;
         const double bh2_cr = {{ namespace }}::{{ project_upper }}_BH2_CONSTRAINT_R;
         const bool maskActive = (bh1_cr > 0.0 || bh2_cr > 0.0);
+        // Say once what rms_msk means for this run. With both radii 0 the
+        // column silently equals rms and gets quoted as masked.
+        static bool maskNoticePrinted = false;
+        if (rank == 0 && !maskNoticePrinted) {
+            maskNoticePrinted = true;
+            if (maskActive)
+                std::cout << "[{{ project_name }}] rms_msk excises r < "
+                          << bh1_cr << " (BH1) and r < " << bh2_cr
+                          << " (BH2) around the punctures" << std::endl;
+            else
+                std::cout << "[{{ project_name }}] rms_msk is UNMASKED "
+                             "(bh1/bh2 constraint_r = 0); it equals rms"
+                          << std::endl;
+        }
 
         std::vector<double> consMask;
         if (maskActive) {
