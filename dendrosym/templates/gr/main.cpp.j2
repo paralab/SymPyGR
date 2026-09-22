@@ -351,12 +351,12 @@ int main(int argc, char **argv) {
 {% endif %}
         }
 
-        if ((step % ts_output_freq) == 0) {
+        if (ts_output_freq > 0 && (step % ts_output_freq) == 0) {
             ctx->write_bh_coords();
         }
 {% endif %}
 
-        if ((step % ts_output_freq) == 0) {
+        if (ts_output_freq > 0 && (step % ts_output_freq) == 0) {
             ctx->terminal_output();
         }
 
