@@ -16,7 +16,7 @@ import dendrosym.derivs
 from sympy.printing.numpy import NumPyPrinter
 from sympy.printing.precedence import precedence
 
-# `lambda` is declared by bssn_eqns.py, ccz4_eqns.py and emda_configs.py.
+# `lambda` is declared by several configs (e.g. tests/jax_emit/bssn_eqns.py).
 KEYWORD_SUFFIX = "_param"
 
 

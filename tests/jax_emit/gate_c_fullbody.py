@@ -248,7 +248,7 @@ def run_config(path, trials, tol, seed):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("configs", nargs="*",
-                    default=[os.path.join(REPO, "bssn_eqns.py")])
+                    default=[os.path.join(os.path.dirname(os.path.abspath(__file__)), "bssn_eqns.py")])
     ap.add_argument("--trials", type=int, default=2)
     ap.add_argument("--tol", type=float, default=1e-12)
     ap.add_argument("--seed", type=int, default=20260903)

@@ -8,10 +8,10 @@ C++ project.
 
 Usage:
     from dendrosym.project_generator import DendroProjectGenerator
-    from emda_configs import dendroConfigs
+    from my_config import dendroConfigs
 
     gen = DendroProjectGenerator(dendroConfigs)
-    gen.generate("./output/emda-solver/")
+    gen.generate("./output/my-solver/")
 """
 
 import hashlib
