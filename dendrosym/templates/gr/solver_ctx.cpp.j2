@@ -244,6 +244,11 @@ int {{ project_upper }}Ctx::rhs(DVec *in, DVec *out, unsigned int sz,
                                 DendroScalar time) {
 
     {{ namespace }}::timer::t_unzip_async.start();
+{% if boundary_value_modes %}
+    // the stage state carries the boundary data at the stage time before any
+    // derivative sees it
+    this->apply_boundary_values(*in, time);
+{% endif %}
     this->unzip(*in, m_var[VL::CPU_EV_UZ_IN], {{ project_upper }}_ASYNC_COMM_K);
     {{ namespace }}::timer::t_unzip_async.stop();
 
@@ -287,10 +292,38 @@ int {{ project_upper }}Ctx::pre_stage(DVec &sIn) { return 0; }
 // algebraic constraints happens in post_timestep, which the ETS already calls
 // on every intermediate stage state.
 int {{ project_upper }}Ctx::post_stage(DVec &sIn) { return 0; }
+{% if boundary_value_modes %}
+void {{ project_upper }}Ctx::apply_boundary_values(DVec &s, DendroScalar t) {
+    if (!m_uiMesh->isActive()) return;
+    if (m_faceNodesMesh != m_uiMesh) {
+        m_faceNodes = dendro_bc::face_nodes(m_uiMesh);
+        m_faceNodesMesh = m_uiMesh;
+    }
+    DendroScalar *f[{{ evolution_num_vars }}];
+    s.to_2d(f);
+    switch ({{ project_upper }}_BOUNDARY_MODE_ID) {
+{% for m in boundary_value_modes %}
+        case {{ m.id }}: {  // {{ m.name }}
+{{ m.code }}
+            break;
+        }
+{% endfor %}
+        default:
+            break;
+    }
+}
+
+{% endif %}
 int {{ project_upper }}Ctx::pre_timestep(DVec &sIn) { return 0; }
 
 int {{ project_upper }}Ctx::post_timestep(DVec &sIn) {
     if (!m_uiMesh->isActive()) return 0;
+{% if boundary_value_modes %}
+
+    // after a step the clock still reads t_n; the state is at t_n + dt. On the
+    // intermediate stage states this is overwritten by rhs() with the stage time.
+    this->apply_boundary_values(sIn, m_uiTinfo._m_uiT + m_uiTinfo._m_uiTh);
+{% endif %}
 
     DendroScalar *zipIn[{{ evolution_num_vars }}];
     sIn.to_2d(zipIn);
@@ -1101,6 +1134,9 @@ bool {{ project_upper }}Ctx::is_remesh() {
 }
 
 int {{ project_upper }}Ctx::grid_transfer(const ot::Mesh *m_new) {
+{% if boundary_value_modes %}
+    m_faceNodesMesh = nullptr;  // a new mesh may reuse the old one's address
+{% endif %}
     // dealloc old MPI context
     ot::dealloc_mpi_ctx<DendroScalar>(m_uiMesh, m_mpi_ctx, {{ evolution_num_vars }},
                                        {{ project_upper }}_ASYNC_COMM_K);

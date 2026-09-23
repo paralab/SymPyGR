@@ -21,6 +21,13 @@ rhs, so the time integrator carries them):
                              takes d/dt itself. The face follows g if the initial
                              data already equals g(t = 0) there -- otherwise the
                              offset is kept, not corrected.
+  dirichlet_value(g)         Dirichlet by overwriting: the face is set to g on
+                             every stage state (at the stage time) and after each
+                             step. g is a sympy expression or a C++ expression
+                             string in x, y, z, t -- for data with no closed-form
+                             d/dt (tables, other codes). Exact on the face; with
+                             time-dependent g it can cost RK some time order at the
+                             boundary, which the rhs form (dirichlet) does not.
   exact()                    dirichlet() from the id type's exact solution (tests)
   outflow(vel)               f_t = -v . grad f, v the outgoing characteristic
                              velocity per face (6 x 3, sympy allowed); exact for
@@ -31,7 +38,8 @@ rhs, so the time integrator carries them):
   sommerfeld(falloff, f_inf) radiative condition for fields falling off as
                              f_inf + O(1/r^falloff) from a central source
 
-Data-free: static, outflow, neumann, sommerfeld. Needs data: dirichlet, exact.
+Data-free: static, outflow, neumann, sommerfeld. Needs data: dirichlet,
+dirichlet_value, exact.
 """
 
 import sympy as sym
@@ -39,7 +47,8 @@ import sympy as sym
 # dendrolib face order: OCT_DIR_LEFT, RIGHT (x), DOWN, UP (y), BACK, FRONT (z)
 FACE_NORMALS = ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1))
 
-KINDS = ("static", "dirichlet", "exact", "outflow", "neumann", "sommerfeld")
+KINDS = ("static", "dirichlet", "dirichlet_value", "exact", "outflow", "neumann",
+         "sommerfeld")
 
 
 def static():
@@ -48,6 +57,10 @@ def static():
 
 def dirichlet(g):
     return ("dirichlet", sym.sympify(g))
+
+
+def dirichlet_value(g):
+    return ("dirichlet_value", g if isinstance(g, str) else sym.sympify(g))
 
 
 def exact():

@@ -1633,6 +1633,7 @@ class DendroProjectGenerator:
             modes = {"exact": {"all": _bc.exact()}}
         ctx["boundary_modes"] = []
         ctx["boundary_data_funcs"] = []
+        ctx["boundary_value_modes"] = []
         ctx["boundary_needs_grutils"] = False
         if not modes:
             return
@@ -1657,7 +1658,7 @@ class DendroProjectGenerator:
                 raise ValueError(f"boundary mode {mname!r} leaves {missing} without a "
                                  "boundary condition; use static() to hold them")
 
-            lines, exact_vars, summary = [], [], []
+            lines, exact_vars, summary, value_lines = [], [], [], []
             for v in names:
                 kind = per_var[v]
                 summary.append(f"{v}: {kind[0]}")
@@ -1681,6 +1682,22 @@ class DendroProjectGenerator:
                         raise ValueError(f"boundary mode {mname!r}: exact() needs "
                                          "initial_data_types with an `exact` solution")
                     exact_vars.append(v)
+                elif kind[0] == "dirichlet_value":
+                    fname = f"boundaryValue_{mid}_{v}"
+                    if isinstance(kind[1], str):
+                        body = [f"    return ({kind[1]});"]
+                    else:
+                        temps, (red,) = sym.cse([sym.sympify(kind[1]).subs(param_subs)],
+                                                symbols=sym.numbered_symbols("__bv"))
+                        body = [f"    const double {s_} = {cprinter.doprint(e)};"
+                                for s_, e in temps]
+                        body.append(f"    return {cprinter.doprint(red)};")
+                    ctx["boundary_data_funcs"].append({"name": fname, "mode": mname,
+                                                       "var": v, "code": "\n".join(body)})
+                    value_lines.append(
+                        f"dendro_bc::set_face_values(f[VAR::U_{v.upper()}], m_faceNodes, "
+                        f"[&](double ox, double oy, double oz) {{ return {fname}("
+                        f"GRIDX_TO_X(ox), GRIDY_TO_Y(oy), GRIDZ_TO_Z(oz), t); }});")
                 elif kind[0] == "dirichlet":
                     fname = f"boundaryDataDt_{mid}_{v}"
                     temps, (red,) = sym.cse([sym.diff(kind[1], t_sym).subs(param_subs)],
@@ -1702,6 +1719,10 @@ class DendroProjectGenerator:
                     f"{sets} }});")
             if exact_vars or any(per_var[v][0] == "dirichlet" for v in names):
                 ctx["boundary_needs_grutils"] = True
+            if value_lines:
+                ctx["boundary_value_modes"].append({
+                    "id": mid, "name": mname,
+                    "code": "\n".join(" " * 16 + ln for ln in value_lines)})
             ctx["boundary_modes"].append({
                 "name": mname, "id": mid, "summary": ", ".join(summary),
                 "code": "\n".join(ind + ln for ln in lines)})
