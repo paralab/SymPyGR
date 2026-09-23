@@ -89,6 +89,15 @@ wavelet_tol_function_r1 = 220.0
 # ==========================================
 # [dissipation] - Kreiss-Oliger
 # ==========================================
+{% if boundary_modes %}
+[boundary]
+# outer boundary mode, one of the modes the config defines (dendrosym.bc):
+{% for m in boundary_modes %}
+#   "{{ m.name }}": {{ m.summary }}
+{% endfor %}
+mode = "{{ boundary_modes[0].name }}"
+
+{% endif %}
 [dissipation]
 ko_diss_sigma = 0.4
 use_const_ko = false

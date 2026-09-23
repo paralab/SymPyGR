@@ -21,8 +21,8 @@
 #include "parameters.h"
 #include "profile_params.h"
 #include "block_geometry.h"
-{% if exact_boundary %}
 #include "boundary_conditions.h"
+{% if boundary_needs_grutils %}
 #include "grUtils.h"
 {% endif %}
 {% if evolution_cascade is defined and evolution_cascade.fused %}
@@ -285,18 +285,17 @@ void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
     // with a specified falloff rate and asymptotic value.
     if (bflag != 0) {
         {{ namespace }}::timer::t_bdyc.start();
-{% if exact_boundary %}
-        // exact boundary: physical-face nodes take the exact solution's time
-        // derivative (dendrolib dendro_bc::dirichlet_rhs, faces only).
-        double *__rhs[{{ evolution_num_vars }}];
-{% for vname in evolution_var_names %}
-        __rhs[VAR::U_{{ vname | upper }}] = out.{{ vname }};
+{% if boundary_modes %}
+        // configured boundary modes (dendrosym.bc -> dendrolib dendro_bc),
+        // chosen at run time by [boundary] mode
+        switch ({{ namespace }}::{{ project_upper }}_BOUNDARY_MODE_ID) {
+{% for m in boundary_modes %}
+            case {{ m.id }}: {  // {{ m.name }}: {{ m.summary }}
+{{ m.code }}
+                break;
+            }
 {% endfor %}
-        dendro_bc::dirichlet_rhs(__rhs, {{ evolution_num_vars }}, pmin, pmax, sz,
-                                 bflag, PW,
-                                 [t](double x, double y, double z, double *v) {
-                                     analyticalSolutionDt(x, y, z, t, v);
-                                 });
+        }
 {% elif evolution_bcs_code is defined and evolution_bcs_code %}
         {{ evolution_bcs_code }}
 {% endif %}
@@ -369,124 +368,9 @@ void {{ project_name }}_bcs(double *f_rhs, const double *f,
               const double *pmin, const double *pmax,
               const double f_falloff, const double f_asymptotic,
               const unsigned int *sz, const unsigned int &bflag) {
-
-    const unsigned int nx = sz[0];
-    const unsigned int ny = sz[1];
-    const unsigned int nz = sz[2];
-
-    double hx = (pmax[0] - pmin[0]) / (nx - 1);
-    double hy = (pmax[1] - pmin[1]) / (ny - 1);
-    double hz = (pmax[2] - pmin[2]) / (nz - 1);
-
-    const unsigned int PW = {{ namespace }}::{{ project_upper }}_PADDING_WIDTH;
-
-    unsigned int ib = PW;
-    unsigned int jb = PW;
-    unsigned int kb = PW;
-    unsigned int ie = nx - PW;
-    unsigned int je = ny - PW;
-    unsigned int ke = nz - PW;
-
-    double x, y, z;
-    unsigned int pp;
-    double inv_r;
-
-    // apply on each boundary face that's flagged
-    if (bflag & (1u << OCT_DIR_LEFT)) {
-        for (unsigned int k = kb; k < ke; k++) {
-            z = pmin[2] + k * hz;
-            for (unsigned int j = jb; j < je; j++) {
-                y = pmin[1] + j * hy;
-                for (unsigned int i = ib; i < ib + PW; i++) {
-                    x = pmin[0] + i * hx;
-                    pp = i + nx * (j + ny * k);
-                    inv_r = 1.0 / sqrt(x * x + y * y + z * z);
-                    f_rhs[pp] = -inv_r * (x * dxf[pp] + y * dyf[pp] + z * dzf[pp]
-                                + f_falloff * (f[pp] - f_asymptotic));
-                }
-            }
-        }
-    }
-
-    if (bflag & (1u << OCT_DIR_RIGHT)) {
-        for (unsigned int k = kb; k < ke; k++) {
-            z = pmin[2] + k * hz;
-            for (unsigned int j = jb; j < je; j++) {
-                y = pmin[1] + j * hy;
-                for (unsigned int i = ie - PW; i < ie; i++) {
-                    x = pmin[0] + i * hx;
-                    pp = i + nx * (j + ny * k);
-                    inv_r = 1.0 / sqrt(x * x + y * y + z * z);
-                    f_rhs[pp] = -inv_r * (x * dxf[pp] + y * dyf[pp] + z * dzf[pp]
-                                + f_falloff * (f[pp] - f_asymptotic));
-                }
-            }
-        }
-    }
-
-    if (bflag & (1u << OCT_DIR_DOWN)) {
-        for (unsigned int k = kb; k < ke; k++) {
-            z = pmin[2] + k * hz;
-            for (unsigned int j = jb; j < jb + PW; j++) {
-                y = pmin[1] + j * hy;
-                for (unsigned int i = ib; i < ie; i++) {
-                    x = pmin[0] + i * hx;
-                    pp = i + nx * (j + ny * k);
-                    inv_r = 1.0 / sqrt(x * x + y * y + z * z);
-                    f_rhs[pp] = -inv_r * (x * dxf[pp] + y * dyf[pp] + z * dzf[pp]
-                                + f_falloff * (f[pp] - f_asymptotic));
-                }
-            }
-        }
-    }
-
-    if (bflag & (1u << OCT_DIR_UP)) {
-        for (unsigned int k = kb; k < ke; k++) {
-            z = pmin[2] + k * hz;
-            for (unsigned int j = je - PW; j < je; j++) {
-                y = pmin[1] + j * hy;
-                for (unsigned int i = ib; i < ie; i++) {
-                    x = pmin[0] + i * hx;
-                    pp = i + nx * (j + ny * k);
-                    inv_r = 1.0 / sqrt(x * x + y * y + z * z);
-                    f_rhs[pp] = -inv_r * (x * dxf[pp] + y * dyf[pp] + z * dzf[pp]
-                                + f_falloff * (f[pp] - f_asymptotic));
-                }
-            }
-        }
-    }
-
-    if (bflag & (1u << OCT_DIR_BACK)) {
-        for (unsigned int k = kb; k < kb + PW; k++) {
-            z = pmin[2] + k * hz;
-            for (unsigned int j = jb; j < je; j++) {
-                y = pmin[1] + j * hy;
-                for (unsigned int i = ib; i < ie; i++) {
-                    x = pmin[0] + i * hx;
-                    pp = i + nx * (j + ny * k);
-                    inv_r = 1.0 / sqrt(x * x + y * y + z * z);
-                    f_rhs[pp] = -inv_r * (x * dxf[pp] + y * dyf[pp] + z * dzf[pp]
-                                + f_falloff * (f[pp] - f_asymptotic));
-                }
-            }
-        }
-    }
-
-    if (bflag & (1u << OCT_DIR_FRONT)) {
-        for (unsigned int k = ke - PW; k < ke; k++) {
-            z = pmin[2] + k * hz;
-            for (unsigned int j = jb; j < je; j++) {
-                y = pmin[1] + j * hy;
-                for (unsigned int i = ib; i < ie; i++) {
-                    x = pmin[0] + i * hx;
-                    pp = i + nx * (j + ny * k);
-                    inv_r = 1.0 / sqrt(x * x + y * y + z * z);
-                    f_rhs[pp] = -inv_r * (x * dxf[pp] + y * dyf[pp] + z * dzf[pp]
-                                + f_falloff * (f[pp] - f_asymptotic));
-                }
-            }
-        }
-    }
+    dendro_bc::sommerfeld_rhs(f_rhs, f, dxf, dyf, dzf, pmin, pmax, f_falloff,
+                              f_asymptotic, sz, bflag,
+                              {{ namespace }}::{{ project_upper }}_PADDING_WIDTH);
 }
 
 void freeze_bcs(double *f_rhs, const unsigned int *sz,

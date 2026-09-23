@@ -216,6 +216,11 @@ extern unsigned int DISSIPATION_TYPE;
 extern std::unique_ptr<dendroderivs::DendroDerivatives> {{ project_upper }}_DERIVS;
 extern std::string {{ project_upper }}_DERIVTYPE_FIRST;
 extern std::string {{ project_upper }}_DERIVTYPE_SECOND;
+{% if boundary_modes %}
+// outer boundary mode ([boundary] mode) and its index into the configured modes
+extern std::string {{ project_upper }}_BOUNDARY_MODE;
+extern int {{ project_upper }}_BOUNDARY_MODE_ID;
+{% endif %}
 extern std::vector<double> {{ project_upper }}_DERIV_FIRST_COEFFS;
 extern std::vector<double> {{ project_upper }}_DERIV_SECOND_COEFFS;
 extern unsigned int {{ project_upper }}_DERIV_FIRST_MATID;

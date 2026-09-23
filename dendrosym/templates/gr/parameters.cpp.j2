@@ -229,6 +229,10 @@ unsigned int {{ project_upper }}_ID_TYPE = 0;
 // list of stencil names (E4/E6/E8, KIM*, BYU*, A4/A6/B4/B6/C4/C6, etc.)
 std::unique_ptr<dendroderivs::DendroDerivatives> {{ project_upper }}_DERIVS = nullptr;
 std::string {{ project_upper }}_DERIVTYPE_FIRST = "E6";
+{% if boundary_modes %}
+std::string {{ project_upper }}_BOUNDARY_MODE = "{{ boundary_modes[0].name }}";
+int {{ project_upper }}_BOUNDARY_MODE_ID = 0;
+{% endif %}
 std::string {{ project_upper }}_DERIVTYPE_SECOND = "E6";
 bool {{ project_upper }}_USE_FUSED_STENCILS = true;
 std::vector<double> {{ project_upper }}_DERIV_FIRST_COEFFS = {};
@@ -936,6 +940,42 @@ void readParamFile(const char* inFile, MPI_Comm comm) {
 #endif
 {% endif %}
 
+{% if boundary_modes %}
+    // [boundary] -- the outer boundary mode; the modes themselves come from the
+    // config (dendrosym.bc). An unknown name refuses rather than falls back.
+    READ_OPTIONAL("boundary", "mode", {{ project_upper }}_BOUNDARY_MODE);
+    {
+        static const char *__names[] = {
+{% for m in boundary_modes %}
+            "{{ m.name }}",
+{% endfor %}
+        };
+        static const char *__what[] = {
+{% for m in boundary_modes %}
+            "{{ m.summary }}",
+{% endfor %}
+        };
+        const int __n = {{ boundary_modes | length }};
+        int __id = -1;
+        for (int i = 0; i < __n; i++)
+            if ({{ project_upper }}_BOUNDARY_MODE == __names[i]) __id = i;
+        if (__id < 0) {
+            if (rank == 0) {
+                std::cerr << RED << "UNSUPPORTED PARAMETER VALUE: [boundary] mode = \""
+                          << {{ project_upper }}_BOUNDARY_MODE << "\"" << NRM << std::endl;
+                std::cerr << "\tthis solver implements:";
+                for (int i = 0; i < __n; i++) std::cerr << " \"" << __names[i] << "\"";
+                std::cerr << std::endl;
+            }
+            throw std::runtime_error("Unsupported value for parameter: [boundary] mode");
+        }
+        {{ project_upper }}_BOUNDARY_MODE_ID = __id;
+        if (rank == 0)
+            std::cout << "[{{ namespace }}] boundary mode = " << __names[__id]
+                      << " (" << __what[__id] << ")" << std::endl;
+    }
+{% endif %}
+
 {% if use_dendro_derivs %}
     // [derivatives] -- see dendrolib's derivs_factory.h for valid type names
     READ_OPTIONAL("derivatives", "type_first", {{ project_upper }}_DERIVTYPE_FIRST);
@@ -1112,6 +1152,11 @@ void dumpParamFile(std::ostream& sout, int root, MPI_Comm comm) {
     sout << "ko_diss_sigma = " << KO_DISS_SIGMA << std::endl;
     sout << "use_const_ko = " << USE_CONST_KO << std::endl;
     sout << "dissipation_type = " << DISSIPATION_TYPE << std::endl;
+
+{% if boundary_modes %}
+    sout << "\n[boundary]" << std::endl;
+    sout << "mode = \"" << {{ project_upper }}_BOUNDARY_MODE << "\"" << std::endl;
+{% endif %}
 
 {% if use_dendro_derivs %}
     sout << "\n[derivatives]" << std::endl;

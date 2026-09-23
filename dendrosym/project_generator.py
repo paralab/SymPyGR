@@ -1565,13 +1565,7 @@ class DendroProjectGenerator:
                 idt["code"] = _exact_lines(idt["exact"], "t0", 4)
             idt.pop("exact", None)
 
-        # "exact": every evolved variable's rhs on the physical boundary nodes
-        # is the exact solution's time derivative (Dirichlet in time), in place
-        # of Sommerfeld. Needs analytical_cases.
-        ctx["exact_boundary"] = getattr(c, "boundary_condition", "sommerfeld") == "exact"
-        if ctx["exact_boundary"] and not ctx["analytical_cases"]:
-            raise ValueError("boundary_condition = 'exact' needs initial_data_types "
-                             "entries with an `exact` solution")
+        self._boundary_modes(ctx, c, cprinter, param_subs, t_sym)
 
         # symbolic initial data: dict of {var_symbol: sympy_expr}
         sym_init_data = getattr(c, "symbolic_initial_data", {})
@@ -1623,6 +1617,93 @@ class DendroProjectGenerator:
         ]
 
         return ctx
+
+    # ------------------------------------------------------------------
+    # Outer boundary modes (dendrosym.bc): one C++ block per mode, selected at
+    # run time by `[boundary] mode`. Each kind calls dendrolib's dendro_bc.
+    # ------------------------------------------------------------------
+    def _boundary_modes(self, ctx, c, cprinter, param_subs, t_sym):
+        import sympy as sym
+
+        from dendrosym import bc as _bc
+
+        modes = getattr(c, "boundary_modes", None)
+        if modes is None and getattr(c, "boundary_condition", None) == "exact":
+            modes = {"exact": {"all": _bc.exact()}}
+        ctx["boundary_modes"] = []
+        ctx["boundary_data_funcs"] = []
+        ctx["boundary_needs_grutils"] = False
+        if not modes:
+            return
+
+        names = list(ctx["evolution_var_names"])
+        pr = lambda e: cprinter.doprint(sym.sympify(e).subs(param_subs))
+        blk = "pmin, pmax, sz, bflag, PW"
+        ind = " " * 16
+
+        for mid, (mname, spec) in enumerate(modes.items()):
+            per_var = {}
+            for key, kind in spec.items():
+                if kind[0] not in _bc.KINDS:
+                    raise ValueError(f"boundary mode {mname!r}: unknown kind {kind[0]!r}")
+                targets = names if key == "all" else [str(key).replace(c.idx_str, "")]
+                for v in targets:
+                    if v not in names:
+                        raise ValueError(f"boundary mode {mname!r}: {v!r} is not evolved")
+                    per_var[v] = kind
+            missing = [v for v in names if v not in per_var]
+            if missing:
+                raise ValueError(f"boundary mode {mname!r} leaves {missing} without a "
+                                 "boundary condition; use static() to hold them")
+
+            lines, exact_vars, summary = [], [], []
+            for v in names:
+                kind = per_var[v]
+                summary.append(f"{v}: {kind[0]}")
+                if kind[0] == "static":
+                    lines.append(f"dendro_bc::static_rhs(out.{v}, {blk});")
+                elif kind[0] == "neumann":
+                    lines.append(f"dendro_bc::neumann_rhs(out.{v}, {blk});")
+                elif kind[0] == "sommerfeld":
+                    lines.append(
+                        f"dendro_bc::sommerfeld_rhs(out.{v}, in.{v}, d.{v}_x, d.{v}_y, "
+                        f"d.{v}_z, pmin, pmax, {pr(kind[1])}, {pr(kind[2])}, sz, bflag, PW);")
+                elif kind[0] == "outflow":
+                    rows = ", ".join("{" + ", ".join(pr(e) for e in r) + "}" for r in kind[1])
+                    lines.append("{")
+                    lines.append(f"    const double __vel[6][3] = {{{rows}}};")
+                    lines.append(f"    dendro_bc::outflow_rhs(out.{v}, d.{v}_x, d.{v}_y, "
+                                 f"d.{v}_z, {blk}, __vel);")
+                    lines.append("}")
+                elif kind[0] == "exact":
+                    if not ctx["analytical_cases"]:
+                        raise ValueError(f"boundary mode {mname!r}: exact() needs "
+                                         "initial_data_types with an `exact` solution")
+                    exact_vars.append(v)
+                elif kind[0] == "dirichlet":
+                    fname = f"boundaryDataDt_{mid}_{v}"
+                    temps, (red,) = sym.cse([sym.diff(kind[1], t_sym).subs(param_subs)],
+                                            symbols=sym.numbered_symbols("__bd"))
+                    body = [f"    const double {s_} = {cprinter.doprint(e)};" for s_, e in temps]
+                    body.append(f"    return {cprinter.doprint(red)};")
+                    ctx["boundary_data_funcs"].append({"name": fname, "mode": mname,
+                                                       "var": v, "code": "\n".join(body)})
+                    lines.append(
+                        f"dendro_bc::for_each_face_node({blk}, "
+                        f"[&](unsigned int __pp, double __x, double __y, double __z) {{ "
+                        f"out.{v}[__pp] = {fname}(__x, __y, __z, t); }});")
+            if exact_vars:
+                sets = " ".join(f"out.{v}[__pp] = __e[VAR::U_{v.upper()}];" for v in exact_vars)
+                lines.append(
+                    f"dendro_bc::for_each_face_node({blk}, "
+                    f"[&](unsigned int __pp, double __x, double __y, double __z) {{ "
+                    f"double __e[{len(names)}]; analyticalSolutionDt(__x, __y, __z, t, __e); "
+                    f"{sets} }});")
+            if exact_vars or any(per_var[v][0] == "dirichlet" for v in names):
+                ctx["boundary_needs_grutils"] = True
+            ctx["boundary_modes"].append({
+                "name": mname, "id": mid, "summary": ", ".join(summary),
+                "code": "\n".join(ind + ln for ln in lines)})
 
     # ------------------------------------------------------------------
     # Gencode (expensive: CSE, derivatives, equation printing)

@@ -70,6 +70,10 @@ void analyticalSolutionDt(const double x, const double y, const double z,
 {% endif %}
 {% endif %}
 
+{% for bd in boundary_data_funcs %}
+double {{ bd.name }}(const double x, const double y, const double z, const double t);
+{% endfor %}
+
 }  // namespace {{ namespace }}
 
 #endif  // GRUTILS_H
