@@ -74,7 +74,7 @@ void {{ project_name }}RHS(double **uzipVarsRHS, const double **uZipVars,
 {% endif %}
 
 void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
-             const unsigned int &offset, const double *pmin, const double *pmax,
+             const DendroIntL &offset, const double *pmin, const double *pmax,
              const unsigned int *sz, const unsigned int &bflag, const double t,
              const double **uZipConstVars) {
 

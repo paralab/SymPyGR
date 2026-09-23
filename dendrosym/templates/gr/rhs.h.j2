@@ -35,7 +35,7 @@ void {{ project_name }}RHS(double **uzipVarsRHS, const double **uZipVars,
 
 /**@brief Per-block RHS computation. */
 void {{ project_name }}rhs(double **uzipVarsRHS, const double **uZipVars,
-             const unsigned int &offset, const double *ptmin,
+             const DendroIntL &offset, const double *ptmin,
              const double *ptmax, const unsigned int *sz,
              const unsigned int &bflag, const double t,
              const double **uZipConstVars);
