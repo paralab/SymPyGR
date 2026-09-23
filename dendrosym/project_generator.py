@@ -440,7 +440,10 @@ def _record_rendered_provenance(output: Path, template_map, config):
         if path.exists():
             files[out_rel] = hashlib.sha256(path.read_bytes()).hexdigest()[:16]
     rec = _read_render_manifest(output)
-    rec.setdefault("files", {}).update(files)
+    # merged, since other passes record their own files; entries for files
+    # that are gone (a template the generator no longer renders) are dropped
+    kept = {k: v for k, v in rec.get("files", {}).items() if (output / k).exists()}
+    rec["files"] = {**kept, **files}
     rec["stamp"] = (f"{_gencode_stamp(config)} "
                     f"templates {_template_set_sha(template_map)}")
     (output / _RENDER_MANIFEST).write_text(
