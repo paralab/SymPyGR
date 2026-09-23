@@ -1011,6 +1011,10 @@ void warn_unported_refinement(const char *asked, const char *used) {
 
 bool {{ project_upper }}Ctx::is_remesh() {
     if ({{ project_upper }}_REFINEMENT_MODE == REFINE_MODE_NONE) return false;
+    // block-adaptive meshes are fixed: without this the initial-grid pass and
+    // every remesh re-run the wavelet test and undo the uniform seed (BSSN
+    // bssnCtx.cpp does the same).
+    if ({{ project_upper }}_ENABLE_BLOCK_ADAPTIVITY) return false;
 
     // Pre-merger the par's AMR factor stands. After a merger there is one
     // object where there were two, so a coarser factor is usually enough;
