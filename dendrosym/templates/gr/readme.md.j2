@@ -27,9 +27,7 @@ cmake -B build && cmake --build build -j
 |---|---|
 | Read/change the equations | `{{ project_name }}.py` |
 | Change a run (resolution, time, output) | `{{ project_name }}_parameters.sample.toml` |
-| Know what's safe to hand-edit | `CUSTOMIZE.md` |
 | Generated C++ (don't edit — regenerate instead) | `solver/` |
 
-New here? Read `{{ project_name }}.py` for the physics and `CUSTOMIZE.md` for the
-handful of things you'd ever change by hand. You should never need to touch
-`solver/`.
+New here? Read `{{ project_name }}.py` for the physics. You should never need to
+touch `solver/`.

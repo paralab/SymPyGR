@@ -1112,8 +1112,6 @@ def build_template_map(ctx):
         f"{ctx['project_name']}_parameters.sample.toml": "gr/sample_params.toml.j2",
         # newcomer orientation: pipeline, quickstart, where-things-live
         "README.md": "gr/readme.md.j2",
-        # physicist's map of the hand-editable hooks
-        "CUSTOMIZE.md": "gr/customize.md.j2",
         # Common templates
         "CMakeLists.txt": "common/CMakeLists.txt.j2",
         "solver/CMakeLists.txt": "common/solver_CMakeLists.txt.j2",
