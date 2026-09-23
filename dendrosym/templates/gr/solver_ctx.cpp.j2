@@ -712,36 +712,48 @@ int {{ project_upper }}Ctx::terminal_output() {
             std::string name = {{ project_upper }}_VAR_NAMES[v];
             fileDiff << name << "_DIFF_MIN," << name << "_DIFF_MAX,"
                      << name << "_DIFF_L2," << name << "_DIFF_RMSE,"
-                     << name << "_DIFF_NRMSE," << name << "_DIFF_MAE,";
+                     << name << "_DIFF_NRMSE," << name << "_DIFF_MAE,"
+                     << name << "_DIFF_L2_INT,";
         }
         fileDiff << std::endl;
         fileDiff.close();
     }
 
-    // compute and print per-variable error norms
+    // l2_int = sqrt(int e^2 dV / V): volume-weighted, so meshes and element
+    // orders compare fairly. Every norm here is a collective: all ranks call.
+    std::vector<double> __ones;
+    m_uiMesh->createVector(__ones);
+    for (size_t i = 0; i < m_uiMesh->getDegOfFreedom(); i++) __ones[i] = 1.0;
+    const double __vol = integrateScalarFieldOnMesh(m_uiMesh, __ones.data());
+
+    std::ofstream fileDiff;
     if (rank == 0) {
-        std::ofstream fileDiff(fName, std::ofstream::app);
+        fileDiff.open(fName, std::ofstream::app);
         fileDiff << m_uiTinfo._m_uiStep << "," << m_uiTinfo._m_uiT << ",";
+    }
+    for (unsigned int v = 0; v < {{ evolution_num_vars }}; v++) {
+        double l_min = vecMin(&zippedDiff[v][nodeBegin], nLocal, comm);
+        double l_max = vecMax(&zippedDiff[v][nodeBegin], nLocal, comm);
+        double l2 = normL2(&zippedDiff[v][nodeBegin], nLocal, comm);
+        double rmse = normRMSE(&zippedDiff[v][nodeBegin], nLocal, comm);
+        double nrmse = normNRMSE(&zippedDiff[v][nodeBegin],
+                                  &zippedUp[v][nodeBegin], nLocal, comm);
+        double mae = normMAE(&zippedDiff[v][nodeBegin], nLocal, comm);
+        double l2_int = std::sqrt(
+            calculateL2FullMeshIntegration(m_uiMesh, zippedDiff[v]) / __vol);
 
-        for (unsigned int v = 0; v < {{ evolution_num_vars }}; v++) {
-            double l_min = vecMin(&zippedDiff[v][nodeBegin], nLocal, comm);
-            double l_max = vecMax(&zippedDiff[v][nodeBegin], nLocal, comm);
-            double l2 = normL2(&zippedDiff[v][nodeBegin], nLocal, comm);
-            double rmse = normRMSE(&zippedDiff[v][nodeBegin], nLocal, comm);
-            double nrmse = normNRMSE(&zippedDiff[v][nodeBegin],
-                                      &zippedUp[v][nodeBegin], nLocal, comm);
-            double mae = normMAE(&zippedDiff[v][nodeBegin], nLocal, comm);
-
+        if (rank == 0) {
             std::cout << "\t[diff]: " << std::setw(12)
                       << std::string({{ project_upper }}_VAR_NAMES[v]) + "_DIFF"
-                      << " (min, max, l2, rmse, nrmse, mae) : \t ( "
+                      << " (min, max, l2, rmse, nrmse, mae, l2_int) : \t ( "
                       << l_min << ", " << l_max << ", " << l2 << ", "
-                      << rmse << ", " << nrmse << ", " << mae << ") "
-                      << std::endl;
-
-            fileDiff << l_min << "," << l_max << "," << l2 << ","
-                     << rmse << "," << nrmse << "," << mae << ",";
+                      << rmse << ", " << nrmse << ", " << mae << ", "
+                      << l2_int << ") " << std::endl;
+            fileDiff << l_min << "," << l_max << "," << l2 << "," << rmse
+                     << "," << nrmse << "," << mae << "," << l2_int << ",";
         }
+    }
+    if (rank == 0) {
         fileDiff << std::endl;
         fileDiff.close();
     }
