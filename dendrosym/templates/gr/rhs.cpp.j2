@@ -290,8 +290,9 @@ void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
     // -- kreiss-oliger dissipation --
     // adds numerical dissipation to damp high-frequency noise.
 {% if use_dendro_derivs %}
-    // using the DendroDerivatives filter api -- handles ko internally
-    if (!{{ deriv_obj }}.do_filter_before()) {
+    // using the DendroDerivatives filter api -- handles ko internally.
+    // sigma = 0 means no dissipation (dendrolib has no "none" filter).
+    if (!{{ deriv_obj }}.do_filter_before() && KO_DISS_SIGMA != 0.0) {
         {{ namespace }}::timer::t_ko.start();
         const double sigma = KO_DISS_SIGMA;
 
