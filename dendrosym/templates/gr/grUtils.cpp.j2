@@ -276,13 +276,45 @@ void analyticalSolution(const double xx, const double yy,
     const double t = time;
     const double r = sqrt(x*x + y*y + z*z);
 
-{% if symbolic_analytical_code %}
+{% if analytical_cases %}
+    switch ({{ project_upper }}_ID_TYPE) {
+{% for ac in analytical_cases %}
+        case {{ ac.id }}:  // {{ ac.name }}
+{{ ac.code }}
+            break;
+{% endfor %}
+        default:
+            std::cout << "no exact solution for id_type "
+                      << {{ project_upper }}_ID_TYPE << std::endl;
+            exit(1);
+    }
+{% elif symbolic_analytical_code %}
     // auto-generated from symbolic expressions in the python config
     {{ symbolic_analytical_code }}
 {% else %}
     // TODO: implement your analytical solution here
 {% endif %}
 }
+{% if analytical_cases %}
+
+// time derivative of the exact solution, for exact boundary conditions
+void analyticalSolutionDt(const double x, const double y, const double z,
+                          const double t, double *var) {
+    for (unsigned int i = 0; i < {{ evolution_num_vars }}; i++) var[i] = 0.0;
+
+    switch ({{ project_upper }}_ID_TYPE) {
+{% for ac in analytical_cases %}
+        case {{ ac.id }}:  // {{ ac.name }}
+{{ ac.dt_code }}
+            break;
+{% endfor %}
+        default:
+            std::cout << "no exact solution for id_type "
+                      << {{ project_upper }}_ID_TYPE << std::endl;
+            exit(1);
+    }
+}
+{% endif %}
 
 void analyticalSolution_BLOCK(double **uZipAnalyticVars,
                               double **uZipAnalyticDiffVars,

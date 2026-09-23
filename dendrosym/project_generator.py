@@ -1497,9 +1497,16 @@ class DendroProjectGenerator:
 
         # tag id types needing sympy->C conversion; we convert below once
         # param_subs is finalized (runtime_symbol_map gets merged in next)
+        # An id type may carry `exact` = {var: expr(x, y, z, t)}. Its initial
+        # data is then the solution at t = 0 (unless sympy_exprs/code is also
+        # given), analyticalSolution dispatches on id_type, and
+        # analyticalSolutionDt supplies d/dt for exact boundary conditions.
+        t_sym = sym.Symbol("t")
         processed_id_types = []
         for idt in ctx.pop("_raw_initial_data_types", []):
             idt = dict(idt)
+            if idt.get("exact") and not idt.get("sympy_exprs") and not idt.get("code"):
+                idt["_id_from_exact"] = True
             if "sympy_exprs" in idt and idt["sympy_exprs"]:
                 idt["_needs_sympy_conversion"] = True
             processed_id_types.append(idt)
@@ -1527,6 +1534,44 @@ class DendroProjectGenerator:
                 idt["code"] = "\n".join(lines)
             final_id_types.append(idt)
         ctx["initial_data_types"] = final_id_types
+
+        def _exact_lines(exprs, mode, indent):
+            # mode: "t0" (initial data), "t" (solution), "dt" (d/dt, for the BC).
+            # CSE'd: exact solutions and their t-derivatives repeat heavily.
+            names, vals = [], []
+            for var_sym, expr in exprs.items():
+                expr = sym.sympify(expr)
+                if mode == "dt":
+                    expr = sym.diff(expr, t_sym)
+                elif mode == "t0":
+                    expr = expr.subs(t_sym, 0)
+                names.append(str(var_sym).replace(c.idx_str, "").upper())
+                vals.append(expr.subs(param_subs))
+            temps, reduced = sym.cse(vals, symbols=sym.numbered_symbols("__ex"))
+            pad = " " * indent
+            lines = [f"{pad}const double {s} = {cprinter.doprint(e)};" for s, e in temps]
+            lines += [f"{pad}var[VAR::U_{n}] = {cprinter.doprint(e)};"
+                      for n, e in zip(names, reduced)]
+            return "\n".join(lines)
+
+        ctx["analytical_cases"] = [
+            {"id": idt["id"], "name": idt.get("name", idt["function"]),
+             "code": "            {\n" + _exact_lines(idt["exact"], "t", 16) + "\n            }",
+             "dt_code": "            {\n" + _exact_lines(idt["exact"], "dt", 16) + "\n            }"}
+            for idt in final_id_types if idt.get("exact")
+        ]
+        for idt in final_id_types:
+            if idt.pop("_id_from_exact", False):
+                idt["code"] = _exact_lines(idt["exact"], "t0", 4)
+            idt.pop("exact", None)
+
+        # "exact": every evolved variable's rhs on the physical boundary nodes
+        # is the exact solution's time derivative (Dirichlet in time), in place
+        # of Sommerfeld. Needs analytical_cases.
+        ctx["exact_boundary"] = getattr(c, "boundary_condition", "sommerfeld") == "exact"
+        if ctx["exact_boundary"] and not ctx["analytical_cases"]:
+            raise ValueError("boundary_condition = 'exact' needs initial_data_types "
+                             "entries with an `exact` solution")
 
         # symbolic initial data: dict of {var_symbol: sympy_expr}
         sym_init_data = getattr(c, "symbolic_initial_data", {})
@@ -1562,6 +1607,12 @@ class DendroProjectGenerator:
             ctx["enable_analytical"] = True
         else:
             ctx["symbolic_analytical_code"] = ""
+        if ctx["analytical_cases"]:
+            if sym_analytical:
+                raise ValueError("give the exact solution either as "
+                                 "symbolic_analytical_solution or per id type "
+                                 "(`exact`), not both")
+            ctx["enable_analytical"] = True
 
         # Feature table for CUSTOMIZE.md, read from the resolved ctx rather than
         # the config: enable_analytical is switched on above when the config

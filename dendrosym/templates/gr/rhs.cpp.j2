@@ -21,6 +21,10 @@
 #include "parameters.h"
 #include "profile_params.h"
 #include "block_geometry.h"
+{% if exact_boundary %}
+#include "boundary_conditions.h"
+#include "grUtils.h"
+{% endif %}
 {% if evolution_cascade is defined and evolution_cascade.fused %}
 #include <iostream>
 #include <string>
@@ -281,7 +285,19 @@ void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
     // with a specified falloff rate and asymptotic value.
     if (bflag != 0) {
         {{ namespace }}::timer::t_bdyc.start();
-{% if evolution_bcs_code is defined and evolution_bcs_code %}
+{% if exact_boundary %}
+        // exact boundary: physical-face nodes take the exact solution's time
+        // derivative (dendrolib dendro_bc::dirichlet_rhs, faces only).
+        double *__rhs[{{ evolution_num_vars }}];
+{% for vname in evolution_var_names %}
+        __rhs[VAR::U_{{ vname | upper }}] = out.{{ vname }};
+{% endfor %}
+        dendro_bc::dirichlet_rhs(__rhs, {{ evolution_num_vars }}, pmin, pmax, sz,
+                                 bflag, PW,
+                                 [t](double x, double y, double z, double *v) {
+                                     analyticalSolutionDt(x, y, z, t, v);
+                                 });
+{% elif evolution_bcs_code is defined and evolution_bcs_code %}
         {{ evolution_bcs_code }}
 {% endif %}
         {{ namespace }}::timer::t_bdyc.stop();

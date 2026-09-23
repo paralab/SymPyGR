@@ -62,6 +62,12 @@ void analyticalSolution_BLOCK(double **uZipAnalyticVars,
                               const DendroIntL &offset, const double *pmin,
                               const double *pmax, const unsigned int *sz,
                               const unsigned int &bflag);
+{% if analytical_cases %}
+
+/**@brief Time derivative of the exact solution for the current id_type. */
+void analyticalSolutionDt(const double x, const double y, const double z,
+                          const double t, double *var);
+{% endif %}
 {% endif %}
 
 }  // namespace {{ namespace }}
