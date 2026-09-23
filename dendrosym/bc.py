@@ -35,20 +35,22 @@ rhs, so the time integrator carries them):
                              for oblique ones
   neumann()                  normal derivative held at its initial value (zero
                              flux if the initial data has zero flux)
+  robin(a, b)                a f + b d_n f held at its initial value, d_n the
+                             outward normal derivative; a, b scalars or 6 per-face
+                             values in OCT_DIR order. b = 0 holds f; a = 0 is neumann
   sommerfeld(falloff, f_inf) radiative condition for fields falling off as
                              f_inf + O(1/r^falloff) from a central source
 
-Data-free: static, outflow, neumann, sommerfeld. Needs data: dirichlet,
+Data-free: static, outflow, neumann, robin, sommerfeld. Needs data: dirichlet,
 dirichlet_value, exact.
 """
 
 import sympy as sym
 
-# dendrolib face order: OCT_DIR_LEFT, RIGHT (x), DOWN, UP (y), BACK, FRONT (z)
-FACE_NORMALS = ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1))
+FACE_NORMALS_BY_OCT_DIR = ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1))
 
 KINDS = ("static", "dirichlet", "dirichlet_value", "exact", "outflow", "neumann",
-         "sommerfeld")
+         "robin", "sommerfeld")
 
 
 def static():
@@ -78,16 +80,25 @@ def neumann():
     return ("neumann",)
 
 
+def robin(a, b):
+    def per_face(c):
+        c = list(c) if isinstance(c, (list, tuple)) else [c] * 6
+        if len(c) != 6:
+            raise ValueError("robin coefficients: a scalar or 6 per-face values")
+        return [sym.sympify(x) for x in c]
+    return ("robin", per_face(a), per_face(b))
+
+
 def sommerfeld(falloff, f_inf):
     return ("sommerfeld", sym.sympify(falloff), sym.sympify(f_inf))
 
 
 def wave_outflow_velocity(K=None, c=1):
     """Per-face outgoing velocity for u_tt = K_ij d_i d_j u (or speed c if K is
-    None): v = K n / sqrt(n.K.n) with n the outward normal. For K = c^2 I this is
-    c n."""
+    None): v = K n / sqrt(n.K.n) with n the outward normal, faces in dendrolib's
+    OCT_DIR order (-x, +x, -y, +y, -z, +z). For K = c^2 I this is c n."""
     out = []
-    for n in FACE_NORMALS:
+    for n in FACE_NORMALS_BY_OCT_DIR:
         nv = sym.Matrix(n)
         if K is None:
             v = c * nv

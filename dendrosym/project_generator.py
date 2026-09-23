@@ -1498,10 +1498,8 @@ class DendroProjectGenerator:
 
         # tag id types needing sympy->C conversion; we convert below once
         # param_subs is finalized (runtime_symbol_map gets merged in next)
-        # An id type may carry `exact` = {var: expr(x, y, z, t)}. Its initial
-        # data is then the solution at t = 0 (unless sympy_exprs/code is also
-        # given), analyticalSolution dispatches on id_type, and
-        # analyticalSolutionDt supplies d/dt for exact boundary conditions.
+        # an id type's `exact` = {var: expr(x, y, z, t)} also supplies its initial
+        # data (at t = 0), the error reference, and d/dt for exact boundaries
         t_sym = sym.Symbol("t")
         processed_id_types = []
         for idt in ctx.pop("_raw_initial_data_types", []):
@@ -1537,8 +1535,8 @@ class DendroProjectGenerator:
         ctx["initial_data_types"] = final_id_types
 
         def _exact_lines(exprs, mode, indent):
-            # mode: "t0" (initial data), "t" (solution), "dt" (d/dt, for the BC).
-            # CSE'd: exact solutions and their t-derivatives repeat heavily.
+            """CSE'd C++ assigning var[...] from `exprs` at t = 0 ("t0"), at t
+            ("t") or as d/dt ("dt")."""
             names, vals = [], []
             for var_sym, expr in exprs.items():
                 expr = sym.sympify(expr)
@@ -1619,11 +1617,10 @@ class DendroProjectGenerator:
 
         return ctx
 
-    # ------------------------------------------------------------------
-    # Outer boundary modes (dendrosym.bc): one C++ block per mode, selected at
-    # run time by `[boundary] mode`. Each kind calls dendrolib's dendro_bc.
-    # ------------------------------------------------------------------
     def _boundary_modes(self, ctx, c, cprinter, param_subs, t_sym):
+        """Outer boundary modes (dendrosym.bc) -> one C++ block per mode for the
+        rhs and, for value kinds, for the ctx; selected at run time by
+        `[boundary] mode`. Each kind calls dendrolib's dendro_bc."""
         import sympy as sym
 
         from dendrosym import bc as _bc
@@ -1666,6 +1663,12 @@ class DendroProjectGenerator:
                     lines.append(f"dendro_bc::static_rhs(out.{v}, {blk});")
                 elif kind[0] == "neumann":
                     lines.append(f"dendro_bc::neumann_rhs(out.{v}, {blk});")
+                elif kind[0] == "robin":
+                    ca = ", ".join(pr(x) for x in kind[1])
+                    cb = ", ".join(pr(x) for x in kind[2])
+                    lines += ["{", f"    const double __a[6] = {{{ca}}};",
+                              f"    const double __b[6] = {{{cb}}};",
+                              f"    dendro_bc::robin_rhs(out.{v}, {blk}, __a, __b);", "}"]
                 elif kind[0] == "sommerfeld":
                     lines.append(
                         f"dendro_bc::sommerfeld_rhs(out.{v}, in.{v}, d.{v}_x, d.{v}_y, "

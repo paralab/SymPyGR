@@ -245,8 +245,6 @@ int {{ project_upper }}Ctx::rhs(DVec *in, DVec *out, unsigned int sz,
 
     {{ namespace }}::timer::t_unzip_async.start();
 {% if boundary_value_modes %}
-    // the stage state carries the boundary data at the stage time before any
-    // derivative sees it
     this->apply_boundary_values(*in, time);
 {% endif %}
     this->unzip(*in, m_var[VL::CPU_EV_UZ_IN], {{ project_upper }}_ASYNC_COMM_K);
@@ -320,8 +318,7 @@ int {{ project_upper }}Ctx::post_timestep(DVec &sIn) {
     if (!m_uiMesh->isActive()) return 0;
 {% if boundary_value_modes %}
 
-    // after a step the clock still reads t_n; the state is at t_n + dt. On the
-    // intermediate stage states this is overwritten by rhs() with the stage time.
+    // the clock is advanced after post_timestep, so the state here is at t + dt
     this->apply_boundary_values(sIn, m_uiTinfo._m_uiT + m_uiTinfo._m_uiTh);
 {% endif %}
 
@@ -752,8 +749,7 @@ int {{ project_upper }}Ctx::terminal_output() {
         fileDiff.close();
     }
 
-    // l2_int = sqrt(int e^2 dV / V): volume-weighted, so meshes and element
-    // orders compare fairly. Every norm here is a collective: all ranks call.
+    // every norm below is an MPI collective: all ranks call, rank 0 prints
     std::vector<double> __ones;
     m_uiMesh->createVector(__ones);
     for (size_t i = 0; i < m_uiMesh->getDegOfFreedom(); i++) __ones[i] = 1.0;
@@ -1056,9 +1052,7 @@ void warn_unported_refinement(const char *asked, const char *used) {
 
 bool {{ project_upper }}Ctx::is_remesh() {
     if ({{ project_upper }}_REFINEMENT_MODE == REFINE_MODE_NONE) return false;
-    // block-adaptive meshes are fixed: without this the initial-grid pass and
-    // every remesh re-run the wavelet test and undo the uniform seed (BSSN
-    // bssnCtx.cpp does the same).
+    // block-adaptive meshes are fixed (as in BSSN); the wavelet test would undo them
     if ({{ project_upper }}_ENABLE_BLOCK_ADAPTIVITY) return false;
 
     // Pre-merger the par's AMR factor stands. After a merger there is one
@@ -1135,7 +1129,7 @@ bool {{ project_upper }}Ctx::is_remesh() {
 
 int {{ project_upper }}Ctx::grid_transfer(const ot::Mesh *m_new) {
 {% if boundary_value_modes %}
-    m_faceNodesMesh = nullptr;  // a new mesh may reuse the old one's address
+    m_faceNodesMesh = nullptr;  // the new mesh may reuse the old address
 {% endif %}
     // dealloc old MPI context
     ot::dealloc_mpi_ctx<DendroScalar>(m_uiMesh, m_mpi_ctx, {{ evolution_num_vars }},

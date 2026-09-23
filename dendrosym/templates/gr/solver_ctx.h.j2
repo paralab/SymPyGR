@@ -54,7 +54,8 @@ class {{ project_upper }}Ctx : public ts::Ctx<{{ project_upper }}Ctx, DendroScal
    protected:
 {% if boundary_value_modes %}
     std::vector<dendro_bc::FaceNode> m_faceNodes;
-    const ot::Mesh *m_faceNodesMesh = nullptr;  // m_faceNodes is for this mesh
+    /** mesh m_faceNodes was built for */
+    const ot::Mesh *m_faceNodesMesh = nullptr;
 {% endif %}
     DVec m_var[VL::END];
 
@@ -98,8 +99,8 @@ class {{ project_upper }}Ctx : public ts::Ctx<{{ project_upper }}Ctx, DendroScal
     int post_timestep(DVec &sIn);
 {% if boundary_value_modes %}
 
-    // value-form boundary data (dirichlet_value): overwrite the face nodes of a
-    // zipped state with the boundary data at time t
+    /** Value-form boundary data (dirichlet_value): overwrite the face nodes of
+     * a zipped state with the boundary data at time t. */
     void apply_boundary_values(DVec &s, DendroScalar t);
 {% endif %}
 
