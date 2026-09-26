@@ -573,6 +573,12 @@ int {{ project_upper }}Ctx::write_vtu() {
     m_var[VL::CPU_ANALYTIC_DIFF].to_2d(analyticDiffVar);
 {% endif %}
 
+    // the slice and fine writers read every element node, ghosts included
+    for (auto v : {VL::CPU_EV{% if enable_analytical %}, VL::CPU_ANALYTIC, VL::CPU_ANALYTIC_DIFF{% endif %}}) {
+        m_uiMesh->readFromGhostBegin(m_var[v].get_vec_ptr(), m_var[v].get_dof());
+        m_uiMesh->readFromGhostEnd(m_var[v].get_vec_ptr(), m_var[v].get_dof());
+    }
+
     // build the list of data arrays and names for VTU output
     std::vector<std::string> pDataNames;
     std::vector<double *> pDataVec;
