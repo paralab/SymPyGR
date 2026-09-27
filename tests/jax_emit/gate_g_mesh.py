@@ -214,7 +214,7 @@ def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
         domain=DOM, params=Params(phys=phys, ko_sigma=0.1),
         max_depth=5, min_depth=3, wavelet_tol=1e-3, max_blocks=4096,
         init_grid_iter=5, cfl=0.2, batch_size=32, verbose=False,
-        max_active_budget=2048, **ec_kw,
+        max_active_budget=2048, post_step_func=cb6.enforce_state, **ec_kw,
     )
     sim6.setup()
     print(f"  mesh: {sim6.active_count} elements, "
