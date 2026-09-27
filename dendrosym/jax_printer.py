@@ -52,13 +52,14 @@ class DendroJaxPrinter(NumPyPrinter):
 
     def __init__(self, additional_user_funcs={}, fields=None):
         super().__init__()
-        # 29 inherited entries hardcode a "numpy." prefix, so _module alone
-        # would still emit numpy.exp into a traced kernel.
-        self.known_functions = {
-            k: (self._module + v[len("numpy"):]
-                if isinstance(v, str) and v.startswith("numpy.") else v)
-            for k, v in self.known_functions.items()
-        }
+        # 29 inherited functions and every constant hardcode a "numpy." prefix,
+        # so _module alone would still emit numpy.exp into a traced kernel.
+        def rebase(table):
+            return {k: (self._module + v[len("numpy"):]
+                        if isinstance(v, str) and v.startswith("numpy.") else v)
+                    for k, v in table.items()}
+        self.known_functions = rebase(self.known_functions)
+        self.known_constants = rebase(self.known_constants)
         self.known_functions = dict(self.known_functions, **additional_user_funcs)
         self._fields = set(
             fields if fields is not None else dendrosym.derivs.variable_strs
