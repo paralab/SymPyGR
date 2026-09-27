@@ -35,8 +35,33 @@ The body is pure elementwise arithmetic and closes over nothing, so it is safe
 to `jit` and `vmap`, and it introduces no shape-dependent branch — which is what
 DendroJAX's zero-recompilation-across-remeshes invariant requires.
 
+## Run it on an octree
+
+`{{ project_name }}_driver.py` binds these tables to `dendrojax.Simulation`:
+
+```python
+import dendrojax
+from {{ project_name }} import {{ project_upper }}Params, Params, build_callbacks
+
+phys = {{ project_upper }}Params()
+cbs = build_callbacks(domain=((-16.0, 16.0),) * 3, phys=phys, eleorder=6,
+                      id_type=1, runtime={})
+sim = dendrojax.Simulation(
+    initial_data=cbs.initial_data, rhs=cbs.rhs, rhs_interior=cbs.rhs_interior,
+    num_vars=cbs.num_vars, eleorder=6, domain=((-16.0, 16.0),) * 3,
+    params=Params(phys=phys, ko_sigma=0.1),
+    use_ec_sync=cbs.needs_ec_sync,          # the plan knows; do not guess
+    post_step_func=cbs.enforce_state,       # algebraic constraints after each step
+)
+```
+
+`needs_ec_sync` is derived from the derivative plan: only a mixed second
+derivative reads the edge/corner ghost band, and syncing it when nothing reads
+it is pure cost.
+
 ## What is NOT generated
 
-The derivative stencils, ghost exchange, boundary conditions, KO dissipation,
-initial data, and the time integrator. Those come from `dendrojax` and from the
-driver you write around this package. See `CUSTOMIZE.md`.
+The derivative stencils, ghost exchange, the Sommerfeld row algebra, KO
+dissipation, and the time integrator. Those come from `dendrojax`
+(`dendrojax.emitted` holds the formulation-independent half of this contract).
+See `CUSTOMIZE.md`.

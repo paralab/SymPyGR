@@ -17,6 +17,7 @@ from .{{ project_name }}_initial_data import (
 {% endif %}
 )
 {% endif %}
+from .{{ project_name }}_driver import Params, Callbacks, build_callbacks
 from .{{ project_name }}_rhs import (
 {% for vt in jax_var_types %}
     {{ vt }}_rhs,
@@ -37,6 +38,9 @@ from .{{ project_name }}_rhs import (
 __all__ = [
     "{{ project_upper }}Params",
     "from_toml",
+    "Params",
+    "Callbacks",
+    "build_callbacks",
 {% if jax_initial_data %}
     "initial_data",
     "register",

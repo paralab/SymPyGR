@@ -126,7 +126,6 @@ def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
     import jax
     import jax.numpy as jnp
     from dendrojax.initial_data import register_brill_lindquist
-    from emitted_driver import Params, build_callbacks
 
     ec_note, ec_kw = _patch_simulation()
     print(ec_note)
@@ -137,6 +136,9 @@ def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
         if p.is_dir() and (p / "__init__.py").exists()))
     print(f"imported {mod.__name__}: {len(mod.EVOLUTION_FIELDS)} fields, "
           f"{len(mod.EVOLUTION_DERIVS)} buffers, {len(mod.EVOLUTION_BCS)} bc rows")
+    # the driver is part of the emitted package now (<name>_driver.py), so
+    # dendrojax holds only the formulation-independent half of the contract
+    Params, build_callbacks = mod.Params, mod.build_callbacks
 
     DOM = ((-16.0, 16.0),) * 3
     ELE = 6
@@ -156,7 +158,7 @@ def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
                BH1_spin_theta=0.0, BH1_spin_phi=0.0,
                BH2_mass=0.0, BH2_x=0.0, BH2_y=0.0, BH2_z=0.0, BH2_spin=0.0,
                BH2_spin_theta=0.0, BH2_spin_phi=0.0)
-    cbm = build_callbacks(mod, domain=DOM, phys=phys, eleorder=ELE,
+    cbm = build_callbacks(domain=DOM, phys=phys, eleorder=ELE,
                           id_type=6, runtime=off)
     # the plan knows whether the edge band is needed; nobody has to guess
     print(f"  plan needs edge/corner sync: {cbm.needs_ec_sync} "
@@ -204,7 +206,7 @@ def main(pkg_dir, dj_src="/home/denv/research/dendrojax/src"):
               BH1_spin_theta=0.0, BH1_spin_phi=0.0,
               BH2_mass=0.0, BH2_x=0.0, BH2_y=0.0, BH2_z=0.0, BH2_spin=0.0,
               BH2_spin_theta=0.0, BH2_spin_phi=0.0)
-    cb6 = build_callbacks(mod, domain=DOM, phys=phys, eleorder=ELE,
+    cb6 = build_callbacks(domain=DOM, phys=phys, eleorder=ELE,
                           id_type=6, runtime=rt)
     sim6 = dendrojax.Simulation(
         initial_data=cb6.initial_data, rhs=cb6.rhs,

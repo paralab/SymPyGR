@@ -1131,8 +1131,10 @@ def build_template_map(ctx):
 def build_jax_template_map(ctx):
     """Output path -> template, DendroJAX backend.
 
-    Much smaller than the C++ map: driver, BCs, initial data and integration
-    are NOT generated -- they come from the dendrojax package.
+    Much smaller than the C++ map: stencils, ghost exchange, BC algebra and
+    integration are NOT generated -- they come from the dendrojax package. The
+    driver that binds this package's tables to ``dendrojax.Simulation`` IS
+    generated (``<name>_driver.py``), so dendrojax stays formulation-blind.
     """
     name = ctx["project_name"]
     return {
@@ -1140,6 +1142,7 @@ def build_jax_template_map(ctx):
         f"{name}/{name}_rhs.py": "jax/rhs.py.j2",
         f"{name}/{name}_params.py": "jax/params.py.j2",
         f"{name}/{name}_initial_data.py": "jax/initial_data.py.j2",
+        f"{name}/{name}_driver.py": "jax/driver.py.j2",
         "pyproject.toml": "jax/pyproject.toml.j2",
         "README.md": "jax/readme.md.j2",
         "CUSTOMIZE.md": "jax/customize.md.j2",
