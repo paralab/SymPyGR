@@ -48,7 +48,9 @@ def main(pkg_dir):
     vts = [n[: -len("_OUTPUTS")].lower() for n in dir(m) if n.endswith("_OUTPUTS")]
     assert vts, "the package declares no <VAR_TYPE>_OUTPUTS"
 
-    params = next(getattr(m, n) for n in dir(m) if n.endswith("Params"))()
+    # `Params` is the driver's wrapper; the physics one is `<NAME>Params`
+    params = next(getattr(m, n) for n in dir(m)
+                  if n.endswith("Params") and n != "Params")()
     for vt in sorted(vts):
         up = vt.upper()
         FIELDS = getattr(m, f"{up}_FIELDS")
