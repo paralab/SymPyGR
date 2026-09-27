@@ -21,6 +21,9 @@ def _arr(v, like):
 {% for name in e.params %}
     {{ name }} = p.{{ name }}
 {% endfor %}
+{% for lhs, rhs in e.temps %}
+    {{ lhs }} = {{ rhs }}
+{% endfor %}
 {% for lhs, rhs in e.lines %}
     {{ lhs }} = {{ rhs }}
 {% endfor %}
@@ -54,6 +57,12 @@ def analytical_solution(x, y, z, t, p{% if jax_initial_data.analytical.runtime %
     """Exact solution at time t -- the reference an error norm is taken against."""
 {{ body(jax_initial_data.analytical) }}
 {% endif %}
+{% for e in jax_initial_data.exact %}
+
+def {{ e.func }}(x, y, z, t, p{% if e.runtime %}, *{% for n in e.runtime %}, {{ n }}{% endfor %}{% endif %}):
+    """{{ e.name }} at time t. Exact solution of id_type {{ e.id }}."""
+{{ body(e) }}
+{% endfor %}
 
 #: id_type -> (name, function, the keyword-only runtime values it requires).
 INITIAL_DATA = {
@@ -66,6 +75,13 @@ INITIAL_DATA = {
 INITIAL_DATA_UNAVAILABLE = {
 {% for e in jax_initial_data.unavailable %}
     {{ e.id }}: "{{ e.name }} -- {{ e.reason }}",
+{% endfor %}
+}
+
+#: id_type -> (name, exact solution ``fn(x, y, z, t, p)``, runtime values).
+EXACT_SOLUTIONS = {
+{% for e in jax_initial_data.exact %}
+    {{ e.id }}: ("{{ e.name }}", {{ e.func }}, ({% for n in e.runtime %}"{{ n }}", {% endfor %})),
 {% endfor %}
 }
 
@@ -96,3 +112,15 @@ def initial_data(id_type, x, y, z, p, **runtime):
     if missing:
         raise TypeError(f"id_type {id_type} ({_name}) needs {missing}")
     return fn(x, y, z, p, **{n: runtime[n] for n in needs})
+
+
+def exact_solution(id_type, x, y, z, t, p, **runtime):
+    """The exact solution of ``id_type`` at time ``t``, as ``{field: array}``."""
+    if id_type not in EXACT_SOLUTIONS:
+        raise KeyError(f"id_type {id_type} has no exact solution; "
+                       f"these do: {sorted(EXACT_SOLUTIONS)}")
+    _name, fn, needs = EXACT_SOLUTIONS[id_type]
+    missing = [n for n in needs if n not in runtime]
+    if missing:
+        raise TypeError(f"id_type {id_type} ({_name}) needs {missing}")
+    return fn(x, y, z, t, p, **{n: runtime[n] for n in needs})

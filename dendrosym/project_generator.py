@@ -116,7 +116,7 @@ _CACHE_SCHEMA_VERSION = "v20"
 
 # Bump on any change to the jax emission. Separate from the schema version so a
 # jax-only change does not force every C++ solver into a cold regen.
-_JAX_META_VERSION = 1
+_JAX_META_VERSION = 2
 
 # Marker opening the provenance line every gencode file carries. Deliberately
 # carries no timestamp: a regen of unchanged equations must stay byte-identical,
@@ -718,8 +718,10 @@ def _jax_initial_data(config):
     """Emit the config's initial data as jnp functions.
 
     `sympy_exprs` entries translate directly -- same expressions the C++ side
-    prints, through the jax printer. Entries carrying raw `code` are C++ text
-    with no Python form; they are reported, not silently dropped.
+    prints, through the jax printer. An `exact` entry supplies both its initial
+    data (at t = 0) and an exact solution at t, CSE'd as on the C++ side.
+    Entries carrying raw `code` are C++ text with no Python form; they are
+    reported, not silently dropped.
 
     Runtime symbols (`BH1_mass`, ...) become keyword-only arguments with **no
     defaults**: the C++ side reads them off the BH trackers, and inventing a
@@ -747,12 +749,19 @@ def _jax_initial_data(config):
             for sy in syms:
                 param_base[sy] = base
 
-    def render(exprs, extra_free=()):
-        """{var: expr} -> (assignment lines, params used, runtime used, unknown)."""
+    t_sym = sym.Symbol("t")
+
+    def render(exprs, extra_free=(), cse=False):
+        """{var: expr} -> (temps, assignment lines, params, runtime, unknown)."""
+        names = [safe_name(str(v).replace(config.idx_str, "")) for v in exprs]
+        vals = [sym.sympify(e) for e in exprs.values()]
+        temps = []
+        if cse:
+            temps, vals = sym.cse(vals, symbols=sym.numbered_symbols("_ex"))
         lines, params, rts, unknown = [], [], [], []
-        for var_sym, expr in exprs.items():
-            name = str(var_sym).replace(config.idx_str, "")
-            expr = sym.sympify(expr)
+        pr = lambda e: change_deriv_names_jax(printer.doprint(e))
+        tnames = {str(s_) for s_, _ in temps}
+        for expr in [e for _, e in temps] + list(vals):
             for free in expr.free_symbols:
                 if free in param_base:
                     if param_base[free] not in params:
@@ -760,12 +769,12 @@ def _jax_initial_data(config):
                 elif free in runtime:
                     if str(free) not in rts:
                         rts.append(str(free))
-                elif str(free) not in coords and str(free) not in extra_free:
+                elif str(free) not in coords | tnames and str(free) not in extra_free:
                     if str(free) not in unknown:
                         unknown.append(str(free))
-            src = change_deriv_names_jax(printer.doprint(expr))
-            lines.append((safe_name(name), src))
-        return lines, sorted(params), sorted(rts), sorted(unknown)
+        temps = [(str(s_), pr(e)) for s_, e in temps]
+        lines = [(n, pr(e)) for n, e in zip(names, vals)]
+        return temps, lines, sorted(params), sorted(rts), sorted(unknown)
 
     def fn_name(raw, fallback):
         """camelCase C++ name -> snake_case python, keeping it recognizable."""
@@ -774,43 +783,42 @@ def _jax_initial_data(config):
         snake = re.sub(r"(?<!^)(?=[A-Z])", "_", raw).lower()
         return safe_name(re.sub(r"__+", "_", snake))
 
-    entries, unavailable = [], []
+    def entry(temps, lines, params, rts, unknown, **kw):
+        return dict(kw, temps=temps, lines=lines, params=params, runtime=rts,
+                    unknown=unknown)
+
+    entries, unavailable, exact = [], [], []
     for idt in getattr(config, "initial_data_types", []) or []:
         name = idt.get("name", f"id {idt.get('id')}")
-        if not idt.get("sympy_exprs"):
-            unavailable.append({
-                "id": idt.get("id"),
-                "name": name,
-                "reason": "raw C++ in the config, so it has no Python form",
-            })
-            continue
-        lines, params, rts, unknown = render(idt["sympy_exprs"])
-        entries.append({
-            "id": idt.get("id"),
-            "name": name,
-            "note": idt.get("note", ""),
-            "func": fn_name(idt.get("function"), f"init_{idt.get('id')}"),
-            "lines": lines, "params": params, "runtime": rts, "unknown": unknown,
-        })
+        head = {"id": idt.get("id"), "name": name, "note": idt.get("note", ""),
+                "func": fn_name(idt.get("function"), f"init_{idt.get('id')}")}
+        if idt.get("exact"):
+            exact.append(entry(*render(idt["exact"], cse=True), **dict(
+                head, func=fn_name(re.sub(r"\W+", "_", name), f"id_{head['id']}")
+                + "_exact")))
+        if idt.get("sympy_exprs"):
+            entries.append(entry(*render(idt["sympy_exprs"]), **head))
+        elif idt.get("code"):
+            unavailable.append(dict(
+                head, reason="raw C++ in the config, so it has no Python form"))
+        elif idt.get("exact"):
+            t0 = {v: sym.sympify(e).subs(t_sym, 0) for v, e in idt["exact"].items()}
+            entries.append(entry(*render(t0, cse=True), **head))
+        else:
+            unavailable.append(dict(head, reason="the config gives no expressions for it"))
 
     symbolic = None
     if getattr(config, "symbolic_initial_data", None):
-        lines, params, rts, unknown = render(config.symbolic_initial_data)
-        symbolic = {
-            "func": fn_name(getattr(config, "symbolic_initial_data_name", ""),
-                            "symbolic_init"),
-            "lines": lines, "params": params, "runtime": rts, "unknown": unknown,
-        }
+        symbolic = entry(*render(config.symbolic_initial_data), func=fn_name(
+            getattr(config, "symbolic_initial_data_name", ""), "symbolic_init"))
 
     analytical = None
     if getattr(config, "symbolic_analytical_solution", None):
-        lines, params, rts, unknown = render(config.symbolic_analytical_solution)
-        analytical = {"lines": lines, "params": params, "runtime": rts,
-                      "unknown": unknown}
+        analytical = entry(*render(config.symbolic_analytical_solution))
 
     if not (entries or unavailable or symbolic or analytical):
         return None
-    return {"entries": entries, "unavailable": unavailable,
+    return {"entries": entries, "unavailable": unavailable, "exact": exact,
             "symbolic": symbolic, "analytical": analytical}
 
 
@@ -1900,11 +1908,13 @@ class DendroProjectGenerator:
         ic = ctx["jax_initial_data"]
         if ic:
             print(f"  [jax] initial data: {len(ic['entries'])} emitted"
-                  + (f", {len(ic['unavailable'])} raw-C++ (not translatable)"
+                  + (f", {len(ic['exact'])} exact solution(s)" if ic["exact"] else "")
+                  + (f", {len(ic['unavailable'])} not translatable"
                      if ic["unavailable"] else ""), file=sys.stderr)
-            for e in ic["entries"] + ([ic["symbolic"]] if ic["symbolic"] else []):
+            for e in (ic["entries"] + ic["exact"]
+                      + [x for x in (ic["symbolic"], ic["analytical"]) if x]):
                 if e["unknown"]:
-                    print(f"  [jax] {e['func']}: undeclared symbol(s) "
+                    print(f"  [jax] {e.get('func', 'analytical_solution')}: undeclared symbol(s) "
                           f"{e['unknown']}", file=sys.stderr)
 
         # Tables, not code: the Sommerfeld application and the det/trace/floor

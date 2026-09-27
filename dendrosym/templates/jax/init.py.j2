@@ -12,6 +12,8 @@ from .{{ project_name }}_initial_data import (
     register,
     INITIAL_DATA,
     INITIAL_DATA_UNAVAILABLE,
+    EXACT_SOLUTIONS,
+    exact_solution,
 {% if jax_initial_data.analytical %}
     analytical_solution,
 {% endif %}
@@ -46,6 +48,8 @@ __all__ = [
     "register",
     "INITIAL_DATA",
     "INITIAL_DATA_UNAVAILABLE",
+    "EXACT_SOLUTIONS",
+    "exact_solution",
 {% if jax_initial_data.analytical %}
     "analytical_solution",
 {% endif %}
