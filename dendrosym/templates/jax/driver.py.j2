@@ -20,7 +20,8 @@ The contract it bridges, learned from ``Simulation._wrap_rhs``:
   * ``rhs(f_block, *, hx, hy, hz, cx, cy, cz, bflag, t, dt, params)``
   * ``f_block`` is the PADDED (V, S, S, S) block, S = 2*eleorder+1
   * the return is the TIGHT interior (V, E, E, E), E = eleorder+1
-  * ``hx`` is world spacing but ``cx`` is an octree [0,1] corner
+  * ``hx`` is world spacing but ``cx`` is an octree [0,1] corner, and
+    ``initial_data`` is handed octree [0,1] coordinates too
   * KO and the Sommerfeld rows are the driver's job -- the emitted body has
     neither (``kograd`` appears nowhere in it)
 """
@@ -124,7 +125,11 @@ def build_callbacks(*, domain, phys, eleorder=6, id_type=None, runtime=None,
 
 {% if jax_initial_data %}
     def initial_data(X, Y, Z):
-        """-> (E, E, E, V); Simulation transposes to (V, E, E, E)."""
+        """Octree [0, 1] coords -> (E, E, E, V); Simulation transposes to
+        (V, E, E, E). The emitted initial data is in world coords."""
+        X = xmin + X * (xmax - xmin)
+        Y = ymin + Y * (ymax - ymin)
+        Z = zmin + Z * (zmax - zmin)
         st = _id.initial_data(id_type, X, Y, Z, phys, **(runtime or {}))
         return jnp.stack([jnp.broadcast_to(jnp.asarray(st[v]), X.shape)
                           for v in fields], axis=-1)
