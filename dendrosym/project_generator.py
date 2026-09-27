@@ -26,7 +26,6 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
 
 import dendrosym
-from dendrosym.general_configs import SOLVER_FEATURES
 
 
 # ---------------------------------------------------------------------------
@@ -1153,7 +1152,6 @@ def build_jax_template_map(ctx):
         f"{name}/{name}_driver.py": "jax/driver.py.j2",
         "pyproject.toml": "jax/pyproject.toml.j2",
         "README.md": "jax/readme.md.j2",
-        "CUSTOMIZE.md": "jax/customize.md.j2",
     }
 
 
@@ -1617,14 +1615,6 @@ class DendroProjectGenerator:
                                  "symbolic_analytical_solution or per id type "
                                  "(`exact`), not both")
             ctx["enable_analytical"] = True
-
-        # Feature table for CUSTOMIZE.md, read from the resolved ctx rather than
-        # the config: enable_analytical is switched on above when the config
-        # supplies analytical expressions.
-        ctx["solver_features"] = [
-            (flag, bool(ctx.get(flag, default)), doc)
-            for flag, (default, doc) in sorted(SOLVER_FEATURES.items())
-        ]
 
         return ctx
 

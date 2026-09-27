@@ -66,8 +66,7 @@ def _transform_worker(args):
 # attribute, the generator's getattr fell back to the default, and the solver
 # came out without the capability.
 #
-# __setattr__ below rejects any `enable_*` name not keyed here. This table also
-# feeds the jax package's CUSTOMIZE.md, so a new flag documents itself.
+# __setattr__ below rejects any `enable_*` name not keyed here.
 SOLVER_FEATURES = {
     "enable_analytical": (
         False,
