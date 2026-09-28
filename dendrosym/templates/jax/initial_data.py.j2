@@ -63,6 +63,12 @@ def {{ e.func }}(x, y, z, t, p{% if e.runtime %}, *{% for n in e.runtime %}, {{ 
     """{{ e.name }} at time t. Exact solution of id_type {{ e.id }}."""
 {{ body(e) }}
 {% endfor %}
+{% for e in jax_initial_data.exact_dt %}
+
+def {{ e.func }}(x, y, z, t, p{% if e.runtime %}, *{% for n in e.runtime %}, {{ n }}{% endfor %}{% endif %}):
+    """d/dt of {{ e.name }} at time t, for exact boundaries."""
+{{ body(e) }}
+{% endfor %}
 
 #: id_type -> (name, function, the keyword-only runtime values it requires).
 INITIAL_DATA = {
@@ -81,6 +87,13 @@ INITIAL_DATA_UNAVAILABLE = {
 #: id_type -> (name, exact solution ``fn(x, y, z, t, p)``, runtime values).
 EXACT_SOLUTIONS = {
 {% for e in jax_initial_data.exact %}
+    {{ e.id }}: ("{{ e.name }}", {{ e.func }}, ({% for n in e.runtime %}"{{ n }}", {% endfor %})),
+{% endfor %}
+}
+
+#: id_type -> (name, d/dt of the exact solution, runtime values).
+EXACT_SOLUTIONS_DT = {
+{% for e in jax_initial_data.exact_dt %}
     {{ e.id }}: ("{{ e.name }}", {{ e.func }}, ({% for n in e.runtime %}"{{ n }}", {% endfor %})),
 {% endfor %}
 }

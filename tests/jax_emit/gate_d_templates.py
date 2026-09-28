@@ -283,6 +283,41 @@ def test_rhs_body_is_executable():
     assert all(np.isfinite(v).all() for v in out), out
 
 
+def test_boundary_modes_render():
+    """A config with boundary_modes: the mode table, the exact-dt table and
+    the driver's mode branch all parse."""
+    ctx = synthetic_ctx()
+    ctx["jax_initial_data"]["exact"] = ctx["jax_initial_data"]["exact_dt"] = [{
+        "id": 1, "name": "Toy", "func": "toy_exact_dt", "temps": [("_ex0", "t*x")],
+        "lines": [("alpha", "_ex0"), ("chi", "0")], "params": [], "runtime": [],
+        "unknown": []}]
+    ctx["jax_boundary"] = {
+        "funcs": [{"name": "_robin_1_all", "args": "p", "temps": [],
+                   "lines": [(f"c{i}", "1.0") for i in range(12)], "params": ["eta"],
+                   "ret": "((c0, c1, c2, c3, c4, c5), (c6, c7, c8, c9, c10, c11))",
+                   "runtime": [], "unknown": []}],
+        "modes": [{"name": "exact", "rows": [("alpha", "exact", None), ("chi", "exact", None)]},
+                  {"name": "walls", "rows": [("alpha", "robin", "_robin_1_all"),
+                                             ("chi", "static", None)]}],
+        "unavailable": [{"name": "table", "reason": "C++ text"}],
+        "default": "exact", "grads": []}
+    env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)),
+                      keep_trailing_newline=True, trim_blocks=True, lstrip_blocks=True)
+    tmap = build_jax_template_map(ctx)
+    assert "toy/toy_boundary.py" in tmap, sorted(tmap)
+    for rel, tmpl in tmap.items():
+        if rel.endswith(".py"):
+            ast.parse(env.get_template(tmpl).render(**ctx), rel)
+    mod = {}
+    src = env.get_template("jax/boundary.py.j2").render(**ctx)
+    exec(compile(src.replace("import jax.numpy as jnp", "import numpy as jnp"),
+                 "toy_boundary.py", "exec"), mod)
+    assert mod["DEFAULT_MODE"] == "exact"
+    p = types.SimpleNamespace(eta=2.0)
+    assert mod["BOUNDARY_MODES"]["walls"][0][2](p) == ((1.0,) * 6, (1.0,) * 6)
+    assert "table" in mod["BOUNDARY_MODES_UNAVAILABLE"]
+
+
 def test_generated_project(path):
     """Parse and import every .py in a real generated project."""
     import pathlib
@@ -308,6 +343,7 @@ if __name__ == "__main__":
     check("rhs declares its inputs", test_rhs_declares_its_inputs)
     check("field named u/d/p", test_field_named_like_a_parameter)
     check("rhs body executes", test_rhs_body_is_executable)
+    check("boundary modes render", test_boundary_modes_render)
     if len(sys.argv) > 1:
         check(f"generated project {sys.argv[1]}",
               lambda: test_generated_project(sys.argv[1]))

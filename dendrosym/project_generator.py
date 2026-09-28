@@ -115,7 +115,7 @@ _CACHE_SCHEMA_VERSION = "v20"
 
 # Bump on any change to the jax emission. Separate from the schema version so a
 # jax-only change does not force every C++ solver into a cold regen.
-_JAX_META_VERSION = 2
+_JAX_META_VERSION = 3
 
 # Marker opening the provenance line every gencode file carries. Deliberately
 # carries no timestamp: a regen of unchanged equations must stay byte-identical,
@@ -713,19 +713,10 @@ def _jax_meta(config, var_type):
     }
 
 
-def _jax_initial_data(config):
-    """Emit the config's initial data as jnp functions.
-
-    `sympy_exprs` entries translate directly -- same expressions the C++ side
-    prints, through the jax printer. An `exact` entry supplies both its initial
-    data (at t = 0) and an exact solution at t, CSE'd as on the C++ side.
-    Entries carrying raw `code` are C++ text with no Python form; they are
-    reported, not silently dropped.
-
-    Runtime symbols (`BH1_mass`, ...) become keyword-only arguments with **no
-    defaults**: the C++ side reads them off the BH trackers, and inventing a
-    default here would evolve the wrong spacetime without saying so.
-    """
+def _jax_renderer(config):
+    """sympy -> jnp statements, shared by the emitted initial data and boundary
+    modes. Returns render({name: expr}, cse=False) -> (temps, lines, params,
+    runtime, unknown)."""
     import sympy as sym
 
     from dendrosym.codegen_jax import change_deriv_names_jax
@@ -747,8 +738,6 @@ def _jax_initial_data(config):
                     else [pvar.var_symbols])
             for sy in syms:
                 param_base[sy] = base
-
-    t_sym = sym.Symbol("t")
 
     def render(exprs, extra_free=(), cse=False):
         """{var: expr} -> (temps, assignment lines, params, runtime, unknown)."""
@@ -775,6 +764,35 @@ def _jax_initial_data(config):
         lines = [(n, pr(e)) for n, e in zip(names, vals)]
         return temps, lines, sorted(params), sorted(rts), sorted(unknown)
 
+    return render
+
+
+def _jax_entry(temps, lines, params, rts, unknown, **kw):
+    return dict(kw, temps=temps, lines=lines, params=params, runtime=rts,
+                unknown=unknown)
+
+
+def _jax_initial_data(config):
+    """Emit the config's initial data as jnp functions.
+
+    `sympy_exprs` entries translate directly -- same expressions the C++ side
+    prints, through the jax printer. An `exact` entry supplies its initial data
+    (at t = 0), an exact solution at t and its d/dt (for exact boundaries),
+    CSE'd as on the C++ side. Entries carrying raw `code` are C++ text with no
+    Python form; they are reported, not silently dropped.
+
+    Runtime symbols (`BH1_mass`, ...) become keyword-only arguments with **no
+    defaults**: the C++ side reads them off the BH trackers, and inventing a
+    default here would evolve the wrong spacetime without saying so.
+    """
+    import sympy as sym
+
+    from dendrosym.jax_printer import safe_name
+
+    render = _jax_renderer(config)
+    t_sym = sym.Symbol("t")
+    entry = _jax_entry
+
     def fn_name(raw, fallback):
         """camelCase C++ name -> snake_case python, keeping it recognizable."""
         if not raw:
@@ -782,19 +800,18 @@ def _jax_initial_data(config):
         snake = re.sub(r"(?<!^)(?=[A-Z])", "_", raw).lower()
         return safe_name(re.sub(r"__+", "_", snake))
 
-    def entry(temps, lines, params, rts, unknown, **kw):
-        return dict(kw, temps=temps, lines=lines, params=params, runtime=rts,
-                    unknown=unknown)
-
-    entries, unavailable, exact = [], [], []
+    entries, unavailable, exact, exact_dt = [], [], [], []
     for idt in getattr(config, "initial_data_types", []) or []:
         name = idt.get("name", f"id {idt.get('id')}")
         head = {"id": idt.get("id"), "name": name, "note": idt.get("note", ""),
                 "func": fn_name(idt.get("function"), f"init_{idt.get('id')}")}
         if idt.get("exact"):
-            exact.append(entry(*render(idt["exact"], cse=True), **dict(
-                head, func=fn_name(re.sub(r"\W+", "_", name), f"id_{head['id']}")
-                + "_exact")))
+            base = fn_name(re.sub(r"\W+", "_", name), f"id_{head['id']}")
+            exact.append(entry(*render(idt["exact"], cse=True),
+                               **dict(head, func=base + "_exact")))
+            dt = {v: sym.diff(sym.sympify(e), t_sym) for v, e in idt["exact"].items()}
+            exact_dt.append(entry(*render(dt, cse=True),
+                                  **dict(head, func=base + "_exact_dt")))
         if idt.get("sympy_exprs"):
             entries.append(entry(*render(idt["sympy_exprs"]), **head))
         elif idt.get("code"):
@@ -818,8 +835,86 @@ def _jax_initial_data(config):
     if not (entries or unavailable or symbolic or analytical):
         return None
     return {"entries": entries, "unavailable": unavailable, "exact": exact,
-            "symbolic": symbolic, "analytical": analytical}
+            "exact_dt": exact_dt, "symbolic": symbolic, "analytical": analytical}
 
+
+
+def _jax_boundary(config, var_names, has_exact):
+    """cfg.boundary_modes (dendrosym.bc) as jnp: per mode, per field, a kind and
+    its data -- coefficients as functions of the params, boundary data as
+    functions of (x, y, z, t, p). The kinds live in dendrojax.boundary, as the
+    C++ ones live in dendrolib's dendro_bc; the driver picks the mode."""
+    import sympy as sym
+
+    from dendrosym import bc as _bc
+
+    modes = getattr(config, "boundary_modes", None)
+    if modes is None and getattr(config, "boundary_condition", None) == "exact":
+        modes = {"exact": {"all": _bc.exact()}}
+    if not modes:
+        return None
+
+    render = _jax_renderer(config)
+    t_sym = sym.Symbol("t")
+    funcs, table, unavailable, grads, shared = [], [], [], [], {}
+
+    def coef(name, exprs, ret):
+        c = {sym.Symbol(f"c{i}"): e for i, e in enumerate(exprs)}
+        funcs.append(_jax_entry(*render(c), name=name, args="p", ret=ret))
+        return name
+
+    def data(name, expr):
+        funcs.append(_jax_entry(*render({sym.Symbol("g"): expr}, cse=True),
+                                name=name, args="x, y, z, t, p", ret="_arr(g, x)"))
+        return name
+
+    for mid, (mname, spec) in enumerate(modes.items()):
+        per_var = {}
+        for key, kind in spec.items():
+            targets = (var_names if key == "all"
+                       else [str(key).replace(config.idx_str, "")])
+            for v in targets:
+                per_var[v] = (key, kind)
+        rows, text = [], []
+        for v in var_names:
+            key, kind = per_var[v]
+            k = kind[0]
+            tag = f"{mid}_{'all' if key == 'all' else v}"
+            fn = shared.get((tag, k))
+            if k in ("outflow", "sommerfeld") and v not in grads:
+                grads.append(v)
+            if fn is not None:
+                pass
+            elif k == "outflow":
+                fn = coef(f"_outflow_{tag}", [e for row in kind[1] for e in row],
+                          "(" + ", ".join(f"(c{3*f}, c{3*f+1}, c{3*f+2})"
+                                          for f in range(6)) + ")")
+            elif k == "robin":
+                fn = coef(f"_robin_{tag}", list(kind[1]) + list(kind[2]),
+                          "((" + ", ".join(f"c{i}" for i in range(6)) + "), ("
+                          + ", ".join(f"c{i}" for i in range(6, 12)) + "))")
+            elif k == "sommerfeld":
+                fn = coef(f"_sommerfeld_{tag}", [kind[1], kind[2]], "(c0, c1)")
+            elif k == "dirichlet":
+                fn = data(f"_dirichlet_dt_{mid}_{v}", sym.diff(kind[1], t_sym))
+            elif k == "dirichlet_value":
+                if isinstance(kind[1], str):
+                    text.append(v)
+                    continue
+                fn = data(f"_value_{mid}_{v}", kind[1])
+            elif k == "exact" and not has_exact:
+                raise ValueError(f"boundary mode {mname!r}: exact() needs "
+                                 "initial_data_types with an `exact` solution")
+            shared[(tag, k)] = fn
+            rows.append((v, k, fn))
+        if text:
+            unavailable.append({"name": mname, "reason":
+                                f"dirichlet_value given as C++ text for {text}, "
+                                "so it has no Python form"})
+        else:
+            table.append({"name": mname, "rows": rows})
+    return {"funcs": funcs, "modes": table, "unavailable": unavailable,
+            "default": next(iter(modes)), "grads": grads}
 
 def _run_var_type(args):
     """Full per-var_type gencode pipeline: find derivs, allocate, emit RHS.
@@ -1144,7 +1239,7 @@ def build_jax_template_map(ctx):
     generated (``<name>_driver.py``), so dendrojax stays formulation-blind.
     """
     name = ctx["project_name"]
-    return {
+    tmap = {
         f"{name}/__init__.py": "jax/init.py.j2",
         f"{name}/{name}_rhs.py": "jax/rhs.py.j2",
         f"{name}/{name}_params.py": "jax/params.py.j2",
@@ -1153,6 +1248,9 @@ def build_jax_template_map(ctx):
         "pyproject.toml": "jax/pyproject.toml.j2",
         "README.md": "jax/readme.md.j2",
     }
+    if ctx.get("jax_boundary"):
+        tmap[f"{name}/{name}_boundary.py"] = "jax/boundary.py.j2"
+    return tmap
 
 
 class DendroProjectGenerator:
@@ -1937,6 +2035,26 @@ class DendroProjectGenerator:
                 if row[1] not in known:
                     known.add(row[1])
                     jax_ctx[vt].leaves.field.append(row[1])
+
+        # Run-time boundary modes replace the Sommerfeld rows, as in the C++ rhs.
+        ctx["jax_boundary"] = None
+        if "evolution" in jax_ctx:
+            ctx["jax_boundary"] = bnd = _jax_boundary(
+                c, list(ctx["evolution_var_names"]), bool(ic and ic["exact"]))
+            if bnd:
+                have = jax_ctx["evolution"].deriv_names
+                extra = [f"grad_{i}_{v}" for v in bnd["grads"] for i in range(3)
+                         if f"grad_{i}_{v}" not in have]
+                jax_ctx["evolution"].deriv_names = have + extra
+                print(f"  [jax] boundary modes: {len(bnd['modes'])} emitted"
+                      + (f", {len(bnd['unavailable'])} not translatable"
+                         if bnd["unavailable"] else "")
+                      + (f"; +{len(extra)} buffer(s) for them" if extra else ""),
+                      file=sys.stderr)
+                for f in bnd["funcs"]:
+                    if f["unknown"]:
+                        print(f"  [jax] {f['name']}: undeclared symbol(s) "
+                              f"{f['unknown']}", file=sys.stderr)
 
         # `lambda` is declared by bssn/ccz4/emda
         from dendrosym.jax_printer import safe_name

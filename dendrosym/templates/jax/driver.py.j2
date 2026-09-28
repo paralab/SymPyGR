@@ -35,6 +35,10 @@ import dendrojax
 from dendrojax import emitted as em
 
 from . import {{ project_name }}_rhs as _rhs
+{% if jax_boundary %}
+from dendrojax import boundary as bd
+from . import {{ project_name }}_boundary as _bc
+{% endif %}
 {% if jax_initial_data %}
 from . import {{ project_name }}_initial_data as _id
 {% endif %}
@@ -65,11 +69,13 @@ class Callbacks(NamedTuple):
     #: the derivative plan knows whether one is present. Pass it straight to
     #: ``Simulation(use_ec_sync=...)``.
     needs_ec_sync: bool
+    #: The boundary mode in force (None: the Sommerfeld rows).
+    boundary_mode: object = None
 
 
 def build_callbacks(*, domain, phys, eleorder=6, id_type=None, runtime=None,
                     var_type="evolution", chi_floor=1e-4, alpha_floor=1e-4,
-                    ko_order=4):
+                    ko_order=4{% if jax_boundary %}, boundary_mode=None{% endif %}):
     """Resolve the emitted name tables to indices once, outside ``jit``.
 
     Parameters
@@ -89,6 +95,12 @@ def build_callbacks(*, domain, phys, eleorder=6, id_type=None, runtime=None,
         Positive floors applied by ``enforce``.
     ko_order : int
         Kreiss-Oliger order; dendrojax ships the 4th-order stencil only.
+{% if jax_boundary %}
+    boundary_mode : str or None
+        One of ``BOUNDARY_MODES`` (default ``DEFAULT_MODE``). Time-dependent
+        kinds read ``t`` from the RHS call, so they are only as accurate in time
+        as the stepper's ``t`` is the stage time.
+{% endif %}
     """
     vt = var_type.upper()
     fields = list(getattr(_rhs, f"{vt}_FIELDS"))
@@ -104,7 +116,32 @@ def build_callbacks(*, domain, phys, eleorder=6, id_type=None, runtime=None,
     plan = em.plan_derivs(derivs, fields)          # remesh-stable, hashable
     out_idx = tuple(outputs.index(f"{v}_rhs") for v in fields)
     idx = {v: i for i, v in enumerate(fields)}
+{% if jax_boundary %}
+    mode = boundary_mode or _bc.DEFAULT_MODE
+    if mode in _bc.BOUNDARY_MODES_UNAVAILABLE:
+        raise NotImplementedError(
+            f"boundary mode {mode!r}: {_bc.BOUNDARY_MODES_UNAVAILABLE[mode]}")
+    if mode not in _bc.BOUNDARY_MODES:
+        raise ValueError(f"boundary mode {mode!r} is not one of "
+                         f"{sorted(_bc.BOUNDARY_MODES)}")
+    kinds = tuple((idx[v], v, k, fn) for v, k, fn in _bc.BOUNDARY_MODES[mode])
+    print(f"{{ project_name }}: boundary mode {mode!r} ("
+          + ", ".join(f"{v}: {k}" for _, v, k, _ in kinds) + ")")
+    values = tuple((i, fn) for i, _, k, fn in kinds if k == "dirichlet_value")
+{% if jax_initial_data and jax_initial_data.exact_dt %}
+    exact_dt = None
+    if any(k == "exact" for _, _, k, _ in kinds):
+        if id_type not in _id.EXACT_SOLUTIONS_DT:
+            raise ValueError(f"boundary mode {mode!r} needs an exact solution; "
+                             f"id_type {id_type} has none")
+        _name, exact_dt, needs = _id.EXACT_SOLUTIONS_DT[id_type]
+        exact_rt = {n: (runtime or {})[n] for n in needs}
+{% endif %}
+    bc_rows = ()
+{% else %}
+    mode = None
     bc_rows = tuple((idx[f], gx, gy, gz, fo, asy) for _, f, gx, gy, gz, fo, asy in bcs)
+{% endif %}
 
 {% if jax_enforce %}
     metric_idx, tf_idx, _ = em.conformal_indices(
@@ -144,21 +181,72 @@ def build_callbacks(*, domain, phys, eleorder=6, id_type=None, runtime=None,
         out = rhs_fn(u, d, params.phys)
         return jnp.stack([out[i] for i in out_idx], axis=0), d
 
+    def _coords(hx, hy, hz, cx, cy, cz, n=S, pad=pw):
+        # world coords of a block of n nodes per axis whose first `pad` are
+        # ghosts: the -pad is what puts the outer face at the domain edge
+        xs = (xmin + cx * (xmax - xmin)) + (jnp.arange(n) - pad) * hx
+        ys = (ymin + cy * (ymax - ymin)) + (jnp.arange(n) - pad) * hy
+        zs = (zmin + cz * (zmax - zmin)) + (jnp.arange(n) - pad) * hz
+        return xs, ys, zs
+
+{% if jax_boundary %}
+    def _set_values(block, bflag, xs, ys, zs, t, phys, pad=pw):
+        X3, Y3, Z3 = jnp.meshgrid(zs, ys, xs, indexing="ij")[::-1]
+        for i, fn in values:
+            block = block.at[i].set(bd.set_face_values(
+                block[i], fn(X3, Y3, Z3, t, phys), bflag, pad))
+        return block
+
+{% endif %}
     def rhs(f_block, *, hx, hy, hz, cx, cy, cz, bflag, t, dt, params):
+        xs, ys, zs = _coords(hx, hy, hz, cx, cy, cz)
+{% if jax_boundary %}
+        if values:
+            f_block = _set_values(f_block, bflag, xs, ys, zs, t, params.phys)
+{% endif %}
         stack, d = _body(f_block, hx, hy, hz, bflag, params)
 
-        # world coords of the PADDED block: the ghost layer sits at negative
-        # offsets, so the -pw is what puts the outer face at the domain edge
-        xs = (xmin + cx * (xmax - xmin)) + (jnp.arange(S) - pw) * hx
-        ys = (ymin + cy * (ymax - ymin)) + (jnp.arange(S) - pw) * hy
-        zs = (zmin + cz * (zmax - zmin)) + (jnp.arange(S) - pw) * hz
-
+{% if jax_boundary %}
+        def apply_bcs(cur):
+            phys = params.phys
+            X3, Y3, Z3 = jnp.meshgrid(zs, ys, xs, indexing="ij")[::-1]
+            h = (hx, hy, hz)
+{% if jax_initial_data and jax_initial_data.exact_dt %}
+            ex = exact_dt(X3, Y3, Z3, t, phys, **exact_rt) if exact_dt else None
+{% endif %}
+            for i, v, k, fn in kinds:
+                r = cur[i]
+                if k in ("outflow", "sommerfeld"):
+                    g = (d[f"grad_0_{v}"], d[f"grad_1_{v}"], d[f"grad_2_{v}"])
+                if k == "static":
+                    r = bd.static_rhs(r, bflag, pw)
+                elif k == "dirichlet":
+                    r = bd.dirichlet_rhs(r, fn(X3, Y3, Z3, t, phys), bflag, pw)
+{% if jax_initial_data and jax_initial_data.exact_dt %}
+                elif k == "exact":
+                    r = bd.dirichlet_rhs(r, ex[v], bflag, pw)
+{% endif %}
+                elif k == "outflow":
+                    r = bd.outflow_rhs(r, *g, fn(phys), bflag, pw)
+                elif k == "neumann":
+                    r = bd.neumann_rhs(r, h, bflag, pw)
+                elif k == "robin":
+                    a, b = fn(phys)
+                    r = bd.robin_rhs(r, a, b, h, bflag, pw)
+                elif k == "sommerfeld":
+                    fo, finf = fn(phys)
+                    r = bd.sommerfeld_rhs(r, f_block[i], *g, X3, Y3, Z3, fo, finf,
+                                          bflag, pw)
+                cur = cur.at[i].set(r)
+            return cur
+{% else %}
         def apply_bcs(cur):
             for i, gx, gy, gz, fo, asy in bc_rows:
                 cur = cur.at[i].set(em.apply_bc_row(
                     cur[i], f_block[i], d[gx], d[gy], d[gz],
                     xs, ys, zs, bflag, fo, asy, pw))
             return cur
+{% endif %}
 
         stack = jax.lax.cond(bflag > 0, apply_bcs, lambda s: s, operand=stack)
         ko = dendrojax.derivs.compute_ko_diss_xyz(
@@ -190,9 +278,23 @@ def build_callbacks(*, domain, phys, eleorder=6, id_type=None, runtime=None,
         Built once and reused: post_step_func is a JIT cache key, so handing in
         a fresh closure per call re-traces the whole step loop.
         """
+{% if jax_boundary %}
+        data = state.physics_data
+        if values:
+            # value form, second half: the stepped state (interior-only E^3
+            # blocks, no ghost band) at its new time
+            g = state.geom
+            n = data.shape[0]
+            data = jax.vmap(lambda blk, bf, hx, hy, hz, cx, cy, cz: _set_values(
+                blk, bf, *_coords(hx, hy, hz, cx, cy, cz, E, 0), state.time,
+                state.params.phys, 0))(data, state.bflags[:n], g.hx[:n], g.hy[:n],
+                                       g.hz[:n], g.cx[:n], g.cy[:n], g.cz[:n])
+        return state._replace(physics_data=jax.vmap(enforce)(data))
+{% else %}
         return state._replace(
             physics_data=jax.vmap(enforce)(state.physics_data))
+{% endif %}
 
     return Callbacks(initial_data, rhs, rhs_interior, len(fields),
                      tuple(fields), enforce, enforce_state,
-                     bool(plan.mixed_slots))
+                     bool(plan.mixed_slots), mode)
