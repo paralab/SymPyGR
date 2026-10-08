@@ -69,6 +69,11 @@ class {{ project_upper }}Ctx : public ts::Ctx<{{ project_upper }}Ctx, DendroScal
     bool m_bIsBHMerged;
 {% endif %}
 
+{% if enforcement_monitors %}
+    // min of each enforced quantity before enforcement, since the last write
+    double m_preEnforceMin[NUM_ENFORCEMENT_MONITORS];
+
+{% endif %}
     // State flags
     bool m_bConstraintsComputed;
     // checkpoint restore guard: initialize() is invoked twice (once directly,

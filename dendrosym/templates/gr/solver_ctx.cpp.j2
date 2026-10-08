@@ -25,8 +25,10 @@ extern MPI_Comm TP_MPI_COMM;
 #include "punctureTracker.h"
 {% endif %}
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <limits>
 #include <fstream>
 #include <sstream>
 
@@ -108,6 +110,10 @@ void initDataFuncToPhysCoords(const double xx, const double yy,
     m_uiMergeStep = std::numeric_limits<uint32_t>::max();
 {% endif %}
     m_bConstraintsComputed = false;
+{% if enforcement_monitors %}
+    std::fill(m_preEnforceMin, m_preEnforceMin + NUM_ENFORCEMENT_MONITORS,
+              std::numeric_limits<double>::max());
+{% endif %}
     m_uiWroteGridInfoHeader = false;
 
     // time stepping info
@@ -230,7 +236,8 @@ int {{ project_upper }}Ctx::init_grid() {
 
     // enforce evolution constraints on initial data
     for (unsigned int node = nodeLocalBegin; node < nodeLocalEnd; node++) {
-        enforce_{{ project_name }}_constraints(zipIn, node);
+        enforce_{{ project_name }}_constraints(
+            zipIn, node{{ ", m_preEnforceMin" if enforcement_monitors }});
     }
 
     return 0;
@@ -329,7 +336,8 @@ int {{ project_upper }}Ctx::post_timestep(DVec &sIn) {
     const unsigned int nodeLocalEnd = m_uiMesh->getNodeLocalEnd();
 
     for (unsigned int node = nodeLocalBegin; node < nodeLocalEnd; node++) {
-        enforce_{{ project_name }}_constraints(zipIn, node);
+        enforce_{{ project_name }}_constraints(
+            zipIn, node{{ ", m_preEnforceMin" if enforcement_monitors }});
     }
 
     return 0;
@@ -1015,6 +1023,28 @@ int {{ project_upper }}Ctx::terminal_output() {
             }
         }
 
+{% if enforcement_monitors %}
+        // what enforcement overwrote since the last row: the min each
+        // quantity reached first. NaN if enforcement has not run since.
+        double preMin[NUM_ENFORCEMENT_MONITORS];
+        MPI_Allreduce(m_preEnforceMin, preMin, NUM_ENFORCEMENT_MONITORS,
+                      MPI_DOUBLE, MPI_MIN, comm);
+        std::fill(m_preEnforceMin, m_preEnforceMin + NUM_ENFORCEMENT_MONITORS,
+                  std::numeric_limits<double>::max());
+        if (rank == 0) {
+            std::cout << "\t[enf]:  pre-enforcement min :";
+            for (unsigned int m = 0; m < NUM_ENFORCEMENT_MONITORS; m++) {
+                if (preMin[m] == std::numeric_limits<double>::max())
+                    preMin[m] = std::numeric_limits<double>::quiet_NaN();
+                consHdr << ",PRE_MIN_" << ENFORCEMENT_MONITOR_NAMES[m];
+                consRow << "," << preMin[m];
+                std::cout << " " << ENFORCEMENT_MONITOR_NAMES[m] << "="
+                          << preMin[m];
+            }
+            std::cout << std::endl;
+        }
+{% endif %}
+
         if (rank == 0) {
             const std::string fName =
                 {{ project_upper }}_PROFILE_FILE_PREFIX + "_Constraints.csv";
@@ -1144,6 +1174,17 @@ int {{ project_upper }}Ctx::grid_transfer(const ot::Mesh *m_new) {
     // transfer evolution variables to the new mesh (interpolation)
     DVec::grid_transfer(m_uiMesh, m_new, m_var[VL::CPU_EV]);
 
+    // the constraint vectors are recreated empty below
+    m_bConstraintsComputed = false;
+{% if enforcement_monitors %}
+
+    // a rank that goes inactive on the new mesh would take its minima with
+    // it; give every currently active rank the global ones first
+    if (m_uiMesh->isActive())
+        MPI_Allreduce(MPI_IN_PLACE, m_preEnforceMin, NUM_ENFORCEMENT_MONITORS,
+                      MPI_DOUBLE, MPI_MIN, m_uiMesh->getMPICommunicator());
+{% endif %}
+
     // destroy everything that depends on the old mesh layout
 {% if constraint_num_vars > 0 %}
     m_var[VL::CPU_CV].destroy_vector();
@@ -1209,6 +1250,62 @@ void {{ project_upper }}Ctx::calculate_full_grid_size() {
 // checkpoint layout version -- bump only on an incompatible format change.
 static const unsigned int {{ project_upper }}_CHKPT_FORMAT_VERSION = 1;
 
+// True if every rank that wrote the slot left .oct and .var files as long as
+// their own headers say. Collective over comm; file index = rank, as on
+// restore.
+static bool chkpt_slot_complete(int slot, MPI_Comm comm) {
+    int rank;
+    MPI_Comm_rank(comm, &rank);
+    const std::string &prefix = {{ project_upper }}_CHKPT_FILE_PREFIX;
+    char f[512];
+
+    unsigned int writers = 0;
+    if (!rank) {
+        snprintf(f, sizeof(f), "%s_%d.meta.json", prefix.c_str(), slot);
+        std::ifstream mf(f);
+        try {
+            json meta;
+            mf >> meta;
+            if (meta.value("num_evol_vars", 0u) == {{ evolution_num_vars }})
+                writers = meta.value("active_comm_sz", 0u);
+        } catch (...) {
+            writers = 0;
+        }
+    }
+    MPI_Bcast(&writers, 1, MPI_UNSIGNED, 0, comm);
+    if (writers == 0) return false;
+
+    int ok = 1;
+    if ((unsigned int)rank < writers) {
+        std::error_code ec;
+        unsigned int num = 0;
+        snprintf(f, sizeof(f), "%s_%d_octree_%d.oct", prefix.c_str(), slot, rank);
+        FILE *fp = fopen(f, "rb");
+        ok = fp && fread(&num, sizeof(num), 1, fp) == 1;
+        if (fp) fclose(fp);
+        ok = ok && std::filesystem::file_size(f, ec) ==
+                       sizeof(unsigned int) +
+                           (uintmax_t)num * sizeof(ot::TreeNode) && !ec;
+
+        // header: total nodes, local begin, local end
+        unsigned int hdr[3] = {0, 0, 0};
+        snprintf(f, sizeof(f), "%s_%d_vars_%d.var", prefix.c_str(), slot, rank);
+        fp = fopen(f, "rb");
+        ok = ok && fp && fread(hdr, sizeof(unsigned int), 3, fp) == 3 &&
+             hdr[2] >= hdr[1];
+        if (fp) fclose(fp);
+        const uintmax_t body =
+            hdr[0] > 0 ? (uintmax_t){{ evolution_num_vars }} *
+                             (hdr[2] - hdr[1]) * sizeof(double)
+                       : 0;
+        ok = ok && std::filesystem::file_size(f, ec) ==
+                       3 * sizeof(unsigned int) + body && !ec;
+    }
+    int allOk = 0;
+    MPI_Allreduce(&ok, &allOk, 1, MPI_INT, MPI_MIN, comm);
+    return allOk == 1;
+}
+
 int {{ project_upper }}Ctx::write_checkpt() {
     if (!m_uiMesh->isActive()) return 0;
 
@@ -1223,16 +1320,23 @@ int {{ project_upper }}Ctx::write_checkpt() {
                                      m_uiMesh->getElementLocalBegin()));
     sprintf(fname, "%s_%u_octree_%u.oct",
             {{ project_upper }}_CHKPT_FILE_PREFIX.c_str(), slot, rank);
-    io::checkpoint::writeOctToFile(fname, pNodes,
-                                   m_uiMesh->getNumLocalMeshElements());
+    int status = io::checkpoint::writeOctToFile(
+        fname, pNodes, m_uiMesh->getNumLocalMeshElements());
 
     // (2) evolution variables -- one binary file per (active) rank
     DendroScalar *eVar[{{ evolution_num_vars }}];
     m_var[VL::CPU_EV].to_2d(eVar);
     sprintf(fname, "%s_%u_vars_%u.var",
             {{ project_upper }}_CHKPT_FILE_PREFIX.c_str(), slot, rank);
-    io::checkpoint::writeVecToFile(fname, m_uiMesh, (const DendroScalar **)eVar,
-                                   {{ evolution_num_vars }});
+    status |= io::checkpoint::writeVecToFile(
+        fname, m_uiMesh, (const DendroScalar **)eVar, {{ evolution_num_vars }});
+
+{% if enforcement_monitors %}
+    // not yet written to _Constraints.csv; rank 0 stores the global min
+    double preMin[NUM_ENFORCEMENT_MONITORS];
+    MPI_Allreduce(m_preEnforceMin, preMin, NUM_ENFORCEMENT_MONITORS,
+                  MPI_DOUBLE, MPI_MIN, m_uiMesh->getMPICommunicator());
+{% endif %}
 
     // (3) self-describing metadata -- single JSON file (active rank 0)
     if (rank == 0) {
@@ -1252,6 +1356,10 @@ int {{ project_upper }}Ctx::write_checkpt() {
         meta["time"]["step"]   = m_uiTinfo._m_uiStep;
         meta["time"]["dt"]     = m_uiTinfo._m_uiTh;
         meta["wavelet_tol"]    = {{ project_upper }}_WAVELET_TOL;
+{% if enforcement_monitors %}
+        for (unsigned int m = 0; m < NUM_ENFORCEMENT_MONITORS; m++)
+            meta["pre_enforce_min"][ENFORCEMENT_MONITOR_NAMES[m]] = preMin[m];
+{% endif %}
         meta["load_imb_tol"]   = {{ project_upper }}_LOAD_IMB_TOL;
 {% if enable_bh_tracking %}
         meta["bh"]["loc"] = json::array({
@@ -1280,11 +1388,22 @@ int {{ project_upper }}Ctx::write_checkpt() {
         std::ofstream mf(fname);
         mf << std::setw(2) << meta << std::endl;
         mf.close();
+        if (!mf) status = 1;
     }
 
-    // (4) sentinel: barrier so every active rank's .oct/.var/.meta is flushed,
-    //     then rank 0 atomically publishes which slot is now complete + valid.
-    MPI_Barrier(m_uiMesh->getMPICommunicator());
+    // (4) sentinel: the reduction holds rank 0 until every active rank has
+    //     closed its files; rank 0 then atomically publishes the slot, but
+    //     only if all of them wrote it whole.
+    int statusG = 0;
+    par::Mpi_Allreduce(&status, &statusG, 1, MPI_MAX,
+                       m_uiMesh->getMPICommunicator());
+    if (statusG != 0) {
+        if (rank == 0)
+            std::cerr << "[{{ project_name }}] checkpoint slot " << slot
+                      << " failed to write; .latest still names the previous"
+                      << " one." << std::endl;
+        return statusG;
+    }
     if (rank == 0) {
         json latest;
         latest["format_version"] = {{ project_upper }}_CHKPT_FORMAT_VERSION;
@@ -1325,6 +1444,17 @@ int {{ project_upper }}Ctx::restore_checkpt() {
     }
     par::Mpi_Bcast(&slot, 1, 0, comm);
 
+    // A write that died partway into the slot .latest names leaves short
+    // files; restore the other slot rather than abort on them.
+    if (slot >= 0 && slot < 2 && !chkpt_slot_complete(slot, comm) &&
+        chkpt_slot_complete(1 - slot, comm)) {
+        if (!rank)
+            std::cout << "[{{ project_name }}] WARNING: checkpoint slot " << slot
+                      << " is incomplete; restoring slot " << 1 - slot
+                      << " instead." << std::endl;
+        slot = 1 - slot;
+    }
+
     if (slot < 0) {
         if (!rank)
             std::cout << "[{{ project_name }}] no valid checkpoint ("
@@ -1346,7 +1476,7 @@ int {{ project_upper }}Ctx::restore_checkpt() {
             if (!rank)
                 std::cerr << "[{{ project_name }}] checkpoint metadata missing: "
                           << fname << std::endl;
-            MPI_Abort(comm, 0);
+            MPI_Abort(comm, 1);
         }
         mf >> meta;
     }
@@ -1357,7 +1487,7 @@ int {{ project_upper }}Ctx::restore_checkpt() {
             std::cerr << "[{{ project_name }}] checkpoint var-count mismatch: file="
                       << file_nvars << " expected=" << {{ evolution_num_vars }}
                       << std::endl;
-        MPI_Abort(comm, 0);
+        MPI_Abort(comm, 1);
     }
     const unsigned int active_comm_sz = meta["active_comm_sz"];
     // element order from the checkpoint (the ctx's m_uiElementOrder may be
@@ -1370,6 +1500,13 @@ int {{ project_upper }}Ctx::restore_checkpt() {
     m_uiTinfo._m_uiT    = meta["time"]["t"].get<double>();
     m_uiTinfo._m_uiStep = meta["time"]["step"].get<unsigned int>();
     m_uiTinfo._m_uiTh   = meta["time"]["dt"].get<double>();
+{% if enforcement_monitors %}
+    if (meta.contains("pre_enforce_min"))
+        for (unsigned int m = 0; m < NUM_ENFORCEMENT_MONITORS; m++)
+            m_preEnforceMin[m] = meta["pre_enforce_min"].value(
+                ENFORCEMENT_MONITOR_NAMES[m],
+                std::numeric_limits<double>::max());
+{% endif %}
 
 {% if enable_bh_tracking %}
     if (meta.contains("bh")) {
@@ -1409,7 +1546,7 @@ int {{ project_upper }}Ctx::restore_checkpt() {
                       << active_comm_sz << " active ranks; cannot restore on "
                       << npes << " (communicator shrinking unsupported)."
                       << std::endl;
-        MPI_Abort(comm, 0);
+        MPI_Abort(comm, 1);
     }
 
     // (3) active ranks read their octree slice (file index = active rank).
@@ -1431,7 +1568,7 @@ int {{ project_upper }}Ctx::restore_checkpt() {
         if (!rank)
             std::cerr << "[{{ project_name }}] checkpoint octree (.oct) read "
                          "failed/corrupt." << std::endl;
-        MPI_Abort(comm, 0);
+        MPI_Abort(comm, 1);
     }
 
     // (4) rebuild the mesh from the restored octree.
@@ -1494,7 +1631,7 @@ int {{ project_upper }}Ctx::restore_checkpt() {
         if (!rank)
             std::cerr << "[{{ project_name }}] checkpoint variables (.var) read "
                          "failed/corrupt." << std::endl;
-        MPI_Abort(comm, 0);
+        MPI_Abort(comm, 1);
     }
 
     // (7) swap in the restored mesh; main re-sizes derivs + builds the ETS

@@ -185,6 +185,20 @@ class NRConfig(dendrosym.DendroConfiguration):
             ),
         }
 
+    def evolution_enforcement_monitors(self):
+        """Names of the pre-enforcement minima, in `pre_min[]` slot order.
+
+        One per quantity the enforcement overwrites: det(metric), then each
+        floored variable. Empty when no enforcement is generated.
+        """
+        if self.metric_var is None:
+            return []
+        metric_name = self.clean_var_names([self.metric_var])[0][:-2]
+        monitors = [f"DET_{metric_name.upper()}"]
+        for var_use in self.evolution_constraint_info.get("pos_floor", []):
+            monitors.append(self.clean_var_names([var_use])[0].upper())
+        return monitors
+
     def generate_evolution_constraints(self):
         if self.metric_var is None:
             raise ImproperInitalization(
@@ -211,8 +225,9 @@ class NRConfig(dendrosym.DendroConfiguration):
         )
 
         # then we need to generate the determinant code
+        monitors = self.evolution_enforcement_monitors()
         return_str += dendrosym.codegen.generate_force_sym_matrix_det_to_one(
-            metric_name, metric_enums
+            metric_name, metric_enums, pre_min_slot=0
         )
 
         # now we can start adding our other constraints
@@ -250,7 +265,9 @@ class NRConfig(dendrosym.DendroConfiguration):
             var_enum = f"VAR::{enum_prefix}_{single_var_name.upper()}"
 
             return_str += dendrosym.codegen.generate_variable_always_positive(
-                var_enum, floor_var=f"{single_var_name.upper()}_FLOOR"
+                var_enum,
+                floor_var=f"{single_var_name.upper()}_FLOOR",
+                pre_min_slot=monitors.index(single_var_name.upper()),
             )
             return_str += "//// END APPLICATION OF POSITIVE FLOOR\n////\n\n"
 

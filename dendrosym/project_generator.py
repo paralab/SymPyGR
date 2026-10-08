@@ -1507,6 +1507,13 @@ class DendroProjectGenerator:
         else:
             ctx["evolution_constraint_enforcement"] = ""
 
+        # pre-enforcement minima exist only where enforcement was emitted
+        ctx["enforcement_monitors"] = []
+        if ctx["evolution_constraint_enforcement"] and hasattr(
+            c, "evolution_enforcement_monitors"
+        ):
+            ctx["enforcement_monitors"] = c.evolution_enforcement_monitors()
+
         # pos_floor vars: feed `<VAR>_FLOOR` constants to parameters.h/cpp so
         # constraints.h enforcement compiles for any conformal-factor name
         pos_floor_vars = []

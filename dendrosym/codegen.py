@@ -2099,7 +2099,8 @@ def generate_bcs_table(
 
 
 def generate_force_sym_matrix_det_to_one(
-    vname, unzip_access, uzip="uiVar", node="node", dtype="double"
+    vname, unzip_access, uzip="uiVar", node="node", dtype="double",
+    pre_min_slot=None,
 ):
     # NOTE: the function already should have `one_third` defined
 
@@ -2124,12 +2125,15 @@ def generate_force_sym_matrix_det_to_one(
     # add the determinant calculation to the return str
     return_str += det_str + ";\n\n"
 
+    if pre_min_slot is not None:
+        return_str += generate_pre_enforcement_min(f"det_{vname}", pre_min_slot)
+
     # TODO: what can we do to fix the metric determinant being negative?
     # for now, we exit
     return_str += f"if (det_{vname} < 0.0){{\n"
     return_str += f'    std::cout << "Determinant of {vname} is negative: " '
     return_str += f"<< det_{vname} << std::endl;\n"
-    return_str += "    exit(0);\n}\n"
+    return_str += "    MPI_Abort(MPI_COMM_WORLD, 1);\n}\n"
 
     # now add the calculation for negative third
     return_str += (
@@ -2165,7 +2169,7 @@ def generate_force_sym_matrix_det_to_one(
     return_str += f'    std::cout << "    {vname}(3,3)" << '
     return_str += f"{vname}[2][2] << std::endl;\n"
     # exit, and close the block
-    return_str += "exit(0);\n}\n\n"
+    return_str += "MPI_Abort(MPI_COMM_WORLD, 1);\n}\n\n"
 
     # then we can make the calculations to update everything
     return_str += f"double {vname}_up[3][3];\n"
@@ -2255,7 +2259,7 @@ def generate_force_symmat_traceless(vname, metric_vname, dtype="double"):
     return_str += cout_str + f'{vname}(2,2)=" << {vname}[1][1]' + cout_end_str
     return_str += cout_str + f'{vname}(2,3)=" << {vname}[1][2]' + cout_end_str
     return_str += cout_str + f'{vname}(3,3)=" << {vname}[2][2]' + cout_end_str
-    return_str += "    exit(0);\n}\n\n"
+    return_str += "    MPI_Abort(MPI_COMM_WORLD, 1);\n}\n\n"
 
     return return_str
 
@@ -2306,13 +2310,27 @@ def generate_update_sym_mat_code(
     return return_str + "\n"
 
 
+def generate_pre_enforcement_min(value, slot, pre_min="pre_min"):
+    """Record `value` into `pre_min[slot]` if smaller; no-op on a null pointer."""
+    return (
+        f"if ({pre_min} && {value} < {pre_min}[{slot}]) "
+        f"{pre_min}[{slot}] = {value};\n"
+    )
+
+
 def generate_variable_always_positive(
-    uzip_access, floor_var=None, uzip="uiVar", node="node"
+    uzip_access, floor_var=None, uzip="uiVar", node="node", pre_min_slot=None
 ):
     if floor_var is None:
         floor_var = "1.0e-6"
 
-    return (
+    return_str = ""
+    if pre_min_slot is not None:
+        return_str += generate_pre_enforcement_min(
+            f"{uzip}[{uzip_access}][{node}]", pre_min_slot
+        )
+
+    return return_str + (
         f"{uzip}[{uzip_access}][{node}] = std::max("
         + f"{uzip}[{uzip_access}][{node}], {floor_var});\n"
     )
