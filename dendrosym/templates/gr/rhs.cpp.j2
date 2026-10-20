@@ -150,6 +150,27 @@ void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
 {% endif %}
     unsigned int n = sz[0] * sz[1] * sz[2];
 
+{% set exact_ghost_modes = (boundary_modes or []) | selectattr("exact_ghost") | list %}
+{% if exact_ghost_modes %}
+    // exact_ghost: the padding outside the domain holds the exact solution, so every
+    // face is differentiated like an interior block face and no closure rows act at
+    // the walls. __deriv_bflag is the bflag the derivatives see.
+    const bool __exact_ghost = bflag != 0 && (
+{% for m in exact_ghost_modes %}
+        {{ namespace }}::{{ project_upper }}_BOUNDARY_MODE_ID == {{ m.id }}{{ " ||" if not loop.last else ");" }}
+{% endfor %}
+    if (__exact_ghost)
+        dendro_bc::for_each_exterior_node(pmin, pmax, sz, bflag, PW,
+            [&](unsigned int __pp, double __x, double __y, double __z) {
+                double __e[{{ evolution_var_names | length }}];
+                analyticalSolution(__x, __y, __z, t, __e);
+{% for vname in evolution_var_names %}
+                const_cast<double *>(in.{{ vname }})[__pp] = __e[VAR::U_{{ vname | upper }}];
+{% endfor %}
+            });
+    const unsigned int __deriv_bflag = __exact_ghost ? 0u : bflag;
+
+{% endif %}
     {{ namespace }}::timer::t_deriv.start();
 
     const unsigned int BLK_SZ = n;
@@ -182,6 +203,10 @@ void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
     // deriv_calc fills the derivative buffers with the finite-difference stencils
     // (including the staged derivatives of the intermediate buffers above).
 {% if evolution_gencode is defined and evolution_gencode.deriv_calc is defined %}
+{% if exact_ghost_modes %}
+    {
+        const unsigned int bflag = __deriv_bflag;
+{% endif %}
 {% if evolution_cascade is defined and evolution_cascade.fused %}
 #ifndef DENDRO_CASCADE_FLAT
     // fused cascade: interior blocks compute their 1st/pure-2nd derivatives inside the
@@ -196,6 +221,9 @@ void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
     }
 {% else %}
 #include "../gencode/{{ evolution_gencode.deriv_calc }}"
+{% endif %}
+{% if exact_ghost_modes %}
+    }
 {% endif %}
 {% endif %}
 
@@ -240,7 +268,7 @@ void {{ project_name }}rhs(double **unzipVarsRHS, const double **uZipVars,
         const unsigned int __cascade_i_lo = PW;
         const unsigned int __cascade_i_hi = nx - PW;
 {% if evolution_cascade.fused %}
-        if (bflag == 0 && __cascade_fused) {
+        if ({{ "__deriv_bflag" if exact_ghost_modes else "bflag" }} == 0 && __cascade_fused) {
             // interior block: fused body (inline 1st/pure-2nd stencils)
 {{ cascade_loop(evolution_cascade.body_fused, evolution_cascade.body_fused_tail) }}
         } else {

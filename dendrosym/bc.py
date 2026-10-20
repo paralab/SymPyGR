@@ -29,6 +29,11 @@ rhs, so the time integrator carries them):
                              time-dependent g it can cost RK some time order at the
                              boundary, which the rhs form (dirichlet) does not.
   exact()                    dirichlet() from the id type's exact solution (tests)
+  exact_ghost()              the id type's exact solution in the padding outside
+                             the domain, so every face is differentiated as an
+                             interior block face and no closure rows act at the
+                             walls (tests; isolates the interior operator). Not a
+                             face-node kind: it must cover all variables
   outflow(vel)               f_t = -v . grad f, v the outgoing characteristic
                              velocity per face (6 x 3, sympy allowed); exact for
                              waves meeting the face head-on, partial reflection
@@ -42,15 +47,15 @@ rhs, so the time integrator carries them):
                              f_inf + O(1/r^falloff) from a central source
 
 Data-free: static, outflow, neumann, robin, sommerfeld. Needs data: dirichlet,
-dirichlet_value, exact.
+dirichlet_value, exact, exact_ghost.
 """
 
 import sympy as sym
 
 FACE_NORMALS_BY_OCT_DIR = ((-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1))
 
-KINDS = ("static", "dirichlet", "dirichlet_value", "exact", "outflow", "neumann",
-         "robin", "sommerfeld")
+KINDS = ("static", "dirichlet", "dirichlet_value", "exact", "exact_ghost", "outflow",
+         "neumann", "robin", "sommerfeld")
 
 
 def static():
@@ -67,6 +72,10 @@ def dirichlet_value(g):
 
 def exact():
     return ("exact",)
+
+
+def exact_ghost():
+    return ("exact_ghost",)
 
 
 def outflow(vel):

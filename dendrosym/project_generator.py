@@ -875,6 +875,10 @@ def _jax_boundary(config, var_names, has_exact):
                        else [str(key).replace(config.idx_str, "")])
             for v in targets:
                 per_var[v] = (key, kind)
+        if any(kind[0] == "exact_ghost" for _, kind in per_var.values()):
+            unavailable.append({"name": mname, "reason":
+                                "exact_ghost is not in dendrojax.boundary"})
+            continue
         rows, text = [], []
         for v in var_names:
             key, kind = per_var[v]
@@ -1760,6 +1764,13 @@ class DendroProjectGenerator:
             if missing:
                 raise ValueError(f"boundary mode {mname!r} leaves {missing} without a "
                                  "boundary condition; use static() to hold them")
+            ghost = [v for v in names if per_var[v][0] == "exact_ghost"]
+            if ghost and len(ghost) != len(names):
+                raise ValueError(f"boundary mode {mname!r}: exact_ghost() changes every "
+                                 "variable's derivatives, so it must cover all of them")
+            if ghost and not ctx["analytical_cases"]:
+                raise ValueError(f"boundary mode {mname!r}: exact_ghost() needs "
+                                 "initial_data_types with an `exact` solution")
 
             lines, exact_vars, summary, value_lines = [], [], [], []
             for v in names:
@@ -1826,7 +1837,7 @@ class DendroProjectGenerator:
                     f"[&](unsigned int __pp, double __x, double __y, double __z) {{ "
                     f"double __e[{len(names)}]; analyticalSolutionDt(__x, __y, __z, t, __e); "
                     f"{sets} }});")
-            if exact_vars or any(per_var[v][0] == "dirichlet" for v in names):
+            if exact_vars or ghost or any(per_var[v][0] == "dirichlet" for v in names):
                 ctx["boundary_needs_grutils"] = True
             if value_lines:
                 ctx["boundary_value_modes"].append({
@@ -1834,7 +1845,7 @@ class DendroProjectGenerator:
                     "code": "\n".join(" " * 16 + ln for ln in value_lines)})
             ctx["boundary_modes"].append({
                 "name": mname, "id": mid, "summary": ", ".join(summary),
-                "code": "\n".join(ind + ln for ln in lines)})
+                "code": "\n".join(ind + ln for ln in lines), "exact_ghost": bool(ghost)})
 
     # ------------------------------------------------------------------
     # Gencode (expensive: CSE, derivatives, equation printing)
