@@ -223,6 +223,8 @@ int main(int argc, char **argv) {
 {% if enable_lts %}
     if ({{ namespace }}::{{ project_upper }}_TIME_STEPPER == "lts") {
         const int rc = {{ namespace }}::run_{{ project_name }}_lts(ctx, comm);
+        // a remesh inside the driver replaced the mesh the ctx holds
+        mesh = ctx->get_mesh();
 {% if enable_profiling %}
         {{ namespace }}::timer::print_profile(comm);
 {% endif %}

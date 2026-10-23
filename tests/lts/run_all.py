@@ -188,6 +188,9 @@ def test_flag_on_emits_the_contract():
     assert "dump_evar_bin" in driver and "DENDRO_EVAR_DUMP" in driver
     assert "demo::dump_evar_bin(" in out["solver/demo_main.cpp"], "global path does not dump"
     assert "demo_lts_driver.h" in out["solver/demo_main.cpp"]
+    main_cpp = out["solver/demo_main.cpp"]
+    assert re.search(r"run_demo_lts\(ctx, comm\);\s*(//[^\n]*\n\s*)*mesh = ctx->get_mesh\(\);\s*delete ctx;\s*delete mesh;", main_cpp), \
+        "main deletes a stale mesh after the driver remeshed"
     assert 'DEMO_TIME_STEPPER == "lts"' in out["solver/demo_main.cpp"]
 
 
