@@ -154,7 +154,7 @@ _LTS_ON = dict(
 _LTS_TOKEN = re.compile(
     r"(?<![A-Za-z])(?:lts|LTS)(?![a-z])|rhs_blk|block_view|enforce_blk|"
     r"slot_override|restored_checkpt|restoredSlot|time_stepper|TIME_STEPPER|"
-    r"ExplicitNUTS")
+    r"ExplicitNUTS|get_async_batch_sz|EVAR_DUMP|dump_evar_bin")
 
 
 def test_flag_off_emits_nothing_lts():
@@ -173,6 +173,8 @@ def test_flag_on_emits_the_contract():
                  "post_timestep_blk", "on_mesh_changed", "compute_lts_ts_offset"):
         assert hook in ctx_h, f"{hook} not declared"
         assert re.search(rf"DEMOCtx::{hook}\(", ctx_cpp), f"{hook} not defined"
+    assert "unsigned int get_async_batch_sz() { return DEMO_ASYNC_COMM_K; }" in ctx_h, \
+        "the CRTP base forwards get_async_batch_sz to the leaf: without it the stepper recurses forever"
     assert "ot::Mesh *get_mesh() const {" in ctx_h, "the stepper calls get_mesh() on a const ctx"
     assert "lts_thread_safe" not in ctx_cpp.replace("Not lts_thread_safe", "")
     assert "std::fabs(static_cast<double>(demo::DEMO_ETA))" in ctx_cpp, \
@@ -183,6 +185,8 @@ def test_flag_on_emits_the_contract():
     for piece in ("ExplicitNUTS", "remesh_if_needed", "checkpoint(", "write_carried_g",
                   "read_carried_g", "clk.resume", "checkpoint_slot", "LtsOptions"):
         assert piece in driver, f"driver lacks {piece}"
+    assert "dump_evar_bin" in driver and "DENDRO_EVAR_DUMP" in driver
+    assert "demo::dump_evar_bin(" in out["solver/demo_main.cpp"], "global path does not dump"
     assert "demo_lts_driver.h" in out["solver/demo_main.cpp"]
     assert 'DEMO_TIME_STEPPER == "lts"' in out["solver/demo_main.cpp"]
 

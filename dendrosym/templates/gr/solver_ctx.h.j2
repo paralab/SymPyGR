@@ -145,6 +145,8 @@ class {{ project_upper }}Ctx : public ts::Ctx<{{ project_upper }}Ctx, DendroScal
     unsigned int compute_lts_ts_offset();
     /** Pointwise enforcement on one padded block (what post_timestep does zipped). */
     void enforce_blk(DendroScalar *in, unsigned int dof, unsigned int blk);
+    /** Ghost-exchange batch size. The CRTP base forwards to the leaf, so a leaf without it recurses forever. */
+    unsigned int get_async_batch_sz() { return {{ project_upper }}_ASYNC_COMM_K; }
     /** Checkpoint slot restore_checkpt read, or -1 (the g history sits beside it). */
     int restored_checkpt_slot() const { return m_restoredSlot; }
 {% endif %}
