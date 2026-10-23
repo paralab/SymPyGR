@@ -11,6 +11,7 @@ over-reporting).
 """
 
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -19,7 +20,11 @@ sys.path.insert(0, ROOT)
 
 import sympy as sym  # noqa: E402
 
-from dendrosym import lts_audit  # noqa: E402
+import jinja2  # noqa: E402
+
+from dendrosym import lts_audit, template_gate  # noqa: E402
+from dendrosym.lts_names import LTS_NAMES  # noqa: E402
+from dendrosym.project_generator import _TEMPLATES_DIR, build_template_map  # noqa: E402
 
 FAILURES = []
 
@@ -113,11 +118,106 @@ def test_ccz4_audit():
     assert {"eta", "kappa[0]"} <= set(a.rate_params), a.rate_params
 
 
+def _render(flags, only=None):
+    """Render the mapped C++ templates for one stub context; {output path: text}."""
+    env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(str(_TEMPLATES_DIR)),
+        undefined=template_gate._StubUndefined,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    ctx = dict(
+        project_name="demo",
+        project_upper="DEMO",
+        namespace="demo",
+        evolution_num_vars=3,
+        physics_params=[],
+    )
+    ctx.update(flags)
+    out = {}
+    for rel, tmpl in build_template_map(ctx).items():
+        if not rel.endswith((".h", ".cpp", ".toml")):
+            continue
+        if only and not any(o in rel for o in only):
+            continue
+        out[rel] = env.get_template(tmpl).render(**ctx)
+    return out
+
+
+_LTS_ON = dict(
+    enable_lts=True,
+    lts=LTS_NAMES,
+    lts_rates=["std::fabs(static_cast<double>(demo::DEMO_ETA))"],
+    lts_value_boundary_ids=[2],
+    boundary_modes=[{"name": "a", "id": 0, "summary": "", "code": ""}],
+)
+_LTS_TOKEN = re.compile(
+    r"(?<![A-Za-z])(?:lts|LTS)(?![a-z])|rhs_blk|block_view|enforce_blk|"
+    r"slot_override|restored_checkpt|restoredSlot|time_stepper|TIME_STEPPER|"
+    r"ExplicitNUTS")
+
+
+def test_flag_off_emits_nothing_lts():
+    for extra in (dict(), dict(enable_bh_tracking=True, enable_ah=True,
+                               enable_gw_extraction=True, enable_profiling=True)):
+        for path, text in _render(extra).items():
+            hit = _LTS_TOKEN.search(text)
+            assert not hit, f"{path} mentions {hit.group(0)!r} with enable_lts off"
+
+
+def test_flag_on_emits_the_contract():
+    out = _render(_LTS_ON)
+    ctx_h = out["solver/include/demoCtx.h"]
+    ctx_cpp = out["solver/src/demoCtx.cpp"]
+    for hook in ("rhs_blk", "pre_stage_blk", "post_stage_blk", "pre_timestep_blk",
+                 "post_timestep_blk", "on_mesh_changed", "compute_lts_ts_offset"):
+        assert hook in ctx_h, f"{hook} not declared"
+        assert re.search(rf"DEMOCtx::{hook}\(", ctx_cpp), f"{hook} not defined"
+    assert "lts_thread_safe" not in ctx_cpp.replace("Not lts_thread_safe", "")
+    assert "std::fabs(static_cast<double>(demo::DEMO_ETA))" in ctx_cpp, \
+        "audit rate missing from compute_lts_ts_offset"
+    assert "DEMO_LTS_RATE_C / rate" in ctx_cpp
+    assert "meta[\"time_stepper\"]" in ctx_cpp and "refusing to restore" in ctx_cpp
+    driver = out["solver/include/demo_lts_driver.h"]
+    for piece in ("ExplicitNUTS", "remesh_if_needed", "checkpoint(", "write_carried_g",
+                  "read_carried_g", "clk.resume", "checkpoint_slot", "LtsOptions"):
+        assert piece in driver, f"driver lacks {piece}"
+    assert "demo_lts_driver.h" in out["solver/demo_main.cpp"]
+    assert 'DEMO_TIME_STEPPER == "lts"' in out["solver/demo_main.cpp"]
+
+
+def test_flag_on_refuses_what_lts_cannot_run():
+    par = _render(_LTS_ON)["solver/src/parameters.cpp"]
+    assert "{RKType::RK3, RKType::RK4}" in par, "rk_type refusal missing or widened"
+    assert "{2})" in par.replace(" ", "") or "{2}" in par.replace(" ", ""), \
+        "value-form boundary refusal missing"
+    assert "value-form boundary modes" in par
+    assert "[lts] partitioning_method" in par and "{0}" in par.replace(" ", "")
+    bh = _render(dict(_LTS_ON, enable_bh_tracking=True))["solver/src/parameters.cpp"]
+    assert "fixed_punctures" in bh and "Puncture tracking is not supported" in bh
+    nobh = _render(_LTS_ON)["solver/src/parameters.cpp"]
+    assert "fixed_punctures" not in nobh
+    novalue = _render(dict(_LTS_ON, lts_value_boundary_ids=[]))["solver/src/parameters.cpp"]
+    assert "value-form boundary modes" not in novalue
+
+
+def test_names_come_from_the_table():
+    renamed = dict(LTS_NAMES, stepper="RenamedStepper", enforced_nodes="renamed_nodes")
+    out = _render(dict(_LTS_ON, lts=renamed))
+    assert "RenamedStepper" in out["solver/include/demo_lts_driver.h"]
+    assert "renamed_nodes" in out["solver/src/demoCtx.cpp"]
+    assert "ExplicitNUTS" not in out["solver/include/demo_lts_driver.h"]
+
+
 check("audit finds a stiff rate", test_stiff_rate_found)
 check("audit ignores derivative terms", test_derivative_terms_are_not_rates)
 check("audit finds constraint reads", test_constraint_read_found)
 check("audit finds dt terms", test_dt_term_found)
 check("rate_cpp prints names and magnitude", test_rate_cpp_names_and_magnitude)
+check("enable_lts off: no LTS text in any template", test_flag_off_emits_nothing_lts)
+check("enable_lts on: hooks, driver, rates, checkpoint tag", test_flag_on_emits_the_contract)
+check("enable_lts on: refusals are emitted", test_flag_on_refuses_what_lts_cannot_run)
+check("library names read from lts_names", test_names_come_from_the_table)
 if "--fast" not in sys.argv:
     check("BSSN: eta in B is the stiff rate", test_bssn_eta_is_the_known_stiff_rate)
 if "--ccz4" in sys.argv:
