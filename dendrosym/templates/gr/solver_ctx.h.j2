@@ -194,7 +194,7 @@ class {{ project_upper }}Ctx : public ts::Ctx<{{ project_upper }}Ctx, DendroScal
     // ---- Accessors ----
     DVec &get_evolution_vars() { return m_var[VL::CPU_EV]; }
     DVec &get_constraint_vars() { return m_var[VL::CPU_CV]; }
-    ot::Mesh *get_mesh() { return m_uiMesh; }
+    ot::Mesh *get_mesh() {{ "const " if enable_lts }}{ return m_uiMesh; }
 
     void prepare_for_next_iter();
 };

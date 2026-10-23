@@ -173,6 +173,7 @@ def test_flag_on_emits_the_contract():
                  "post_timestep_blk", "on_mesh_changed", "compute_lts_ts_offset"):
         assert hook in ctx_h, f"{hook} not declared"
         assert re.search(rf"DEMOCtx::{hook}\(", ctx_cpp), f"{hook} not defined"
+    assert "ot::Mesh *get_mesh() const {" in ctx_h, "the stepper calls get_mesh() on a const ctx"
     assert "lts_thread_safe" not in ctx_cpp.replace("Not lts_thread_safe", "")
     assert "std::fabs(static_cast<double>(demo::DEMO_ETA))" in ctx_cpp, \
         "audit rate missing from compute_lts_ts_offset"
