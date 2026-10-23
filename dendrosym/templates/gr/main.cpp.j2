@@ -412,6 +412,9 @@ int main(int argc, char **argv) {
     // final output
     ctx->compute_constraint_variables();
     ctx->write_vtu();
+{% if enable_lts %}
+    {{ namespace }}::dump_evar_bin(ctx->get_mesh(), ctx->get_evolution_vars());
+{% endif %}
 
     if (rank == 0) {
         std::cout << GRN << "========================================" << NRM << std::endl;
